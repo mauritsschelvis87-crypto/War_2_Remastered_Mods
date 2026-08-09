@@ -1,0 +1,660 @@
+# Warcraft II Remastered - Player Color Studio (minimap + ally screen)
+param(
+    [string]$GameRootPath = 'C:\Program Files (x86)\Warcraft II Remastered',
+    [switch]$ApplySavedConfigOnly,
+    [switch]$RestoreOnly,
+    [switch]$SyncVanillaBackup,
+    [switch]$GetDefaultConfig
+)
+
+$ErrorActionPreference = 'Stop'
+
+# Players not supported yet (minimap engine limitation)
+$DisabledPlayerIndices = @(1, 7)   # Player 2 and Player 8 (0-based)
+
+# Fixed display color for disabled players in the desktop UI (not patched in-game)
+$DisabledPlayerDisplayHex = @{
+    7 = '#FFFF00'   # Player 8: original minimap color is yellow
+}
+
+# Palette indices used by minimap AND ally (F5) for each supported player
+$PlayerColorIndices = @{
+    0 = @(208, 209, 210, 211)
+    2 = @(216, 217, 218, 219)
+    3 = @(220, 221, 222, 223)
+    4 = @(224, 225, 226, 227)
+    5 = @(228, 229, 230, 231)
+    6 = @(232, 233, 234, 235, 255)   # P7 minimap extras (ally chip is skins.json)
+}
+
+# Unit/building selection outline = bright green at palette index 250 (0,63,0).
+# Enemy selection = forest.ppl index 249. Build stage red = indices 201/202.
+# Gold mine selection uses indices 236-238 (gold band) — left vanilla for now.
+$SelectionHighlightPaletteIndex = 250
+$EnemySelectionHighlightPaletteIndex = 249
+$BuildStageRedPaletteIndices = @(201, 202)
+$GoldMineSelectionPaletteIndices = @(236, 237, 238)
+
+# Enemy highlight shares palette index 249 with build UI — customization paused in desktop.
+$EnemySelectionHighlightUiDisabled = $true
+$EnemySelectionDisplayHex = '#FF0000'
+
+# First palette index per player, used to read/write JSON defaults from authentic backup
+$VanillaJsonColorIndices = @(208, 212, 216, 220, 224, 228, 232, 252)
+
+$PplFiles = @(
+    'x86\Data\Art\bgs\Forest\forest.ppl',
+    'x86\Data\Art\bgs\Iceland\iceland.ppl',
+    'x86\Data\Art\bgs\Swamp\swamp.ppl',
+    'x86\Data\Art\bgs\XSwamp\xswamp.ppl'
+)
+$MapColorFiles = @(
+    'x86\Data\Art\hd\classic\forest_mapColors.bin',
+    'x86\Data\Art\hd\classic\iceland_mapColors.bin',
+    'x86\Data\Art\hd\classic\swamp_mapColors.bin',
+    'x86\Data\Art\hd\classic\xswamp_mapColors.bin'
+)
+
+# Ally screen (F5) reads hardcoded RGBA from these skins, not palette files.
+$AllyScreenSkinsJson = 'x86\Data\skins\skins.json'
+$AllyScreenSkinPrefix = 'fe_endgame_stats_bar_'
+
+function Get-DisabledPlayerDisplayColor([int]$playerIndex) {
+    if ($DisabledPlayerDisplayHex.ContainsKey($playerIndex)) {
+        return Convert-HexToColor $DisabledPlayerDisplayHex[$playerIndex]
+    }
+    return $null
+}
+
+function Get-PlayerDisplayColor($colors, [int]$playerIndex) {
+    $forced = Get-DisabledPlayerDisplayColor $playerIndex
+    if ($forced) { return $forced }
+    return $colors[$playerIndex]
+}
+
+function Convert-HexToColor([string]$hex) {
+    $h = $hex.Trim()
+    if ($h -notmatch '^#') { $h = "#$h" }
+    return [pscustomobject]@{
+        R = [int]::Parse($h.Substring(1, 2), 'HexNumber')
+        G = [int]::Parse($h.Substring(3, 2), 'HexNumber')
+        B = [int]::Parse($h.Substring(5, 2), 'HexNumber')
+    }
+}
+
+function Convert-ColorToHex($color) {
+    return '#{0:X2}{1:X2}{2:X2}' -f $color.R, $color.G, $color.B
+}
+
+function Scale-Channel([int]$chan) {
+    return [byte][math]::Round($chan * 63 / 255)
+}
+
+function Get-GameRootPaths {
+    # Only patch the live game install - not the dev repo copy.
+    return @($GameRootPath.TrimEnd('\'))
+}
+
+function Get-GameFilePath([string]$relativePath, [string]$root) {
+    return Join-Path $root $relativePath
+}
+
+function Get-RelativeGamePath([string]$absolutePath, [string]$root) {
+    return $absolutePath.Substring($root.TrimEnd('\').Length).TrimStart('\')
+}
+
+function Get-ColorFromPaletteBytes($bytes, [int]$idx, [switch]$EightBit) {
+    $off = $idx * 3
+    if (($off + 2) -ge $bytes.Length) {
+        throw "Palette index buiten bereik: $idx"
+    }
+    if ($EightBit) {
+        return [pscustomobject]@{
+            R = [int]$bytes[$off]
+            G = [int]$bytes[$off + 1]
+            B = [int]$bytes[$off + 2]
+        }
+    }
+    return [pscustomobject]@{
+        R = [int][math]::Round($bytes[$off] * 255 / 63)
+        G = [int][math]::Round($bytes[$off + 1] * 255 / 63)
+        B = [int][math]::Round($bytes[$off + 2] * 255 / 63)
+    }
+}
+
+function Get-DefaultPlayerHexColors {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        throw 'Vanilla backup ontbreekt. Run capture-vanilla.bat na Scan and Repair.'
+    }
+    $bytes = Read-FileBytes $pplPath
+    $result = @()
+    foreach ($idx in $VanillaJsonColorIndices) {
+        $result += (Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $idx))
+    }
+    return $result
+}
+
+function Get-VanillaBackupRoot {
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    return Join-Path $scriptDir 'backup\vanilla'
+}
+
+function Get-AuthenticVanillaSourcePath([string]$relativePath) {
+    # Ground truth = live game install (Program Files) after Scan and Repair.
+    $live = Join-Path $GameRootPath $relativePath
+    if (Test-Path -LiteralPath $live) { return $live }
+
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    $legacyRel = $relativePath -replace '^x86\\', ''
+    $leaf = Split-Path -Leaf $relativePath
+    $candidates = @(
+        (Join-Path (Join-Path $scriptDir 'backup\vanilla') $relativePath),
+        (Join-Path $GameRootPath ("x86\Mods\Player6-Cyan\backup\{0}" -f $legacyRel)),
+        (Join-Path $scriptDir ("backup\Data\Art\hd\classic\{0}" -f $leaf))
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    return $null
+}
+
+function Sync-AuthenticVanillaBackup {
+    $vanillaRoot = Get-VanillaBackupRoot
+    if (!(Test-Path -LiteralPath $vanillaRoot)) {
+        New-Item -ItemType Directory -Path $vanillaRoot -Force | Out-Null
+    }
+
+    foreach ($rel in ($PplFiles + $MapColorFiles + @($AllyScreenSkinsJson))) {
+        $source = Get-AuthenticVanillaSourcePath $rel
+        if (!$source) {
+            throw "Geen bron gevonden voor: $rel (run eerst Battle.net Scan and Repair)"
+        }
+        $dest = Join-Path $vanillaRoot $rel
+        $destDir = Split-Path -Parent $dest
+        if (!(Test-Path -LiteralPath $destDir)) {
+            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $source -Destination $dest -Force
+        Write-Host "Vanilla backup <= $source"
+    }
+
+    $pplPath = Join-Path $vanillaRoot 'x86\Data\Art\bgs\Forest\forest.ppl'
+    $pplBytes = Read-FileBytes $pplPath
+    $colors = foreach ($idx in $VanillaJsonColorIndices) {
+        Get-ColorFromPaletteBytes $pplBytes $idx
+    }
+    Save-ColorsToJson @(Get-DefaultPlayerColors) (Get-DefaultSelectionHighlightHex) (Get-DefaultEnemySelectionHighlightHex)
+    Write-ApplyLog "Captured backup\vanilla from $GameRootPath (Scan and Repair source)"
+}
+
+function Get-VanillaBackupPath([string]$relativePath) {
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    $candidates = @(
+        (Join-Path (Join-Path $scriptDir 'backup\vanilla') $relativePath),
+        (Join-Path (Join-Path $GameRootPath 'war2-color-mod\backup\vanilla') $relativePath)
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    return $null
+}
+
+function Get-BackupFilePath([string]$absolutePath, [string]$root) {
+    $rel = Get-RelativeGamePath $absolutePath $root
+
+    # Shipped vanilla backups are the restore source of truth.
+    $vanilla = Get-VanillaBackupPath $rel
+    if ($vanilla) { return $vanilla }
+
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    $legacyRel = $rel -replace '^x86\\', ''
+    $candidates = @(
+        (Join-Path (Join-Path $GameRootPath 'war2-color-mod\backup') $legacyRel),
+        (Join-Path (Join-Path $scriptDir 'backup') $rel),
+        (Join-Path (Join-Path $GameRootPath 'war2-color-mod\backup') $rel),
+        (Join-Path $GameRootPath ("x86\Mods\Player6-Cyan\backup\{0}" -f $legacyRel))
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    return $null
+}
+
+function Read-FileBytes([string]$path) {
+    return [IO.File]::ReadAllBytes($path)
+}
+
+function Write-FileBytes([string]$path, [byte[]]$bytes) {
+    [IO.File]::WriteAllBytes($path, $bytes)
+}
+
+function Ensure-BackupOfFile([string]$absolutePath, [string]$root) {
+    $rel = Get-RelativeGamePath $absolutePath $root
+    $vanilla = Get-VanillaBackupPath $rel
+    if (!$vanilla) {
+        throw "Vanilla backup ontbreekt voor: $rel. Voer sync-to-game.bat opnieuw uit."
+    }
+    return $vanilla
+}
+
+function Get-DefaultPlayerColors {
+    return @(Get-DefaultPlayerHexColors | ForEach-Object { Convert-HexToColor $_ })
+}
+
+function Restore-OriginalPaletteFiles {
+    foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson))) {
+        Restore-FromBackup $rel
+    }
+    Save-ColorsToJson @(Get-DefaultPlayerColors) (Get-DefaultSelectionHighlightHex) (Get-DefaultEnemySelectionHighlightHex)
+    Write-ApplyLog "Restored authentic vanilla game files and player-colors.json"
+}
+
+function Restore-FromBackup([string]$relativePath) {
+    foreach ($root in (Get-GameRootPaths)) {
+        $targetPath = Get-GameFilePath $relativePath $root
+        if (!(Test-Path -LiteralPath $targetPath)) { continue }
+        $backupPath = Get-BackupFilePath $targetPath $root
+        if (!$backupPath) {
+            throw "Geen vanilla backup gevonden voor: $relativePath"
+        }
+        $targetDir = Split-Path -Parent $targetPath
+        if (!(Test-Path $targetDir)) {
+            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $backupPath -Destination $targetPath -Force
+        Write-Host "Restored $targetPath <= $backupPath"
+    }
+}
+
+function Write-ApplyLog([string]$message) {
+    $logPath = Join-Path (Split-Path -Parent $PSCommandPath) 'war2_color_patch_log.txt'
+    $line = '{0:yyyy-MM-dd HH:mm:ss}  {1}' -f (Get-Date), $message
+    Add-Content -LiteralPath $logPath -Value $line -Encoding UTF8
+    Write-Host $line
+}
+
+function Test-GameRunning {
+    return $null -ne (Get-Process -Name 'Warcraft II' -ErrorAction SilentlyContinue)
+}
+
+# UI slots restored from vanilla after each apply (build bar gradient, enemy/build red, goldmine, mine selection)
+$PreservePaletteIndicesPpl = @(251, 189, 190, 191, 249) + $BuildStageRedPaletteIndices + $GoldMineSelectionPaletteIndices
+$PreservePaletteIndicesBin = @(251) + $BuildStageRedPaletteIndices + $GoldMineSelectionPaletteIndices
+
+$TilesetPalettePairs = @(
+    @{
+        Ppl = 'x86\Data\Art\bgs\Forest\forest.ppl'
+        Bin = 'x86\Data\Art\hd\classic\forest_mapColors.bin'
+    },
+    @{
+        Ppl = 'x86\Data\Art\bgs\Iceland\iceland.ppl'
+        Bin = 'x86\Data\Art\hd\classic\iceland_mapColors.bin'
+    },
+    @{
+        Ppl = 'x86\Data\Art\bgs\Swamp\swamp.ppl'
+        Bin = 'x86\Data\Art\hd\classic\swamp_mapColors.bin'
+    },
+    @{
+        Ppl = 'x86\Data\Art\bgs\XSwamp\xswamp.ppl'
+        Bin = 'x86\Data\Art\hd\classic\xswamp_mapColors.bin'
+    }
+)
+
+function Get-AllPlayerPaletteIndices {
+    $indices = New-Object System.Collections.Generic.HashSet[int]
+    foreach ($playerIndex in $PlayerColorIndices.Keys) {
+        foreach ($idx in $PlayerColorIndices[$playerIndex]) {
+            [void]$indices.Add($idx)
+        }
+    }
+    return @($indices)
+}
+
+function Copy-PaletteIndexBytes($sourceBytes, $targetBytes, [int]$idx) {
+    $off = $idx * 3
+    if (($off + 2) -ge $sourceBytes.Length) { return }
+    if (($off + 2) -ge $targetBytes.Length) { return }
+    $targetBytes[$off] = $sourceBytes[$off]
+    $targetBytes[$off + 1] = $sourceBytes[$off + 1]
+    $targetBytes[$off + 2] = $sourceBytes[$off + 2]
+}
+
+function Restore-PreservedPaletteSlots($targetBytes, $vanillaBytes, [int[]]$indices) {
+    foreach ($idx in $indices) {
+        Copy-PaletteIndexBytes $vanillaBytes $targetBytes $idx
+    }
+}
+
+function Set-PlayerColorsOnBytes($bytes, $colors) {
+    foreach ($playerIndex in $PlayerColorIndices.Keys) {
+        if ($DisabledPlayerIndices -contains $playerIndex) { continue }
+        $baseColor = $colors[$playerIndex]
+        foreach ($idx in $PlayerColorIndices[$playerIndex]) {
+            Set-PaletteIndexFromColor $bytes $idx $baseColor
+        }
+    }
+}
+
+function Get-DefaultSelectionHighlightHex {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        return '#00FF00'
+    }
+    $bytes = Read-FileBytes $pplPath
+    return Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $SelectionHighlightPaletteIndex)
+}
+
+function Set-SelectionHighlightOnBytes($bytes, $color) {
+    Set-PaletteIndexFromColor $bytes $SelectionHighlightPaletteIndex $color
+}
+
+function Get-DefaultEnemySelectionHighlightHex {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        return '#FF0000'
+    }
+    $bytes = Read-FileBytes $pplPath
+    return Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $EnemySelectionHighlightPaletteIndex)
+}
+
+function Set-EnemySelectionHighlightOnBytes($bytes, $color) {
+    Set-PaletteIndexFromColor $bytes $EnemySelectionHighlightPaletteIndex $color
+}
+
+function Get-SelectionPatchPaletteIndices {
+    return @($SelectionHighlightPaletteIndex)
+}
+
+function Get-AllyBarCursorColor($color) {
+    # Ally chips render progress_cursor; keep the exact player color (no 2x clip to white).
+    return [pscustomobject]@{
+        R = $color.R
+        G = $color.G
+        B = $color.B
+    }
+}
+
+function Apply-AllyScreenSkinsJson {
+    param(
+        [object[]]$Colors,
+        [string]$Root
+    )
+
+    $path = Get-GameFilePath $AllyScreenSkinsJson $Root
+    if (!(Test-Path -LiteralPath $path)) {
+        throw "skins.json niet gevonden: $path"
+    }
+
+    Ensure-BackupOfFile $path $Root | Out-Null
+    $content = [IO.File]::ReadAllText($path)
+
+    for ($playerIndex = 0; $playerIndex -lt 8; $playerIndex++) {
+        if ($DisabledPlayerIndices -contains $playerIndex) { continue }
+
+        $base = $Colors[$playerIndex]
+        $cursor = Get-AllyBarCursorColor $base
+        $skinId = "$AllyScreenSkinPrefix$playerIndex"
+        $baseRgba = "$($base.R), $($base.G), $($base.B), 255"
+        $cursorRgba = "$($cursor.R), $($cursor.G), $($cursor.B), 255"
+
+        $progressPattern = '(?s)("id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress"\s*:\s*\{\s*"color"\s*:\s*)\[[^\]]+\]'
+        $content = [regex]::Replace($content, $progressPattern, "`${1}[$baseRgba]", 1)
+
+        $cursorPattern = '(?s)("id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress_cursor"\s*:\s*\{\s*"color"\s*:\s*)\[[^\]]+\]'
+        $content = [regex]::Replace($content, $cursorPattern, "`${1}[$cursorRgba]", 1)
+    }
+
+    [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+    Write-Host "  Patched skins.json ally bars (fe_endgame_stats_bar_*)"
+}
+
+function Test-AllyScreenSkinsJson($colors, [string]$Root) {
+    $path = Get-GameFilePath $AllyScreenSkinsJson $Root
+    $content = [IO.File]::ReadAllText($path)
+    $base = $colors[0]
+    $expected = "$($base.R), $($base.G), $($base.B), 255"
+    $skinId = "${AllyScreenSkinPrefix}0"
+    $pattern = '(?s)"id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress"\s*:\s*\{\s*"color"\s*:\s*\[([^\]]+)\]'
+    $match = [regex]::Match($content, $pattern)
+    if (!$match.Success) {
+        throw "Kon fe_endgame_stats_bar_0 niet vinden in skins.json."
+    }
+    $actual = ($match.Groups[1].Value -replace '\s', '')
+    $want = ($expected -replace '\s', '')
+    if ($actual -ne $want) {
+        throw "Patch mislukt op skins.json ($skinId progress.color)."
+    }
+}
+
+function Set-PaletteIndexFromColor($bytes, [int]$idx, $color) {
+    $off = $idx * 3
+    if (($off + 2) -ge $bytes.Length) { return }
+    # Minimap + units use 6-bit palette bytes (0-63 per channel).
+    $bytes[$off] = Scale-Channel $color.R
+    $bytes[$off + 1] = Scale-Channel $color.G
+    $bytes[$off + 2] = Scale-Channel $color.B
+}
+
+function Apply-MinimapAndAllyColors {
+    param(
+        [object[]]$Colors,
+        $SelectionHighlightColor,
+        $EnemySelectionHighlightColor
+    )
+
+    $colors = @($Colors)
+    if ($colors.Count -ne 8) {
+        throw "Kleuren konden niet worden gelezen (verwacht 8 spelers, kreeg $($colors.Count))."
+    }
+    if (!$SelectionHighlightColor) {
+        $SelectionHighlightColor = Convert-HexToColor (Get-DefaultSelectionHighlightHex)
+    }
+    if (!$EnemySelectionHighlightColor) {
+        $EnemySelectionHighlightColor = Get-EnemySelectionHighlightColorForApply
+    }
+
+    $gameRunning = Test-GameRunning
+    $root = $GameRootPath.TrimEnd('\')
+    $playerIndices = Get-AllPlayerPaletteIndices
+    $selectionPatchIndices = Get-SelectionPatchPaletteIndices
+    Write-Host "Patching: $root"
+
+    foreach ($pair in $TilesetPalettePairs) {
+        $pplFile = Get-GameFilePath $pair.Ppl $root
+        $binFile = Get-GameFilePath $pair.Bin $root
+        if (!(Test-Path -LiteralPath $pplFile)) {
+            Write-Host "Skip missing: $pplFile"
+            continue
+        }
+        if (!(Test-Path -LiteralPath $binFile)) {
+            Write-Host "Skip missing: $binFile"
+            continue
+        }
+
+        Ensure-BackupOfFile $pplFile $root | Out-Null
+        Ensure-BackupOfFile $binFile $root | Out-Null
+
+        $vanillaPpl = Read-FileBytes (Get-VanillaBackupPath $pair.Ppl)
+        $vanillaBin = Read-FileBytes (Get-VanillaBackupPath $pair.Bin)
+        $pplBytes = Read-FileBytes $pplFile
+        $binBytes = Read-FileBytes $binFile
+
+        Set-PlayerColorsOnBytes $pplBytes $colors
+        Restore-PreservedPaletteSlots $pplBytes $vanillaPpl $PreservePaletteIndicesPpl
+        Set-SelectionHighlightOnBytes $pplBytes $SelectionHighlightColor
+
+        Set-PlayerColorsOnBytes $binBytes $colors
+        foreach ($idx in ($playerIndices + $selectionPatchIndices)) {
+            Copy-PaletteIndexBytes $pplBytes $binBytes $idx
+        }
+        Restore-PreservedPaletteSlots $binBytes $vanillaBin $PreservePaletteIndicesBin
+
+        Write-FileBytes $pplFile $pplBytes
+        Write-FileBytes $binFile $binBytes
+        Write-Host "  Patched $(Split-Path -Leaf $pplFile) + $(Split-Path -Leaf $binFile)"
+    }
+
+    $verifyPpl = Get-GameFilePath 'x86\Data\Art\bgs\Forest\forest.ppl' $root
+    $verifyBin = Get-GameFilePath 'x86\Data\Art\hd\classic\forest_mapColors.bin' $root
+    $ppl = Read-FileBytes $verifyPpl
+    $bin = Read-FileBytes $verifyBin
+    $o = 208 * 3
+    $expected = @(
+        (Scale-Channel $colors[0].R)
+        (Scale-Channel $colors[0].G)
+        (Scale-Channel $colors[0].B)
+    )
+    if ($ppl[$o] -ne $expected[0] -or $ppl[$o + 1] -ne $expected[1] -or $ppl[$o + 2] -ne $expected[2]) {
+        throw "Patch mislukt op forest.ppl (idx 208). Probeer open-desktop.bat als Administrator te starten."
+    }
+    if ($bin[$o] -ne $expected[0] -or $bin[$o + 1] -ne $expected[1] -or $bin[$o + 2] -ne $expected[2]) {
+        throw "Patch mislukt op forest_mapColors.bin (idx 208). Probeer open-desktop.bat als Administrator te starten."
+    }
+    if ($bin[$o] -ne $ppl[$o] -or $bin[$o + 1] -ne $ppl[$o + 1] -or $bin[$o + 2] -ne $ppl[$o + 2]) {
+        throw "forest.ppl en forest_mapColors.bin komen niet overeen op idx 208."
+    }
+
+    $vanillaPpl = Read-FileBytes (Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl')
+    $vanillaBin = Read-FileBytes (Get-VanillaBackupPath 'x86\Data\Art\hd\classic\forest_mapColors.bin')
+    $oFriendly = $SelectionHighlightPaletteIndex * 3
+    $expectedFriendly = @(
+        (Scale-Channel $SelectionHighlightColor.R)
+        (Scale-Channel $SelectionHighlightColor.G)
+        (Scale-Channel $SelectionHighlightColor.B)
+    )
+    if ($ppl[$oFriendly] -ne $expectedFriendly[0] -or $ppl[$oFriendly + 1] -ne $expectedFriendly[1] -or $ppl[$oFriendly + 2] -ne $expectedFriendly[2]) {
+        throw "Patch mislukt op forest.ppl (idx $SelectionHighlightPaletteIndex, friendly highlight)."
+    }
+    if ($bin[$oFriendly] -ne $expectedFriendly[0] -or $bin[$oFriendly + 1] -ne $expectedFriendly[1] -or $bin[$oFriendly + 2] -ne $expectedFriendly[2]) {
+        throw "Patch mislukt op forest_mapColors.bin (idx $SelectionHighlightPaletteIndex, friendly highlight)."
+    }
+
+    $oEnemy = $EnemySelectionHighlightPaletteIndex * 3
+    if ($ppl[$oEnemy] -ne $vanillaPpl[$oEnemy] -or $ppl[$oEnemy + 1] -ne $vanillaPpl[$oEnemy + 1] -or $ppl[$oEnemy + 2] -ne $vanillaPpl[$oEnemy + 2]) {
+        throw "Patch mislukt op forest.ppl (idx $EnemySelectionHighlightPaletteIndex, enemy/build red moet vanilla blijven)."
+    }
+
+    foreach ($buildIdx in $BuildStageRedPaletteIndices) {
+        $oBuild = $buildIdx * 3
+        if ($ppl[$oBuild] -ne $vanillaPpl[$oBuild] -or $ppl[$oBuild + 1] -ne $vanillaPpl[$oBuild + 1] -or $ppl[$oBuild + 2] -ne $vanillaPpl[$oBuild + 2]) {
+            throw "Patch mislukt op forest.ppl (idx $buildIdx, build stage red)."
+        }
+        if ($bin[$oBuild] -ne $vanillaBin[$oBuild] -or $bin[$oBuild + 1] -ne $vanillaBin[$oBuild + 1] -or $bin[$oBuild + 2] -ne $vanillaBin[$oBuild + 2]) {
+            throw "Patch mislukt op forest_mapColors.bin (idx $buildIdx, build stage red)."
+        }
+    }
+
+    Apply-AllyScreenSkinsJson -Colors $colors -Root $root
+    Test-AllyScreenSkinsJson -colors $colors -Root $root
+
+    Write-ApplyLog "Applied minimap + ally + selection highlight to $root (players 1,3,4,5,6,7)"
+    return $gameRunning
+}
+
+function Get-PlayerColorsJsonPath {
+    return Join-Path (Split-Path -Parent $PSCommandPath) 'player-colors.json'
+}
+
+function Load-ColorsFromJsonOrDefault {
+    $jsonPath = Get-PlayerColorsJsonPath
+    $defaultHex = Get-DefaultPlayerHexColors
+
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return ,@(Get-DefaultPlayerColors)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    $hexByIndex = @{}
+    foreach ($p in $raw.players) {
+        $idx = [int]$p.player - 1
+        if ($idx -ge 0 -and $idx -le 7) { $hexByIndex[$idx] = [string]$p.color }
+    }
+
+    $result = for ($i = 0; $i -lt 8; $i++) {
+        $h = if ($hexByIndex.ContainsKey($i)) { $hexByIndex[$i] } else { $defaultHex[$i] }
+        Convert-HexToColor $h
+    }
+    return ,$result
+}
+
+function Load-SelectionHighlightFromJsonOrDefault {
+    $jsonPath = Get-PlayerColorsJsonPath
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return Convert-HexToColor (Get-DefaultSelectionHighlightHex)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    if ($raw.selectionHighlight) {
+        return Convert-HexToColor ([string]$raw.selectionHighlight)
+    }
+    return Convert-HexToColor (Get-DefaultSelectionHighlightHex)
+}
+
+function Get-EnemySelectionHighlightColorForApply {
+    return Convert-HexToColor (Get-DefaultEnemySelectionHighlightHex)
+}
+
+function Load-EnemySelectionHighlightFromJsonOrDefault {
+    if ($EnemySelectionHighlightUiDisabled) {
+        return Convert-HexToColor $EnemySelectionDisplayHex
+    }
+    $jsonPath = Get-PlayerColorsJsonPath
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return Convert-HexToColor (Get-DefaultEnemySelectionHighlightHex)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    if ($raw.enemySelectionHighlight) {
+        return Convert-HexToColor ([string]$raw.enemySelectionHighlight)
+    }
+    return Convert-HexToColor (Get-DefaultEnemySelectionHighlightHex)
+}
+
+function Save-ColorsToJson($colors, [string]$selectionHighlightHex, [string]$enemySelectionHighlightHex) {
+    try {
+        if (!$selectionHighlightHex) {
+            $selectionHighlightHex = Get-DefaultSelectionHighlightHex
+        }
+        if (!$enemySelectionHighlightHex) {
+            $enemySelectionHighlightHex = if ($EnemySelectionHighlightUiDisabled) {
+                $EnemySelectionDisplayHex
+            } else {
+                Get-DefaultEnemySelectionHighlightHex
+            }
+        }
+        $players = for ($i = 0; $i -lt 8; $i++) {
+            [pscustomobject]@{
+                player = $i + 1
+                preset = 'Custom'
+                color  = (Convert-ColorToHex $colors[$i])
+            }
+        }
+        $json = ([pscustomobject]@{
+            players                  = $players
+            selectionHighlight       = $selectionHighlightHex
+            enemySelectionHighlight  = $enemySelectionHighlightHex
+        } | ConvertTo-Json -Depth 5)
+        [IO.File]::WriteAllText((Get-PlayerColorsJsonPath), $json, [Text.UTF8Encoding]::new($false))
+    } catch {
+        Write-ApplyLog "Kon player-colors.json niet opslaan: $($_.Exception.Message)"
+    }
+}
+
+if ($GetDefaultConfig) {
+    # Backups are deliberately created locally from this installation and are
+    # never distributed with the app or committed to source control.
+    if (!(Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl')) {
+        Sync-AuthenticVanillaBackup
+    }
+
+    $players = for ($i = 0; $i -lt 8; $i++) {
+        [pscustomobject]@{
+            player = $i + 1
+            color = (Get-DefaultPlayerHexColors)[$i]
+        }
+    }
+    [pscustomobject]@{ players = $players } | ConvertTo-Json -Compress
+    exit 0
+}
+

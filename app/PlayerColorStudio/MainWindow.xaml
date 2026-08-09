@@ -1,0 +1,80 @@
+<Window x:Class="PlayerColorStudio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Warcraft II — Player Color Studio"
+        Width="1120" Height="640" MinWidth="960" MinHeight="580"
+        WindowStartupLocation="CenterScreen"
+        Background="#FF101726" Foreground="White">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="Player Color Studio" FontSize="28" FontWeight="SemiBold"/>
+            <TextBlock Margin="0,6,0,20" Foreground="{StaticResource MutedBrush}"
+                       Text="Minimap + victory/ally bars follow the selected colors. Restart Warcraft II after applying."/>
+        </StackPanel>
+
+        <TabControl Grid.Row="1" Background="{StaticResource PanelBrush}" BorderBrush="#FF536887">
+            <TabItem Header="Colors">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16">
+                    <StackPanel>
+                        <Border Background="#172844" BorderBrush="#345B8F" BorderThickness="1" Padding="12" CornerRadius="6" Margin="0,0,0,16">
+                            <TextBlock TextWrapping="Wrap">
+                                Player 2 and Player 8 are disabled: no safe, exclusive Remastered palette hook has been verified yet.
+                            </TextBlock>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding Cards}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="236" Margin="0,0,16,16" Padding="14" CornerRadius="8"
+                                            Background="{StaticResource CardBrush}" BorderBrush="#FF40506B" BorderThickness="1"
+                                            Opacity="{Binding IsEnabled, Converter={StaticResource BooleanToOpacityConverter}}">
+                                        <StackPanel>
+                                            <DockPanel Margin="0,0,0,12">
+                                                <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold"/>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Availability}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+                                            </DockPanel>
+                                            <Border Height="46" CornerRadius="5" Background="{Binding CurrentBrush}" BorderBrush="#FF71809B" BorderThickness="1" Margin="0,0,0,9"/>
+                                            <TextBox Text="{Binding Hex, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding IsEnabled}"
+                                                     LostFocus="Hex_LostFocus" Margin="0,0,0,8"/>
+                                            <Button Content="Choose color…" IsEnabled="{Binding IsEnabled}" Tag="{Binding}" Click="ChooseColor_Click" Margin="0,0,0,15"/>
+                                            <TextBlock Text="Vanilla standard" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                                            <DockPanel Margin="0,4,0,10">
+                                                <Border Width="22" Height="22" CornerRadius="3" Background="{Binding VanillaBrush}" BorderBrush="#FF71809B" BorderThickness="1"/>
+                                                <TextBlock Text="{Binding VanillaHex}" Margin="8,2,0,0" Foreground="{StaticResource MutedBrush}"/>
+                                            </DockPanel>
+                                            <Button Content="Standard" IsEnabled="{Binding IsEnabled}" Tag="{Binding}" Click="ResetCard_Click"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Grid Grid.Row="2" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Apply" Background="{StaticResource AccentBrush}" BorderBrush="#FF8EC4FF" Click="Apply_Click"/>
+            <Button Grid.Column="2" Content="All standard" Click="ResetAll_Click"/>
+            <TextBlock Grid.Column="3" Margin="18,0" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" Text="{Binding Status}"/>
+            <Button Grid.Column="4" Content="Close" IsCancel="True" Click="Close_Click"/>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,26 @@
+<Application x:Class="PlayerColorStudio.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#FF172033"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FF202C44"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF4E9DFF"/>
+        <SolidColorBrush x:Key="MutedBrush" Color="#FF8B98AE"/>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Background" Value="#FF2C3B58"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FF536887"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="Background" Value="#FF111827"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FF536887"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+    </Application.Resources>
+</Application>
