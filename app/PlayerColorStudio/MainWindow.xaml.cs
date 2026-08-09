@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Forms = System.Windows.Forms;
 using WpfMessageBox = System.Windows.MessageBox;
@@ -45,7 +46,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _enginePath = string.Empty;
             _configPath = string.Empty;
             Status = ex.Message;
-            WpfMessageBox.Show(ex.Message, "Player Color Studio", MessageBoxButton.OK, MessageBoxImage.Error);
+            WpfMessageBox.Show(ex.Message, "Modding Studio", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -58,7 +59,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (File.Exists(candidate)) return candidate;
             folder = folder.Parent;
         }
-        throw new FileNotFoundException("The patch engine was not found. Reinstall Player Color Studio.");
+        throw new FileNotFoundException("The patch engine was not found. Reinstall Modding Studio.");
     }
 
     private void LoadCards()
@@ -70,8 +71,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         foreach (var vanilla in defaults.Players.OrderBy(p => p.Player))
         {
-            var current = saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color;
             var disabled = vanilla.Player is 2 or 8;
+            // Disabled players keep their authentic in-game display color (e.g. Player 8 yellow).
+            var current = disabled
+                ? vanilla.Color
+                : (saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color);
             Cards.Add(new ColorCard(vanilla.Player, current, vanilla.Color, !disabled));
         }
     }
@@ -133,16 +137,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if ((sender as FrameworkElement)?.Tag is ColorCard card) card.Reset();
     }
 
-    private void ResetAll_Click(object sender, RoutedEventArgs e)
-    {
-        foreach (var card in Cards.Where(card => card.IsEnabled)) card.Reset();
-        Status = "Vanilla colors loaded. Click Apply to write them to the game.";
-    }
-
     private void Apply_Click(object sender, RoutedEventArgs e)
     {
         try
         {
+            // Commit any hex TextBox still focused so the latest typed value is saved.
+            if (Keyboard.FocusedElement is UIElement focused)
+                focused.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+
             foreach (var card in Cards)
             {
                 if (!ColorCard.IsValidHex(card.Hex))
@@ -154,11 +156,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Status = "Applying colors…";
             var result = RunEngine("-ApplySavedConfigOnly");
             if (result.ExitCode != 0)
-                throw new InvalidOperationException(string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error);
+            {
+                var details = string.Join(Environment.NewLine,
+                    new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
+                    ? "Apply failed with no error details."
+                    : details);
+            }
 
             Status = "Applied. Restart Warcraft II to see the changes.";
-            WpfMessageBox.Show("Colors were applied to the minimap and victory/ally bars.\n\nRestart Warcraft II to see the changes.",
-                "Player Color Studio", MessageBoxButton.OK, MessageBoxImage.Information);
+            WpfMessageBox.Show("Colors were applied to the minimap and victory/ally bars.\n\nClose Warcraft II completely and restart it to see the changes.",
+                "Modding Studio", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
@@ -180,7 +188,6 @@ public sealed class ColorCard : INotifyPropertyChanged
     public int Player { get; }
     public string Name => $"Player {Player}";
     public bool IsEnabled { get; }
-    public string Availability => IsEnabled ? "Available" : "Not available";
     public string VanillaHex { get; }
     public string LastValidHex { get; private set; }
 

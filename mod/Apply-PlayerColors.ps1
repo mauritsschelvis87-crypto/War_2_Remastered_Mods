@@ -9,12 +9,24 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Players not supported yet (minimap engine limitation)
+# Players not supported yet (minimap engine limitation).
+# Research notes ("Wat we zeker weten"):
+#   Player 2 minimap reads palette index 252 (shared with goldmine) -> stays blue
+#   Player 8 minimap reads palette index 188 (shared with build bar) -> stays yellow
 $DisabledPlayerIndices = @(1, 7)   # Player 2 and Player 8 (0-based)
 
-# Fixed display color for disabled players in the desktop UI (not patched in-game)
+# Authentic Remastered display colors for disabled players (UI only; not patched).
+# Cross-checked against forest.ppl indices above and skins.json ally bars:
+#   P2 bar_1 progress_cursor = [0,60,192], P8 bar_7 = [252,252,72]
 $DisabledPlayerDisplayHex = @{
-    7 = '#FFFF00'   # Player 8: original minimap color is yellow
+    1 = '#003CC0'   # Player 2 blue
+    7 = '#FCFC48'   # Player 8 yellow
+}
+
+# Palette indices that feed those authentic colors (used when backup is available)
+$DisabledPlayerDisplayIndices = @{
+    1 = 252   # Player 2
+    7 = 188   # Player 8
 }
 
 # Palette indices used by minimap AND ally (F5) for each supported player
@@ -39,8 +51,9 @@ $GoldMineSelectionPaletteIndices = @(236, 237, 238)
 $EnemySelectionHighlightUiDisabled = $true
 $EnemySelectionDisplayHex = '#FF0000'
 
-# First palette index per player, used to read/write JSON defaults from authentic backup
-$VanillaJsonColorIndices = @(208, 212, 216, 220, 224, 228, 232, 252)
+# First palette index per player, used to read/write JSON defaults from authentic backup.
+# P2/P8 use the minimap source indices (252 / 188), not the unpatchable band starts.
+$VanillaJsonColorIndices = @(208, 252, 216, 220, 224, 228, 232, 188)
 
 $PplFiles = @(
     'x86\Data\Art\bgs\Forest\forest.ppl',
@@ -60,6 +73,22 @@ $AllyScreenSkinsJson = 'x86\Data\skins\skins.json'
 $AllyScreenSkinPrefix = 'fe_endgame_stats_bar_'
 
 function Get-DisabledPlayerDisplayColor([int]$playerIndex) {
+    # Prefer live/vanilla palette sample at the documented minimap source index.
+    if ($DisabledPlayerDisplayIndices.ContainsKey($playerIndex)) {
+        $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+        if (!$pplPath) {
+            $live = Join-Path $GameRootPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+            if (Test-Path -LiteralPath $live) { $pplPath = $live }
+        }
+        if ($pplPath) {
+            try {
+                $bytes = Read-FileBytes $pplPath
+                return Get-ColorFromPaletteBytes $bytes ([int]$DisabledPlayerDisplayIndices[$playerIndex])
+            } catch {
+                # Fall through to fixed hex.
+            }
+        }
+    }
     if ($DisabledPlayerDisplayHex.ContainsKey($playerIndex)) {
         return Convert-HexToColor $DisabledPlayerDisplayHex[$playerIndex]
     }
@@ -641,20 +670,52 @@ function Save-ColorsToJson($colors, [string]$selectionHighlightHex, [string]$ene
     }
 }
 
+function Test-VanillaBackupReady {
+    return $null -ne (Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl')
+}
+
+function Ensure-VanillaBackupReady {
+    if (Test-VanillaBackupReady) { return }
+    Sync-AuthenticVanillaBackup
+}
+
 if ($GetDefaultConfig) {
     # Backups are deliberately created locally from this installation and are
     # never distributed with the app or committed to source control.
-    if (!(Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl')) {
-        Sync-AuthenticVanillaBackup
-    }
+    Ensure-VanillaBackupReady
 
+    $defaultColors = Get-DefaultPlayerColors
     $players = for ($i = 0; $i -lt 8; $i++) {
         [pscustomobject]@{
             player = $i + 1
-            color = (Get-DefaultPlayerHexColors)[$i]
+            color = Convert-ColorToHex (Get-PlayerDisplayColor $defaultColors $i)
         }
     }
     [pscustomobject]@{ players = $players } | ConvertTo-Json -Compress
     exit 0
 }
+
+if ($SyncVanillaBackup) {
+    Sync-AuthenticVanillaBackup
+    exit 0
+}
+
+if ($RestoreOnly) {
+    Ensure-VanillaBackupReady
+    Restore-OriginalPaletteFiles
+    exit 0
+}
+
+if ($ApplySavedConfigOnly) {
+    Ensure-VanillaBackupReady
+    $loaded = Load-ColorsFromJsonOrDefault
+    $highlight = Load-SelectionHighlightFromJsonOrDefault
+    Apply-MinimapAndAllyColors -Colors @($loaded) `
+        -SelectionHighlightColor $highlight `
+        -EnemySelectionHighlightColor (Get-EnemySelectionHighlightColorForApply)
+    exit 0
+}
+
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -RestoreOnly, or -SyncVanillaBackup.'
+exit 1
 
