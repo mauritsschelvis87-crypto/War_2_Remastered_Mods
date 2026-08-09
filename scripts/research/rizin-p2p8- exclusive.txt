@@ -1,0 +1,8 @@
+ERROR: Command '/c' does not exist.
+ERROR: Displaying the help of command '/c'.
+
+ERROR: Usage: /c<hem?>   # Cryptographic material search.
+Ôöé /ch[jqt] <algo> <hash> <block_size>=256 # Search for blocks that have the same hash.
+Ôöé /ce[jqt] <min_entropy> <max_entropy>=8.0 <block_size>=256 # Search for blocks above an entropy level.
+Ôöé /cef[jqt] <min_entropy> <max_entropy>=1.0 <block_size>=256 # Search for blocks above an fractional entropy level.
+Ôöé /cm[jqt] <type>=all                     # Search cryptographic material.

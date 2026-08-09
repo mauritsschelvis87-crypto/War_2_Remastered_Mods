@@ -1,0 +1,69 @@
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x004f1800  ff0f b646 01c6 80ac 8c91 0003 0fb6 4601  ...F..........F.
+0x004f1810  50e8 eafc fbff 83c4 2083 3d78 c191 0000  P....... .=x....
+            0x004f17f0      add   byte [edx+0x28], ch
+            0x004f17f3      lea   eax, dword [ebp-0x11c]
+            0x004f17f9      push  0x08                                 ; 8
+            0x004f17fb      push  eax
+            0x004f17fc      call  0x4d3160
+            0x004f1801      movzx eax, byte [esi+0x01]
+            0x004f1805      mov   byte [eax+0x918cac], 0x03
+            0x004f180c      movzx eax, byte [esi+0x01]
+            0x004f1810      push  eax
+            0x004f1811      call  reloc.pe_004b1500
+            0x004f1816      add   esp, 0x20
+            0x004f1819      cmp   dword [0x91c178], 0x00               ; [0x91c178:4]=0
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x004f3f90  04c7 9100 5733 ffc6 81ac 8c91 0003 c680  ....W3..........
+0x004f3fa0  6862 9100 030f b605 7896 9100 0fb3 c8a2  hb......x.......
+            0x004f3f80      push  ebp
+            0x004f3f81      mov   ebp, esp
+            0x004f3f83      push  ebx
+            0x004f3f84      mov   bl, byte [ebp+0x08]
+            0x004f3f87      movzx ecx, bl
+            0x004f3f8a      imul  eax, ecx, 0x26                       ; RELOC 3 pe_004f3f8c @ 0x00000000
+            0x004f3f8d      push  esi
+            0x004f3f8e      mov   esi, dword [0x91c704]                ; [0x91c704:4]=0
+            0x004f3f94      push  edi
+            0x004f3f95      xor   edi, edi
+            0x004f3f97      mov   byte [ecx+0x918cac], 0x03
+            0x004f3f9e      mov   byte [eax+0x916268], 0x03            ; RELOC 3 pe_004f3fa0 @ 0x00000000
+            0x004f3fa5      movzx eax, byte [0x919678]                 ; [0x919678:1]=0
+            0x004f3fac      btr   eax, ecx
+            0x004f3faf      mov   byte [0x919678], al
+            ;-- pe_004f3fb4:
+            0x004f3fb4      movzx eax, byte [0x919679]                 ; [0x919679:1]=0; RELOC 3 pe_004f3fb4 @ 0x00000000
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x00525d7a  e891 f3ff ff83 7db4 0f8d 45a0 6a11 0f47  ......}...E.j..G
+0x00525d8a  45a0 50ff 3570 5196 00e8 8890 0800 83c4  E.P.5pQ.........
+0x00525d9a  1080 bfac 8c91 0001 750e ff35 7051 9600  ........u..5pQ..
+            0x00525d7a      call  0x525110
+            0x00525d7f      cmp   dword [ebp-0x4c], 0x0f
+            0x00525d83      lea   eax, dword [ebp-0x60]
+            0x00525d86      push  0x11                                 ; 17
+            0x00525d88      cmovnbe eax, dword [ebp-0x60]
+            0x00525d8c      push  eax
+            0x00525d8d      push  dword [0x965170]
+            0x00525d93      call  0x5aee20
+            0x00525d98      add   esp, 0x10
+            0x00525d9b      cmp   byte [edi+0x918cac], 0x01
+        ÔöîÔöÇ< 0x00525da2      jnz   0x525db2
+        Ôöé   0x00525da4      push  dword [0x965170]
+        Ôöé   0x00525daa      call  0x5ae470
+        Ôöé   0x00525daf      add   esp, 0x04
+        ÔööÔöÇ> 0x00525db2      lea   eax, dword [edi+0x95c064]
+            0x00525db8      push  eax
+            0x00525db9      push  0x836c13
+            0x00525dbe      call  0x545370
+            0x00525dc3      add   esp, 0x08
+            0x00525dc6      test  al, al
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x005439b0  e8fb 1cfe ffe9 1207 0000 518d 45a0 c704  ..........Q.E...
+            0x005439b0      call  0x5256b0
+        ÔöîÔöÇ< 0x005439b5      jmp   0x5440cc
+        Ôöé   0x005439ba      push  ecx
+        Ôöé   0x005439bb      lea   eax, dword [ebp-0x60]
+        Ôöé   0x005439be      mov   dword [esp], 0x3f800000              ; [0x3f800000:4]=-1
+        Ôöé   0x005439c5      push  eax
+        Ôöé   0x005439c6      call  0x547320
+        Ôöé   0x005439cb      add   esp, 0x08

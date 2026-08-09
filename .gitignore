@@ -6,6 +6,8 @@
 !/app/**
 !/mod/
 !/mod/**
+!/native/
+!/native/**
 !/installer/
 !/installer/**
 !/scripts/
@@ -17,6 +19,8 @@
 /backup/
 /mods/
 /tools/
+mod/backup/
+mod/native/
 *.exe
 *.dll
 *.ppl
@@ -27,3 +31,5 @@
 **/obj/
 **/publish/
 **/player-colors.json
+**/war2_color_patch_log.txt
+**/extra-features.json

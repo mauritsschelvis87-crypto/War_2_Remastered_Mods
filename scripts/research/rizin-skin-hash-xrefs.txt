@@ -1,0 +1,90 @@
+0x00440c66 4 hit.bytes.0
+[2K
+===== SEP =====
+[2K
+0x00411d06 4 hit.bytes.0
+===== SEP =====
+===== SEP =====
+            ;-- str.Skin_Config_Error:_Component_skin_of_skin__s_not_present:
+            0x0085ae80     .string "Skin Config Error: Component skin of skin %s not present\n" ; len=58
+            0x0085aeba      add   byte [eax], al
+            0x0085aebc      add   byte [eax], al
+            0x0085aebe      add   byte [eax], al
+            0x0085aec0     .string "D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUIContent.cpp" ; len=182
+            0x0085af76      add   byte [eax], al
+            0x0085af78      and   byte [eax], al
+            0x0085af7a      add   byte [eax], al
+            0x0085af7c      inc   dword [eax]
+            0x0085af7e      add   byte [eax], al
+            0x0085af80      jo    0x85af85
+            0x0085af82      add   byte [eax], al
+            0x0085af84      inc   dword [ebx]
+            0x0085af86      add   byte [eax], al
+            0x0085af88      add   byte [eax+eax*1], al
+            0x0085af8b      add   byte [edi], ch
+            0x0085af8d      add   eax, 0x20190000
+            0x0085af92      add   byte [eax], al
+            0x0085af94      sbb   dword [eax], esp
+            0x0085af96      add   byte [eax], al
+            0x0085af98      add   byte [edx], ah
+            0x0085af9a      add   byte [eax], al
+            0x0085af9c      jmp   dword [edx]
+            0x0085af9e      add   byte [eax], al
+            0x0085afa0      loopne 0x85afcf
+            0x0085afa2      add   byte [eax], al
+            0x0085afa4      jmp   far fword [0xa6400000]
+            0x0085afaa      add   byte [eax], al
+            0x0085afac      lahf
+            0x0085afad      cmpsb
+===== SEP =====
+===== SEP =====
+            0x005ae470      push  ebp
+            0x005ae471      mov   ebp, esp
+            0x005ae473      sub   esp, 0x08
+            0x005ae476      cmp   dword [ebp+0x08], 0x00
+        ÔöîÔöÇ< 0x005ae47a      jz    0x5ae488
+        Ôöé   0x005ae47c      mov   eax, dword [ebp+0x08]
+        Ôöé   0x005ae47f      cmp   dword [eax+0x3d28], 0x00
+       ÔöîÔöÇÔöÇ< 0x005ae486      jnz   0x5ae48d
+      ÔöîÔöÇÔööÔöÇ> 0x005ae488      jmp   0x5ae7d5
+      ÔöéÔööÔöÇÔöÇ> 0x005ae48d      mov   ecx, dword [ebp+0x08]
+      Ôöé     0x005ae490      mov   edx, dword [ecx+0x3d28]
+      Ôöé     0x005ae496      mov   dword [ebp-0x08], edx
+      Ôöé     0x005ae499      mov   eax, dword [ebp+0x08]
+      Ôöé     0x005ae49c      add   eax, 0x1e0                           ; 480
+      Ôöé     0x005ae4a1      mov   dword [ebp-0x04], eax
+      Ôöé     0x005ae4a4      mov   ecx, dword [ebp-0x08]
+      Ôöé     0x005ae4a7      mov   dword [ecx+0x170], 0x01
+      Ôöé     0x005ae4b1      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae4b4      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae4b7      mov   ecx, dword [eax+0xf8]
+      Ôöé     0x005ae4bd      mov   dword [edx+0xd4], ecx
+      Ôöé     0x005ae4c3      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae4c6      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae4c9      mov   ecx, dword [eax+0xf8]
+      Ôöé     0x005ae4cf      mov   dword [edx+0xb0], ecx
+      Ôöé     0x005ae4d5      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae4d8      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae4db      mov   ecx, dword [eax+0x11e8]
+      Ôöé     0x005ae4e1      mov   dword [edx+0x11e4], ecx
+      Ôöé     0x005ae4e7      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae4ea      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae4ed      mov   ecx, dword [eax+0x490]
+      Ôöé     0x005ae4f3      mov   dword [edx+0x48c], ecx
+      Ôöé     0x005ae4f9      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae4fc      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae4ff      mov   ecx, dword [eax+0x1b8c]
+      Ôöé     0x005ae505      mov   dword [edx+0x1b88], ecx
+      Ôöé     0x005ae50b      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae50e      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae511      mov   ecx, dword [eax+0x1b4c]
+      Ôöé     0x005ae517      mov   dword [edx+0x1b28], ecx
+      Ôöé     0x005ae51d      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae520      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae523      mov   ecx, dword [eax+0x1b4c]
+      Ôöé     0x005ae529      mov   dword [edx+0x1b04], ecx
+      Ôöé     0x005ae52f      mov   edx, dword [ebp-0x04]
+      Ôöé     0x005ae532      mov   eax, dword [ebp-0x04]
+      Ôöé     0x005ae535      invalid
+      Ôöé     0x005ae536      invalid
+      Ôöé     0x005ae537      invalid

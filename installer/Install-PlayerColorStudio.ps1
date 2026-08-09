@@ -38,6 +38,12 @@ if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) {
 }
 
 try {
+    $nativeBuild = Join-Path $sourceRoot 'native\AllyLeaveHook\build.ps1'
+    if (Test-Path -LiteralPath $nativeBuild) {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $nativeBuild | Write-Host
+        if ($LASTEXITCODE -ne 0) { throw 'The Extra hook native build failed.' }
+    }
+
     & dotnet publish $projectFile --configuration Release --output (Join-Path $stage 'app') | Write-Host
     if ($LASTEXITCODE -ne 0) { throw 'The Player Color Studio app build failed.' }
 

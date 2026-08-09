@@ -1,0 +1,226 @@
+===== alliances_menu ptr site =====
+            0x005256e4      cmp   byte [0x922f5b], 0x00                ; [0x922f5b:1]=0
+        ÔöîÔöÇ< 0x005256eb      jnz   0x5256f7
+        Ôöé   0x005256ed      call  0x543850
+       ÔöîÔöÇÔöÇ< 0x005256f2      jmp   0x525f0c
+       ÔöéÔööÔöÇ> 0x005256f7      push  ecx
+       Ôöé    0x005256f8      lea   eax, dword [ebp-0x20]
+       Ôöé    0x005256fb      mov   dword [esp], 0x3f800000              ; [0x3f800000:4]=-1
+       Ôöé    0x00525702      push  eax
+       Ôöé    0x00525703      call  0x547320
+       Ôöé    0x00525708      add   esp, 0x08
+       Ôöé    0x0052570b      movups xmm0, xmmword [eax]
+       Ôöé    0x0052570e      push  0x20                                 ; 32
+       Ôöé    0x00525710      sub   esp, 0x10
+       Ôöé    0x00525713      mov   ecx, esp
+       Ôöé    0x00525715      push  str.alliances_menu                   ; 0x844f28 ; "alliances_menu"
+            0x00525716      sub   byte [edi-0x7c], cl
+            0x00525719      add   bh, bh
+            0x0052571b      xor   eax, 0x965170
+            0x00525720      movups xmmword [ecx], xmm0
+            0x00525723      call  0x5a9bf0
+            0x00525728      add   esp, 0x1c
+            0x0052572b      test  eax, eax
+        ÔöîÔöÇ< 0x0052572d      jz    0x525f0c
+        Ôöé   0x00525733      push  dword [0x965170]
+        Ôöé   0x00525739      lea   eax, dword [ebp-0x20]
+        Ôöé   0x0052573c      push  eax
+        Ôöé   0x0052573d      call  0x5aab20
+        Ôöé   0x00525742      add   esp, 0x08
+        Ôöé   0x00525745      lea   ecx, dword [ebp-0xcc]
+        Ôöé   0x0052574b      cmp   byte [0x8c03c8], 0x01                ; [0x8c03c8:1]=1
+        Ôöé   0x00525752      movups xmm0, xmmword [eax]
+        Ôöé   0x00525755      mov   eax, dword [0x95beb4]                ; [0x95beb4:4]=0
+        Ôöé   0x0052575a      cmovz eax, dword [0x95beb8]
+        Ôöé   0x00525761      push  0x965310
+        Ôöé   0x00525766      push  eax
+        Ôöé   0x00525767      movups xmmword [ebp-0xb4], xmm0
+        Ôöé   0x0052576e      call  0x5f54f0
+        Ôöé   0x00525773      push  0x3e8                                ; 1000
+        Ôöé   0x00525778      push  ecx
+        Ôöé   0x00525779      mov   dword [esp], 0x00
+        Ôöé   0x00525780      push  0x01                                 ; 1
+        Ôöé   0x00525782      push  dword [0x965170]
+        Ôöé   0x00525788      mov   dword [ebp-0x04], 0x00
+        Ôöé   0x0052578f      call  0x5ac490
+        Ôöé   0x00525794      movups xmm1, xmmword [ebp-0xb4]
+        Ôöé   0x0052579b      lea   eax, dword [ebp-0x20]
+        Ôöé   0x0052579e      movaps xmm0, xmm1
+        Ôöé   0x005257a1      shufps xmm0, xmm1, 0xff
+        Ôöé   0x005257a5      subss xmm0, dword [0x84500c]
+        Ôöé   0x005257ad      movss dword [esp+0x0c], xmm0
+        Ôöé   0x005257b3      movaps xmm0, xmm1
+        Ôöé   0x005257b6      shufps xmm0, xmm1, 0xaa
+        Ôöé   0x005257ba      movss dword [esp+0x08], xmm0
+        Ôöé   0x005257c0      mov   dword [esp+0x04], 0x00
+        Ôöé   0x005257c8      mov   dword [esp], 0x00
+===== team_color_ ptr site =====
+            0x00525154      lea   eax, dword [ebp-0x2b]
+            0x00525157      push  edi
+            0x00525158      push  eax
+            0x00525159      mov   dword [ebp-0xdc], edi
+            0x0052515f      call  0x49d020
+            0x00525164      add   esp, 0x08
+            0x00525167      lea   ecx, dword [ebp-0xd1]
+            0x0052516d      push  ecx
+            0x0052516e      lea   ecx, dword [ebp-0x2b]
+            0x00525171      push  ecx
+            0x00525172      push  eax
+            0x00525173      lea   ecx, dword [ebp-0xa0]
+            0x00525179      call  0x507ec0
+            0x0052517e      push  0x0b                                 ; 0xb ; 11
+            0x00525180      push  str.team_color                       ; 0x844ed4 ; "team_color_"
+            0x00525181      aam   0x4e
+            0x00525183      test  byte [eax], al
+            0x00525185      push  0x00
+            0x00525187      lea   ecx, dword [ebp-0xa0]
+            0x0052518d      mov   dword [ebp-0x04], 0x00
+            0x00525194      call  0x49d830
+            0x00525199      mov   dword [ebp-0x78], 0x00
+            0x005251a0      xorps xmm0, xmm0
+            0x005251a3      movups xmmword [ebp-0x88], xmm0
+            0x005251aa      mov   dword [ebp-0x74], 0x00
+            0x005251b1      movups xmm0, xmmword [eax]
+            0x005251b4      push  0x20                                 ; 32
+            0x005251b6      movups xmmword [ebp-0x88], xmm0
+            0x005251bd      movq  xmm0, qword [eax+0x10]
+            0x005251c2      movq  qword [ebp-0x78], xmm0
+            0x005251c7      mov   dword [eax+0x10], 0x00
+            0x005251ce      mov   dword [eax+0x14], 0x0f               ; [0xf:4]=-1 ; 15
+            0x005251d5      mov   byte [eax], 0x00
+            0x005251d8      lea   eax, dword [ebp-0x88]
+            0x005251de      cmp   dword [ebp-0x74], 0x0f
+            0x005251e2      cmovnbe eax, dword [ebp-0x88]
+            0x005251e9      push  eax
+            0x005251ea      push  dword [0x965170]
+            0x005251f0      call  0x5aca30
+            0x005251f5      mov   ecx, dword [ebp-0x74]
+            0x005251f8      add   esp, 0x0c
+            0x005251fb      mov   esi, eax
+            0x005251fd      cmp   ecx, 0x0f                            ; 0xf ; 15
+        ÔöîÔöÇ< 0x00525200      jbe   0x525231
+        Ôöé   0x00525202      mov   edx, dword [ebp-0x88]
+        Ôöé   0x00525208      inc   ecx
+        Ôöé   0x00525209      mov   eax, edx
+        Ôöé   0x0052520b      cmp   ecx, reloc.pe_00001000               ; 0x1000
+       ÔöîÔöÇÔöÇ< 0x00525211      jb    0x525227
+       ÔöéÔöé   0x00525213      mov   edx, dword [eax-0x04]
+       ÔöéÔöé   0x00525216      add   ecx, 0x23                            ; 35
+       ÔöéÔöé   0x00525219      sub   eax, edx
+       ÔöéÔöé   0x0052521b      add   eax, 0xfffffffc                      ; 4294967292
+       ÔöéÔöé   0x0052521e      cmp   eax, 0x1f                            ; 31
+      ÔöîÔöÇÔöÇÔöÇ< 0x00525221      jnbe  0x525691
+===== stats_player_name_ ptr site =====
+            0x00549eb7      call  0x49d020
+            0x00549ebc      add   esp, 0x08
+            0x00549ebf      lea   ecx, dword [ebp-0xd9]
+            0x00549ec5      push  ecx
+            0x00549ec6      lea   ecx, dword [ebp-0x4b]
+            0x00549ec9      push  ecx
+            0x00549eca      push  eax
+            0x00549ecb      lea   ecx, dword [ebp-0xa8]
+            0x00549ed1      call  0x507ec0
+            0x00549ed6      or    dword [ebp-0xfc], 0x60               ; [0x60:4]=-1 ; 96
+            0x00549edd      lea   eax, dword [ebp-0xe0]
+            0x00549ee3      mov   byte [ebp-0x04], 0x15                ; 21
+            0x00549ee7      push  eax
+            0x00549ee8      lea   eax, dword [ebp-0x78]
+            0x00549eeb      mov   dword [ebp-0xe0], 0x1f               ; 31
+            0x00549ef5      xorps xmm0, xmm0
+            0x00549ef8      push  eax
+            0x00549ef9      movups xmmword [ebp-0x78], xmm0
+            0x00549efd      call  0x498740
+            0x00549f02      movups xmm0, xmmword [str.stats_player_name] ; [0x84910c:16]=-1 ; "stats_player_name_"
+            0x00549f05      or    al, 0x91                             ; 145
+            0x00549f07      test  byte [eax], al
+            0x00549f09      mov   ecx, dword [ebp-0xe0]
+            0x00549f0f      add   esp, 0x08
+            0x00549f12      mov   dword [ebp-0x64], ecx
+            0x00549f15      movups xmmword [eax], xmm0
+            0x00549f18      mov   cx, word [0x84911c]                  ; [0x84911c:2]=0x5f65 ; "e_"
+            0x00549f1f      mov   word [eax+0x10], cx
+            0x00549f23      mov   dword [ebp-0x78], eax
+            0x00549f26      mov   dword [ebp-0x68], 0x12               ; 18
+            0x00549f2d      mov   byte [eax+0x12], 0x00
+            0x00549f31      lea   eax, dword [ebp-0xa8]
+            0x00549f37      mov   byte [ebp-0x04], 0x16                ; 22
+            0x00549f3b      push  eax
+            0x00549f3c      lea   eax, dword [ebp-0x78]
+            0x00549f3f      push  eax
+            0x00549f40      push  dword [ebp-0x104]
+            0x00549f46      lea   ecx, dword [ebp-0x48]
+            0x00549f49      call  0x4b7270
+            0x00549f4e      mov   eax, dword [ebp-0xfc]
+            0x00549f54      or    eax, 0x80                            ; 128
+            0x00549f59      cmp   dword [ebp-0x34], 0x0f
+            0x00549f5d      mov   dword [ebp-0xfc], eax
+            0x00549f63      mov   dword [ebp-0xf0], eax
+            0x00549f69      lea   eax, dword [ebp-0x48]
+            0x00549f6c      cmovnbe eax, dword [ebp-0x48]
+            0x00549f70      push  0x20                                 ; 32
+            0x00549f72      push  eax
+            0x00549f73      push  dword [0x965170]
+            0x00549f79      call  0x5aca30
+            0x00549f7e      mov   ecx, dword [ebp-0x34]
+            0x00549f81      add   esp, 0x0c
+            0x00549f84      mov   dword [ebp-0xf8], eax
+            0x00549f8a      cmp   ecx, 0x0f                            ; 0xf ; 15
+        ÔöîÔöÇ< 0x00549f8d      jbe   0x549fbb
+        Ôöé   0x00549f8f      mov   edx, dword [ebp-0x48]
+        Ôöé   0x00549f92      inc   ecx
+        Ôöé   0x00549f93      mov   eax, edx
+        Ôöé   0x00549f95      cmp   ecx, reloc.pe_00001000               ; 0x1000
+       ÔöîÔöÇÔöÇ< 0x00549f9b      jb    0x549fb1
+       ÔöéÔöé   0x00549f9d      mov   edx, dword [eax-0x04]
+       ÔöéÔöé   0x00549fa0      add   ecx, 0x23                            ; 35
+       ÔöéÔöé   0x00549fa3      sub   eax, edx
+       ÔöéÔöé   0x00549fa5      add   eax, 0xfffffffc                      ; 4294967292
+       ÔöéÔöé   0x00549fa8      cmp   eax, 0x1f                            ; 31
+      ÔöîÔöÇÔöÇÔöÇ< 0x00549fab      jnbe  0x54b34a
+      ÔöéÔööÔöÇÔöÇ> 0x00549fb1      push  ecx
+      Ôöé Ôöé   0x00549fb2      push  edx
+      Ôöé Ôöé   0x00549fb3      call  0x7e91f3
+      Ôöé Ôöé   0x00549fb8      add   esp, 0x08
+===== drop_text_color ptr site =====
+            0x0064019d      mov   ecx, dword [ebp+0x08]
+            0x006401a0      call  0x5f8100
+            0x006401a5      push  eax
+            0x006401a6      call  0x63b750
+            0x006401ab      add   esp, 0x10
+            0x006401ae      push  0x00
+            0x006401b0      mov   ecx, dword [ebp+0x10]
+            0x006401b3      add   ecx, 0x48                            ; 72
+            0x006401b6      push  ecx
+            0x006401b7      push  str.drop_text_color                  ; 0x86c350 ; "drop_text_color"
+            0x006401b8      push  eax
+            0x006401b9      ret
+            0x006401ba      xchg  byte [eax], al
+            0x006401bc      mov   edx, dword [ebp+0x0c]
+            0x006401bf      push  edx
+            0x006401c0      mov   ecx, dword [ebp+0x08]
+            0x006401c3      call  0x5f8100
+            0x006401c8      push  eax
+            0x006401c9      call  0x63b750
+            0x006401ce      add   esp, 0x10
+            0x006401d1      push  0x00
+            0x006401d3      mov   eax, dword [ebp+0x10]
+            0x006401d6      add   eax, 0x40                            ; 64
+            0x006401d9      push  eax
+            0x006401da      push  0x86c360                             ; "color"
+            0x006401df      mov   ecx, dword [ebp+0x0c]
+            0x006401e2      push  ecx
+            0x006401e3      mov   ecx, dword [ebp+0x08]
+            0x006401e6      call  0x5f8100
+            0x006401eb      push  eax
+            0x006401ec      call  0x63b750
+            0x006401f1      add   esp, 0x10
+            0x006401f4      push  0x00
+            0x006401f6      mov   edx, dword [ebp+0x10]
+            0x006401f9      add   edx, 0x44                            ; 68
+            0x006401fc      push  edx
+            0x006401fd      push  str.secondary_color                  ; 0x86c368 ; "secondary_color"
+            0x00640202      mov   eax, dword [ebp+0x0c]
+            0x00640205      push  eax
+            0x00640206      mov   ecx, dword [ebp+0x08]
+===== which function contains alliances_menu ref =====
+===== which function contains stats_player_name ref =====

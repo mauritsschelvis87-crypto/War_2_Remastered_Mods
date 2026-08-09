@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 using WpfMessageBox = System.Windows.MessageBox;
 
@@ -20,9 +21,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly string _enginePath;
     private readonly string _configPath;
+    private readonly string _extraConfigPath;
+    private readonly string _nativeDir;
+    private readonly DispatcherTimer _hookWatchTimer;
+    private bool _allyLeaveRedNames;
+    private bool _hookInjectedForRunningGame;
     private string _status = "Ready. Close Warcraft II before applying colors.";
 
     public ObservableCollection<ColorCard> Cards { get; } = [];
+
+    public bool AllyLeaveRedNames
+    {
+        get => _allyLeaveRedNames;
+        set
+        {
+            _allyLeaveRedNames = value;
+            OnPropertyChanged();
+            if (value) TryAutoInjectAllyLeaveHook();
+        }
+    }
 
     public string Status
     {
@@ -35,16 +52,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         DataContext = this;
 
+        _hookWatchTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _hookWatchTimer.Tick += (_, _) => TryAutoInjectAllyLeaveHook();
+
         try
         {
             _enginePath = FindEnginePath();
-            _configPath = Path.Combine(Path.GetDirectoryName(_enginePath)!, "player-colors.json");
+            var modDir = Path.GetDirectoryName(_enginePath)!;
+            _configPath = Path.Combine(modDir, "player-colors.json");
+            _extraConfigPath = Path.Combine(modDir, "extra-features.json");
+            _nativeDir = Path.Combine(modDir, "native");
             LoadCards();
+            LoadExtraFeatures();
+            _hookWatchTimer.Start();
+            TryAutoInjectAllyLeaveHook();
         }
         catch (Exception ex)
         {
             _enginePath = string.Empty;
             _configPath = string.Empty;
+            _extraConfigPath = string.Empty;
+            _nativeDir = string.Empty;
             Status = ex.Message;
             WpfMessageBox.Show(ex.Message, "Modding Studio", MessageBoxButton.OK, MessageBoxImage.Error);
         }
@@ -71,8 +99,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         foreach (var vanilla in defaults.Players.OrderBy(p => p.Player))
         {
-            var disabled = vanilla.Player is 2 or 8;
-            // Disabled players keep their authentic in-game display color (e.g. Player 8 yellow).
+            var disabled = vanilla.Player is 8;
+            // Player 8 stays locked (shared yellow band). Player 2 patches exclusive 212-215.
             var current = disabled
                 ? vanilla.Color
                 : (saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color);
@@ -137,6 +165,98 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if ((sender as FrameworkElement)?.Tag is ColorCard card) card.Reset();
     }
 
+    private void LoadExtraFeatures()
+    {
+        if (!File.Exists(_extraConfigPath)) return;
+        var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        AllyLeaveRedNames = extra?.AllyLeaveRedNames ?? false;
+    }
+
+    private void SaveExtraFeatures()
+    {
+        var extra = new ExtraFeaturesConfig { AllyLeaveRedNames = AllyLeaveRedNames };
+        File.WriteAllText(_extraConfigPath, JsonSerializer.Serialize(extra, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static bool IsWarcraftIiRunning() =>
+        Process.GetProcessesByName("Warcraft II").Length > 0;
+
+    private void TryAutoInjectAllyLeaveHook()
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!IsWarcraftIiRunning())
+        {
+            _hookInjectedForRunningGame = false;
+            return;
+        }
+
+        if (!AllyLeaveRedNames || _hookInjectedForRunningGame) return;
+
+        try
+        {
+            var message = SyncAllyLeaveHook(throwOnError: false);
+            if (!string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase))
+            {
+                _hookInjectedForRunningGame = true;
+                Status = message;
+            }
+        }
+        catch
+        {
+            // Auto-inject is best-effort; Apply still reports errors explicitly.
+        }
+    }
+
+    private string SyncAllyLeaveHook(bool throwOnError = true)
+    {
+        var injector = Path.Combine(_nativeDir, "InjectAllyLeave.exe");
+        var dll = Path.Combine(_nativeDir, "AllyLeaveHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var missing = "Extra hook files are missing. Rebuild mod/native.";
+            if (throwOnError) throw new InvalidOperationException(missing);
+            return missing;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _hookInjectedForRunningGame = false;
+            return AllyLeaveRedNames
+                ? "Extra setting saved. Hook loads automatically when Warcraft II is running (or click Apply again after start)."
+                : "Extra setting saved.";
+        }
+
+        var args = AllyLeaveRedNames ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start the Extra hook injector.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+        {
+            _hookInjectedForRunningGame = false;
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Extra hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        _hookInjectedForRunningGame = AllyLeaveRedNames;
+        return string.IsNullOrWhiteSpace(output) ? "Extra hook updated." : output;
+    }
+
     private void Apply_Click(object sender, RoutedEventArgs e)
     {
         try
@@ -153,7 +273,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             var config = new ColorConfig { Players = Cards.Select(card => new PlayerColor(card.Player, card.Hex)).ToList() };
             File.WriteAllText(_configPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
-            Status = "Applying colors…";
+            SaveExtraFeatures();
+
+            Status = "Applying…";
             var result = RunEngine("-ApplySavedConfigOnly");
             if (result.ExitCode != 0)
             {
@@ -164,8 +286,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     : details);
             }
 
-            Status = "Applied. Restart Warcraft II to see the changes.";
-            WpfMessageBox.Show("Colors were applied to the minimap and victory/ally bars.\n\nClose Warcraft II completely and restart it to see the changes.",
+            var hookStatus = SyncAllyLeaveHook();
+            Status = "Applied. " + hookStatus;
+            WpfMessageBox.Show(
+                "Colors were applied to the minimap and victory/ally bars.\n\n" +
+                hookStatus + "\n\n" +
+                "Restart Warcraft II if color changes do not show yet.",
                 "Modding Studio", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
@@ -238,3 +364,8 @@ public sealed class ColorConfig
 }
 
 public sealed record PlayerColor(int Player, string Color);
+
+public sealed class ExtraFeaturesConfig
+{
+    public bool AllyLeaveRedNames { get; set; }
+}

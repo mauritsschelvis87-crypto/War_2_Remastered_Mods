@@ -1,0 +1,447 @@
+        ÔöîÔöÇ< 0x00411ca0      jnz   0x411cdf
+        Ôöé   0x00411ca2      add   byte [ebx-0x173ca21b], cl
+        Ôöé   0x00411ca8      movsd
+        Ôöé   0x00411ca9      mov   dword [esi], edi
+        Ôöé   0x00411cab      add   ah, cl
+        Ôöé   0x00411cad      int3
+        Ôöé   0x00411cae      int3
+        Ôöé   0x00411caf      int3
+        Ôöé   0x00411cb0      push  ebp
+        Ôöé   0x00411cb1      mov   ebp, esp
+        Ôöé   0x00411cb3      sub   esp, 0x1c
+        Ôöé   0x00411cb6      mov   eax, dword [0x90d6c0]                ; [0x90d6c0:4]=0xbb40e64e
+        Ôöé   0x00411cbb      xor   eax, ebp
+        Ôöé   0x00411cbd      mov   dword [ebp-0x04], eax
+        Ôöé   0x00411cc0      push  ebx
+        Ôöé   0x00411cc1      push  esi
+        Ôöé   0x00411cc2      push  edi
+        Ôöé   0x00411cc3      push  str.widget_text_red                  ; 0x84487c ; "widget_text_red"
+        Ôöé   0x00411cc8      lea   ecx, dword [ebp-0x1c]
+        Ôöé   0x00411ccb      call  pe_00411ccf                          ; RELOC 3 pe_00411ccf @ 0x00000000
+        Ôöé   0x00411cd0      mov   eax, dword [ebp-0x08]
+        Ôöé   0x00411cd3      lea   edi, dword [ebp-0x1c]
+        Ôöé   0x00411cd6      mov   esi, dword [ebp-0x1c]
+        Ôöé   0x00411cd9      cmp   eax, 0x0f                            ; 0xf ; 15
+        Ôöé   0x00411cdc      mov   ebx, dword [ebp-0x0c]
+        ÔööÔöÇ> 0x00411cdf      mov   edx, 0x811c9dc5                      ; RELOC 3 pe_00411ce1 @ 0x00000000
+            0x00411ce4      cmovnbe edi, esi
+            0x00411ce7      xor   ecx, ecx
+            0x00411ce9      test  ebx, ebx
+        ÔöîÔöÇ< 0x00411ceb      jz    0x411d04
+        Ôöé   0x00411ced      nop   dword [eax], eax
+       ÔöîÔöÇÔöÇ> 0x00411cf0      movzx eax, byte [ecx+edi*1]
+       ÔòÄÔöé   0x00411cf4      inc   ecx
+       ÔòÄÔöé   0x00411cf5      xor   eax, edx
+       ÔòÄÔöé   0x00411cf7      imul  edx, eax, 0x1000193
+       ÔòÄÔöé   0x00411cfd      cmp   ecx, ebx
+       ÔööÔöÇÔöÇ< 0x00411cff      jb    0x411cf0
+        Ôöé   0x00411d01      mov   eax, dword [ebp-0x08]
+        ÔööÔöÇ> 0x00411d04      mov   dword [0x95bc04], edx
+            0x00411d0a      cmp   eax, 0x0f                            ; 0xf ; 15
+===== SEP =====
+            0x00440c00      test  dword [edx], edi
+            0x00440c02      add   byte [ebx-0x173ca21b], cl
+            0x00440c08      inc   ebp
+            0x00440c09      call  far 0xcccc:0xcccc003b                ; 0xcce599bb
+            0x00440c10      push  ebp
+            0x00440c11      mov   ebp, esp
+            0x00440c13      sub   esp, 0x1c
+            0x00440c16      mov   eax, dword [0x90d6c0]                ; [0x90d6c0:4]=0xbb40e64e
+            0x00440c1b      xor   eax, ebp
+            0x00440c1d      mov   dword [ebp-0x04], eax
+            0x00440c20      push  ebx
+            0x00440c21      push  esi
+            0x00440c22      push  edi
+            0x00440c23      push  str.widget_text_red                  ; 0x84487c ; "widget_text_red"
+            0x00440c28      lea   ecx, dword [ebp-0x1c]
+            0x00440c2b      call  0x49ed60
+            0x00440c30      mov   eax, dword [ebp-0x08]
+            0x00440c33      lea   edi, dword [ebp-0x1c]
+            0x00440c36      mov   esi, dword [ebp-0x1c]
+            0x00440c39      cmp   eax, 0x0f                            ; 0xf ; 15
+            0x00440c3c      mov   ebx, dword [ebp-0x0c]
+            0x00440c3f      mov   edx, 0x811c9dc5
+            0x00440c44      cmovnbe edi, esi
+            0x00440c47      xor   ecx, ecx
+            0x00440c49      test  ebx, ebx
+        ÔöîÔöÇ< 0x00440c4b      jz    0x440c64
+        Ôöé   0x00440c4d      nop   dword [eax], eax
+       ÔöîÔöÇÔöÇ> 0x00440c50      movzx eax, byte [ecx+edi*1]
+       ÔòÄÔöé   0x00440c54      inc   ecx
+       ÔòÄÔöé   0x00440c55      xor   eax, edx
+       ÔòÄÔöé   0x00440c57      imul  edx, eax, 0x1000193
+       ÔòÄÔöé   0x00440c5d      cmp   ecx, ebx
+       ÔööÔöÇÔöÇ< 0x00440c5f      jb    0x440c50
+        Ôöé   0x00440c61      mov   eax, dword [ebp-0x08]
+        ÔööÔöÇ> 0x00440c64      mov   dword [0x95d990], edx
+            0x00440c6a      cmp   eax, 0x0f                            ; 0xf ; 15
+        ÔöîÔöÇ< 0x00440c6d      jbe   0x440c96
+        Ôöé   0x00440c6f      lea   ecx, dword [eax+0x01]
+        Ôöé   0x00440c72      mov   eax, esi
+        Ôöé   0x00440c74      cmp   ecx, reloc.pe_00001000               ; 0x1000
+===== SEP =====
+            0x00411cbb      xor   eax, ebp
+            0x00411cbd      mov   dword [ebp-0x04], eax
+            0x00411cc0      push  ebx
+            0x00411cc1      push  esi
+            0x00411cc2      push  edi
+===== SEP =====
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x00411cc0  5356 5768 7c48 8400 8d4d e4e8 90d0 0800  SVWh|H...M......
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x00440c20  5356 5768 7c48 8400 8d4d e4e8 30e1 0500  SVWh|H...M..0...
+===== SEP =====
+            0x005ac490      push  ebp
+            0x005ac491      mov   ebp, esp
+            0x005ac493      sub   esp, 0x08
+            0x005ac496      cmp   dword [ebp+0x08], 0x00
+        ÔöîÔöÇ< 0x005ac49a      jz    0x5ac4ba
+        Ôöé   0x005ac49c      mov   eax, dword [ebp+0x08]
+        Ôöé   0x005ac49f      cmp   dword [eax+0x3d28], 0x00
+       ÔöîÔöÇÔöÇ< 0x005ac4a6      jz    0x5ac4ba
+       ÔöéÔöé   0x005ac4a8      mov   ecx, dword [ebp+0x08]
+       ÔöéÔöé   0x005ac4ab      mov   edx, dword [ecx+0x3d28]
+       ÔöéÔöé   0x005ac4b1      cmp   dword [edx+0x8c], 0x00
+      ÔöîÔöÇÔöÇÔöÇ< 0x005ac4b8      jnz   0x5ac4bf
+     ÔöîÔöÇÔööÔööÔöÇ> 0x005ac4ba      jmp   0x5ac543
+     ÔöéÔööÔöÇÔöÇÔöÇ> 0x005ac4bf      mov   eax, dword [ebp+0x08]
+     Ôöé      0x005ac4c2      mov   ecx, dword [eax+0x3d28]
+     Ôöé      0x005ac4c8      mov   dword [ebp-0x08], ecx
+     Ôöé      0x005ac4cb      mov   edx, dword [ebp-0x08]
+     Ôöé      0x005ac4ce      mov   eax, dword [edx+0x8c]
+     Ôöé      0x005ac4d4      mov   dword [ebp-0x04], eax
+     Ôöé      0x005ac4d7      mov   ecx, dword [ebp+0x14]
+     Ôöé      0x005ac4da      push  ecx
+     Ôöé      0x005ac4db      push  ecx
+     Ôöé      0x005ac4dc      movss xmm0, dword [ebp+0x10]
+     Ôöé      0x005ac4e1      movss dword [esp], xmm0
+     Ôöé      0x005ac4e6      mov   edx, dword [ebp-0x08]
+     Ôöé      0x005ac4e9      push  edx
+     Ôöé      0x005ac4ea      mov   eax, dword [ebp+0x08]
+     Ôöé      0x005ac4ed      push  eax
+     Ôöé      0x005ac4ee      call  0x5d1090
+     Ôöé      0x005ac4f3      add   esp, 0x10
+     Ôöé      0x005ac4f6      cmp   dword [ebp+0x0c], 0x01
+     Ôöé  ÔöîÔöÇ< 0x005ac4fa      jnz   0x5ac508
+     Ôöé  Ôöé   0x005ac4fc      mov   ecx, dword [ebp-0x04]
+     Ôöé  Ôöé   0x005ac4ff      mov   dword [ecx+0x64], 0x06
+     Ôöé ÔöîÔöÇÔöÇ< 0x005ac506      jmp   0x5ac512
+     Ôöé ÔöéÔööÔöÇ> 0x005ac508      mov   edx, dword [ebp-0x04]
+     Ôöé Ôöé    0x005ac50b      mov   dword [edx+0x64], 0x02
+     Ôöé ÔööÔöÇÔöÇ> 0x005ac512      mov   eax, dword [ebp-0x04]
+     Ôöé      0x005ac515      mov   dword [eax+0x78], 0x00
+     Ôöé      0x005ac51c      mov   ecx, dword [ebp-0x04]
+     Ôöé      0x005ac51f      xorps xmm0, xmm0
+     Ôöé      0x005ac522      movss dword [ecx+0x88], xmm0
+     Ôöé      0x005ac52a      mov   edx, dword [ebp-0x04]
+     Ôöé      0x005ac52d      xorps xmm0, xmm0
+     Ôöé      0x005ac530      movss dword [edx+0x7c], xmm0
+     Ôöé      0x005ac535      mov   eax, dword [ebp-0x04]
+     Ôöé      0x005ac538      xorps xmm0, xmm0
+     Ôöé      0x005ac53b      movss dword [eax+0x84], xmm0
+     ÔööÔöÇÔöÇÔöÇÔöÇ> 0x005ac543      mov   esp, ebp
+            0x005ac545      pop   ebp
+            0x005ac546      ret
+            0x005ac547      int3
+            0x005ac548      int3
+            0x005ac549      int3
+            0x005ac54a      int3
+            0x005ac54b      int3
+            0x005ac54c      int3
+            0x005ac54d      int3
+            0x005ac54e      int3
+            0x005ac54f      int3
+===== SEP =====
+0x00459790 0x0085ad90   54   55 .rdata  ascii   Skin Config Error: Atlas used for skin %s not present\n
+0x00459880 0x0085ae80   57   58 .rdata  ascii   Skin Config Error: Component skin of skin %s not present\n
+0x0046b138 0x0086c738   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b198 0x0086c798   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b250 0x0086c850   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b2b0 0x0086c8b0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b368 0x0086c968   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b3c8 0x0086c9c8   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b488 0x0086ca88   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b4e8 0x0086cae8   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b5a8 0x0086cba8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b608 0x0086cc08   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b6c8 0x0086ccc8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b728 0x0086cd28   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b7f0 0x0086cdf0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b850 0x0086ce50   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046b918 0x0086cf18   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b978 0x0086cf78   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046ba30 0x0086d030   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046ba90 0x0086d090   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046bb50 0x0086d150   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bbb0 0x0086d1b0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046bc70 0x0086d270   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bcd0 0x0086d2d0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046bd90 0x0086d390   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bdf0 0x0086d3f0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046beb8 0x0086d4b8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bf18 0x0086d518   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046bfe0 0x0086d5e0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c040 0x0086d640   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c0f8 0x0086d6f8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c158 0x0086d758   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c210 0x0086d810   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c270 0x0086d870   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c328 0x0086d928   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c388 0x0086d988   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c448 0x0086da48   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c4a8 0x0086daa8   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c568 0x0086db68   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c5c8 0x0086dbc8   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c690 0x0086dc90   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c6f0 0x0086dcf0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c7b8 0x0086ddb8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c818 0x0086de18   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046c8e0 0x0086dee0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c940 0x0086df40   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046ca08 0x0086e008   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046ca68 0x0086e068   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046cb30 0x0086e130   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cb90 0x0086e190   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046cc60 0x0086e260   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046ccc0 0x0086e2c0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046cd90 0x0086e390   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cdf0 0x0086e3f0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046ceb8 0x0086e4b8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cf18 0x0086e518   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046cfe8 0x0086e5e8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d048 0x0086e648   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d118 0x0086e718   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d178 0x0086e778   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d230 0x0086e830   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d290 0x0086e890   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d350 0x0086e950   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d3b0 0x0086e9b0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d470 0x0086ea70   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d4d0 0x0086ead0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d598 0x0086eb98   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d5f8 0x0086ebf8   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d6c0 0x0086ecc0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d720 0x0086ed20   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d7f0 0x0086edf0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d850 0x0086ee50   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046d910 0x0086ef10   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d970 0x0086ef70   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046da38 0x0086f038   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046da98 0x0086f098   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046db60 0x0086f160   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046dbc0 0x0086f1c0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046dc80 0x0086f280   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046dce0 0x0086f2e0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046dda0 0x0086f3a0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046de00 0x0086f400   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046deb8 0x0086f4b8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046df18 0x0086f518   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046dfd8 0x0086f5d8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e038 0x0086f638   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046e0f8 0x0086f6f8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e158 0x0086f758   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046e218 0x0086f818   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e278 0x0086f878   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046e338 0x0086f938   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e398 0x0086f998   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046e450 0x0086fa50   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e4b0 0x0086fab0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046e570 0x0086fb70   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e5d0 0x0086fbd0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x0046e690 0x0086fc90   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e6f0 0x0086fcf0   87  176 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUISkin.cpp
+0x00510a50 0x00912450   19   20 .data   ascii   .?AVNUIScopedSkin@@
+0x00440d38 0x00842338   18   19 .rdata  ascii   wrong color format
+0x00440dc8 0x008423c8   19   20 .rdata  ascii   missing color table
+0x00441508 0x00842b08   35   36 .rdata  ascii   Art\hd\classic\forest_mapColors.bin
+0x00441598 0x00842b98   36   37 .rdata  ascii   Art\hd\classic\iceland_mapColors.bin
+0x00441634 0x00842c34   34   35 .rdata  ascii   Art\hd\classic\swamp_mapColors.bin
+0x004416d0 0x00842cd0   35   36 .rdata  ascii   Art\hd\classic\xswamp_mapColors.bin
+0x00443394 0x00844994   29   30 .rdata  ascii   fe_alliance_team_color_border
+0x004438d4 0x00844ed4   11   12 .rdata  ascii   team_color_
+0x004438f8 0x00844ef8   17   18 .rdata  ascii   team_color_frame_
+0x00450d30 0x00852330  176  177 .rdata  ascii   \n\t#version 460 core\n\tprecision mediump float;\n\tout vec4 Out_Color;\n\tin vec2 Frag_UV;\n\tuniform sampler2D Texture;\n\tvoid main()\n\t{\n\t\tOut_Color = texture(Texture, Frag_UV.st);\n\t}\n
+0x00450de8 0x008523e8  322  323 .rdata  ascii   \n\t#version 460 core\n\n\tlayout (location = 0) in vec2 Position;\n\tlayout (location = 1) in vec2 TexCoord;\n\tlayout (location = 2) in vec4 Color;\n\n\tout vec2 Frag_UV;\n\tout vec4 Frag_Color;\n\n\tuniform mat4 ProjMtx;\n\n\tvoid main()\n\t{\n\t\tFrag_UV = TexCoord;\n\t\tFrag_Color = Color;\n\t\tgl_Position = ProjMtx * vec4(Position.xy, 0, 1);\n\t}\n
+0x00450f30 0x00852530  213  214 .rdata  ascii   \n\t#version 460 core\n\n\tprecision mediump float;\n\n\tout vec4 Out_Color;\n\n\tin vec2 Frag_UV;\n\tin vec4 Frag_Color;\n\n\tuniform sampler2D Texture;\n\n\tvoid main(){\n\t\tOut_Color = Frag_Color * texture(Texture, Frag_UV.st);\n\t}\n
+0x00451008 0x00852608  456  457 .rdata  ascii   \n\t#version 460 core\n\n\tout vec4 Out_Color;\n\tin vec2 Frag_UV;\n\n\tuniform sampler2D TextureY;\n\tuniform sampler2D TextureU;\n\tuniform sampler2D TextureV;\n\n\tvoid main()\n\t{\n\t\tfloat y = texture(TextureY, Frag_UV).r - 0.0625;\n\t\tfloat u = texture(TextureU, Frag_UV).r - 0.5;\n\t\tfloat v = texture(TextureV, Frag_UV).r - 0.5;\n\n\t\tfloat r = y + (1.402 * v);\n\t\tfloat g = y - (0.344136 * u) - (0.714136 * v);\n\t\tfloat b = y + (1.772 * u);\n\n\t\tOut_Color = vec4(r, g, b, 1);\n\t}\n
+0x00454b70 0x00856170   13   14 .rdata  ascii   NK_COLOR_TEXT
+0x00454b80 0x00856180   15   16 .rdata  ascii   NK_COLOR_WINDOW
+0x00454b90 0x00856190   15   16 .rdata  ascii   NK_COLOR_HEADER
+0x00454ba0 0x008561a0   15   16 .rdata  ascii   NK_COLOR_BORDER
+0x00454bb0 0x008561b0   15   16 .rdata  ascii   NK_COLOR_BUTTON
+0x00454bc0 0x008561c0   21   22 .rdata  ascii   NK_COLOR_BUTTON_HOVER
+0x00454bd8 0x008561d8   22   23 .rdata  ascii   NK_COLOR_BUTTON_ACTIVE
+0x00454bf0 0x008561f0   15   16 .rdata  ascii   NK_COLOR_TOGGLE
+0x00454c00 0x00856200   21   22 .rdata  ascii   NK_COLOR_TOGGLE_HOVER
+0x00454c18 0x00856218   22   23 .rdata  ascii   NK_COLOR_TOGGLE_CURSOR
+0x00454c30 0x00856230   15   16 .rdata  ascii   NK_COLOR_SELECT
+0x00454c40 0x00856240   22   23 .rdata  ascii   NK_COLOR_SELECT_ACTIVE
+0x00454c58 0x00856258   15   16 .rdata  ascii   NK_COLOR_SLIDER
+0x00454c68 0x00856268   22   23 .rdata  ascii   NK_COLOR_SLIDER_CURSOR
+0x00454c80 0x00856280   28   29 .rdata  ascii   NK_COLOR_SLIDER_CURSOR_HOVER
+0x00454ca0 0x008562a0   29   30 .rdata  ascii   NK_COLOR_SLIDER_CURSOR_ACTIVE
+0x00454cc0 0x008562c0   17   18 .rdata  ascii   NK_COLOR_PROPERTY
+0x00454cd4 0x008562d4   13   14 .rdata  ascii   NK_COLOR_EDIT
+0x00454ce4 0x008562e4   20   21 .rdata  ascii   NK_COLOR_EDIT_CURSOR
+0x00454cfc 0x008562fc   14   15 .rdata  ascii   NK_COLOR_COMBO
+0x00454d0c 0x0085630c   14   15 .rdata  ascii   NK_COLOR_CHART
+0x00454d1c 0x0085631c   20   21 .rdata  ascii   NK_COLOR_CHART_COLOR
+0x00454d34 0x00856334   30   31 .rdata  ascii   NK_COLOR_CHART_COLOR_HIGHLIGHT
+0x00454d54 0x00856354   18   19 .rdata  ascii   NK_COLOR_SCROLLBAR
+0x00454d68 0x00856368   25   26 .rdata  ascii   NK_COLOR_SCROLLBAR_CURSOR
+0x00454d84 0x00856384   31   32 .rdata  ascii   NK_COLOR_SCROLLBAR_CURSOR_HOVER
+0x00454da4 0x008563a4   32   33 .rdata  ascii   NK_COLOR_SCROLLBAR_CURSOR_ACTIVE
+0x00454dc8 0x008563c8   19   20 .rdata  ascii   NK_COLOR_TAB_HEADER
+0x00454df0 0x008563f0   12   13 .rdata  ascii   glClearColor
+0x00454e20 0x00856420   11   12 .rdata  ascii   glColorMask
+0x004552e8 0x008568e8   12   13 .rdata  ascii   glBlendColor
+0x00455d0c 0x0085730c   12   13 .rdata  ascii   glClampColor
+0x00455d60 0x00857360   12   13 .rdata  ascii   glColorMaski
+0x00458af8 0x0085a0f8  313  314 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\n\tuniform usampler2D gameTexture;\n\tuniform sampler2D paletteTexture;\n\n\tvoid main()\n\t{\n\t\tuint paletteIndex = texture(gameTexture, TexCoord).r;\n\t\tvec3 color = texelFetch(paletteTexture, ivec2(paletteIndex, 0), 0).rgb;\n\t\tFragColor = vec4(color, 1.0f);\n\t}\n
+0x00458d18 0x0085a318  278  279 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\n\tuniform sampler2D texture1;\n\tuniform sampler2D texture2;\n\tuniform float alpha;\n\n\tvoid main()\n\t{\n\t\tvec4 a = texture(texture1, TexCoord);\n\t\tvec4 b = texture(texture2, TexCoord);\n\n\t\tFragColor = a + (b - a) * alpha;\n\t}\n
+0x0045b158 0x0085c758  156  157 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\n\tuniform sampler2D tileImage;\n\n\tvoid main()\n\t{\n\t\tFragColor = texture(tileImage, TexCoord);\n\t}\n
+0x0045b2a0 0x0085c8a0  620  621 .rdata  ascii   \n\t#version 460 core\n\tlayout (location = 0) in vec2 inPos;\n\tlayout (location = 1) in vec2 inTexCoord;\n\tlayout (location = 2) in vec2 inMaskCoord;\n\tlayout (location = 3) in vec2 inMaskTrim;\n\tlayout (location = 4) in vec4 inColor;\n\tlayout (location = 5) in uint inFlags;\n\n\tuniform mat4 projection;\n\tuniform mat4 transform;\n\n\tout vec2 TexCoord;\n\tout vec2 MaskCoord;\n\tout vec2 MaskTrim;\n\tout vec4 Color;\n\tout flat uint Flags;\n\n\tvoid main()\n\t{\n\t\tgl_Position = projection * transform * vec4(inPos, 0.0, 1.0);\n\t\tTexCoord = inTexCoord;\n\t\tMaskCoord = inMaskCoord;\n\t\tMaskTrim = inMaskTrim;\n\t\tColor = inColor;\n\t\tFlags = inFlags;\n\t}\n
+0x0045b510 0x0085cb10  687  688 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\tin vec2 MaskCoord;\n\tin vec2 MaskTrim;\n\tin vec4 Color;\n\tin flat uint Flags;\n\n\tuniform sampler2D image;\n\tuniform sampler2D mask;\n\n\tbool hasMask = (Flags & 0x1) != 0;\n\tbool renderSolid = (Flags & 0x2) != 0;\n\n\tvoid main()\n\t{\n\t\tif (hasMask && MaskTrim.x >= 0 && MaskTrim.x <= 1 && MaskTrim.y >= 0 && MaskTrim.y <= 1)\n\t\t{\n\t\t\tvec4 maskColor = texture(mask, MaskCoord);\n\t\t\tif (maskColor.r > 0)\n\t\t\t{\n\t\t\t\tFragColor = vec4(maskColor.rrr * Color.rgb, 1);\n\t\t\t}\n\t\t\telse\n\t\t\t{\n\t\t\t\tFragColor = texture(image, TexCoord);\n\t\t\t}\n\t\t}\n\t\telse if (renderSolid)\n\t\t{\n\t\t\tFragColor = Color;\n\t\t}\n\t\telse\n\t\t{\n\t\t\tFragColor = texture(image, TexCoord);\n\t\t}\n\t}\n
+0x0045b980 0x0085cf80 1113 1114 .rdata  ascii   \n\t#version 460 core\n\tout uint FragColor;\n\n\tin vec2 TexCoord;\n\tin flat uint Flags;\n\n\tuniform usampler2D image;\n\tuniform ivec2 imageSize;\n\n\tbool renderSolid = (Flags & 0x1) != 0;\n\tbool renderTransparent = (Flags & 0x2) != 0;\n\tbool remapW2 = (Flags & 0x4) != 0;\n\tbool mask = (Flags & 0x8) != 0;\n\n\tuint flagsColor = (Flags >> 8) & 0xff;\n\tuint remapStartColor = (Flags >> 16) & 0xff;\n\tuint maskFixup = (Flags >> 24) & 0x3;\n\n\tvoid main()\n\t{\n\t\tif (renderSolid)\n\t\t{\n\t\t\tFragColor = flagsColor;\n\t\t}\n\t\telse\n\t\t{\n\t\t\tuint textureColor = texture(image, TexCoord).r;\n\n\t\t\tif (renderTransparent && textureColor == flagsColor)\n\t\t\t{\n\t\t\t\tdiscard;\n\t\t\t}\n\n\t\t\tif (mask)\n\t\t\t{\n\t\t\t\tivec2 maskFixup = ivec2(maskFixup >> 1 & 0x1, maskFixup & 0x1);\n\t\t\t\tivec2 intTexCoord = ivec2(floor(TexCoord * imageSize) + maskFixup);\n\t\t\t\tivec2 oddness = intTexCoord % 2;\n\n\t\t\t\tif (oddness.x != oddness.y)\n\t\t\t\t{\n\t\t\t\t\tdiscard;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Warcraft 2 team color remapping\n\t\t\tif (remapW2 && textureColor >= 208 && textureColor <= 211)\n\t\t\t{\n\t\t\t\tFragColor = (textureColor - 208) + remapStartColor;\n\t\t\t}\n\t\t\telse\n\t\t\t{\n\t\t\t\tFragColor = textureColor;\n\t\t\t}\n\t\t}\n\t}\n
+0x0045bf5c 0x0085d55c   14   15 .rdata  ascii   waterDeepColor
+0x0045bf6c 0x0085d56c   17   18 .rdata  ascii   waterShallowColor
+0x0045bf80 0x0085d580   14   15 .rdata  ascii   waterFoamColor
+0x0045c154 0x0085d754   14   15 .rdata  ascii   waterFoamColor
+0x0045c358 0x0085d958 2039 2040 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\tin vec2 MaskCoord;\n\tin vec2 WorldCoord;\n\n\tuniform sampler2D tileTexture;\n\tuniform sampler2D tileMask;\n\n\t// r contains test noise data\n\t// g contains caustic data\n\t// b contains perlin noise\n\tuniform sampler2D waterMasksTexture;\n\n\tuniform float time;\n\n\tconst float PI = 3.1415926535897932384626433832795;\n\n\tuniform float shorelineFrameRate;\n\tuniform float shorelineSpeed;\n\tuniform float shorelineWarpTile;\n\tuniform float shorelineWarpStrength;\n\tuniform float shorelineRipples;\n\tuniform float shorelineRipplesSharpen;\n\tuniform float shorelineDistance;\n\tuniform float shorelineStrength;\n\n\tuniform float waterBlendTile;\n\tuniform float waterBlendAmount;\n\tuniform float waterShoreShadow;\n\tuniform vec3 waterDeepColor;\n\tuniform vec3 waterShallowColor;\n\tuniform vec3 waterFoamColor;\n\n\tuniform float causticSquish;\n\tuniform float causticTile;\n\tuniform float causticWarpTile;\n\tuniform float causticFrameRate;\n\tuniform float causticWarpStrength;\n\tuniform float causticMaskTile;\n\tuniform float causticMaskStrength;\n\tuniform float causticStrength;\n\tuniform vec2 causticPanner;\n\n\tuniform float sparkleTile;\n\tuniform float sparkleMaskTile;\n\tuniform float sparkleFrameRate;\n\tuniform float sparklePower;\n\tuniform float sparkleMaskMin;\n\tuniform float sparkleMaskMax;\n\tuniform float sparkleIntensity;\n\tuniform vec2 sparkleMaskPanner;\n\n\tfloat framerate(float value)\n\t{\n\t\treturn floor(time * value) / value;\n\t}\n\n\tfloat usin(float value)\n\t{\n\t\treturn sin(value * 2.0 * PI);\n\t}\n\n\tfloat constantBiasScale(float value, float bias, float scale)\n\t{\n\t\treturn (value + bias) * scale;\n\t}\n\n\tvec2 panner(vec2 coordinate, float time, vec2 speed)\n\t{\n\t\treturn coordinate + (time * speed);\n\t}\n\n\tfloat shoreline(float shorelineMask)\n\t{\n\t\tfloat speedFactor = shorelineSpeed * framerate(shorelineFrameRate);\n\t\tfloat shorelineWarpFactor = texture(waterMasksTexture, WorldCoord * shorelineWarpTile).r * shorelineWarpStrength;\n\n\t\tfloat biasedFactor = constantBiasScale(usin(speedFactor + shorelineWarpFactor), 1.0, 0.5);
+0x0045cb50 0x0085e150 2038 2039 .rdata  ascii   \t\tfloat ripples = smoothstep(clamp(shorelineRipplesSharpen, 0.0, 1.0), 1.0, clamp(constantBiasScale(usin((biasedFactor + shorelineMask) * shorelineRipples), 1.0, 0.5), 0.0, 1.0));\n\n\t\tfloat foam = smoothstep(clamp((1 - shorelineDistance), 0.0, 1.0), 1.0, shorelineMask) * shorelineStrength;\n\n\t\treturn ripples * foam;\n\t}\n\n\tvec3 waterColor(vec3 baseColor, float waterMask, float shorelineMask, float foamMask)\n\t{\n\t\tfloat waterBlendValue = texture(waterMasksTexture, WorldCoord * waterBlendTile).r * waterBlendAmount;\n\n\t\tvec3 shorelineValue = mix(mix(waterDeepColor, waterShallowColor, waterBlendValue) * mix(1.0, waterShoreShadow, shorelineMask), waterFoamColor, foamMask);\n\n\t\treturn mix(baseColor, shorelineValue, waterMask);\n\t}\n\n\tvec3 caustic(vec3 baseColor, float waterMask, float shorelineMask)\n\t{\n\t\tfloat warpTextureValue = texture(waterMasksTexture, causticWarpTile * WorldCoord).r;\n\t\tfloat maskTextureValue = texture(waterMasksTexture, causticMaskTile * WorldCoord).r;\n\n\t\tvec2 pannerCoordinate = (vec2(causticSquish * causticTile, causticTile) * WorldCoord) + (constantBiasScale(warpTextureValue, -0.5, 2) * causticWarpStrength);\n\t\tfloat causticTextureValue = texture(waterMasksTexture, panner(pannerCoordinate, framerate(causticFrameRate), causticPanner)).g;\n\n\t\tfloat causticAmount = mix(1.0, maskTextureValue, clamp(causticMaskStrength, 0.0, 1.0)) * (1 - shorelineMask) * waterMask * causticStrength;\n\n\t\tvec3 causticValue = baseColor * mix(0.5, causticTextureValue, causticAmount) * 2.0;\n\t\treturn causticValue;\n\t}\n\n\tvec3 sparkle(vec3 baseColor, float waterMask)\n\t{\n\t\tfloat causticEffect = texture(waterMasksTexture, sparkleTile * WorldCoord).b;\n\t\tfloat sparkleMask = texture(waterMasksTexture, panner(WorldCoord * sparkleMaskTile, framerate(sparkleFrameRate), sparkleMaskPanner)).b;\n\n\t\tfloat sparkle = (waterMask * pow(causticEffect, sparklePower) * sparkleIntensity * smoothstep(sparkleMaskMin, sparkleMaskMax, sparkleMask));\n\n\t\treturn baseColor + sparkle;\n\t}\n\n\tvoid main()\n\t{\n\t\tvec3 baseColor = texture(tileTexture, TexCoord).rgb;
+0x0045d347 0x0085e947  437  438 .rdata  ascii   \n\t\tfloat waterMask = texture(tileMask, MaskCoord).b;\n\t\tfloat shorelineMask = clamp(texture(tileMask, MaskCoord).a * 1.005, 0.0, 1.0);\n\n\t\tfloat foamMask = shoreline(shorelineMask);\n\t\tvec3 waterBaseColor = waterColor(baseColor, waterMask, shorelineMask, foamMask);\n\n\t\tvec3 causticColor = caustic(waterBaseColor, waterMask, shorelineMask);\n\n\t\tvec3 sparkleColor = sparkle(causticColor, waterMask);\n\n\t\tFragColor = vec4(sparkleColor, 1.0);\n\t}\n
+0x0045d500 0x0085eb00 1766 1767 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\tin vec2 MaskCoord;\n\tin vec2 WorldCoord;\n\n\tuniform sampler2D spriteMask;\n\n\t// r contains test noise data\n\t// g contains caustic data\n\t// b contains perlin noise\n\tuniform sampler2D waterMasksTexture;\n\n\tuniform float time;\n\n\tconst float PI = 3.1415926535897932384626433832795;\n\n\tuniform float shorelineFrameRate;\n\tuniform float shorelineSpeed;\n\tuniform float shorelineWarpTile;\n\tuniform float shorelineWarpStrength;\n\tuniform float shorelineRipples;\n\tuniform float shorelineRipplesSharpen;\n\tuniform float shorelineDistance;\n\tuniform float shorelineStrength;\n\n\tuniform vec3 waterFoamColor;\n\n\tfloat framerate(float value)\n\t{\n\t\treturn floor(time * value) / value;\n\t}\n\n\tfloat usin(float value)\n\t{\n\t\treturn sin(value * 2.0 * PI);\n\t}\n\n\tfloat constantBiasScale(float value, float bias, float scale)\n\t{\n\t\treturn (value + bias) * scale;\n\t}\n\n\tfloat shoreline(float shorelineMask)\n\t{\n\t\tfloat speedFactor = shorelineSpeed * framerate(shorelineFrameRate);\n\t\tfloat shorelineWarpFactor = texture(waterMasksTexture, WorldCoord * shorelineWarpTile).r * shorelineWarpStrength;\n\n\t\tfloat biasedFactor = constantBiasScale(usin(speedFactor + shorelineWarpFactor), 1.0, 0.5);\n\t\tfloat ripples = smoothstep(clamp(shorelineRipplesSharpen, 0.0, 1.0), 1.0, clamp(constantBiasScale(usin((biasedFactor + shorelineMask) * shorelineRipples), 1.0, 0.5), 0.0, 1.0));\n\n\t\tfloat foam = smoothstep(clamp((1 - shorelineDistance), 0.0, 1.0), 1.0, shorelineMask) * shorelineStrength;\n\n\t\treturn ripples * foam;\n\t}\n\n\tvoid main()\n\t{\n\t\tfloat shorelineMask = clamp(texture(spriteMask, MaskCoord).a * 1.005, 0.0, 1.0);\n\n\t\tfloat foamMask = shoreline(shorelineMask);\n\t\tvec4 waterBaseColor = vec4(waterFoamColor, foamMask);\n\n\t\tFragColor = waterBaseColor;\n\t}\n
+0x0046a210 0x0086b810  250  251 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\n\tuniform sampler2D image;\n\n\tvoid main()\n\t{\n\t\tvec4 color = texture(image, TexCoord);\n\n\t\tfloat y = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;\n\t\tFragColor = vec4(y, y, y, 1);\n\t}\n
+0x0046a310 0x0086b910  250  251 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\n\tuniform sampler2D image;\n\n\tvoid main()\n\t{\n\t\tvec4 color = texture(image, TexCoord);\n\n\t\tfloat y = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;\n\t\tFragColor = vec4(y, 0, 0, 1);\n\t}\n
+0x0046ab5c 0x0086c15c   50   51 .rdata  ascii   Error: failed parsing JSON document for color '%s'
+0x0046ad50 0x0086c350   15   16 .rdata  ascii   drop_text_color
+0x0046ad60 0x0086c360    5    6 .rdata  ascii   color
+0x0046ad68 0x0086c368   15   16 .rdata  ascii   secondary_color
+0x0046ed58 0x00870358   29   30 .rdata  ascii   illegal PNG color type or bpp
+0x0046ee34 0x00870434   43   44 .rdata  ascii   illegal bit depth for this color type given
+0x0046ef20 0x00870520   64   65 .rdata  ascii   tRNS chunk appeared while it was not allowed for this color type
+0x0046f188 0x00870788   75   76 .rdata  ascii   given output image colortype or bitdepth not supported for color conversion
+0x0046f24c 0x0087084c   40   41 .rdata  ascii   requested color conversion not supported
+0x0046f31c 0x0087091c   48   49 .rdata  ascii   conversion from color to grayscale not supported
+0x0046f4a0 0x00870aa0   88   89 .rdata  ascii   tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors
+0x0046f728 0x00870d28   92   93 .rdata  ascii   color conversion to palette requested while a color isn't in palette, or index out of bounds
+0x0046fa48 0x00871048   77   78 .rdata  ascii   invalid ICC profile color type, the PNG specification only allows RGB or GRAY
+0x0046fa98 0x00871098   83   84 .rdata  ascii   PNG specification does not allow RGB ICC profile on gray color types and vice versa
+0x0046faf0 0x008710f0   81   82 .rdata  ascii   not allowed to set grayscale ICC profile with colored pixels by PNG specification
+0x0046fb90 0x00871190   67   68 .rdata  ascii   invalid bKGD color while encoding (e.g. palette index out of range)
+0x0046fbf0 0x008711f0   54   55 .rdata  ascii   PNG file must have PLTE chunk if color type is palette
+0x0046fc28 0x00871228   80   81 .rdata  ascii   color convert from palette mode requested without setting the palette data in it
+0x0046fd9c 0x0087139c   57   58 .rdata  ascii   sBIT chunk has wrong size for the color type of the image
+0x0047d7dd 0x0087eddd    5    6 .rdata  ascii   COLOR
+0x0047db0d 0x0087f10d    5    6 .rdata  ascii   COLOR
+0x0047e0f5 0x0087f6f5    5    6 .rdata  ascii   COLOR
+0x0047e6dd 0x0087fcdd    5    6 .rdata  ascii   COLOR
+0x0047ecc5 0x008802c5    5    6 .rdata  ascii   COLOR
+0x0047f20d 0x0088080d    5    6 .rdata  ascii   COLOR
+0x0047f755 0x00880d55    5    6 .rdata  ascii   COLOR
+0x0047fc9d 0x0088129d    5    6 .rdata  ascii   COLOR
+0x004801f1 0x008817f1    5    6 .rdata  ascii   COLOR
+0x00480749 0x00881d49    5    6 .rdata  ascii   COLOR
+0x00480ca1 0x008822a1    5    6 .rdata  ascii   COLOR
+0x004811fe 0x008827fe    5    6 .rdata  ascii   COLOR
+0x00481271 0x00882871    5    6 .rdata  ascii   COLOR
+0x004a2618 0x008a3c18   46   47 .rdata  ascii   Referenced frame has incompatible color format
+0x004a27ac 0x008a3dac   43   44 .rdata  ascii   4:2:0 color not supported in profile 1 or 3
+0x004a27ec 0x008a3dec   43   44 .rdata  ascii   4:4:4 color not supported in profile 0 or 2
+0x004bbd02 0x008bd302   11   12 .rdata  ascii   GetSysColor
+0x004bc84e 0x008bde4e   12   13 .rdata  ascii   SetTextColor
+0x004bc88c 0x008bde8c   10   11 .rdata  ascii   SetBkColor
+0x004ca214 0x008cbc14   31   32 .data   ascii   Surface doesn't have a colorkey
+0x004cf430 0x008d0e30    7    8 .data   ascii   ncolors
+0x004d19cc 0x008d33cc    5    6 .data   ascii   color
+0x004eb490 0x008ece90   25   26 .data   ascii   UNSUPPORTEDCOLOROPERATION
+0x004eb4ac 0x008eceac   19   20 .data   ascii   UNSUPPORTEDCOLORARG
+0x004ec948 0x008ee348    5    6 .data   ascii   COLOR
+0x004ed84c 0x008ef24c   12   13 .data   ascii   glClearColor
+0x004ed85c 0x008ef25c   12   13 .data   ascii   glClearColor
+0x004ed890 0x008ef290   10   11 .data   ascii   glColor3fv
+0x004ed89c 0x008ef29c   10   11 .data   ascii   glColor3fv
+0x004ed8cc 0x008ef2cc    9   10 .data   ascii   glColor4f
+0x004ed8d8 0x008ef2d8    9   10 .data   ascii   glColor4f
+0x004ed908 0x008ef308   10   11 .data   ascii   glColor4ub
+0x004ed914 0x008ef314   10   11 .data   ascii   glColor4ub
+0x004ed944 0x008ef344   14   15 .data   ascii   glColorPointer
+0x004ed954 0x008ef354   14   15 .data   ascii   glColorPointer
+0x004f281c 0x008f421c   60   61 .data   ascii   A BMP image contains a pixel with a color out of the palette
+0x004f285c 0x008f425c   60   61 .data   ascii   A BMP image contains a pixel with a color out of the palette
+0x004f2978 0x008f4378    5    6 .data   ascii   COLOR
+0x004f2ae5 0x008f44e5    5    6 .data   ascii   COLOR
+0x004f2b67 0x008f4567    5    6 .data   ascii   COLOR
+0x004f37cd 0x008f51cd    5    6 .data   ascii   COLOR
+0x004f3873 0x008f5273    5    6 .data   ascii   COLOR
+0x004f494d 0x008f634d    5    6 .data   ascii   COLOR
+0x004f4a13 0x008f6413    5    6 .data   ascii   COLOR
+0x004f5019 0x008f6a19    5    5 .data   ascii   color
+0x004f5ce5 0x008f76e5    5    6 .data   ascii   COLOR
+0x004f5dab 0x008f77ab    5    6 .data   ascii   COLOR
+0x004f7085 0x008f8a85    5    6 .data   ascii   COLOR
+0x004f714b 0x008f8b4b    5    6 .data   ascii   COLOR
+0x004f8425 0x008f9e25    5    6 .data   ascii   COLOR
+0x004f84db 0x008f9edb    5    6 .data   ascii   COLOR
+0x004f8aa7 0x008fa4a7    7    7 .data   ascii   COLOR0\e
+0x004f9265 0x008fac65    5    5 .data   ascii   COLOR
+0x004f970d 0x008fb10d    5    6 .data   ascii   COLOR
+0x004f97c3 0x008fb1c3    5    6 .data   ascii   COLOR
+0x004fa545 0x008fbf45    5    5 .data   ascii   COLOR
+0x004fa9fd 0x008fc3fd    5    6 .data   ascii   COLOR
+0x004faab3 0x008fc4b3    5    6 .data   ascii   COLOR
+0x004fb835 0x008fd235    5    5 .data   ascii   COLOR
+0x004fbced 0x008fd6ed    5    6 .data   ascii   COLOR
+0x004fbda3 0x008fd7a3    5    6 .data   ascii   COLOR
+0x004fc36f 0x008fdd6f    7    7 .data   ascii   COLOR0\e
+0x004fcb2d 0x008fe52d    5    5 .data   ascii   COLOR
+0x004fcfd5 0x008fe9d5    5    6 .data   ascii   COLOR
+0x004fd08b 0x008fea8b    5    6 .data   ascii   COLOR
+0x004fde0d 0x008ff80d    5    5 .data   ascii   COLOR
+0x004fe2c5 0x008ffcc5    5    6 .data   ascii   COLOR
+0x004fe37b 0x008ffd7b    5    6 .data   ascii   COLOR
+0x004ff0fd 0x00900afd    5    5 .data   ascii   COLOR
+0x004ff5b2 0x00900fb2    5    6 .data   ascii   COLOR
+0x004ff63d 0x0090103d    5    6 .data   ascii   COLOR
+0x004ff6a2 0x009010a2    5    6 .data   ascii   COLOR
+0x004ff6b1 0x009010b1    5    6 .data   ascii   COLOR
+0x005009a2 0x009023a2    5    6 .data   ascii   COLOR
+0x00500a2d 0x0090242d    5    6 .data   ascii   COLOR
+0x00500a92 0x00902492    5    6 .data   ascii   COLOR
+0x00500aa1 0x009024a1    5    6 .data   ascii   COLOR
+0x00501df2 0x009037f2    5    6 .data   ascii   COLOR
+0x00501e7d 0x0090387d    5    6 .data   ascii   COLOR
+0x00501ee2 0x009038e2    5    6 .data   ascii   COLOR
+0x00501ef1 0x009038f1    5    6 .data   ascii   COLOR
+0x0050328a 0x00904c8a    5    6 .data   ascii   COLOR
+0x00503315 0x00904d15    5    6 .data   ascii   COLOR
+0x0050337a 0x00904d7a    5    6 .data   ascii   COLOR
+0x00503389 0x00904d89    5    6 .data   ascii   COLOR
+0x00504a28 0x00906428  122  123 .data   ascii   varying vec4 v_color;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n}
+0x00504aa8 0x009064a8   66   67 .data   ascii   varying vec4 v_color;\n\nvoid main()\n{\n    gl_FragColor = v_color;\n}
+0x00504af0 0x009064f0  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00504bb0 0x009065b0  190  191 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0;\n\nvoid main()\n{\n    gl_FragColor = texture2D(tex0, v_texCoord);\n    gl_FragColor.a = 1.0;\n    gl_FragColor *= v_color;\n}
+0x00504c70 0x00906670  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00504d30 0x00906730  145  146 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0;\n\nvoid main()\n{\n    gl_FragColor = texture2D(tex0, v_texCoord) * v_color;\n}
+0x00504dc8 0x009067c8  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00504e88 0x00906888  861  862 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U \nuniform sampler2D tex2; // V \n\n// YUV offset \nconst vec3 offset = vec3(0, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1,  0.000,  1.402);\nconst vec3 Gcoeff = vec3(1, -0.3441, -0.7141);\nconst vec3 Bcoeff = vec3(1,  1.772,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.y = texture2D(tex1, tcoord).r;\n    yuv.z = texture2D(tex2, tcoord).r;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x005051e8 0x00906be8  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x005052a8 0x00906ca8  888  889 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U \nuniform sampler2D tex2; // V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.596);\nconst vec3 Gcoeff = vec3(1.1644, -0.3918, -0.813);\nconst vec3 Bcoeff = vec3(1.1644,  2.0172,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.y = texture2D(tex1, tcoord).r;\n    yuv.z = texture2D(tex2, tcoord).r;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00505628 0x00907028  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x005056e8 0x009070e8  890  891 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U \nuniform sampler2D tex2; // V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.7927);\nconst vec3 Gcoeff = vec3(1.1644, -0.2132, -0.5329);\nconst vec3 Bcoeff = vec3(1.1644,  2.1124,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.y = texture2D(tex1, tcoord).r;\n    yuv.z = texture2D(tex2, tcoord).r;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00505a68 0x00907468  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00505b28 0x00907528  796  797 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(0, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1,  0.000,  1.402);\nconst vec3 Gcoeff = vec3(1, -0.3441, -0.7141);\nconst vec3 Bcoeff = vec3(1,  1.772,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).ra;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00505e48 0x00907848  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00505f08 0x00907908  823  824 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.596);\nconst vec3 Gcoeff = vec3(1.1644, -0.3918, -0.813);\nconst vec3 Bcoeff = vec3(1.1644,  2.0172,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).ra;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00506240 0x00907c40  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00506300 0x00907d00  823  824 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.596);\nconst vec3 Gcoeff = vec3(1.1644, -0.3918, -0.813);\nconst vec3 Bcoeff = vec3(1.1644,  2.0172,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).rg;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00506638 0x00908038  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x005066f8 0x009080f8  825  826 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.7927);\nconst vec3 Gcoeff = vec3(1.1644, -0.2132, -0.5329);\nconst vec3 Bcoeff = vec3(1.1644,  2.1124,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).ra;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00506a38 0x00908438  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00506af8 0x009084f8  825  826 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.7927);\nconst vec3 Gcoeff = vec3(1.1644, -0.2132, -0.5329);\nconst vec3 Bcoeff = vec3(1.1644,  2.1124,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).rg;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00506e38 0x00908838  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x00506ef8 0x009088f8  796  797 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(0, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1,  0.000,  1.402);\nconst vec3 Gcoeff = vec3(1, -0.3441, -0.7141);\nconst vec3 Bcoeff = vec3(1,  1.772,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).ar;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00507218 0x00908c18  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x005072d8 0x00908cd8  823  824 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.596);\nconst vec3 Gcoeff = vec3(1.1644, -0.3918, -0.813);\nconst vec3 Bcoeff = vec3(1.1644,  2.0172,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).ar;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}
+0x00507610 0x00909010  189  190 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\n\nvoid main()\n{\n    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n    v_color = gl_Color;\n    v_texCoord = vec2(gl_MultiTexCoord0);\n}
+0x005076d0 0x009090d0  825  826 .data   ascii   varying vec4 v_color;\nvarying vec2 v_texCoord;\nuniform sampler2D tex0; // Y \nuniform sampler2D tex1; // U/V \n\n// YUV offset \nconst vec3 offset = vec3(-0.0627451017, -0.501960814, -0.501960814);\n\n// RGB coefficients \nconst vec3 Rcoeff = vec3(1.1644,  0.000,  1.7927);\nconst vec3 Gcoeff = vec3(1.1644, -0.2132, -0.5329);\nconst vec3 Bcoeff = vec3(1.1644,  2.1124,  0.000);\n\nvoid main()\n{\n    vec2 tcoord;\n    vec3 yuv, rgb;\n\n    // Get the Y value \n    tcoord = v_texCoord;\n    yuv.x = texture2D(tex0, tcoord).r;\n\n    // Get the U and V values \n    tcoord *= UVCoordScale;\n    yuv.yz = texture2D(tex1, tcoord).ar;\n\n    // Do the color transform \n    yuv += offset;\n    rgb.r = dot(yuv, Rcoeff);\n    rgb.g = dot(yuv, Gcoeff);\n    rgb.b = dot(yuv, Bcoeff);\n\n    // That was easy. :) \n    gl_FragColor = vec4(rgb, 1.0) * v_color;\n}

@@ -1,0 +1,190 @@
+===== define/analyze alliances builder fn =====
+offset: 0x00525000
+name: fcn.00525000
+size: 6
+is-pure: false
+realsz: 6
+stackframe: 0
+call-convention: cdecl
+cyclomatic-cost: 4
+cyclomatic-complexity: 1
+loops: 0
+bits: 32
+type: fcn
+num-bbs: 1
+edges: 0
+end-bbs: 1
+call-refs:
+data-refs: 0x0090e474
+code-xrefs:
+noreturn: false
+in-degree: 0
+out-degree: 0
+data-xrefs:
+locals: 0
+args: 0
+===== search 918cac near alliances code =====
+(nofunc) 0x4ab302 [DATA] movups xmm0, xmmword [0x918cac]
+(nofunc) 0x4c25e0 [DATA] cmp byte [0x918cac], 0x05
+(nofunc) 0x4c28fe [DATA] cmp byte [0x918cac], 0x05
+(nofunc) 0x4c4833 [DATA] mov ecx, dword [0x918cac]
+(nofunc) 0x4ca445 [DATA] mov edi, 0x918cac
+(nofunc) 0x4cc02e [DATA] mov eax, 0x918cac
+(nofunc) 0x4cccea [DATA] mov ecx, 0x918cac
+(nofunc) 0x4d1b90 [DATA] push 0x918cac
+(nofunc) 0x4d6e8f [DATA] cmp byte [0x918cac], 0x04
+(nofunc) 0x4d6f95 [DATA] mov ecx, 0x918cac
+(nofunc) 0x4e89e6 [DATA] mov ebx, 0x918cac
+(nofunc) 0x4e9dab [DATA] cmp byte [0x918cac], dl
+===== search widget_text_red pointer in 0x52xxxx =====
+0x00411cc4 4 hit.bytes.0
+0x004139b4 4 hit.bytes.1
+0x004157d4 4 hit.bytes.2
+0x004175f4 4 hit.bytes.3
+0x00419cb4 4 hit.bytes.4
+0x0041c8ee 4 hit.bytes.5
+0x00420854 4 hit.bytes.6
+0x00422754 4 hit.bytes.7
+0x00425694 4 hit.bytes.8
+0x00427584 4 hit.bytes.9
+0x00429274 4 hit.bytes.10
+0x0042b114 4 hit.bytes.11
+0x0042d064 4 hit.bytes.12
+0x0042fb7e 4 hit.bytes.13
+0x00432fde 4 hit.bytes.14
+0x0043803e 4 hit.bytes.15
+0x0043cdfe 4 hit.bytes.16
+0x00440c24 4 hit.bytes.17
+0x00442aa4 4 hit.bytes.18
+0x004448a4 4 hit.bytes.19
+0x004466a4 4 hit.bytes.20
+0x00448694 4 hit.bytes.21
+0x0044a5a4 4 hit.bytes.22
+0x0044c3a4 4 hit.bytes.23
+0x0044e094 4 hit.bytes.24
+0x00450cbe 4 hit.bytes.25
+0x00452d84 4 hit.bytes.26
+0x00454c64 4 hit.bytes.27
+0x00456ba4 4 hit.bytes.28
+===== dump alliances-related function around team_color =====
+            0x00524f80      push  ebp
+            0x00524f81      mov   ebp, esp
+            0x00524f83      mov   eax, dword [ebp+0x08]
+            0x00524f86      mov   dword [eax], 0x844fd4                ; [0x844fd4:4]=0x524f80
+            0x00524f8c      pop   ebp
+            0x00524f8d      ret   0x04
+            0x00524f90      push  str.common_ok                        ; 0x844f1c ; "common_ok"
+            0x00524f95      call  0x58ab00
+            0x00524f9a      push  eax
+            0x00524f9b      push  dword [0x965170]
+            0x00524fa1      call  0x5453b0
+            0x00524fa6      add   esp, 0x0c
+            0x00524fa9      test  al, al
+        ÔöîÔöÇ< 0x00524fab      jnz   0x543850
+        Ôöé   0x00524fb1      ret
+        Ôöé   0x00524fb2      int3
+        Ôöé   0x00524fb3      int3
+        Ôöé   0x00524fb4      int3
+        Ôöé   0x00524fb5      int3
+        Ôöé   0x00524fb6      int3
+        Ôöé   0x00524fb7      int3
+        Ôöé   0x00524fb8      int3
+        Ôöé   0x00524fb9      int3
+        Ôöé   0x00524fba      int3
+        Ôöé   0x00524fbb      int3
+        Ôöé   0x00524fbc      int3
+        Ôöé   0x00524fbd      int3
+        Ôöé   0x00524fbe      int3
+        Ôöé   0x00524fbf      int3
+        Ôöé   0x00524fc0      push  str.common_cancel                    ; 0x844f0c ; "common_cancel"
+        Ôöé   0x00524fc5      call  0x58ab00
+        Ôöé   0x00524fca      push  eax
+        Ôöé   0x00524fcb      push  dword [0x965170]
+        Ôöé   0x00524fd1      call  0x5453b0
+        Ôöé   0x00524fd6      add   esp, 0x0c
+        Ôöé   0x00524fd9      test  al, al
+       ÔöîÔöÇÔöÇ< 0x00524fdb      jz    0x524fe5
+       ÔöéÔöé   0x00524fdd      push  0x01                                 ; 1
+       ÔöéÔöé   0x00524fdf      call  0x5437f0
+       ÔöéÔöé   0x00524fe4      pop   ecx
+       ÔööÔöÇÔöÇ> 0x00524fe5      ret
+        Ôöé   0x00524fe6      int3
+        Ôöé   0x00524fe7      int3
+        Ôöé   0x00524fe8      int3
+        Ôöé   0x00524fe9      int3
+        Ôöé   0x00524fea      int3
+        Ôöé   0x00524feb      int3
+        Ôöé   0x00524fec      int3
+        Ôöé   0x00524fed      int3
+        Ôöé   0x00524fee      int3
+        Ôöé   0x00524fef      int3
+        Ôöé   0x00524ff0      mov   eax, 0x90e43c
+        Ôöé   0x00524ff5      ret
+        Ôöé   0x00524ff6      int3
+        Ôöé   0x00524ff7      int3
+        Ôöé   0x00524ff8      int3
+        Ôöé   0x00524ff9      int3
+        Ôöé   0x00524ffa      int3
+        Ôöé   0x00524ffb      int3
+        Ôöé   0x00524ffc      int3
+        Ôöé   0x00524ffd      int3
+        Ôöé   0x00524ffe      int3
+        Ôöé   0x00524fff      int3
+Ôöî fcn.00525000();
+Ôöé       Ôöé   0x00525000      mov   eax, 0x90e474
+Ôöö       Ôöé   0x00525005      ret
+        Ôöé   0x00525006      int3
+        Ôöé   0x00525007      int3
+        Ôöé   0x00525008      int3
+        Ôöé   0x00525009      int3
+        Ôöé   0x0052500a      int3
+        Ôöé   0x0052500b      int3
+        Ôöé   0x0052500c      int3
+        Ôöé   0x0052500d      int3
+        Ôöé   0x0052500e      int3
+        Ôöé   0x0052500f      int3
+        Ôöé   0x00525010      push  esi
+        Ôöé   0x00525011      mov   esi, ecx
+        Ôöé   0x00525013      mov   eax, dword [esi]
+        Ôöé   0x00525015      test  eax, eax
+       ÔöîÔöÇÔöÇ< 0x00525017      jz    0x52507e
+       ÔöéÔöé   0x00525019      push  edi
+       ÔöéÔöé   0x0052501a      push  esi
+       ÔöéÔöé   0x0052501b      push  dword [esi+0x04]
+       ÔöéÔöé   0x0052501e      push  eax
+       ÔöéÔöé   0x0052501f      call  0x4b8ec0
+       ÔöéÔöé   0x00525024      mov   ecx, dword [esi+0x08]
+       ÔöéÔöé   0x00525027      mov   eax, 0x2aaaaaab
+       ÔöéÔöé   0x0052502c      mov   edi, dword [esi]
+       ÔöéÔöé   0x0052502e      add   esp, 0x0c
+       ÔöéÔöé   0x00525031      sub   ecx, edi
+       ÔöéÔöé   0x00525033      imul  ecx
+       ÔöéÔöé   0x00525035      sar   edx, 0x02
+       ÔöéÔöé   0x00525038      mov   eax, edx
+       ÔöéÔöé   0x0052503a      shr   eax, 0x1f
+       ÔöéÔöé   0x0052503d      add   eax, edx
+       ÔöéÔöé   0x0052503f      lea   ecx, dword [eax+eax*2]
+       ÔöéÔöé   0x00525042      shl   ecx, 0x03
+       ÔöéÔöé   0x00525045      cmp   ecx, reloc.pe_00001000               ; 0x1000
+      ÔöîÔöÇÔöÇÔöÇ< 0x0052504b      jb    0x52505f
+      ÔöéÔöéÔöé   0x0052504d      mov   edx, dword [edi-0x04]
+      ÔöéÔöéÔöé   0x00525050      add   ecx, 0x23                            ; 35
+      ÔöéÔöéÔöé   0x00525053      sub   edi, edx
+      ÔöéÔöéÔöé   0x00525055      lea   eax, dword [edi-0x04]
+      ÔöéÔöéÔöé   0x00525058      cmp   eax, 0x1f                            ; 31
+     ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x0052505b      jnbe  0x525080
+     ÔöéÔöéÔöéÔöé   0x0052505d      mov   edi, edx
+     ÔöéÔööÔöÇÔöÇÔöÇ> 0x0052505f      push  ecx
+     Ôöé ÔöéÔöé   0x00525060      push  edi
+     Ôöé ÔöéÔöé   0x00525061      call  0x7e91f3
+     Ôöé ÔöéÔöé   0x00525066      add   esp, 0x08
+     Ôöé ÔöéÔöé   0x00525069      mov   dword [esi], 0x00
+     Ôöé ÔöéÔöé   0x0052506f      mov   dword [esi+0x04], 0x00
+     Ôöé ÔöéÔöé   0x00525076      mov   dword [esi+0x08], 0x00
+     Ôöé ÔöéÔöé   0x0052507d      pop   edi
+     Ôöé ÔööÔöÇÔöÇ> 0x0052507e      pop   esi
+     Ôöé  Ôöé   0x0052507f      ret
+     ÔööÔöÇÔöÇÔöÇÔöÇ> 0x00525080      call  0x7fa651
+        Ôöé   0x00525085      int3
+        Ôöé   0x00525086      int3
+        Ôöé   0x00525087      int3

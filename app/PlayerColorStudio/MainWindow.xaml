@@ -18,7 +18,7 @@
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="White"
                                    Text="Minimap, victory and ally screen follow the selected colors."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White"
-                                   Text="Player 2 and Player 8 cannot be changed yet: no safe, exclusive Remastered palette hook has been verified."/>
+                                   Text="Player 8 cannot be changed yet (shared yellow palette with the build bar). Player 2 uses exclusive band 212–215."/>
                         <ItemsControl ItemsSource="{Binding Cards}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -74,6 +74,23 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Extra">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{StaticResource PanelBrush}">
+                    <StackPanel Background="{StaticResource PanelBrush}">
+                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White"
+                                   Text="Optional multiplayer QoL. These features use a runtime hook and are experimental."/>
+                        <Border Padding="14" CornerRadius="8"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel>
+                                <CheckBox IsChecked="{Binding AllyLeaveRedNames}"
+                                          Content="Mark left players in red on the Alliances screen"/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="When a player leaves, drops, or is eliminated (chat: left / dropped / eliminated), their Alliances name shows in red and is prefixed with [X]. The hook loads automatically while this option is on and Warcraft II is running. NPC/computer slots only change after a real eliminate — killing some units is not enough."/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

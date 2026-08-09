@@ -1,0 +1,359 @@
+            0x004d6020      inc   edx
+            0x004d6021      add   eax, dword [eax]
+            0x004d6023      add   byte [eax+0x60], ch
+            0x004d6026      or    eax, dword [eax+eax*1-0x46afff96]
+            0x004d602d      dec   esp
+            0x004d602e      or    eax, dword [eax+eax*1-0x7bf4c748]
+            0x004d6035      add   byte [edi], cl
+            0x004d6037      inc   ebp
+            0x004d6038      rcl   dword [eax-0x18], 0x71
+            0x004d603c      int1
+            0x004d603d      cli
+            0x004d603e      jmp   far fword [edx-0x03]
+            0x004d6041      push  edi
+            0x004d6042      call  0x4a3110
+            0x004d6047      push  0x00
+            0x004d6049      push  eax
+            0x004d604a      call  0x4d3c00
+            0x004d604f      add   esp, 0x24
+            0x004d6052      push  esi
+            0x004d6053      push  edi
+            0x004d6054      call  0x4a2480
+            0x004d6059      add   esp, 0x08
+            0x004d605c      pop   edi
+            0x004d605d      pop   esi
+            0x004d605e      pop   ebp
+            0x004d605f      ret
+            0x004d6060      cmp   dword [0x949e0c], 0x00               ; [0x949e0c:4]=0
+        ÔöîÔöÇ< 0x004d6067      jz    0x4d6099
+        Ôöé   0x004d6069      push  0x01                                 ; 1
+        Ôöé   0x004d606b      push  dword [0x922f70]
+        Ôöé   0x004d6071      call  0x4a3110
+        Ôöé   0x004d6076      mov   ecx, dword [0x949e0c]                ; [0x949e0c:4]=0
+        Ôöé   0x004d607c      push  eax
+        Ôöé   0x004d607d      or    dword [eax+0x18], 0x100              ; [0x100:4]=-1 ; 256
+        Ôöé   0x004d6084      mov   dword [eax+0x14], ecx
+        Ôöé   0x004d6087      call  0x4a39e0
+        Ôöé   0x004d608c      add   esp, 0x0c
+        Ôöé   0x004d608f      mov   dword [0x949e0c], 0x00
+        ÔööÔöÇ> 0x004d6099      cmp   dword [0x949e10], 0x00               ; [0x949e10:4]=0
+        ÔöîÔöÇ< 0x004d60a0      jz    0x4d60d2
+        Ôöé   0x004d60a2      push  0x02                                 ; 2
+        Ôöé   0x004d60a4      push  dword [0x922f70]
+        Ôöé   0x004d60aa      call  0x4a3110
+        Ôöé   0x004d60af      mov   ecx, dword [0x949e10]                ; [0x949e10:4]=0
+        Ôöé   0x004d60b5      push  eax
+        Ôöé   0x004d60b6      or    dword [eax+0x18], 0x100              ; [0x100:4]=-1 ; 256
+        Ôöé   0x004d60bd      mov   dword [eax+0x14], ecx
+        Ôöé   0x004d60c0      call  0x4a39e0
+        Ôöé   0x004d60c5      add   esp, 0x0c
+        Ôöé   0x004d60c8      mov   dword [0x949e10], 0x00
+        ÔööÔöÇ> 0x004d60d2      xor   eax, eax
+            0x004d60d4      pop   esi
+            0x004d60d5      pop   ebp
+            0x004d60d6      ret
+            0x004d60d7      int3
+            0x004d60d8      int3
+            0x004d60d9      int3
+            0x004d60da      int3
+            0x004d60db      int3
+            0x004d60dc      int3
+            0x00515160      dec   esp
+            0x00515161      and   al, 0x04
+            0x00515163      movss dword [esp], xmm3
+            0x00515168      call  0x61a460
+            0x0051516d      mov   ecx, dword [0x939df0]                ; [0x939df0:4]=0
+            0x00515173      call  0x61a760
+            0x00515178      sub   esp, 0x10
+            0x0051517b      lea   ecx, dword [ebp-0x330]
+            0x00515181      mov   dword [esp+0x0c], 0x00
+            0x00515189      mov   dword [esp+0x08], 0x00
+            0x00515191      mov   dword [esp+0x04], 0x43000000         ; [0x43000000:4]=-1
+            0x00515199      mov   dword [esp], 0x43000000              ; [0x43000000:4]=-1
+            0x005151a0      call  0x615220
+            0x005151a5      movups xmm0, xmmword [ebp-0x330]
+            0x005151ac      mov   ecx, dword [ebp-0x300]
+            0x005151b2      sub   esp, 0x10
+            0x005151b5      mov   eax, esp
+            0x005151b7      add   ecx, 0xa0                            ; 160
+            0x005151bd      movups xmmword [eax], xmm0
+            0x005151c0      lea   eax, dword [ebp-0x24]
+            0x005151c3      push  eax
+            0x005151c4      call  0x615a90
+            0x005151c9      push  ecx
+            0x005151ca      movups xmm0, xmmword [eax]
+            0x005151cd      movups xmmword [ebp-0x330], xmm0
+            0x005151d4      fld   dword [ebp-0x330]
+            0x005151da      fstp  dword [esp]
+            0x005151dd      call  0x7fd9c0
+            0x005151e2      fstp  dword [ebp-0x2e0]
+            0x005151e8      movss xmm0, dword [ebp-0x2e0]
+            0x005151f0      fld   dword [ebp-0x32c]
+            0x005151f6      fstp  dword [esp]
+            0x005151f9      movss dword [ebp-0x330], xmm0
+            0x00515201      call  0x7fd9c0
+            0x00515206      fstp  dword [ebp-0x300]
+            0x0051520c      movss xmm0, dword [ebp-0x300]
+            0x00515214      add   esp, 0x04
+            0x00515217      movss dword [ebp-0x32c], xmm0
+            0x0051521f      call  0x7e9950
+            0x00515224      movss xmm0, dword [ebp-0x2e0]
+            0x0051522c      push  eax
+            0x0051522d      call  0x7e9950
+            0x00515232      mov   ecx, dword [0x939dfc]                ; [0x939dfc:4]=0
+            0x00515238      push  eax
+            0x00515239      call  0x6167d0
+            0x0051523e      push  dword [0x939dfc]
+            0x00515244      lea   ecx, dword [ebp-0x308]
+            0x0051524a      call  0x616920
+            0x0051524f      cvttss2si eax, dword [ebp-0x32c]
+            0x00515257      lea   ecx, dword [ebp-0x140]
+            0x0051525d      invalid
+            0x0051525e      inc   ebp
+            0x0051525f      cld
+            0x00515260      sbb   al, 0x50
+            0x00515262      cvttss2si eax, dword [ebp-0x330]
+            0x0051526a      push  eax
+            0x0051526b      push  0x00
+            0x0051526d      push  0x00
+            0x0051526f      call  0x61eef0
+            0x00515274      lea   ecx, dword [ebp-0x2d5]
+            0x0051527a      mov   byte [ebp-0x04], 0x1d                ; 29
+            0x0051527e      call  0x61ee50
+            0x00515283      mov   ecx, dword [0x939dfc]                ; [0x939dfc:4]=0
+            0x00515289      push  0x9b25a4
+            0x0051528e      mov   byte [ebp-0x04], 0x1e                ; 30
+            0x00515292      call  0x616870
+            0x00515297      movzx eax, word [0x8c959c]                 ; [0x8c959c:2]=0
+            0x0051529e      sub   esp, 0x18
+            0x005152a1      shl   eax, 0x05
+            0x005152a4      mov   dword [esp+0x14], 0x3f800000         ; [0x3f800000:4]=-1
+            0x005152ac      movd  xmm1, eax
+            0x005152b0      lea   eax, dword [ebp-0x290]
+            0x005152b6      cvtdq2ps xmm1, xmm1
+            0x005152b9      mov   dword [esp+0x10], 0xbf800000         ; [0xbf800000:4]=-1
+            0x005152c1      mov   dword [esp+0x0c], 0x00
+            0x005152c9      movss dword [esp+0x08], xmm1
+            0x005152cf      movss dword [esp+0x04], xmm1
+            0x005152d5      mov   dword [esp], 0x00
+            0x005152dc      push  eax
+            0x005152dd      call  0x615410
+            0x0055a4e0      std
+            0x0055a4e1      invalid
+            0x0055a4e2      inc   dword [ebx+0x7d8308c4]
+            0x0055a4e8      or    al, 0x00
+        ÔöîÔöÇ< 0x0055a4ea      jz    0x55a4f8
+        Ôöé   0x0055a4ec      mov   dword [ebp-0x330], 0x00
+       ÔöîÔöÇÔöÇ< 0x0055a4f6      jmp   0x55a502
+       ÔöéÔööÔöÇ> 0x0055a4f8      mov   dword [ebp-0x330], 0x02
+       ÔööÔöÇÔöÇ> 0x0055a502      mov   edx, dword [ebp-0x330]
+            0x0055a508      mov   dword [ebp-0x338], edx
+            0x0055a50e      mov   eax, dword [ebp+0x0c]
+            0x0055a511      push  eax
+            0x0055a512      mov   ecx, dword [ebp-0x338]
+            0x0055a518      push  ecx
+            0x0055a519      mov   edx, dword [ebp-0x324]
+            0x0055a51f      push  edx
+            0x0055a520      push  0x55a130
+            0x0055a525      mov   eax, dword [ebp-0x334]
+            0x0055a52b      push  eax
+            0x0055a52c      call  0x578f10
+            0x0055a531      add   esp, 0x14
+            0x0055a534      mov   ecx, dword [ebp-0x324]
+            0x0055a53a      push  ecx
+            0x0055a53b      call  dword [sym.imp.KERNEL32.dll_CloseHandle] ; 0x834438 ; BOOL CloseHandle(HANDLE hObject)
+            0x0055a541      mov   ecx, dword [ebp-0x04]
+            0x0055a544      xor   ecx, ebp
+            0x0055a546      call  0x7e91e5
+            0x0055a54b      mov   esp, ebp
+            0x0055a54d      pop   ebp
+            0x0055a54e      ret
+            0x0055a54f      int3
+            0x0055a550      push  ebp
+            0x0055a551      mov   ebp, esp
+            0x0055a553      sub   esp, 0x10
+            0x0055a556      mov   dword [ebp-0x04], 0x00
+            0x0055a55d      mov   eax, dword [ebp+0x08]
+            0x0055a560      mov   dword [ebp-0x08], eax
+            0x0055a563      cmp   dword [ebp-0x08], 0xc0000005
+        ÔöîÔöÇ< 0x0055a56a      jnbe  0x55a595
+        Ôöé   0x0055a56c      cmp   dword [ebp-0x08], 0xc0000005
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x004d6040  fd57 e8c9 d0fc ff6a 0050 e8b1 dbff ff83  .W.....j.P......
+0x004d6050  c424 5657 e827 c4fc ff83 c408 5f5e 5dc3  .$VW.'......_^].
+0x004d6060  833d 0c9e 9400 0074 306a 01ff 3570 2f92  .=.....t0j..5p/.
+0x004d6070  00e8 9ad0 fcff 8b0d 0c9e 9400 5081 4818  ............P.H.
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x00515170  9d93 00e8 e855 1000 83ec 108d 8dd0 fcff  .....U..........
+0x00515180  ffc7 4424 0c00 0000 00c7 4424 0800 0000  ..D$......D$....
+0x00515190  00c7 4424 0400 0000 43c7 0424 0000 0043  ..D$....C..$...C
+0x005151a0  e87b 0010 000f 1085 d0fc ffff 8b8d 00fd  .{..............
+[2K
+[2K
+[2K
+0x00438ee4 0x0083a4e4   25   26 .rdata  ascii   Art\bgs\Forest\forest.ppl
+0x0043771d 0x00838d1d    6    7 .rdata  utf8    B}T}├ö% blocks=Basic Latin,Latin-1 Supplement
+0x00438ee4 0x0083a4e4   25   26 .rdata  ascii   Art\bgs\Forest\forest.ppl
+0x00438fa8 0x0083a5a8   27   28 .rdata  ascii   Art\bgs\Iceland\iceland.ppl
+0x0043906c 0x0083a66c   23   24 .rdata  ascii   Art\bgs\Swamp\swamp.ppl
+0x00439120 0x0083a720   25   26 .rdata  ascii   Art\bgs\XSwamp\xswamp.ppl
+0x00441fdc 0x008435dc   16   17 .rdata  ascii   <Application>%s\n
+0x00449044 0x0084a644   55   56 .rdata  ascii   This application has encountered a critical error:\n\n%s\n
+0x004490dc 0x0084a6dc   38   39 .rdata  ascii   Press OK to terminate the application.
+0x00449108 0x0084a708   84   85 .rdata  ascii   Do you wish to keep running anyway?\n\tOK:\tKeep running\n\tCancel:\tTerminate application
+0x00449170 0x0084a770   88   89 .rdata  ascii   Do you wish to break to the debugger?\n\tYes:\tBreak to debugger\n\tNo:\tTerminate application
+0x004491d0 0x0084a7d0  110  111 .rdata  ascii   Do you wish to break to the debugger?\n\tYes:\tBreak to debugger\n\tNo:\tTerminate application\n\tCancel:\tKeep running
+0x0044b2cc 0x0084c8cc   25   26 .rdata  ascii   SNetDropPlayer(%u,0x%08x)
+0x00458e3c 0x0085a43c    6   24 .rdata  utf32le  ├┐ÒÇÇÒâ┐Òç░Òç┐ blocks=Basic Latin,Latin-1 Supplement,CJK Symbols and Punctuation,Katakana,Katakana Phonetic Extensions
+0x00458e68 0x0085a468    8   36 .rdata  utf32le  ├┐ðÇÈ»ÔÀáÔÀ┐ÛÖÇÛÜƒ blocks=Basic Latin,Latin-1 Supplement,Cyrillic,Cyrillic Supplement,Cyrillic Extended-A,Cyrillic Extended-B
+0x0045bed0 0x0085d4d0   16   17 .rdata  ascii   shorelineRipples
+0x0045bee4 0x0085d4e4   23   24 .rdata  ascii   shorelineRipplesSharpen
+0x0045c100 0x0085d700   16   17 .rdata  ascii   shorelineRipples
+0x0045c114 0x0085d714   23   24 .rdata  ascii   shorelineRipplesSharpen
+0x0045c358 0x0085d958 2039 2040 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\tin vec2 MaskCoord;\n\tin vec2 WorldCoord;\n\n\tuniform sampler2D tileTexture;\n\tuniform sampler2D tileMask;\n\n\t// r contains test noise data\n\t// g contains caustic data\n\t// b contains perlin noise\n\tuniform sampler2D waterMasksTexture;\n\n\tuniform float time;\n\n\tconst float PI = 3.1415926535897932384626433832795;\n\n\tuniform float shorelineFrameRate;\n\tuniform float shorelineSpeed;\n\tuniform float shorelineWarpTile;\n\tuniform float shorelineWarpStrength;\n\tuniform float shorelineRipples;\n\tuniform float shorelineRipplesSharpen;\n\tuniform float shorelineDistance;\n\tuniform float shorelineStrength;\n\n\tuniform float waterBlendTile;\n\tuniform float waterBlendAmount;\n\tuniform float waterShoreShadow;\n\tuniform vec3 waterDeepColor;\n\tuniform vec3 waterShallowColor;\n\tuniform vec3 waterFoamColor;\n\n\tuniform float causticSquish;\n\tuniform float causticTile;\n\tuniform float causticWarpTile;\n\tuniform float causticFrameRate;\n\tuniform float causticWarpStrength;\n\tuniform float causticMaskTile;\n\tuniform float causticMaskStrength;\n\tuniform float causticStrength;\n\tuniform vec2 causticPanner;\n\n\tuniform float sparkleTile;\n\tuniform float sparkleMaskTile;\n\tuniform float sparkleFrameRate;\n\tuniform float sparklePower;\n\tuniform float sparkleMaskMin;\n\tuniform float sparkleMaskMax;\n\tuniform float sparkleIntensity;\n\tuniform vec2 sparkleMaskPanner;\n\n\tfloat framerate(float value)\n\t{\n\t\treturn floor(time * value) / value;\n\t}\n\n\tfloat usin(float value)\n\t{\n\t\treturn sin(value * 2.0 * PI);\n\t}\n\n\tfloat constantBiasScale(float value, float bias, float scale)\n\t{\n\t\treturn (value + bias) * scale;\n\t}\n\n\tvec2 panner(vec2 coordinate, float time, vec2 speed)\n\t{\n\t\treturn coordinate + (time * speed);\n\t}\n\n\tfloat shoreline(float shorelineMask)\n\t{\n\t\tfloat speedFactor = shorelineSpeed * framerate(shorelineFrameRate);\n\t\tfloat shorelineWarpFactor = texture(waterMasksTexture, WorldCoord * shorelineWarpTile).r * shorelineWarpStrength;\n\n\t\tfloat biasedFactor = constantBiasScale(usin(speedFactor + shorelineWarpFactor), 1.0, 0.5);
+0x0045cb50 0x0085e150 2038 2039 .rdata  ascii   \t\tfloat ripples = smoothstep(clamp(shorelineRipplesSharpen, 0.0, 1.0), 1.0, clamp(constantBiasScale(usin((biasedFactor + shorelineMask) * shorelineRipples), 1.0, 0.5), 0.0, 1.0));\n\n\t\tfloat foam = smoothstep(clamp((1 - shorelineDistance), 0.0, 1.0), 1.0, shorelineMask) * shorelineStrength;\n\n\t\treturn ripples * foam;\n\t}\n\n\tvec3 waterColor(vec3 baseColor, float waterMask, float shorelineMask, float foamMask)\n\t{\n\t\tfloat waterBlendValue = texture(waterMasksTexture, WorldCoord * waterBlendTile).r * waterBlendAmount;\n\n\t\tvec3 shorelineValue = mix(mix(waterDeepColor, waterShallowColor, waterBlendValue) * mix(1.0, waterShoreShadow, shorelineMask), waterFoamColor, foamMask);\n\n\t\treturn mix(baseColor, shorelineValue, waterMask);\n\t}\n\n\tvec3 caustic(vec3 baseColor, float waterMask, float shorelineMask)\n\t{\n\t\tfloat warpTextureValue = texture(waterMasksTexture, causticWarpTile * WorldCoord).r;\n\t\tfloat maskTextureValue = texture(waterMasksTexture, causticMaskTile * WorldCoord).r;\n\n\t\tvec2 pannerCoordinate = (vec2(causticSquish * causticTile, causticTile) * WorldCoord) + (constantBiasScale(warpTextureValue, -0.5, 2) * causticWarpStrength);\n\t\tfloat causticTextureValue = texture(waterMasksTexture, panner(pannerCoordinate, framerate(causticFrameRate), causticPanner)).g;\n\n\t\tfloat causticAmount = mix(1.0, maskTextureValue, clamp(causticMaskStrength, 0.0, 1.0)) * (1 - shorelineMask) * waterMask * causticStrength;\n\n\t\tvec3 causticValue = baseColor * mix(0.5, causticTextureValue, causticAmount) * 2.0;\n\t\treturn causticValue;\n\t}\n\n\tvec3 sparkle(vec3 baseColor, float waterMask)\n\t{\n\t\tfloat causticEffect = texture(waterMasksTexture, sparkleTile * WorldCoord).b;\n\t\tfloat sparkleMask = texture(waterMasksTexture, panner(WorldCoord * sparkleMaskTile, framerate(sparkleFrameRate), sparkleMaskPanner)).b;\n\n\t\tfloat sparkle = (waterMask * pow(causticEffect, sparklePower) * sparkleIntensity * smoothstep(sparkleMaskMin, sparkleMaskMax, sparkleMask));\n\n\t\treturn baseColor + sparkle;\n\t}\n\n\tvoid main()\n\t{\n\t\tvec3 baseColor = texture(tileTexture, TexCoord).rgb;
+0x0045d500 0x0085eb00 1766 1767 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\tin vec2 MaskCoord;\n\tin vec2 WorldCoord;\n\n\tuniform sampler2D spriteMask;\n\n\t// r contains test noise data\n\t// g contains caustic data\n\t// b contains perlin noise\n\tuniform sampler2D waterMasksTexture;\n\n\tuniform float time;\n\n\tconst float PI = 3.1415926535897932384626433832795;\n\n\tuniform float shorelineFrameRate;\n\tuniform float shorelineSpeed;\n\tuniform float shorelineWarpTile;\n\tuniform float shorelineWarpStrength;\n\tuniform float shorelineRipples;\n\tuniform float shorelineRipplesSharpen;\n\tuniform float shorelineDistance;\n\tuniform float shorelineStrength;\n\n\tuniform vec3 waterFoamColor;\n\n\tfloat framerate(float value)\n\t{\n\t\treturn floor(time * value) / value;\n\t}\n\n\tfloat usin(float value)\n\t{\n\t\treturn sin(value * 2.0 * PI);\n\t}\n\n\tfloat constantBiasScale(float value, float bias, float scale)\n\t{\n\t\treturn (value + bias) * scale;\n\t}\n\n\tfloat shoreline(float shorelineMask)\n\t{\n\t\tfloat speedFactor = shorelineSpeed * framerate(shorelineFrameRate);\n\t\tfloat shorelineWarpFactor = texture(waterMasksTexture, WorldCoord * shorelineWarpTile).r * shorelineWarpStrength;\n\n\t\tfloat biasedFactor = constantBiasScale(usin(speedFactor + shorelineWarpFactor), 1.0, 0.5);\n\t\tfloat ripples = smoothstep(clamp(shorelineRipplesSharpen, 0.0, 1.0), 1.0, clamp(constantBiasScale(usin((biasedFactor + shorelineMask) * shorelineRipples), 1.0, 0.5), 0.0, 1.0));\n\n\t\tfloat foam = smoothstep(clamp((1 - shorelineDistance), 0.0, 1.0), 1.0, shorelineMask) * shorelineStrength;\n\n\t\treturn ripples * foam;\n\t}\n\n\tvoid main()\n\t{\n\t\tfloat shorelineMask = clamp(texture(spriteMask, MaskCoord).a * 1.005, 0.0, 1.0);\n\n\t\tfloat foamMask = shoreline(shorelineMask);\n\t\tvec4 waterBaseColor = vec4(waterFoamColor, foamMask);\n\n\t\tFragColor = waterBaseColor;\n\t}\n
+0x00470dc3 0x008723c3    5    6 .rdata  utf8    {kHw├ó blocks=Basic Latin,Latin-1 Supplement
+0x004715ad 0x00872bad    6    7 .rdata  utf8    [W(\n)├« blocks=Basic Latin,Latin-1 Supplement
+0x00471f00 0x00873500    4    5 .rdata  utf8    ├ª\n:] blocks=Latin-1 Supplement,Basic Latin
+0x00473278 0x00874878    4   16 .rdata  utf32le /0(├á blocks=Basic Latin,Latin-1 Supplement
+0x004732ac 0x008748ac    5   20 .rdata  utf32le 345├í1 blocks=Basic Latin,Latin-1 Supplement
+0x004732dc 0x008748dc   33  136 .rdata  utf32le 678├ÑF├ó,9:;<=>?@ABCSGJRKVP]OWMQNIL blocks=Basic Latin,Latin-1 Supplement
+0x004734a0 0x00874aa0    4   16 .rdata  utf32le /0(├á blocks=Basic Latin,Latin-1 Supplement
+0x004734d4 0x00874ad4    5   20 .rdata  utf32le 345├í1 blocks=Basic Latin,Latin-1 Supplement
+0x00473504 0x00874b04   33  136 .rdata  utf32le 678├ÑF├ó,9:;<=>?@ABCSGJRKVP]OWMQNIL blocks=Basic Latin,Latin-1 Supplement
+0x00473848 0x00874e48   10   40 .rdata  utf32le G├ÉyÐÅÐ×Ð¡ı«┌ú▄©▀┐ blocks=Basic Latin,Latin-1 Supplement,Cyrillic,Armenian,Arabic,Syriac,NKo
+0x00476be5 0x008781e5    4    5 .rdata  utf8    ├Ü<\b\b blocks=Latin-1 Supplement,Basic Latin
+0x00476e2c 0x0087842c    4    5 .rdata  utf8    es├╗) blocks=Basic Latin,Latin-1 Supplement
+0x0047732a 0x0087892a    4    7 .rdata  utf8    ═╗├ó╦╗d blocks=Greek and Coptic,Latin-1 Supplement,Spacing Modifier Letters,Basic Latin
+0x004785d8 0x00879bd8    4    5 .rdata  utf8    "(├║= blocks=Basic Latin,Latin-1 Supplement
+0x0047d838 0x0087ee38    6   24 .rdata  utf32le 8├Ç┼£Ãÿ╩ê╦╝ blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,IPA Extensions,Spacing Modifier Letters
+0x00481f2f 0x0088352f    4    5 .rdata  utf8    ┬ºg&a blocks=Latin-1 Supplement,Basic Latin
+0x004826b1 0x00883cb1    4    5 .rdata  utf8    9q>┬╣ blocks=Basic Latin,Latin-1 Supplement
+0x00483178 0x00884778    5    6 .rdata  utf8    ├Çy{D& blocks=Latin-1 Supplement,Basic Latin
+0x00483611 0x00884c11    6    7 .rdata  utf8    1├ôscur blocks=Basic Latin,Latin-1 Supplement
+0x00483fe5 0x008855e5    7    8 .rdata  utf8    /60├£Z{i blocks=Basic Latin,Latin-1 Supplement
+0x0048b439 0x0088ca39    4    5 .rdata  utf8    ├©Bnc blocks=Latin-1 Supplement,Basic Latin
+0x0048dc36 0x0088f236    4    5 .rdata  utf8    ┬┐#6H blocks=Latin-1 Supplement,Basic Latin
+0x0048dc45 0x0088f245    5    6 .rdata  utf8    -┬┐=]P blocks=Basic Latin,Latin-1 Supplement
+0x0048e928 0x0088ff28    6    7 .rdata  utf8    ?|G┬¥d0 blocks=Basic Latin,Latin-1 Supplement
+0x0048f4ca 0x00890aca    5    7 .rdata  utf8    4┬▒cC= blocks=Basic Latin,Latin-1 Supplement
+0x00495223 0x00896823    4    6 .rdata  utf8    ├¢d\t= blocks=Latin-1 Supplement,Basic Latin
+0x00496b91 0x00898191    4    5 .rdata  utf8    x┬¥/@ blocks=Basic Latin,Latin-1 Supplement
+0x00498901 0x00899f01    4    5 .rdata  utf8    ├ªDAo blocks=Latin-1 Supplement,Basic Latin
+0x00498c25 0x0089a225    5    6 .rdata  utf8    ├Ä<'Za blocks=Latin-1 Supplement,Basic Latin
+0x0049affa 0x0089c5fa    4    8 .rdata  utf16le vJ┬áY blocks=Basic Latin,Latin-1 Supplement
+0x0049b028 0x0089c628    9   18 .rdata  utf16le <┬ú┬▒-y[j┬ñ┬▓ blocks=Basic Latin,Latin-1 Supplement
+0x0049b092 0x0089c692    8   16 .rdata  utf16le ]┬©├ó├ö├▒├å┬¬| blocks=Basic Latin,Latin-1 Supplement
+0x0049b7e4 0x0089cde4    4    8 .rdata  utf16le fu┬í┬░ blocks=Basic Latin,Latin-1 Supplement
+0x0049b836 0x0089ce36    8   16 .rdata  utf16le )┬ú┬▓├Ç├Ç\n\nw blocks=Basic Latin,Latin-1 Supplement
+0x0049b858 0x0089ce58    7   14 .rdata  utf16le *9┬▓├ü┬ñ┬│\v blocks=Basic Latin,Latin-1 Supplement
+0x0049b868 0x0089ce68    6   12 .rdata  utf16le :I├ü├ÉYh blocks=Basic Latin,Latin-1 Supplement
+0x0049b87c 0x0089ce7c    6   12 .rdata  utf16le \e*JY├É├É blocks=Basic Latin,Latin-1 Supplement
+0x0049b8f2 0x0089cef2    4    8 .rdata  utf16le +├ä├ôz blocks=Basic Latin,Latin-1 Supplement
+0x0049b8fc 0x0089cefc    7   14 .rdata  utf16le [j├í├░,;\r blocks=Basic Latin,Latin-1 Supplement
+0x0049b90c 0x0089cf0c    8   16 .rdata  utf16le kz┬Â├à┬¿┬À├ô├ó blocks=Basic Latin,Latin-1 Supplement
+0x0049b932 0x0089cf32    8   16 .rdata  utf16le ,L[\r\r┬À├å{ blocks=Basic Latin,Latin-1 Supplement
+0x0049b944 0x0089cf44    6   12 .rdata  utf16le -<├ö├ú├å├ò blocks=Basic Latin,Latin-1 Supplement
+0x0049b9c6 0x0089cfc6   12   24 .rdata  utf16le .┬½┬║┬║├ë├ë├ÿN]├ª├Á} blocks=Basic Latin,Latin-1 Supplement
+0x0049b9e0 0x0089cfe0    4    8 .rdata  utf16le />├ÿ├º blocks=Basic Latin,Latin-1 Supplement
+0x0049b9f8 0x0089cff8   16   32 .rdata  utf16le ?N├è├Ö┬╗├èn}├Ö├¿┬¼┬╗├¿├ÀO^ blocks=Basic Latin,Latin-1 Supplement
+0x0049c43c 0x0089da3c    7   14 .rdata  utf16le %d├í├é─Ç┬úE blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A
+0x0049c456 0x0089da56    7   14 .rdata  utf16le e┬ñ&─é\a├ú─í blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A
+0x0049c5ae 0x0089dbae    4    8 .rdata  utf16le /┬«O├Ä blocks=Basic Latin,Latin-1 Supplement
+0x0049c5c0 0x0089dbc0    5   10 .rdata  utf16le P┬»p├Å1 blocks=Basic Latin,Latin-1 Supplement
+0x0049c676 0x0089dc76   26   52 .rdata  utf16le uV7╦ó╦â╔ª╔çÃ¬Ãï┼«┼Å├▓├ôvW╦ú╔ºÃ½┼»├│w╠Ç╩ä╚êãî─É blocks=Basic Latin,Spacing Modifier Letters,IPA Extensions,Latin Extended-B,Latin Extended-A,Latin-1 Supplement,Combining Diacritical Marks
+0x0049c724 0x0089dd24   46   92 .rdata  utf16le xY:\e═í═é╠ú╦Ñ╦å╩º╔®╔è╚½Ã¡ÃÄã»┼▒┼Æ─│├Á├û┬ÀyZ;═ó═â╦ª╦ç╔¬╔ïÃ«ÃÅ┼▓┼ô├Â├ùz[═ú╦º╔½Ã»┼│├À{ blocks=Basic Latin,Combining Diacritical Marks,Spacing Modifier Letters,IPA Extensions,Latin Extended-B,Latin Extended-A,Latin-1 Supplement
+0x0049c84a 0x0089de4a   26   52 .rdata  utf16le }^?¤ó¤â═ª═ç╦¬╦ï╔«╔ÅÃ▓Ãô┼Â┼ù├║├ø~_¤ú═º╦½╔»Ã│┼À├╗ blocks=Basic Latin,Greek and Coptic,Combining Diacritical Marks,Spacing Modifier Letters,IPA Extensions,Latin Extended-B,Latin Extended-A,Latin-1 Supplement
+0x0049cd20 0x0089e320    4    8 .rdata  utf16le 33┬á┬á blocks=Basic Latin,Latin-1 Supplement
+0x0049cd3c 0x0089e33c    8   16 .rdata  utf16le SSrr$$┬░┬░ blocks=Basic Latin,Latin-1 Supplement
+0x0049cd64 0x0089e364    6   12 .rdata  utf16le DD├Ç├Ç┬í┬í blocks=Basic Latin,Latin-1 Supplement
+0x0049cd90 0x0089e390    4    8 .rdata  utf16le dd┬▒┬▒ blocks=Basic Latin,Latin-1 Supplement
+0x0049cdbc 0x0089e3bc    8   16 .rdata  utf16le &&├ü├üee66 blocks=Basic Latin,Latin-1 Supplement
+0x0049cdf4 0x0089e3f4   14   28 .rdata  utf16le \a\aVV├é├é├í├í''┬│┬│ff blocks=Basic Latin,Latin-1 Supplement
+0x0049ce14 0x0089e414   12   24 .rdata  utf16le 77┬ñ┬ñ\b\bGG├Æ├Ævv blocks=Basic Latin,Latin-1 Supplement
+0x0049ce74 0x0089e474    6   12 .rdata  utf16le XX├ä├ä)) blocks=Basic Latin,Latin-1 Supplement
+0x0049cec4 0x0089e4c4    6   12 .rdata  utf16le ii┬º┬º├ñ├ñ blocks=Basic Latin,Latin-1 Supplement
+0x0049ced4 0x0089e4d4   12   24 .rdata  utf16le **yy├ò├ò::├å├åJJ blocks=Basic Latin,Latin-1 Supplement
+0x0049cf14 0x0089e514   20   40 .rdata  utf16le \e\e├ç├ç++┬©┬©zz┬®┬®├ª├ª;;\v\vKK blocks=Basic Latin,Latin-1 Supplement
+0x0049cf60 0x0089e560   20   40 .rdata  utf16le ,,├º├º├ÿ├ÿ<<{{\f\fLL├ë├ë┬¬┬¬├¿├¿ blocks=Basic Latin,Latin-1 Supplement
+0x0049cfe8 0x0089e5e8    4    8 .rdata  utf16le >>┬╗┬╗ blocks=Basic Latin,Latin-1 Supplement
+0x0049cff4 0x0089e5f4    6   12 .rdata  utf16le }}├Ü├ÜNN blocks=Basic Latin,Latin-1 Supplement
+0x0049d010 0x0089e610   12   24 .rdata  utf16le ^^├¬├¬├ï├ï??nn┬╝┬╝ blocks=Basic Latin,Latin-1 Supplement
+0x0049d038 0x0089e638    4    8 .rdata  utf16le __├ø├ø blocks=Basic Latin,Latin-1 Supplement
+0x0049d10a 0x0089e70a    5   10 .rdata  utf16le #Cb├Ç├Ç blocks=Basic Latin,Latin-1 Supplement
+0x0049d12a 0x0089e72a    9   18 .rdata  utf16le $Dc├ü├á┬ó├ü├á├á blocks=Basic Latin,Latin-1 Supplement
+0x0049d180 0x0089e780    4    8 .rdata  utf16le &E┬ñ├â blocks=Basic Latin,Latin-1 Supplement
+0x0049d1a8 0x0089e7a8    7   14 .rdata  utf16le \a\a┬Ñ├ä'Ff blocks=Basic Latin,Latin-1 Supplement
+0x0049d272 0x0089e872    8   16 .rdata  utf16le )┬¿├ç┼à┼ñãóÃüi blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B
+0x0049d308 0x0089e908   15   30 .rdata  utf16le Kj┬¬├ëÃó╚ü╚Ç╚ÇãåãÑ┼ºãåãÑÃäk blocks=Basic Latin,Latin-1 Supplement,Latin Extended-B,Latin Extended-A
+0x0049d328 0x0089e928   10   20 .rdata  utf16le \f+├è├®ÃäÃú─ë─¿┼ê┼º blocks=Basic Latin,Latin-1 Supplement,Latin Extended-B,Latin Extended-A
+0x0049d3a6 0x0089e9a6   24   48 .rdata  utf16le L┬¼├ï┼è┼®╔Ç╔Ç\r\r─ï─¬╚ó╔üMl├î├½ÃçÃª╔ü╔á─½┼èm blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,IPA Extensions
+0x0049d3fc 0x0089e9fc    7   14 .rdata  utf16le Nm├ì├¼╔â╔ón blocks=Basic Latin,Latin-1 Supplement,Latin Extended-B,IPA Extensions
+0x0049d414 0x0089ea14    4    8 .rdata  utf16le /N┬«├ì blocks=Basic Latin,Latin-1 Supplement
+0x0049d420 0x0089ea20    4    8 .rdata  utf16le On├Ä├¡ blocks=Basic Latin,Latin-1 Supplement
+0x0049d466 0x0089ea66   14   28 .rdata  utf16le 23RSr╔á╔áÃñ╚â┼¿ãç├¼─ïp blocks=Basic Latin,IPA Extensions,Latin Extended-B,Latin Extended-A,Latin-1 Supplement
+0x0049d5d0 0x0089ebd0   27   54 .rdata  utf16le Vu7V╦â╦ó╔ç╔ªÃïÃ¬┼Å┼«├ô├▓Wv╦á╦á╔ñ╩âÃ¿╚ç┼¼ãï├░─Åt blocks=Basic Latin,Spacing Modifier Letters,Latin Extended-B,IPA Extensions,Latin Extended-A,Latin-1 Supplement
+0x0049d750 0x0089ed50   61  122 .rdata  utf16le Yx:Y\e:═é═í╠ú═é╦å╦Ñ╩º╦å╔è╔®╚½╔èÃÄÃ¡ã»ÃÄ┼Æ┼▒─│┼Æ├û├Á┬À├ûZy;Z═â═ó╦ç╦ª╔ï╔¬ÃÅÃ«┼ô┼▓├ù├Â[z═á═á╦ñ╠â╔¿╩çÃ¼╚ï┼░ãÅ├┤─ôx blocks=Basic Latin,Combining Diacritical Marks,Spacing Modifier Letters,IPA Extensions,Latin Extended-B,Latin Extended-A,Latin-1 Supplement
+0x0049d988 0x0089ef88   21   42 .rdata  utf16le ^}?^¤â¤ó═ç═ª╦ï╦¬╔Å╔«ÃôÃ▓┼ù┼Â├ø├║_~═ñ blocks=Basic Latin,Greek and Coptic,Combining Diacritical Marks,Spacing Modifier Letters,Latin Extended-B,IPA Extensions,Latin Extended-A,Latin-1 Supplement
+0x0049e210 0x0089f810    6   12 .rdata  utf16le q#R┬áb3 blocks=Basic Latin,Latin-1 Supplement
+0x0049e242 0x0089f842    4    8 .rdata  utf16le T├É┬▒% blocks=Basic Latin,Latin-1 Supplement
+0x0049e24c 0x0089f84c    5   10 .rdata  utf16le d5┬ó├áE blocks=Basic Latin,Latin-1 Supplement
+0x0049e266 0x0089f866    9   18 .rdata  utf16le &┬▓e┬ú6├æuF\a blocks=Basic Latin,Latin-1 Supplement
+0x0049e286 0x0089f886    9   18 .rdata  utf16le '┬ñ\bf├Æ├▒7├âv blocks=Basic Latin,Latin-1 Supplement
+0x0049e2c8 0x0089f8c8    4    8 .rdata  utf16le )h├ö9 blocks=Basic Latin,Latin-1 Supplement
+0x0049e2f0 0x0089f8f0    6   12 .rdata  utf16le *y┬À├┤┬¿: blocks=Basic Latin,Latin-1 Supplement
+0x0049e338 0x0089f938    8   16 .rdata  utf16le ,├ë{┬¬<├À├¿L blocks=Basic Latin,Latin-1 Supplement
+0x0049e34a 0x0089f94a    5   10 .rdata  utf16le \r\├Ö┬║├© blocks=Basic Latin,Latin-1 Supplement
+0x0049e35a 0x0089f95a    6   12 .rdata  utf16le |-├è├®┬½= blocks=Basic Latin,Latin-1 Supplement
+0x0049e398 0x0089f998    6   12 .rdata  utf16le n├║├øO~├î blocks=Basic Latin,Latin-1 Supplement
+0x0049e3a8 0x0089f9a8    4    8 .rdata  utf16le _┬¢o├½ blocks=Basic Latin,Latin-1 Supplement
+0x0049e86a 0x0089fe6a    5   10 .rdata  utf16le u┬í(\tf blocks=Basic Latin,Latin-1 Supplement
+0x0049e888 0x0089fe88    9   18 .rdata  utf16le Hg)┬ú\n├Ç┬▓X9 blocks=Basic Latin,Latin-1 Supplement
+0x0049e8bc 0x0089febc    7   14 .rdata  utf16le :├é┬┤\eJ├æi blocks=Basic Latin,Latin-1 Supplement
+0x0049e8ce 0x0089fece   10   20 .rdata  utf16le +Z├á┬ª├â┬Áy├Æ;\f blocks=Basic Latin,Latin-1 Supplement
+0x0049e8e4 0x0089fee4    4    8 .rdata  utf16le j┬º├äK blocks=Basic Latin,Latin-1 Supplement
+0x0049e916 0x0089ff16    8   16 .rdata  utf16le {├å┬©├ú┬®├▓L├ò blocks=Basic Latin,Latin-1 Supplement
+0x0049e932 0x0089ff32    8   16 .rdata  utf16le =├ñ├û┬¬┬╣├│lM blocks=Basic Latin,Latin-1 Supplement
+0x0049e980 0x0089ff80    5   10 .rdata  utf16le ?├¿┬¼n├À blocks=Basic Latin,Latin-1 Supplement
+0x0049e98c 0x0089ff8c    8   16 .rdata  utf16le O├Ü├ï~├®┬╝├©_ blocks=Basic Latin,Latin-1 Supplement
+0x0049eb78 0x008a0178    6   12 .rdata  utf16le vv++┬á┬á blocks=Basic Latin,Latin-1 Supplement
+0x0049ebb0 0x008a01b0   18   36 .rdata  utf16le ;;┬ó┬ó┬░┬░,,xxZZii┬ú┬ú┬▒┬▒ blocks=Basic Latin,Latin-1 Supplement
+0x0049ec84 0x008a0284   16   32 .rdata  utf16le \\┬À┬À├í├í├ô├ô├░├░├à├à┬®┬®{{ blocks=Basic Latin,Latin-1 Supplement
+0x0049f884 0x008a0e84    5    6 .rdata  utf8    ├é.:lv blocks=Latin-1 Supplement,Basic Latin
+0x0049f8c3 0x008a0ec3    8    9 .rdata  utf8    ├Ä &Vt\f@x blocks=Latin-1 Supplement,Basic Latin
+0x004a2e50 0x008a4450   96  192 .rdata  utf16le         @@@@@@@@├┐├┐├┐├┐├┐├┐├┐├┐─ü─ü─ü─ü─ü─ü─ü─ü╚Ç╚Ç╚Ç╚Ç╚Ç╚Ç╚Ç╚Ç╠é╠é╠é╠é╠é╠é╠é╠é╠â╠â╠â╠â╠â╠â╠â╠âðäðäðäðä╠â╠â╠â╠âÒ┐¼╠ñÒ┐¼╠ñÒ┐¼╠ñÒ┐¼╠ñðäðäðäðäðäðäðäðä╠éÈä╠éÈä╠éÈä╠éÈäÈäÈäÈäÈäÈäÈäÈäÈä blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Combining Diacritical Marks,Cyrillic,CJK Unified Ideographs Extension A,Cyrillic Supplement
+0x004bf936 0x008c1336   51  102 .data   utf16le L├ÉL─░L┼ÇLãáLã░L╚ÉL╚áL╔ÉL╩áL╦ÇL─Ç╚é╚é╚éðäðé╚äðäðäðâðäðé╠éðé╚éÏå╚é╚éÈéðäðäðäðäðäðäðäðäðäÈä╚é blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,IPA Extensions,Spacing Modifier Letters,Cyrillic,Combining Diacritical Marks,Arabic,Cyrillic Supplement
+0x004c450c 0x008c5f0c    5   10 .data   utf16le Pd2├ê├ê blocks=Basic Latin,Latin-1 Supplement
+0x004c4518 0x008c5f18    8   16 .data   utf16le F<2dd2d├ê blocks=Basic Latin,Latin-1 Supplement
+0x004cac74 0x008cc674   11   12 .data   ascii   Application
+0x004ce9d0 0x008d03d0  111  112 .data   ascii   Application didn't initialize properly, did you include SDL_main.h in the file containing your main() function?
+0x004e5850 0x008e7250  332  333 .data   ascii   03000000790000000600000000000000,Sanwa Supply JY-P76USV,crc:20f0,+leftx:+a0,+rightx:+a2,+righty:a4,-leftx:-a0,-lefty:-a1,-rightx:-a2,-righty:-a4,a:b0,b:b1,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,leftshoulder:b4,leftstick:b10,lefttrigger:b6,lefty:+a1,rightshoulder:b5,rightstick:b11,righttrigger:b7,start:b9,x:b2,y:b3,
+0x004ea518 0x008ebf18   36   37 .data   ascii   Application not compiled with SDL %d
+0x004ea918 0x008ec318   35   36 .data   ascii   Couldn't register application class
+0x004f2a30 0x008f4430    8   32 .data   utf32le @P├ø─òÃÖ╚æÌ®▀à blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Thaana,NKo
+0x004f3718 0x008f5118    8   32 .data   utf32le @P├ø─òÃ¢╩ìÓ®¡Ó¬ë blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,IPA Extensions,Gurmukhi,Gujarati
+0x004f3d4f 0x008f574f    5    6 .data   utf8    Ap&\b┬│ blocks=Basic Latin,Latin-1 Supplement
+0x004f4898 0x008f6298    6   24 .data   utf32le @P├ø─ò╚Ø╠à blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Combining Diacritical Marks
+0x004f5c1b 0x008f761b    4    5 .data   utf8    y%├ât blocks=Basic Latin,Latin-1 Supplement
+0x004f5c30 0x008f7630    8   32 .data   utf32le @P├ø─ò╚Ø╠àÓ«òÓ«▒ blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Combining Diacritical Marks,Tamil
+0x004f6fd0 0x008f89d0    8   32 .data   utf32le @P├ø─ò╚Ø╠àÓ«òÓ«▒ blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Combining Diacritical Marks,Tamil
+0x004f8370 0x008f9d70    8   32 .data   utf32le @P├ø─ò╚ì╦ëÓ¼ØÓ¼╣ blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Spacing Modifier Letters,Oriya
+0x004f8ad9 0x008fa4d9    6    7 .data   utf8    \r├á\a}0A blocks=Basic Latin,Latin-1 Supplement
+0x004f9658 0x008fb058    7   28 .data   utf32le @P├ø─ò╚ì╦ëÓ¼ò blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Spacing Modifier Letters,Oriya
+0x004f9e20 0x008fb820    4    5 .data   utf8    &\b┬ÁA blocks=Basic Latin,Latin-1 Supplement
+0x004fa948 0x008fc348    7   28 .data   utf32le @P├ø─ò╚ì╦ëÓ¼ò blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Spacing Modifier Letters,Oriya
+0x004fb110 0x008fcb10    4    5 .data   utf8    &\b┬ÁA blocks=Basic Latin,Latin-1 Supplement
+0x004fbc38 0x008fd638    8   32 .data   utf32le @P├ø─ò╚ì╦ëÓ¼ØÓ¼╣ blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Spacing Modifier Letters,Oriya
+0x004fc3a1 0x008fdda1    6    7 .data   utf8    \r├á\a}0A blocks=Basic Latin,Latin-1 Supplement
+0x004fcf20 0x008fe920    7   28 .data   utf32le @P├ø─ò╚ì╦ëÓ¼ò blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Spacing Modifier Letters,Oriya
+0x004fd6e8 0x008ff0e8    4    5 .data   utf8    &\b┬ÁA blocks=Basic Latin,Latin-1 Supplement
+0x004fe210 0x008ffc10    7   28 .data   utf32le @P├ø─ò╚ì╦ëÓ¼ò blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,Latin Extended-B,Spacing Modifier Letters,Oriya
+0x004fe9d8 0x009003d8    4    5 .data   utf8    &\b┬ÁA blocks=Basic Latin,Latin-1 Supplement
+0x004ff500 0x00900f00    8   32 .data   utf32le @P├ÿ┼ú╔│╩½Ó¬ºÓ½â blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,IPA Extensions,Gujarati
+0x005008f0 0x009022f0    8   32 .data   utf32le @P├ÿ┼ú╔│╠âÓ¼âÓ¼ƒ blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,IPA Extensions,Combining Diacritical Marks,Oriya
+0x00501d40 0x00903740    6   24 .data   utf32le @P├ÿ┼ú╔│═ø blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,IPA Extensions,Combining Diacritical Marks
+0x005031d8 0x00904bd8    8   32 .data   utf32le @P├ÿ┼ú╔│╠»Ó¼ºÓ¡â blocks=Basic Latin,Latin-1 Supplement,Latin Extended-A,IPA Extensions,Combining Diacritical Marks,Oriya
+0x0051d544 0x009fcd44    4    8 .rsrc   utf16le \a\a├╗$ blocks=Basic Latin,Latin-1 Supplement
+0x0051d8ac 0x009fd0ac   67  136 .rsrc   utf16le Copyright ┬® 1995-2024, Blizzard Entertainment. All rights reserved. blocks=Basic Latin,Latin-1 Supplement
+0x0051dddb 0x009fd5db  548  549 .rsrc   ascii   <?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0"><trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"></requestedExecutionLevel></requestedPrivileges></security></trustInfo><application xmlns="urn:schemas-microsoft-com:asm.v3"><windowsSettings><dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">True/PM</dpiAware></windowsSettings></application></assembly>

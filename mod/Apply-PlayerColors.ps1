@@ -9,34 +9,36 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Players not supported yet (minimap engine limitation).
-# Research notes ("Wat we zeker weten"):
-#   Player 2 minimap reads palette index 252 (shared with goldmine) -> stays blue
-#   Player 8 minimap reads palette index 188 (shared with build bar) -> stays yellow
-$DisabledPlayerIndices = @(1, 7)   # Player 2 and Player 8 (0-based)
+# Player 8 still unsupported: minimap table uses idx 2 (shared); no safe exclusive band yet.
+# See scripts/research/p2p8-colors-found.md
+$DisabledPlayerIndices = @(7)   # Player 8 only (0-based)
 
 # Authentic Remastered display colors for disabled players (UI only; not patched).
-# Cross-checked against forest.ppl indices above and skins.json ally bars:
-#   P2 bar_1 progress_cursor = [0,60,192], P8 bar_7 = [252,252,72]
 $DisabledPlayerDisplayHex = @{
-    1 = '#003CC0'   # Player 2 blue
-    7 = '#FCFC48'   # Player 8 yellow
+    7 = '#FFF759'   # Player 8 shared band 188
 }
 
 # Palette indices that feed those authentic colors (used when backup is available)
 $DisabledPlayerDisplayIndices = @{
-    1 = 252   # Player 2
-    7 = 188   # Player 8
+    7 = 188   # Player 8 shared
 }
 
-# Palette indices used by minimap AND ally (F5) for each supported player
+# Unit/team remap bands (exe table @ 0x008425F8: D0 D4 D8 DC E0 E4 E8).
+# Applied to both .ppl and mapColors sync for supported players.
 $PlayerColorIndices = @{
     0 = @(208, 209, 210, 211)
+    1 = @(212, 213, 214, 215)   # P2 unit band only
     2 = @(216, 217, 218, 219)
     3 = @(220, 221, 222, 223)
     4 = @(224, 225, 226, 227)
     5 = @(228, 229, 230, 231)
-    6 = @(232, 233, 234, 235, 255)   # P7 minimap extras (ally chip is skins.json)
+    6 = @(232, 233, 234, 235, 255)   # P7 includes minimap idx 255
+}
+
+# Minimap player-dot indices from exe table @ 0x008C8D84: D0 01 D8 DC E0 E4 FF 02
+# P2 = 1, P8 = 2. These are .ppl-only (mapColors.bin low bytes are a different format).
+$PlayerMinimapPplOnlyIndices = @{
+    1 = @(1)
 }
 
 # Unit/building selection outline = bright green at palette index 250 (0,63,0).
@@ -52,8 +54,8 @@ $EnemySelectionHighlightUiDisabled = $true
 $EnemySelectionDisplayHex = '#FF0000'
 
 # First palette index per player, used to read/write JSON defaults from authentic backup.
-# P2/P8 use the minimap source indices (252 / 188), not the unpatchable band starts.
-$VanillaJsonColorIndices = @(208, 252, 216, 220, 224, 228, 232, 188)
+# P2 defaults from minimap slot 1 (#0094FC); P8 still shared 188.
+$VanillaJsonColorIndices = @(208, 1, 216, 220, 224, 228, 232, 188)
 
 $PplFiles = @(
     'x86\Data\Art\bgs\Forest\forest.ppl',
@@ -355,12 +357,17 @@ function Restore-PreservedPaletteSlots($targetBytes, $vanillaBytes, [int[]]$indi
     }
 }
 
-function Set-PlayerColorsOnBytes($bytes, $colors) {
+function Set-PlayerColorsOnBytes($bytes, $colors, [switch]$IncludePplOnlyMinimap) {
     foreach ($playerIndex in $PlayerColorIndices.Keys) {
         if ($DisabledPlayerIndices -contains $playerIndex) { continue }
         $baseColor = $colors[$playerIndex]
         foreach ($idx in $PlayerColorIndices[$playerIndex]) {
             Set-PaletteIndexFromColor $bytes $idx $baseColor
+        }
+        if ($IncludePplOnlyMinimap -and $PlayerMinimapPplOnlyIndices.ContainsKey([int]$playerIndex)) {
+            foreach ($idx in $PlayerMinimapPplOnlyIndices[[int]$playerIndex]) {
+                Set-PaletteIndexFromColor $bytes $idx $baseColor
+            }
         }
     }
 }
@@ -509,10 +516,11 @@ function Apply-MinimapAndAllyColors {
         $pplBytes = Read-FileBytes $pplFile
         $binBytes = Read-FileBytes $binFile
 
-        Set-PlayerColorsOnBytes $pplBytes $colors
+        Set-PlayerColorsOnBytes $pplBytes $colors -IncludePplOnlyMinimap
         Restore-PreservedPaletteSlots $pplBytes $vanillaPpl $PreservePaletteIndicesPpl
         Set-SelectionHighlightOnBytes $pplBytes $SelectionHighlightColor
 
+        # mapColors.bin: unit bands only — never low minimap slots 1/2 (different file format).
         Set-PlayerColorsOnBytes $binBytes $colors
         foreach ($idx in ($playerIndices + $selectionPatchIndices)) {
             Copy-PaletteIndexBytes $pplBytes $binBytes $idx
@@ -577,7 +585,10 @@ function Apply-MinimapAndAllyColors {
     Apply-AllyScreenSkinsJson -Colors $colors -Root $root
     Test-AllyScreenSkinsJson -colors $colors -Root $root
 
-    Write-ApplyLog "Applied minimap + ally + selection highlight to $root (players 1,3,4,5,6,7)"
+    $patchedPlayers = @(
+        $PlayerColorIndices.Keys | Where-Object { $DisabledPlayerIndices -notcontains $_ } | ForEach-Object { $_ + 1 } | Sort-Object
+    ) -join ','
+    Write-ApplyLog "Applied minimap + ally + selection highlight to $root (players $patchedPlayers)"
     return $gameRunning
 }
 

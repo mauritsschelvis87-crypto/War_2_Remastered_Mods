@@ -1,0 +1,198 @@
+            0x00512370      add   byte [eax], al
+            0x00512372      mov   edx, dword [ebp-0xf8]
+            0x00512378      mov   ecx, dword [0x939da8]                ; [0x939da8:4]=0
+            0x0051237e      mov   edi, dword [0x939df4]                ; [0x939df4:4]=0
+            0x00512384      movzx eax, byte [edx+0x18]
+            0x00512388      mov   esi, dword [edx+0x1c]
+            0x0051238b      movzx eax, byte [eax+0x919390]             ; RELOC 3 pe_0051238c @ 0x00000000
+            0x00512392      mov   al, byte [eax+0x8425f8]
+            0x00512398      mov   dword [ebp-0xf4], eax
+            0x0051239e      call  0x617320
+            0x005123a3      push  dword [ebp-0xf4]
+            0x005123a9      mov   ecx, edi
+            0x005123ab      push  0x00
+            0x005123ad      push  esi
+            0x005123ae      push  eax
+            0x005123af      mov   eax, dword [ebp-0xf8]                ; RELOC 3 pe_005123b4 @ 0x00000000
+            0x005123b5      push  dword [ebp-0xf0]
+            0x005123bb      push  dword [eax+0x14]
+            0x005123be      push  dword [eax+0x10]
+            0x005123c1      push  dword [eax+0x0c]
+            0x005123c4      push  dword [eax+0x08]
+            0x005123c7      call  0x61bc50
+        ÔöîÔöÇ< 0x005123cc      jmp   0x5124eb
+        Ôöé   0x005123d1      test  edi, edi
+       ÔöîÔöÇÔöÇ< 0x005123d3      jz    0x5124f1
+       ÔöéÔöé   0x005123d9      cmp   byte [eax], 0x01
+       ÔöéÔöé   ;-- pe_005123dc:
+      ÔöîÔöÇÔöÇÔöÇ< 0x005123dc      jnz   pe_005123dc                          ; RELOC 3 pe_005123dc @ 0x00000000
+      ÔöéÔöéÔöé   0x005123e2      mov   esi, dword [edi+0x04]
+      ÔöéÔöéÔöé   0x005123e5      mov   dl, byte [edi+0x20]
+      ÔöéÔöéÔöé   0x005123e8      mov   eax, dword [edi+0x08]
+      ÔöéÔöéÔöé   0x005123eb      push  edx
+      ÔöéÔöéÔöé   0x005123ec      lea   ecx, dword [esi+0x01]
+      ÔöéÔöéÔöé   0x005123ef      inc   eax
+      ÔöéÔöéÔöé   0x005123f0      push  ecx
+      ÔöéÔöéÔöé   0x005123f1      mov   ecx, dword [0x939df4]                ; [0x939df4:4]=0
+      ÔöéÔöéÔöé   0x005123f7      push  eax
+      ÔöéÔöéÔöé   0x005123f8      push  esi
+      ÔöéÔöéÔöé   0x005123f9      push  dword [edi]
+      ÔöéÔöéÔöé   0x005123fb      call  0x61be20
+      ÔöéÔöéÔöé   ;-- pe_00512400:
+      ÔöéÔöéÔöé   0x00512400      mov   esi, dword [edi+0x0c]                ; RELOC 3 pe_00512400 @ 0x00000000
+      ÔöéÔöéÔöé   0x00512403      mov   dl, byte [edi+0x20]
+      ÔöéÔöéÔöé   0x00512406      mov   eax, dword [edi+0x08]
+      ÔöéÔöéÔöé   0x00512409      push  edx
+      ÔöéÔöéÔöé   0x0051240a      lea   ecx, dword [esi+0x01]
+      ÔöéÔöéÔöé   0x0051240d      inc   eax
+      ÔöéÔöéÔöé   0x0051240e      push  ecx
+      ÔöéÔöéÔöé   0x0051240f      mov   ecx, dword [0x939df4]                ; [0x939df4:4]=0
+      ÔöéÔöéÔöé   0x00512415      push  eax
+      ÔöéÔöéÔöé   0x00512416      push  esi
+      ÔöéÔöéÔöé   0x00512417      push  dword [edi]
+            0x00512b10      mov   dh, 0x05
+            0x00512b12      rcl   byte [ebp+0xd8b008c], 0xa8
+            0x00512b19      popfd
+            0x00512b1a      xchg  ebx, eax
+            0x00512b1b      add   byte [ebx-0x6c620bcb], cl
+            0x00512b21      add   byte [edi], cl
+            0x00512b23      mov   dh, 0x80                             ; 128
+            0x00512b25      nop
+            0x00512b26      xchg  ebx, eax
+            0x00512b27      xchg  ecx, eax
+            0x00512b28      add   byte [edx-0x7bda0780], cl            ; RELOC 3 pe_00512b2c @ 0x00000000
+            0x00512b2e      add   byte [ecx-0xf37b], cl
+            0x00512b34      invalid
+            0x00512b35      call  0x617320
+            0x00512b3a      push  dword [ebp-0xf4]
+            0x00512b40      mov   ecx, esi
+            0x00512b42      push  0x00
+            0x00512b44      push  0x00
+            0x00512b46      push  eax
+            0x00512b47      push  edi
+            0x00512b48      push  dword [0x8c95bc]
+            0x00512b4e      push  dword [0x8c95b8]                     ; RELOC 3 pe_00512b50 @ 0x00000000
+            0x00512b54      push  dword [0x8c95b4]
+            0x00512b5a      push  dword [0x8c95b0]
+            0x00512b60      call  0x61bd30
+            0x00512b65      cmp   byte [0x8c9618], 0x00                ; [0x8c9618:1]=0
+        ÔöîÔöÇ< 0x00512b6c      jz    0x512c1e
+        Ôöé   0x00512b72      mov   ecx, dword [0x8c95f8]                ; [0x8c95f8:4]=0; RELOC 3 pe_00512b74 @ 0x00000000
+        Ôöé   0x00512b78      movzx eax, byte [0x8c9614]                 ; [0x8c9614:1]=0
+        Ôöé   0x00512b7f      push  eax
+        Ôöé   0x00512b80      lea   eax, dword [ecx+0x01]
+        Ôöé   0x00512b83      push  eax
+        Ôöé   0x00512b84      mov   eax, dword [0x8c95fc]                ; [0x8c95fc:4]=0
+        Ôöé   0x00512b89      inc   eax
+        Ôöé   0x00512b8a      push  eax
+        Ôöé   0x00512b8b      push  ecx
+        Ôöé   0x00512b8c      push  dword [0x8c95f4]
+        Ôöé   0x00512b92      mov   ecx, dword [0x939df4]                ; [0x939df4:4]=0
+        Ôöé   ;-- pe_00512b98:
+        Ôöé   0x00512b98      call  pe_00512b98                          ; RELOC 3 pe_00512b98 @ 0x00000000
+        Ôöé   0x00512b9d      mov   ecx, dword [0x8c9600]                ; [0x8c9600:4]=0
+            ;-- pe_004f0980:
+            0x004f0980      or    dword [edx-0x6f7877ff], 0xc7009193   ; [0xc7009193:4]=-1; RELOC 3 pe_004f0980 @ 0x00000000
+            0x004f098a      add   edi, edi
+            0x004f098c      invalid
+            0x004f098d      invalid
+            0x004f098e      inc   dword [ebp+0x5fbd75ff]               ; RELOC 3 pe_004f0990 @ 0x00000000
+            ;-- pe_004f0994:
+            0x004f0994      mov   dword [0x8c8db4], esi                ; RELOC 3 pe_004f0994 @ 0x00000000
+            0x004f099a      pop   esi
+        ÔöîÔöÇ< 0x004f099b      jmp   reloc.pe_004f09ac                    ; RELOC 3 pe_004f099c @ 0x00000000
+        Ôöé   0x004f099d      xor   eax, eax
+        Ôöé   0x004f099f      nop
+        Ôöé   ;-- pe_004f09a0:
+       ÔöîÔöÇÔöÇ> 0x004f09a0      mov   byte [eax+0x919390], al              ; RELOC 3 pe_004f09a0 @ 0x00000000
+       ÔòÄÔöé   0x004f09a6      inc   eax
+       ÔòÄÔöé   0x004f09a7      cmp   eax, 0x0f                            ; 0xf ; 15; RELOC 3 pe_004f09a8 @ 0x00000000
+       ÔööÔöÇÔöÇ< 0x004f09aa      jl    reloc.pe_004f09a0
+        Ôöé   ;-- pe_004f09ac:
+        ÔööÔöÇ> 0x004f09ac      xor   edx, edx                             ; RELOC 3 pe_004f09ac @ 0x00000000
+            0x004f09ae      nop
+            ;-- pe_004f09b0:
+            0x004f09b0      movzx ecx, byte [edx+0x919390]             ; RELOC 3 pe_004f09b0 @ 0x00000000
+            0x004f09b7      mov   al, byte [ecx+0x8c8d74]              ; RELOC 3 pe_004f09b8 @ 0x00000000
+            0x004f09bd      mov   byte [edx+0x8c8d94], al              ; RELOC 3 pe_004f09c0 @ 0x00000000
+            0x004f09c3      mov   al, byte [ecx+0x8c8d84]              ; RELOC 3 pe_004f09c4 @ 0x00000000
+            0x004f09c9      mov   byte [edx+0x8c8d64], al              ; RELOC 3 pe_004f09cc @ 0x00000000
+            0x004f09cf      mov   al, byte [ecx+str.01743625000000020174362500000002]; RELOC 3 pe_004f09d0 @ 0x00000000
+            0x004f09d5      movzx ecx, byte [edx+0x919391]
+            0x004f09dc      mov   byte [edx+0x8c59b8], al
+            0x004f09e2      mov   al, byte [ecx+0x8c8d74]
+            0x004f09e8      mov   byte [edx+0x8c8d95], al
+            0x004f09ee      mov   al, byte [ecx+0x8c8d84]
+            0x004f09f4      mov   byte [edx+0x8c8d65], al
+            0x004f09fa      mov   al, byte [ecx+str.01743625000000020174362500000002]
+            0x004f0a00      movzx ecx, byte [edx+0x919392]
+            0x004f0a07      mov   byte [edx+0x8c59b9], al
+            0x004f0a0d      mov   al, byte [ecx+0x8c8d74]
+            0x004f0a13      mov   byte [edx+0x8c8d96], al
+            0x004f0a19      mov   al, byte [ecx+0x8c8d84]
+            0x004f0a1f      mov   byte [edx+0x8c8d66], al
+            0x004f0a25      mov   al, byte [ecx+str.01743625000000020174362500000002]
+            0x004f0a2b      movzx ecx, byte [edx+0x919393]
+            0x004f0a32      mov   byte [edx+0x8c59ba], al
+            0x004f0a38      mov   al, byte [ecx+0x8c8d74]
+            0x004f0a3e      mov   byte [edx+0x8c8d97], al
+            0x004f0a44      mov   al, byte [ecx+0x8c8d84]
+            0x004f0a4a      mov   byte [edx+0x8c8d67], al
+            0x004f0a50      mov   al, byte [ecx+str.01743625000000020174362500000002]
+            0x004f0a56      movzx ecx, byte [edx+0x919394]
+            0x004f0a5d      mov   byte [edx+0x8c59bb], al
+            0x004f0a63      mov   al, byte [ecx+0x8c8d74]
+            0x004f0a69      mov   byte [edx+0x8c8d98], al
+            0x004f0a6f      mov   al, byte [ecx+0x8c8d84]
+            0x004f0a75      mov   byte [edx+0x8c8d68], al
+            0x004f0a7b      invalid
+            0x004f0a7c      invalid
+            0x004f0a7d      test  al, 0x59                             ; 89
+            0x004f0a7f      invalid
+            0x004f0a80      add   byte [eax-0x73a6437e], cl
+            0x004f0a86      add   byte [ebx-0x57cfa3e], al
+            0x004f0a8c      invalid
+            0x004f0a8d      jl    reloc.pe_004f09b0
+            0x004f0a93      mov   ecx, dword [ebp-0x04]
+            0x004f0a96      xor   ecx, ebp
+            0x004f0a98      call  0x7e91e5
+            0x004ef860      inc   esi
+            0x004ef861      daa
+            0x004ef862      mov   eax, dword [eax*4+0x9185f0]
+            0x004ef869      mov   edx, eax
+            0x004ef86b      and   edx, 0x20                            ; 32
+        ÔöîÔöÇ< 0x004ef86e      jnz   0x4ef8d3
+        Ôöé   0x004ef870      and   eax, 0x2020
+        Ôöé   0x004ef875      cmp   eax, 0x2020                          ; '  '
+       ÔöîÔöÇÔöÇ< 0x004ef87a      jz    0x4ef8d3
+       ÔöéÔöé   0x004ef87c      movzx eax, byte [esi+0x2d]
+       ÔöéÔöé   0x004ef880      mov   cl, byte [eax+0x8c8d94]
+       ÔöéÔöé   0x004ef886      mov   al, cl
+       ÔöéÔöé   0x004ef888      inc   cl
+       ÔöéÔöé   0x004ef88a      mov   byte [0x8bf0d0], al
+       ÔöéÔöé   0x004ef88f      mov   al, cl
+       ÔöéÔöé   0x004ef891      inc   cl
+       ÔöéÔöé   0x004ef893      mov   byte [0x8bf0d1], al
+       ÔöéÔöé   0x004ef898      mov   byte [0x8bf0d2], cl
+       ÔöéÔöé   0x004ef89e      inc   cl
+       ÔöéÔöé   0x004ef8a0      mov   byte [0x8bf0d3], cl
+       ÔöéÔöé   0x004ef8a6      movzx eax, byte [esi+0x2d]
+       ÔöéÔöé   0x004ef8aa      push  eax
+       ÔöéÔöé   0x004ef8ab      movzx eax, byte [esi+0x0a]
+       ÔöéÔöé   0x004ef8af      mov   al, byte [eax+0x8c8dac]
+       ÔöéÔöé   0x004ef8b5      add   al, byte [esi+0x09]
+       ÔöéÔöé   0x004ef8b8      movzx eax, al
+       ÔöéÔöé   0x004ef8bb      push  eax
+       ÔöéÔöé   0x004ef8bc      movzx eax, byte [esi+0x2b]
+       ÔöéÔöé   0x004ef8c0      push  dword [eax*4+0x91d3b0]
+       ÔöéÔöé   0x004ef8c7      push  esi
+       ÔöéÔöé   0x004ef8c8      push  esi
+       ÔöéÔöé   0x004ef8c9      call  0x4efd40
+       ÔöéÔöé   0x004ef8ce      add   esp, 0x14
+      ÔöîÔöÇÔöÇÔöÇ< 0x004ef8d1      jmp   0x4ef92b
+      ÔöéÔööÔööÔöÇ> 0x004ef8d3      cmp   byte [esi+0x51], 0x00
+      Ôöé ÔöîÔöÇ< 0x004ef8d7      jnz   0x4ef902
+      Ôöé Ôöé   0x004ef8d9      movzx ecx, word [esi+0x1e]
+      Ôöé Ôöé   0x004ef8dd      test  ecx, reloc.pe_00002000               ; 0x2000
+      ÔöéÔöîÔöÇÔöÇ< 0x004ef8e3      jnz   0x4ef902
+      ÔöéÔöéÔöé   0x004ef8e5      mov   al, byte [esi+0x2c]

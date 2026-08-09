@@ -1,0 +1,9 @@
+===== widget_text_red
+===== widget_text_white
+===== widget_text_yellow
+===== stats_player_name_
+===== drop_text_color
+===== team_color_
+===== alliances_menu
+===== fe_alliance_team_color_border
+===== mp_dip_allies
