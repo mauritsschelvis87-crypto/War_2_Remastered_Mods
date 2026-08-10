@@ -10,7 +10,7 @@ Windows WPF tool for safely changing confirmed Warcraft II Remastered player col
 - **Player 2:** unit band `212–215` + minimap palette index `1` (exe table `0x008C8D84`) + ally/victory skins
 - **Player 8:** still locked (shared yellow / minimap index `2`)
 - **Other colors:** Self highlight (`250`), Enemy highlight (`249`), Ally highlight (`251`), Gold mine (`236–238`), Oil patch (`246`), Critter minimap (`247`; selection outline uses Ally)
-- **Feature:** mark gone players and computer/NPC clans on the Alliances screen (`[X]` + red name). Covers human leave/drop/eliminate and local computer wipe when units and buildings are gone (zeppelin / flying machine do not block wipe, same as the game). Optional **chat names in player color** (multiplayer chat lines use that player’s current Player colors).
+- **Feature:** mark gone players and computer/NPC clans on the Alliances screen (`[X]` + red name). Covers human leave/drop/eliminate and local computer wipe when units and buildings are gone (zeppelin / flying machine do not block wipe, same as the game). Optional **chat names in player color** and **pause/resume names in player color** (e.g. “Avent resumed the game.”).
 - **Bug fixes:** optional **chat during pause screen** (read + send while paused). Enable once — a background watcher (`AllyLeaveWatch`) starts with Windows and injects when the game runs; Studio can stay closed. Preferences are stored in `mod\extra-features.json` and survive reboot.
 
 ## Install from source
