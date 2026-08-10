@@ -35,9 +35,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         get => _allyLeaveRedNames;
         set
         {
+            if (_allyLeaveRedNames == value) return;
             _allyLeaveRedNames = value;
             OnPropertyChanged();
-            if (value) TryAutoInjectAllyLeaveHook();
+            if (!string.IsNullOrEmpty(_extraConfigPath))
+                SaveExtraFeatures();
+            _hookInjectedForRunningGame = false;
+            UpdateAllyLeaveHookStatus(forceInject: value);
         }
     }
 
@@ -53,7 +57,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         DataContext = this;
 
         _hookWatchTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _hookWatchTimer.Tick += (_, _) => TryAutoInjectAllyLeaveHook();
+        _hookWatchTimer.Tick += (_, _) => UpdateAllyLeaveHookStatus(forceInject: false);
 
         try
         {
@@ -65,7 +69,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             LoadCards();
             LoadExtraFeatures();
             _hookWatchTimer.Start();
-            TryAutoInjectAllyLeaveHook();
+            UpdateAllyLeaveHookStatus(forceInject: AllyLeaveRedNames);
         }
         catch (Exception ex)
         {
@@ -74,7 +78,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _extraConfigPath = string.Empty;
             _nativeDir = string.Empty;
             Status = ex.Message;
-            WpfMessageBox.Show(ex.Message, "Modding Studio", MessageBoxButton.OK, MessageBoxImage.Error);
+            WpfMessageBox.Show(ex.Message, "Quality of Life Modding", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -87,7 +91,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (File.Exists(candidate)) return candidate;
             folder = folder.Parent;
         }
-        throw new FileNotFoundException("The patch engine was not found. Reinstall Modding Studio.");
+        throw new FileNotFoundException("The patch engine was not found. Reinstall Quality of Life Modding.");
     }
 
     private void LoadCards()
@@ -182,17 +186,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static bool IsWarcraftIiRunning() =>
         Process.GetProcessesByName("Warcraft II").Length > 0;
 
-    private void TryAutoInjectAllyLeaveHook()
+    private void UpdateAllyLeaveHookStatus(bool forceInject)
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!AllyLeaveRedNames)
+        {
+            if (IsWarcraftIiRunning() && forceInject)
+            {
+                try { Status = SyncAllyLeaveHook(throwOnError: false); }
+                catch (Exception ex) { Status = ex.Message; }
+            }
+            return;
+        }
 
         if (!IsWarcraftIiRunning())
         {
             _hookInjectedForRunningGame = false;
+            Status = "Extra ON — start Warcraft II; hook auto-loads. Then open Alliances with F11.";
             return;
         }
 
-        if (!AllyLeaveRedNames || _hookInjectedForRunningGame) return;
+        if (_hookInjectedForRunningGame && !forceInject) return;
 
         try
         {
@@ -201,14 +216,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 message.Contains("enabled", StringComparison.OrdinalIgnoreCase))
             {
                 _hookInjectedForRunningGame = true;
-                Status = message;
+                Status = message.Trim() + " Marker: [X] red name on F11 Alliances (players + computers).";
+            }
+            else
+            {
+                _hookInjectedForRunningGame = false;
+                Status = string.IsNullOrWhiteSpace(message)
+                    ? "Extra hook inject failed (no message). Run Studio as admin if needed."
+                    : message;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Auto-inject is best-effort; Apply still reports errors explicitly.
+            _hookInjectedForRunningGame = false;
+            Status = "Extra hook error: " + ex.Message;
         }
     }
+
+    private void TryAutoInjectAllyLeaveHook() => UpdateAllyLeaveHookStatus(forceInject: false);
 
     private string SyncAllyLeaveHook(bool throwOnError = true)
     {
@@ -225,7 +250,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             _hookInjectedForRunningGame = false;
             return AllyLeaveRedNames
-                ? "Extra setting saved. Hook loads automatically when Warcraft II is running (or click Apply again after start)."
+                ? "Extra ON — start Warcraft II; hook auto-loads. Then open Alliances with F11."
                 : "Extra setting saved.";
         }
 
@@ -292,7 +317,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 "Colors were applied to the minimap and victory/ally bars.\n\n" +
                 hookStatus + "\n\n" +
                 "Restart Warcraft II if color changes do not show yet.",
-                "Modding Studio", MessageBoxButton.OK, MessageBoxImage.Information);
+                "Quality of Life Modding", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {

@@ -170,7 +170,7 @@ int InjectAndSet(const std::wstring& dllPath, bool enable)
     CloseHandle(process);
 
     std::fwprintf(stdout,
-        L"Ally leave marker %s. Open Alliances after a leave/eliminate; log: %%TEMP%%\\war2_ally_leave_hook.log\n",
+        L"Ally leave marker %s. Open Alliances with F11 after eliminate; log: %%TEMP%%\\war2_ally_leave_hook.log\n",
         enable ? L"enabled" : L"disabled");
     return 0;
 }

@@ -1,4 +1,4 @@
-# Warcraft II Remastered - Player Color Studio (minimap + ally screen)
+# Warcraft II Remastered - Quality of Life Modding (minimap + ally screen)
 param(
     [string]$GameRootPath = 'C:\Program Files (x86)\Warcraft II Remastered',
     [switch]$ApplySavedConfigOnly,

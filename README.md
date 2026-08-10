@@ -1,4 +1,4 @@
-# Warcraft II — Modding Studio
+# Warcraft II — Quality of Life Modding
 
 **Version 1.0.2**
 
@@ -9,7 +9,7 @@ Windows WPF tool for safely changing confirmed Warcraft II Remastered player col
 - **Players 1–7:** minimap dots, unit/team palette bands, and victory/ally bars
 - **Player 2:** unit band `212–215` + minimap palette index `1` (exe table `0x008C8D84`) + ally/victory skins
 - **Player 8:** still locked (shared yellow / minimap index `2`)
-- **Extra:** mark left/dropped/eliminated players in red on the Alliances screen (runtime hook; auto-injects when the game is running)
+- **Extra:** mark gone players and computer/NPC clans on the Alliances screen (`[X]` + red name). Covers human leave/drop/eliminate and local computer wipe when units and buildings are gone (zeppelin / flying machine do not block wipe, same as the game)
 
 ## Install from source
 

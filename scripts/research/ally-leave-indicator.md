@@ -341,11 +341,17 @@ Use to know when the dialog (re)builds rows.
 - [x] Stable scan signatures captured for H1–H4
 - [x] Working prototype DLL (`mod/native/AllyLeaveHook.dll` + injector)
 - [x] Modding Studio **Extra** tab toggle (`AllyLeaveRedNames`)
+- [x] Leave-write hooks **H1** + secondary helper (H2 sig) set `g_leftFlags[player]`; Alliances marks on `leftFlags OR status>=2` (humans left/drop + eliminate/defeat, including computers on eliminate)
 
 ---
 
-## Immediate next action
+## Implementation note (v1.0.2+)
 
-1. Prototype a small x86 DLL that pattern-scans **H2** and, on `status[edi] != 1`, applies red text to the current `team_color_*` widget (skin id or raw RGB).
-2. Private 2-player MP test: leave → `0x918CAC[i]==3` → open Alliances → name is red.
-3. Only then: Modding Studio toggle “Ally leave marker (experimental)”.
+`AllyLeaveHook.dll` installs:
+
+1. **Alliances name bind** (row set-text) — red + `[X]` when inactive.
+2. **H1 status write** (`movzx eax,[esi+1]` / `mov [eax+status],3`) — records leave/drop/elim from the chat path.
+3. **Secondary gone helper** / **eliminate** (`0x4F3F80`) — same UI flags for computer/other eliminate paths.
+4. **Computer wipe census** — initial per-player units/buildings snapshot (type rows + unit lists), then track gain/lost. Wipe when both buckets hit 0. Excludes oil tanker / transport / flying machine / zeppelin (same as game `HasForces`).
+
+Marking uses **OR** of `g_leftFlags[i]`, wipe UI flag, `status[i] >= 2`, and defeat-flag `*(statusBase+0x21D8+i)` in `{1,2,3}` (VA `0x91AA84`).

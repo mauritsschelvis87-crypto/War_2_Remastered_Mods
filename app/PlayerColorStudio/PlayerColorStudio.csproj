@@ -11,5 +11,7 @@
     <Version>1.0.2</Version>
     <AssemblyVersion>1.0.2.0</AssemblyVersion>
     <FileVersion>1.0.2.0</FileVersion>
+    <AssemblyTitle>Quality of Life Modding</AssemblyTitle>
+    <Product>Warcraft II — Quality of Life Modding</Product>
   </PropertyGroup>
 </Project>

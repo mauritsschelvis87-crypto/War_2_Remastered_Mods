@@ -1,8 +1,8 @@
 <Window x:Class="PlayerColorStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Warcraft II — Modding Studio"
-        Width="980" Height="720" MinWidth="860" MinHeight="620"
+        Title="Warcraft II — Quality of Life Modding"
+        Width="1120" Height="820" MinWidth="960" MinHeight="700"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource WindowBrush}" Foreground="White">
     <Grid Margin="24" Background="{StaticResource WindowBrush}">
@@ -32,9 +32,9 @@
                                             Opacity="{Binding IsEnabled, Converter={StaticResource BooleanToOpacityConverter}}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="32"/>
-                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="0.92*"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="1.08*"/>
                                             </Grid.ColumnDefinitions>
 
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -50,7 +50,8 @@
                                                            Foreground="White" VerticalAlignment="Center" FontSize="14"/>
                                             </StackPanel>
 
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                                        Margin="-18,0,0,0">
                                                 <StackPanel VerticalAlignment="Center" Margin="0,0,14,0" MinWidth="78">
                                                     <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold" Foreground="White"/>
                                                     <TextBlock Text="editable" FontSize="12" Foreground="#FFB8C4D8" Margin="0,2,0,0"/>
@@ -86,9 +87,9 @@
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel>
                                 <CheckBox IsChecked="{Binding AllyLeaveRedNames}"
-                                          Content="Mark left players in red on the Alliances screen"/>
+                                          Content="Mark gone players and computers on the Alliances screen"/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="When a player leaves, drops, or is eliminated (chat: left / dropped / eliminated), their Alliances name shows in red and is prefixed with [X]. The hook loads automatically while this option is on and Warcraft II is running. NPC/computer slots only change after a real eliminate — killing some units is not enough."/>
+                                           Text="Alliances opens with F11 (or Allies button upper-right) — not F5. When a human leaves/drops or a computer/NPC clan is wiped (no units and no buildings left), that row shows '[X] Clan Name' in red. Keep Extra ON and leave this app open while starting the game so the hook injects. Keep Alliances open to see marks update live. Status bar must say the marker is enabled; also check %TEMP%\war2_ally_leave_hook.log."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

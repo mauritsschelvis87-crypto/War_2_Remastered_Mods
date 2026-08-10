@@ -28,7 +28,7 @@ $modTarget = Join-Path $installRoot 'mod'
 $stage = Join-Path ([IO.Path]::GetTempPath()) ('PlayerColorStudio-' + [guid]::NewGuid().ToString('N'))
 
 if (!(Test-Path -LiteralPath $projectFile) -or !(Test-Path -LiteralPath $engineSource)) {
-    throw 'Installer files are incomplete. Download the complete Player Color Studio release.'
+    throw 'Installer files are incomplete. Download the complete Quality of Life Modding release.'
 }
 if (!(Test-Path -LiteralPath (Join-Path $GameRootPath 'x86\Data'))) {
     throw "Warcraft II Remastered was not found at: $GameRootPath"
@@ -45,7 +45,7 @@ try {
     }
 
     & dotnet publish $projectFile --configuration Release --output (Join-Path $stage 'app') | Write-Host
-    if ($LASTEXITCODE -ne 0) { throw 'The Player Color Studio app build failed.' }
+    if ($LASTEXITCODE -ne 0) { throw 'The Quality of Life Modding app build failed.' }
 
     New-Item -ItemType Directory -Path $appTarget, $modTarget -Force | Out-Null
     Copy-Item -Path (Join-Path $stage 'app\*') -Destination $appTarget -Recurse -Force
@@ -54,7 +54,7 @@ try {
     if (!$NoLaunch) {
         Start-Process -FilePath (Join-Path $appTarget 'PlayerColorStudio.exe') -WorkingDirectory $appTarget
     }
-    Write-Host "Installed Player Color Studio: $installRoot"
+    Write-Host "Installed Quality of Life Modding: $installRoot"
 }
 finally {
     if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }

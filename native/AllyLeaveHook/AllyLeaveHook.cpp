@@ -1,6 +1,7 @@
 // Warcraft II Remastered — Alliances leave indicator (red name)
-// Hooks the alliances row name bind; when status[player] != 1, force red text
-// and prefix the name so the change is visible even if color is later overwritten.
+// 1) Hooks leave/drop/elim status writes → g_leftFlags[player]
+// 2) Tracks unit gain/lost per player; last asset wipe → UI gone marker
+// 3) Hooks alliances row name bind; when leftFlags OR status>=2, force red + GONE
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -11,7 +12,7 @@
 
 namespace {
 
-constexpr uint32_t kRedTextColor = 0xFF627CEE; // bytes EE 7C 62 FF = RGB(238,124,98) + A
+constexpr uint32_t kRedTextColor = 0xFF0000FF; // bytes FF 00 00 FF = pure red RGB(255,0,0) + A
 constexpr size_t kUiColorOffset = 0x20C;
 
 using SetTextFn = void(__cdecl*)(void* ui, const char* name, int prop);
@@ -20,13 +21,76 @@ volatile LONG g_enabled = 0;
 volatile LONG g_ready = 0;
 volatile LONG g_hitCount = 0;
 volatile LONG g_recolorCount = 0;
+volatile LONG g_leaveEventCount = 0;
 
 uint8_t* g_statusBase = nullptr;
+// Per-player defeat/result flag at statusBase+0x21D8 (VA 0x91AA84).
+// Values: 0=ok, 1=left, 2=eliminated, 3=defeat; other bytes are garbage/unused.
+uint8_t* g_defeatBase = nullptr;
+constexpr ptrdiff_t kDefeatFromStatus = 0x21D8;
+// Preferred VAs in Warcraft II.exe (ImageBase 0x400000).
+constexpr uintptr_t kPreferredStatus = 0x00918CAC;
+// Per-unit-type linked-list heads (dword[type] → unit*, next at unit+0x68).
+constexpr uintptr_t kPreferredUnitTypeHeads = 0x00934848;
+// type → word[8] per-player counts (human/orc pairs often share one row).
+constexpr uintptr_t kPreferredTypeCountRows = 0x008C0B80;
+// PUD-style: Farm and above are buildings.
+constexpr int kFirstBuildingType = 58;
+// HasForces excludes these from wipe (still “alive” if only these remain → wiped).
+// 26/27 oil tanker, 28/29 transport, 40 flying machine, 41 zeppelin.
+constexpr int kMaxUnitTypesScan = 105;
+constexpr int kMaxPerTypeList = 96;
+
+void** g_unitTypeHeads = nullptr;
+uint16_t** g_typeCountRows = nullptr; // 8C0B80[type] → word[8]
+// Per-player wipe census (excludes tanker/transport/flyer/zeppelin).
+volatile LONG g_units[8]{};
+volatile LONG g_buildings[8]{};
+volatile LONG g_liveAssets[8]{}; // units+buildings cache for UI logs
+volatile LONG g_censusDone = 0;
+using HasForcesFn = int(__cdecl*)(int player);
+HasForcesFn g_hasForces = nullptr;
+uint8_t* g_localPlayer = nullptr; // VA 0x918CCD
+
+// Game eliminate helper: void __cdecl EliminatePlayer(int player) @ 0x4F3F80
+using EliminateFn = void(__cdecl*)(int player);
+EliminateFn g_originalEliminate = nullptr;
+uint8_t* g_eliminateSite = nullptr;
+uint8_t g_origEliminate[7]{};
+void* g_eliminateTramp = nullptr;
+
 SetTextFn g_originalSetText = nullptr;
 uint8_t* g_patchSite = nullptr;
 uint8_t g_originalCall[5]{};
 void* g_trampoline = nullptr;
 
+// H1: movzx eax,[esi+1]; mov [eax+status],3  — packet leave/drop/elim
+// H2: mov [ecx+status],3 ; mov [eax+slot],3 — secondary gone helper
+uint8_t* g_leaveWriteH1 = nullptr;
+uint8_t* g_leaveWriteH2 = nullptr;
+uint8_t g_origLeaveH1[7]{};
+uint8_t g_origLeaveH2[7]{};
+void* g_leaveTrampH1 = nullptr;
+void* g_leaveTrampH2 = nullptr;
+
+// Unit gain/lost count updaters (VA 0x4B52D0 / 0x4B5730).
+using UnitCountFn = void(__cdecl*)(void* unit);
+UnitCountFn g_originalUnitGained = nullptr;
+UnitCountFn g_originalUnitLost = nullptr;
+uint8_t* g_unitGainedSite = nullptr;
+uint8_t* g_unitLostSite = nullptr;
+uint8_t g_origUnitGained[7]{};
+uint8_t g_origUnitLost[7]{};
+void* g_unitGainedTramp = nullptr;
+void* g_unitLostTramp = nullptr;
+
+volatile LONG g_leftFlags[8]{};
+volatile LONG g_everHadAssets[8]{};
+volatile LONG g_forceRowLog = 0;
+volatile LONG g_verboseRows = 0;
+void* g_lastUi[8]{};
+char g_lastName[8][80]{};
+DWORD g_lastSetTextTick = 0;
 char g_nameBuf[8][160]{};
 char g_logPath[MAX_PATH]{};
 
@@ -79,63 +143,704 @@ uint8_t* FindPattern(uint8_t* base, size_t size, const uint8_t* pat, const char*
     return nullptr;
 }
 
-bool PlayerInactive(int playerIndex)
+const char* MsgTypeName(int msgType)
 {
-    if (!g_statusBase || playerIndex < 0 || playerIndex > 7) return false;
-    const uint8_t status = g_statusBase[playerIndex];
-    // 0 = empty slot (do not mark), 1 = active.
-    // Leave / drop / eliminate write 3; other values >= 2 are also inactive in UI.
-    return status >= 2;
+    // Discriminant values observed in handler switch; unknown → numeric in log.
+    switch (msgType) {
+    case 0x10: return "left";
+    default: return nullptr;
+    }
+}
+
+int PlayerAssetCount(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return -1;
+    return static_cast<int>(g_liveAssets[playerIndex]);
+}
+
+bool IsExcludedWipeType(int type)
+{
+    // Same exclusions as HasForces (0x4F4240): not required to stay “alive”.
+    return type == 26 || type == 27 || type == 28 || type == 29 ||
+           type == 40 || type == 41;
+}
+
+bool IsBuildingType(int type)
+{
+    return type >= kFirstBuildingType;
+}
+
+bool LooksLikeUserPtr(const void* p)
+{
+    const uintptr_t v = reinterpret_cast<uintptr_t>(p);
+    return v >= 0x10000u && v < 0x7FFF0000u;
+}
+
+bool ReadUnitMeta(void* unit, int* playerOut, int* typeOut, int* flagsOut, void** nextOut)
+{
+    if (!unit || !LooksLikeUserPtr(unit)) return false;
+    __try {
+        const auto* b = static_cast<const uint8_t*>(unit);
+        *playerOut = static_cast<int>(b[0x27]);
+        *typeOut = static_cast<int>(b[0x2c]);
+        if (flagsOut) *flagsOut = static_cast<int>(b[0x1e]);
+        if (nextOut) {
+            *nextOut = *reinterpret_cast<void* const*>(b + 0x68);
+        }
+        return true;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+
+void NoteAssets(int playerIndex, int assets)
+{
+    if (playerIndex < 0 || playerIndex > 7 || assets <= 0) return;
+    InterlockedExchange(&g_everHadAssets[playerIndex], 1);
+}
+
+void CacheLiveAssets(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    const LONG total = g_units[playerIndex] + g_buildings[playerIndex];
+    InterlockedExchange(&g_liveAssets[playerIndex], total < 0 ? 0 : total);
+}
+
+bool CensusFromTypeRows(LONG unitsOut[8], LONG buildingsOut[8])
+{
+    if (!g_typeCountRows || !LooksLikeUserPtr(g_typeCountRows)) return false;
+
+    for (int i = 0; i < 8; ++i) {
+        unitsOut[i] = 0;
+        buildingsOut[i] = 0;
+    }
+
+    __try {
+        for (int t = 0; t < kMaxUnitTypesScan; ++t) {
+            if (IsExcludedWipeType(t)) continue;
+
+            // Human/orc pairs often share one row — count each row once.
+            uint16_t* row = g_typeCountRows[t];
+            if (!row || !LooksLikeUserPtr(row)) continue;
+            bool dup = false;
+            for (int prev = 0; prev < t; ++prev) {
+                if (g_typeCountRows[prev] == row) {
+                    dup = true;
+                    break;
+                }
+            }
+            if (dup) continue;
+
+            for (int p = 0; p < 8; ++p) {
+                const int n = static_cast<int>(row[p]);
+                if (n <= 0 || n > 600) continue;
+                if (IsBuildingType(t)) buildingsOut[p] += n;
+                else unitsOut[p] += n;
+            }
+        }
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+    return true;
+}
+
+// Walk per-type unit lists. Strict: type byte must match list index, force bit,
+// sane player, no global early-out that skips remaining types.
+bool CensusFromUnitLists(void* excludeUnit, LONG unitsOut[8], LONG buildingsOut[8])
+{
+    for (int i = 0; i < 8; ++i) {
+        unitsOut[i] = 0;
+        buildingsOut[i] = 0;
+    }
+    if (!g_unitTypeHeads || !LooksLikeUserPtr(g_unitTypeHeads)) return false;
+
+    for (int t = 0; t < kMaxUnitTypesScan; ++t) {
+        if (IsExcludedWipeType(t)) continue;
+
+        void* unit = nullptr;
+        __try {
+            unit = g_unitTypeHeads[t];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            continue;
+        }
+        if (unit && !LooksLikeUserPtr(unit)) continue;
+
+        void* seenSlow = unit;
+        int guard = 0;
+        while (unit && guard++ < kMaxPerTypeList) {
+            int player = -1;
+            int type = -1;
+            int flags = 0;
+            void* next = nullptr;
+            if (!ReadUnitMeta(unit, &player, &type, &flags, &next)) {
+                break;
+            }
+            // Chain must stay on this type — otherwise we followed garbage.
+            if (type != t) {
+                break;
+            }
+            const bool isForce = (flags & 0x80) != 0;
+            if (unit != excludeUnit && isForce && player >= 0 && player <= 7) {
+                if (IsBuildingType(type)) ++buildingsOut[player];
+                else ++unitsOut[player];
+            }
+            if (next && !LooksLikeUserPtr(next)) break;
+            unit = next;
+            // Floyd cycle break (every other step).
+            if ((guard & 1) == 0 && seenSlow) {
+                int sp = -1, st = -1, sf = 0;
+                void* sn = nullptr;
+                if (!ReadUnitMeta(seenSlow, &sp, &st, &sf, &sn)) break;
+                seenSlow = sn;
+                if (seenSlow == unit) break;
+            }
+        }
+    }
+    return true;
+}
+
+bool CensusFromWorld(void* excludeUnit, LONG unitsOut[8], LONG buildingsOut[8])
+{
+    LONG fromRowsU[8]{};
+    LONG fromRowsB[8]{};
+    LONG fromListU[8]{};
+    LONG fromListB[8]{};
+    const bool rowsOk = CensusFromTypeRows(fromRowsU, fromRowsB);
+    const bool listOk = CensusFromUnitLists(excludeUnit, fromListU, fromListB);
+    if (!rowsOk && !listOk) return false;
+
+    // Prefer type-row tables when they show any real army; else list walk.
+    LONG rowTotal = 0, listTotal = 0;
+    for (int i = 0; i < 8; ++i) {
+        rowTotal += fromRowsU[i] + fromRowsB[i];
+        listTotal += fromListU[i] + fromListB[i];
+    }
+
+    if (rowsOk && rowTotal > 0) {
+        for (int i = 0; i < 8; ++i) {
+            unitsOut[i] = fromRowsU[i];
+            buildingsOut[i] = fromRowsB[i];
+        }
+        return true;
+    }
+    if (listOk) {
+        for (int i = 0; i < 8; ++i) {
+            unitsOut[i] = fromListU[i];
+            buildingsOut[i] = fromListB[i];
+        }
+        return true;
+    }
+    for (int i = 0; i < 8; ++i) {
+        unitsOut[i] = 0;
+        buildingsOut[i] = 0;
+    }
+    return rowsOk || listOk;
+}
+
+void ApplyCensus(const LONG unitsIn[8], const LONG buildingsIn[8], const char* reason, bool markDone)
+{
+    for (int i = 0; i < 8; ++i) {
+        InterlockedExchange(&g_units[i], unitsIn[i]);
+        InterlockedExchange(&g_buildings[i], buildingsIn[i]);
+        CacheLiveAssets(i);
+        const LONG total = unitsIn[i] + buildingsIn[i];
+        if (total > 0) NoteAssets(i, static_cast<int>(total));
+    }
+    if (markDone) {
+        InterlockedExchange(&g_censusDone, 1);
+    }
+    Log("census(%s) done=%d u=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld b=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
+        reason ? reason : "?", markDone ? 1 : 0,
+        unitsIn[0], unitsIn[1], unitsIn[2], unitsIn[3],
+        unitsIn[4], unitsIn[5], unitsIn[6], unitsIn[7],
+        buildingsIn[0], buildingsIn[1], buildingsIn[2], buildingsIn[3],
+        buildingsIn[4], buildingsIn[5], buildingsIn[6], buildingsIn[7]);
+}
+
+bool ResyncCensus(void* excludeUnit, const char* reason)
+{
+    LONG units[8]{};
+    LONG buildings[8]{};
+    if (!CensusFromWorld(excludeUnit, units, buildings)) {
+        Log("census(%s) FAILED heads=%p", reason ? reason : "?", g_unitTypeHeads);
+        return false;
+    }
+    LONG any = 0;
+    for (int i = 0; i < 8; ++i) {
+        any += units[i] + buildings[i];
+    }
+    // Boot may run before map objects exist — keep retrying until we see assets.
+    const bool isBoot = reason && strcmp(reason, "boot") == 0;
+    if (isBoot && any == 0) {
+        Log("census(boot) empty — waiting for map");
+        return false;
+    }
+    ApplyCensus(units, buildings, reason, true);
+    return true;
+}
+
+bool AdjustTrackedAsset(int playerIndex, int type, int delta)
+{
+    if (playerIndex < 0 || playerIndex > 7 || IsExcludedWipeType(type) || delta == 0) {
+        return false;
+    }
+    volatile LONG* bucket =
+        IsBuildingType(type) ? &g_buildings[playerIndex] : &g_units[playerIndex];
+    LONG next = InterlockedExchangeAdd(bucket, delta) + delta;
+    if (next < 0) {
+        InterlockedExchange(bucket, 0);
+        next = 0;
+    }
+    CacheLiveAssets(playerIndex);
+    if (next > 0 || g_units[playerIndex] + g_buildings[playerIndex] > 0) {
+        NoteAssets(playerIndex, 1);
+    }
+    return true;
+}
+
+bool IsLocalPlayer(int playerIndex)
+{
+    if (!g_localPlayer) return false;
+    __try {
+        return static_cast<int>(*g_localPlayer) == playerIndex;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+
+void MarkGoneUi(int playerIndex, const char* source); // defined below
+
+void CheckWipe(int playerIndex, const char* source)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (IsLocalPlayer(playerIndex)) return;
+    CacheLiveAssets(playerIndex);
+    const LONG u = g_units[playerIndex];
+    const LONG b = g_buildings[playerIndex];
+    if (u == 0 && b == 0 && g_everHadAssets[playerIndex]) {
+        MarkGoneUi(playerIndex, source);
+    }
+}
+
+void CheckAllWipes(const char* source)
+{
+    for (int i = 0; i < 8; ++i) {
+        CheckWipe(i, source);
+    }
+}
+
+int CallHasForces(int playerIndex)
+{
+    if (!g_hasForces || playerIndex < 0 || playerIndex > 7) return -1;
+    __try {
+        return g_hasForces(playerIndex);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
+
+void ClearGoneUi(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (InterlockedExchange(&g_leftFlags[playerIndex], 0) != 0) {
+        Log("clearGone p=%d (unit again)", playerIndex);
+    }
+    // Undo a wipe-only defeat write so Alliances does not keep treating them dead.
+    if (g_defeatBase) {
+        __try {
+            if (g_defeatBase[playerIndex] == 2)
+                g_defeatBase[playerIndex] = 0;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+}
+
+void ApplyGoneToUi(int playerIndex, void* ui, const char* name)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    const char* baseName = (name && name[0]) ? name : g_lastName[playerIndex];
+    // Short prefix — clan names are long and the Alliances label truncates.
+    if (baseName && baseName[0]) {
+        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "[X] %s", baseName);
+    } else {
+        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "[X]");
+    }
+    if (ui && g_originalSetText) {
+        __try {
+            g_originalSetText(ui, g_nameBuf[playerIndex], 0x11);
+            auto* colorPtr =
+                reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(ui) + kUiColorOffset);
+            *colorPtr = kRedTextColor;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+}
+
+void MarkGoneUi(int playerIndex, const char* source)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 1, 0) != 0) {
+        return;
+    }
+    InterlockedIncrement(&g_leaveEventCount);
+
+    // UI flag only for local wipe — do not invent defeat/status (false positives
+    // were sticky when our unit counter drifted below the real army size).
+    InterlockedExchange(&g_forceRowLog, 1);
+    InterlockedExchange(&g_verboseRows, 96);
+
+    Log("gone p=%d src=%s flags=1 liveUi=%d name=%s",
+        playerIndex, source ? source : "?",
+        (g_lastSetTextTick != 0 && (GetTickCount() - g_lastSetTextTick) < 1000) ? 1 : 0,
+        g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
+
+    const DWORD now = GetTickCount();
+    if (g_lastSetTextTick != 0 && (now - g_lastSetTextTick) < 2000) {
+        ApplyGoneToUi(playerIndex, g_lastUi[playerIndex], g_lastName[playerIndex]);
+    }
+}
+
+void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source)
+{
+    if (playerIndex < 0 || playerIndex > 7) {
+        Log("gone ignore p=%d src=%s", playerIndex, source ? source : "?");
+        return;
+    }
+
+    InterlockedExchange(&g_leftFlags[playerIndex], 1);
+    InterlockedIncrement(&g_leaveEventCount);
+
+    if (g_statusBase) {
+        g_statusBase[playerIndex] = 3;
+    }
+    if (g_defeatBase) {
+        // Keep local defeat flag in sync so F5 stays marked if status is rewritten.
+        __try {
+            if (g_defeatBase[playerIndex] == 0)
+                g_defeatBase[playerIndex] = 2;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+
+    int msgType = -1;
+    const char* typeName = nullptr;
+    if (packet) {
+        __try {
+            msgType = packet[6];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            msgType = -1;
+        }
+        typeName = MsgTypeName(msgType);
+    }
+
+    if (typeName) {
+        Log("gone p=%d src=%s type=%s(%d) flags=1", playerIndex, source, typeName, msgType);
+    } else if (msgType >= 0) {
+        Log("gone p=%d src=%s type=%d flags=1", playerIndex, source, msgType);
+    } else {
+        Log("gone p=%d src=%s flags=1", playerIndex, source);
+    }
+}
+
+void RefreshWipeFromAssets()
+{
+    if (!g_censusDone) {
+        ResyncCensus(nullptr, "ui");
+        return;
+    }
+    for (int i = 0; i < 8; ++i) {
+        CacheLiveAssets(i);
+        const LONG total = g_units[i] + g_buildings[i];
+        if (total > 0) {
+            NoteAssets(i, static_cast<int>(total));
+            if (g_leftFlags[i]) ClearGoneUi(i);
+        } else if (g_everHadAssets[i] && !IsLocalPlayer(i)) {
+            CheckWipe(i, "ui");
+        }
+    }
+}
+
+// cdecl wrappers for naked gates (right-to-left push order).
+void __cdecl MarkGoneFromH1(int playerIndex, const uint8_t* packet)
+{
+    MarkGoneAndWrite(playerIndex, packet, "H1");
+}
+
+void __cdecl MarkGoneFromH2(int playerIndex)
+{
+    MarkGoneAndWrite(playerIndex, nullptr, "H2");
+}
+
+int ReadUnitPlayer(void* unit)
+{
+    int player = -1;
+    int type = -1;
+    int flags = 0;
+    if (!ReadUnitMeta(unit, &player, &type, &flags, nullptr)) return -1;
+    if (player < 0 || player > 7) return -1;
+    return player;
+}
+
+void __cdecl Hook_UnitGained(void* unit)
+{
+    if (g_originalUnitGained) {
+        g_originalUnitGained(unit);
+    }
+    if (!unit) return;
+
+    int playerIndex = -1;
+    int type = -1;
+    int flags = 0;
+    if (!ReadUnitMeta(unit, &playerIndex, &type, &flags, nullptr)) return;
+    if (playerIndex < 0 || playerIndex > 7) return;
+
+    // Do not ±1 during map-spawn before the initial census snapshot.
+    if (!g_censusDone) {
+        static LONG s_preLog = 0;
+        if (InterlockedIncrement(&s_preLog) <= 16) {
+            Log("unitGain(pre-census) p=%d type=%d flags=0x%02X excl=%d",
+                playerIndex, type, flags & 0xFF, IsExcludedWipeType(type) ? 1 : 0);
+        }
+        return;
+    }
+
+    if ((flags & 0x80) != 0) {
+        AdjustTrackedAsset(playerIndex, type, +1);
+    }
+    if (g_units[playerIndex] + g_buildings[playerIndex] > 0) {
+        ClearGoneUi(playerIndex);
+    }
+
+    static LONG s_gainLog = 0;
+    if (InterlockedIncrement(&s_gainLog) <= 48) {
+        Log("unitGain p=%d type=%d u=%ld b=%ld total=%ld excl=%d",
+            playerIndex, type, g_units[playerIndex], g_buildings[playerIndex],
+            g_liveAssets[playerIndex], IsExcludedWipeType(type) ? 1 : 0);
+    }
+}
+
+void __cdecl Hook_UnitLost(void* unit)
+{
+    if (g_originalUnitLost) {
+        g_originalUnitLost(unit);
+    }
+    if (!g_enabled || !unit) return;
+
+    int playerIndex = -1;
+    int type = -1;
+    int flags = 0;
+    if (!ReadUnitMeta(unit, &playerIndex, &type, &flags, nullptr)) return;
+    if (playerIndex < 0 || playerIndex > 7) return;
+
+    // Always resync everyone from game tables/lists so we catch clans whose
+    // spawn never hit our gain hook, and so one kill can mark any finished wipe.
+    ResyncCensus(unit, g_censusDone ? "lost" : "lost-init");
+
+    static LONG s_wipeLog = 0;
+    if (InterlockedIncrement(&s_wipeLog) <= 96) {
+        const int hf = CallHasForces(playerIndex);
+        Log("unitLost p=%d type=%d flags=0x%02X u=%ld b=%ld hf=%d ever=%ld name=%s",
+            playerIndex, type, flags & 0xFF,
+            g_units[playerIndex], g_buildings[playerIndex], hf,
+            g_everHadAssets[playerIndex],
+            g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
+    }
+
+    CheckAllWipes("wipe");
+
+    // Game HasForces is what triggers official eliminate — mirror it per slot.
+    if (!IsLocalPlayer(playerIndex) && CallHasForces(playerIndex) == 0) {
+        if (g_everHadAssets[playerIndex] || (flags & 0x80) != 0) {
+            NoteAssets(playerIndex, 1);
+            MarkGoneUi(playerIndex, "hasForces");
+        }
+    }
+}
+
+void __cdecl Hook_Eliminate(int playerIndex)
+{
+    if (playerIndex >= 0 && playerIndex <= 7 && !IsLocalPlayer(playerIndex)) {
+        NoteAssets(playerIndex, 1);
+        MarkGoneUi(playerIndex, "elim");
+    }
+    if (g_originalEliminate) {
+        g_originalEliminate(playerIndex);
+    }
+}
+
+void BindTypeCountTable(uint8_t* moduleBase, uintptr_t imageBase)
+{
+    if (!moduleBase || imageBase == 0) return;
+    g_unitTypeHeads = reinterpret_cast<void**>(
+        moduleBase + (kPreferredUnitTypeHeads - imageBase));
+    g_typeCountRows = reinterpret_cast<uint16_t**>(
+        moduleBase + (kPreferredTypeCountRows - imageBase));
+    Log("BindUnitLists: heads=%p rows=%p module=%p imageBase=0x%08X",
+        g_unitTypeHeads, g_typeCountRows, moduleBase, (unsigned)imageBase);
+}
+
+void BindStatusBase(uint8_t* statusBase)
+{
+    g_statusBase = statusBase;
+    g_defeatBase = statusBase ? (statusBase + kDefeatFromStatus) : nullptr;
+    // Prefer slide from the live status pointer — GetModuleHandle can disagree
+    // with relocated absolute immediates on some launches.
+    if (statusBase) {
+        const uintptr_t slide =
+            reinterpret_cast<uintptr_t>(statusBase) - kPreferredStatus;
+        g_unitTypeHeads =
+            reinterpret_cast<void**>(kPreferredUnitTypeHeads + slide);
+        g_typeCountRows =
+            reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
+        Log("BindUnitLists(via status): heads=%p rows=%p status=%p slide=0x%08X",
+            g_unitTypeHeads, g_typeCountRows, statusBase, (unsigned)slide);
+    }
+}
+
+bool DefeatFlagMeansGone(uint8_t flag)
+{
+    // Only explicit leave/elim/defeat codes. Other values are uninitialized garbage.
+    return flag == 1 || flag == 2 || flag == 3;
+}
+
+bool HasVisibleName(const char* name)
+{
+    if (!name || !name[0]) return false;
+    for (const char* p = name; *p; ++p) {
+        if (*p != ' ' && *p != '\t') return true;
+    }
+    return false;
+}
+
+bool PlayerInactive(int playerIndex, const char* name)
+{
+    if (playerIndex < 0 || playerIndex > 7) return false;
+    if (g_leftFlags[playerIndex]) return true;
+
+    if (g_statusBase) {
+        const uint8_t status = g_statusBase[playerIndex];
+        // Leave/drop/elim write 3. Only mark when the row has a real clan/name
+        // (empty slots often sit at status 3 with no useful label).
+        if (status >= 2 && HasVisibleName(name)) return true;
+    }
+
+    if (g_defeatBase) {
+        uint8_t defeat = 0;
+        __try {
+            defeat = g_defeatBase[playerIndex];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            defeat = 0;
+        }
+        if (DefeatFlagMeansGone(defeat) && HasVisibleName(name)) return true;
+    }
+
+    (void)name;
+    return false;
 }
 
 void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerIndex)
 {
     InterlockedIncrement(&g_hitCount);
+    g_lastSetTextTick = GetTickCount();
+
+    RefreshWipeFromAssets();
 
     const uint8_t status =
         (g_statusBase && playerIndex >= 0 && playerIndex <= 7) ? g_statusBase[playerIndex] : 0xFF;
-    const bool inactive = g_enabled && PlayerInactive(playerIndex);
+    uint8_t defeat = 0xFF;
+    if (g_defeatBase && playerIndex >= 0 && playerIndex <= 7) {
+        __try {
+            defeat = g_defeatBase[playerIndex];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            defeat = 0xFE;
+        }
+    }
+
+    const int assets = PlayerAssetCount(playerIndex);
+    // Never clear leftFlags here: wipe/leave marks must stick for the rest of
+    // the match even while status stays 1 (Remastered peon-wipe behavior).
+
+    if (playerIndex >= 0 && playerIndex <= 7) {
+        g_lastUi[playerIndex] = ui;
+        if (name && name[0]) {
+            _snprintf_s(g_lastName[playerIndex], _TRUNCATE, "%s", name);
+        }
+    }
+
+    const LONG leftFlag =
+        (playerIndex >= 0 && playerIndex <= 7) ? g_leftFlags[playerIndex] : 0;
+    const bool inactive = g_enabled && PlayerInactive(playerIndex, name);
     const char* useName = name;
-    uint32_t saved = 0;
     uint32_t* colorPtr = nullptr;
 
+    if (InterlockedCompareExchange(&g_forceRowLog, 0, 1) == 1) {
+        for (int i = 0; i < 8; ++i) {
+            uint8_t s = g_statusBase ? g_statusBase[i] : 0xFF;
+            uint8_t d = 0xFF;
+            if (g_defeatBase) {
+                __try { d = g_defeatBase[i]; } __except (EXCEPTION_EXECUTE_HANDLER) { d = 0xFE; }
+            }
+            Log("postGone snap[%d] status=%u defeat=%u left=%ld assets=%d",
+                i, s, d, g_leftFlags[i], PlayerAssetCount(i));
+        }
+    }
+
+    static LONG s_snapshot = 0;
+    if (InterlockedIncrement(&s_snapshot) <= 3) {
+        for (int i = 0; i < 8; ++i) {
+            uint8_t s = g_statusBase ? g_statusBase[i] : 0xFF;
+            uint8_t d = 0xFF;
+            if (g_defeatBase) {
+                __try { d = g_defeatBase[i]; } __except (EXCEPTION_EXECUTE_HANDLER) { d = 0xFE; }
+            }
+            Log("snap[%d] status=%u defeat=%u left=%ld assets=%d ever=%ld",
+                i, s, d, g_leftFlags[i], PlayerAssetCount(i), g_everHadAssets[i]);
+        }
+    }
+
+    LONG verboseLeft = InterlockedExchangeAdd(&g_verboseRows, 0);
+    if (verboseLeft > 0) InterlockedDecrement(&g_verboseRows);
     static LONG s_rowLog = 0;
-    if (InterlockedIncrement(&s_rowLog) <= 64) {
-        Log("row p=%d status=%u enabled=%ld inactive=%d prop=%d name=%s",
-            playerIndex, status, g_enabled, inactive ? 1 : 0, prop, name ? name : "(null)");
+    const bool logRow = inactive || verboseLeft > 0 || InterlockedIncrement(&s_rowLog) <= 128;
+    if (logRow) {
+        Log("row p=%d status=%u defeat=%u left=%ld assets=%d enabled=%ld inactive=%d name=%s",
+            playerIndex, status, defeat, leftFlag, assets, g_enabled,
+            inactive ? 1 : 0, name ? name : "(null)");
     }
 
     if (inactive) {
         InterlockedIncrement(&g_recolorCount);
+        if (playerIndex >= 0 && playerIndex <= 7)
+            InterlockedExchange(&g_leftFlags[playerIndex], 1);
         if (name) {
-            // Visible fallback if draw color is not retained by the widget.
             _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "[X] %s", name);
             useName = g_nameBuf[playerIndex];
+        } else {
+            _snprintf_s(g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0],
+                _TRUNCATE, "[X]");
+            useName = g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0];
         }
         if (ui) {
             colorPtr = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(ui) + kUiColorOffset);
-            saved = *colorPtr;
             *colorPtr = kRedTextColor;
         }
     }
 
     g_originalSetText(ui, useName, prop);
 
-    // Color is sampled during set-text/draw; restore so the next row keeps its skin color.
-    // The "[X] " prefix remains as a durable mark if the widget redraws without our color.
-    if (colorPtr) {
-        *colorPtr = saved;
+    if (inactive && colorPtr) {
+        *colorPtr = kRedTextColor;
     }
 }
 
-// Call site stack (cdecl): ret, ui, name, prop, playerIndex(edi leftover from prior push).
-// Replaces only the E8 call; caller still does add esp, 0x10.
+// At the patched call site, EDI is the alliances row player index (0..7).
+// Also pass stack leftover as fallback; prefer EDI.
 void __declspec(naked) Hook_SetText_Gate()
 {
     __asm {
         push ebp
         mov ebp, esp
-        push dword ptr [ebp + 0x14]
+        push edi
         push dword ptr [ebp + 0x10]
         push dword ptr [ebp + 0x0C]
         push dword ptr [ebp + 0x08]
@@ -144,6 +849,348 @@ void __declspec(naked) Hook_SetText_Gate()
         pop ebp
         ret
     }
+}
+
+// After movzx eax, [esi+1]: eax = player. We replace the status write.
+void __declspec(naked) Hook_LeaveWrite_H1_Gate()
+{
+    __asm {
+        pushad
+        push esi
+        push eax
+        call MarkGoneFromH1
+        add esp, 8
+        popad
+        ret
+    }
+}
+
+// ecx = player index (secondary helper). Next instruction still writes the slot array.
+void __declspec(naked) Hook_LeaveWrite_H2_Gate()
+{
+    __asm {
+        pushad
+        push ecx
+        call MarkGoneFromH2
+        add esp, 4
+        popad
+        ret
+    }
+}
+
+bool PatchCall7(uint8_t* site, void* gate, uint8_t* savedOrig, void** trampOut)
+{
+    memcpy(savedOrig, site, 7);
+    void* tramp = VirtualAlloc(nullptr, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!tramp) return false;
+
+    auto* t = static_cast<uint8_t*>(tramp);
+    t[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(t + 1) =
+        static_cast<int32_t>(static_cast<uint8_t*>(gate) - (t + 5));
+
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        VirtualFree(tramp, 0, MEM_RELEASE);
+        return false;
+    }
+
+    site[0] = 0xE8;
+    *reinterpret_cast<int32_t*>(site + 1) = static_cast<int32_t>(t - (site + 5));
+    site[5] = 0x90;
+    site[6] = 0x90;
+
+    VirtualProtect(site, 7, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), site, 7);
+    *trampOut = tramp;
+    return true;
+}
+
+bool PatchFuncPrologue(uint8_t* site, void* hook, uint8_t* savedOrig, void** trampOut, void** originalOut)
+{
+    // Copy 7-byte prologue to trampoline, then jmp back to site+7.
+    memcpy(savedOrig, site, 7);
+    void* tramp = VirtualAlloc(nullptr, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!tramp) return false;
+
+    auto* t = static_cast<uint8_t*>(tramp);
+    memcpy(t, site, 7);
+    t[7] = 0xE9;
+    *reinterpret_cast<int32_t*>(t + 8) =
+        static_cast<int32_t>((site + 7) - (t + 12));
+
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        VirtualFree(tramp, 0, MEM_RELEASE);
+        return false;
+    }
+
+    site[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(site + 1) =
+        static_cast<int32_t>(static_cast<uint8_t*>(hook) - (site + 5));
+    site[5] = 0x90;
+    site[6] = 0x90;
+
+    VirtualProtect(site, 7, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), site, 7);
+    *trampOut = tramp;
+    *originalOut = tramp;
+    return true;
+}
+
+void Unpatch7(uint8_t* site, const uint8_t* savedOrig, void** tramp)
+{
+    if (!site) return;
+    DWORD oldProtect = 0;
+    if (VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        memcpy(site, savedOrig, 7);
+        VirtualProtect(site, 7, oldProtect, &oldProtect);
+        FlushInstructionCache(GetCurrentProcess(), site, 7);
+    }
+    if (tramp && *tramp) {
+        VirtualFree(*tramp, 0, MEM_RELEASE);
+        *tramp = nullptr;
+    }
+}
+
+bool InstallLeaveWriteHooks(uint8_t* base, size_t imageSize)
+{
+    // movzx eax, byte [esi+1] ; mov byte [eax+imm32], 3
+    const uint8_t patH1[] = {
+        0x0F, 0xB6, 0x46, 0x01,
+        0xC6, 0x80, 0x00, 0x00, 0x00, 0x00, 0x03
+    };
+    const char* maskH1 = "xxxxxx????x";
+
+    // mov byte [ecx+imm32], 3 ; mov byte [eax+0x916268], 3
+    const uint8_t patH2[] = {
+        0xC6, 0x81, 0x00, 0x00, 0x00, 0x00, 0x03,
+        0xC6, 0x80, 0x68, 0x62, 0x91, 0x00, 0x03
+    };
+    const char* maskH2 = "xx????xxxxxxxx";
+
+    uint8_t* hit1 = FindPattern(base, imageSize, patH1, maskH1);
+    uint8_t* hit2 = FindPattern(base, imageSize, patH2, maskH2);
+
+    bool ok = true;
+    if (hit1 && IsLikelyCode(hit1, sizeof(patH1))) {
+        const uint32_t statusImm = *reinterpret_cast<uint32_t*>(hit1 + 6);
+        if (!g_statusBase) {
+            BindStatusBase(reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(statusImm)));
+        }
+        g_leaveWriteH1 = hit1 + 4; // C6 80 ...
+        if (!PatchCall7(g_leaveWriteH1, &Hook_LeaveWrite_H1_Gate, g_origLeaveH1, &g_leaveTrampH1)) {
+            Log("InstallLeaveWrite: H1 patch failed (%lu)", GetLastError());
+            g_leaveWriteH1 = nullptr;
+            ok = false;
+        } else {
+            Log("InstallLeaveWrite: H1 ok site=%p", g_leaveWriteH1);
+        }
+    } else {
+        Log("InstallLeaveWrite: H1 pattern not found");
+        ok = false;
+    }
+
+    if (hit2 && IsLikelyCode(hit2, sizeof(patH2))) {
+        g_leaveWriteH2 = hit2; // C6 81 ...
+        if (!PatchCall7(g_leaveWriteH2, &Hook_LeaveWrite_H2_Gate, g_origLeaveH2, &g_leaveTrampH2)) {
+            Log("InstallLeaveWrite: H2 patch failed (%lu)", GetLastError());
+            g_leaveWriteH2 = nullptr;
+            ok = false;
+        } else {
+            Log("InstallLeaveWrite: H2 ok site=%p", g_leaveWriteH2);
+        }
+    } else {
+        Log("InstallLeaveWrite: H2 pattern not found");
+        ok = false;
+    }
+
+    return ok;
+}
+
+bool InstallHasForces(uint8_t* base, size_t imageSize)
+{
+    // push ebp; mov ebp,esp; mov edx,[ebp+8]; mov ax,word [edx*2+imm32]
+    const uint8_t pat[] = {
+        0x55,
+        0x8B, 0xEC,
+        0x8B, 0x55, 0x08,
+        0x66, 0x8B, 0x04, 0x55, 0x00, 0x00, 0x00, 0x00
+    };
+    const char* mask = "xxxxxxxxxx????";
+
+    uint8_t* hit = FindPattern(base, imageSize, pat, mask);
+    if (!hit || !IsLikelyCode(hit, sizeof(pat))) {
+        Log("InstallHasForces: pattern not found");
+        return false;
+    }
+    // Confirm disp is the buildings table (preferred 0x91B38C) after slide.
+    const uint32_t disp = *reinterpret_cast<uint32_t*>(hit + 10);
+    if ((disp & 0xFFFF) != 0xB38C && (disp & 0xFFFF) != 0x38C) {
+        // Still accept if nearby: low word B38C in preferred image.
+        if (disp != 0x0091B38C && (disp % 0x10000) != 0xB38C) {
+            Log("InstallHasForces: unexpected disp=0x%08X at %p", disp, hit);
+            // Continue anyway — pattern is unique enough in this build.
+        }
+    }
+    g_hasForces = reinterpret_cast<HasForcesFn>(hit);
+    Log("InstallHasForces: ok fn=%p disp=0x%08X", g_hasForces, disp);
+    return true;
+}
+
+void BindLocalPlayer(uint8_t* moduleBase, uintptr_t imageBase)
+{
+    if (!moduleBase || imageBase == 0) return;
+    constexpr uintptr_t kPreferredLocal = 0x00918CCD;
+    g_localPlayer = moduleBase + (kPreferredLocal - imageBase);
+    Log("BindLocalPlayer: %p", g_localPlayer);
+}
+
+bool InstallUnitCountHooks(uint8_t* base, size_t imageSize)
+{
+    // Gain: push ebp; mov ebp,esp; push esi; mov esi,[ebp+8]; mov eax,0x100; test [esi+0x1c],ax
+    const uint8_t patGain[] = {
+        0x55,
+        0x8B, 0xEC,
+        0x56,
+        0x8B, 0x75, 0x08,
+        0xB8, 0x00, 0x01, 0x00, 0x00,
+        0x66, 0x85, 0x46, 0x1C,
+        0x74, 0x1F,
+        0x66, 0xFF, 0x05
+    };
+    const char* maskGain = "xxxxxxxxxxxxxxxxxxxxx";
+
+    // Lost: same prologue but loads edx=0xFFFF before the test, then add [global],dx
+    const uint8_t patLost[] = {
+        0x55,
+        0x8B, 0xEC,
+        0x56,
+        0x8B, 0x75, 0x08,
+        0xB8, 0x00, 0x01, 0x00, 0x00,
+        0xBA, 0xFF, 0xFF, 0x00, 0x00,
+        0x66, 0x85, 0x46, 0x1C
+    };
+    const char* maskLost = "xxxxxxxxxxxxxxxxxxxxx";
+
+    bool ok = true;
+    uint8_t* hitGain = FindPattern(base, imageSize, patGain, maskGain);
+    if (!hitGain || !IsLikelyCode(hitGain, sizeof(patGain))) {
+        Log("InstallUnitGain: pattern not found");
+        ok = false;
+    } else {
+        void* original = nullptr;
+        if (!PatchFuncPrologue(hitGain, &Hook_UnitGained, g_origUnitGained, &g_unitGainedTramp, &original)) {
+            Log("InstallUnitGain: patch failed (%lu)", GetLastError());
+            ok = false;
+        } else {
+            g_unitGainedSite = hitGain;
+            g_originalUnitGained = reinterpret_cast<UnitCountFn>(original);
+            Log("InstallUnitGain: ok site=%p tramp=%p", g_unitGainedSite, g_unitGainedTramp);
+        }
+    }
+
+    uint8_t* hitLost = FindPattern(base, imageSize, patLost, maskLost);
+    if (!hitLost || !IsLikelyCode(hitLost, sizeof(patLost))) {
+        Log("InstallUnitLost: pattern not found");
+        ok = false;
+    } else {
+        void* original = nullptr;
+        if (!PatchFuncPrologue(hitLost, &Hook_UnitLost, g_origUnitLost, &g_unitLostTramp, &original)) {
+            Log("InstallUnitLost: patch failed (%lu)", GetLastError());
+            ok = false;
+        } else {
+            g_unitLostSite = hitLost;
+            g_originalUnitLost = reinterpret_cast<UnitCountFn>(original);
+            Log("InstallUnitLost: ok site=%p tramp=%p", g_unitLostSite, g_unitLostTramp);
+        }
+    }
+
+    return ok;
+}
+
+bool InstallEliminateHook(uint8_t* base, size_t imageSize)
+{
+    // push ebp; mov ebp,esp; push ebx; mov bl,[ebp+8]; movzx ecx,bl; imul eax,ecx,0x26
+    const uint8_t pat[] = {
+        0x55,
+        0x8B, 0xEC,
+        0x53,
+        0x8A, 0x5D, 0x08,
+        0x0F, 0xB6, 0xCB,
+        0x6B, 0xC1, 0x26
+    };
+    const char* mask = "xxxxxxxxxxxxx";
+
+    uint8_t* hit = FindPattern(base, imageSize, pat, mask);
+    if (!hit || !IsLikelyCode(hit, sizeof(pat))) {
+        Log("InstallEliminate: pattern not found");
+        return false;
+    }
+    void* original = nullptr;
+    if (!PatchFuncPrologue(hit, &Hook_Eliminate, g_origEliminate, &g_eliminateTramp, &original)) {
+        Log("InstallEliminate: patch failed (%lu)", GetLastError());
+        return false;
+    }
+    g_eliminateSite = hit;
+    g_originalEliminate = reinterpret_cast<EliminateFn>(original);
+    Log("InstallEliminate: ok site=%p tramp=%p", g_eliminateSite, g_eliminateTramp);
+    return true;
+}
+
+bool InstallSetTextHook(uint8_t* base, size_t imageSize)
+{
+    // push dword [imm32] ; call rel32 ; add esp,10 ; cmp byte [edi+imm32],1 ; jnz +0x0E
+    const uint8_t pat[] = {
+        0xFF, 0x35, 0x00, 0x00, 0x00, 0x00,
+        0xE8, 0x00, 0x00, 0x00, 0x00,
+        0x83, 0xC4, 0x10,
+        0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x01,
+        0x75, 0x0E
+    };
+    const char* mask = "xx????x????xxxxx????xxx";
+
+    uint8_t* hit = FindPattern(base, imageSize, pat, mask);
+    if (!hit || !IsLikelyCode(hit, sizeof(pat))) {
+        Log("InstallSetText: pattern not found (imageSize=%u)", (unsigned)imageSize);
+        return false;
+    }
+
+    const uint32_t statusImm = *reinterpret_cast<uint32_t*>(hit + 16);
+    BindStatusBase(reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(statusImm)));
+
+    g_patchSite = hit + 6; // E8
+    memcpy(g_originalCall, g_patchSite, 5);
+
+    const int32_t rel = *reinterpret_cast<int32_t*>(g_patchSite + 1);
+    g_originalSetText = reinterpret_cast<SetTextFn>(g_patchSite + 5 + rel);
+
+    g_trampoline = VirtualAlloc(nullptr, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!g_trampoline) {
+        Log("InstallSetText: VirtualAlloc failed (%lu)", GetLastError());
+        return false;
+    }
+
+    auto* t = static_cast<uint8_t*>(g_trampoline);
+    t[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(t + 1) =
+        static_cast<int32_t>(reinterpret_cast<uint8_t*>(&Hook_SetText_Gate) - (t + 5));
+
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(g_patchSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        Log("InstallSetText: VirtualProtect failed (%lu)", GetLastError());
+        return false;
+    }
+
+    const int32_t newRel = static_cast<int32_t>(t - (g_patchSite + 5));
+    g_patchSite[0] = 0xE8;
+    *reinterpret_cast<int32_t*>(g_patchSite + 1) = newRel;
+
+    VirtualProtect(g_patchSite, 5, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), g_patchSite, 5);
+    Log("InstallSetText: ok site=%p statusBase=%p defeatBase=%p original=%p",
+        g_patchSite, g_statusBase, g_defeatBase, g_originalSetText);
+    return true;
 }
 
 bool InstallHook()
@@ -162,81 +1209,83 @@ bool InstallHook()
 
     auto* base = reinterpret_cast<uint8_t*>(game);
     const size_t imageSize = nt->OptionalHeader.SizeOfImage;
+    const uintptr_t imageBase = nt->OptionalHeader.ImageBase;
 
-    // push dword [imm32] ; call rel32 ; add esp,10 ; cmp byte [edi+imm32],1 ; jnz +0x0E
-    const uint8_t pat[] = {
-        0xFF, 0x35, 0x00, 0x00, 0x00, 0x00,
-        0xE8, 0x00, 0x00, 0x00, 0x00,
-        0x83, 0xC4, 0x10,
-        0x80, 0xBF, 0x00, 0x00, 0x00, 0x00, 0x01,
-        0x75, 0x0E
-    };
-    const char* mask = "xx????x????xxxxx????xxx";
+    BindTypeCountTable(base, imageBase);
+    BindLocalPlayer(base, imageBase);
 
-    uint8_t* hit = FindPattern(base, imageSize, pat, mask);
-    if (!hit || !IsLikelyCode(hit, sizeof(pat))) {
-        Log("InstallHook: pattern not found (imageSize=%u)", (unsigned)imageSize);
+    // Leave-write hooks first so g_statusBase may already be known; set-text is required.
+    const bool leaveOk = InstallLeaveWriteHooks(base, imageSize);
+    const bool forcesOk = InstallHasForces(base, imageSize);
+    const bool wipeOk = InstallUnitCountHooks(base, imageSize);
+    const bool elimOk = InstallEliminateHook(base, imageSize);
+    if (!InstallSetTextHook(base, imageSize)) {
         return false;
     }
 
-    const uint32_t statusImm = *reinterpret_cast<uint32_t*>(hit + 16);
-    g_statusBase = reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(statusImm));
-
-    g_patchSite = hit + 6; // E8
-    memcpy(g_originalCall, g_patchSite, 5);
-
-    const int32_t rel = *reinterpret_cast<int32_t*>(g_patchSite + 1);
-    g_originalSetText = reinterpret_cast<SetTextFn>(g_patchSite + 5 + rel);
-
-    g_trampoline = VirtualAlloc(nullptr, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!g_trampoline) {
-        Log("InstallHook: VirtualAlloc failed (%lu)", GetLastError());
-        return false;
+    // Re-bind local player / unit lists via status slide if module base was wrong.
+    if (g_statusBase) {
+        const uintptr_t slide =
+            reinterpret_cast<uintptr_t>(g_statusBase) - kPreferredStatus;
+        g_localPlayer = reinterpret_cast<uint8_t*>(0x00918CCD + slide);
+        g_unitTypeHeads =
+            reinterpret_cast<void**>(kPreferredUnitTypeHeads + slide);
+        g_typeCountRows =
+            reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
     }
-
-    // trampoline: jmp Hook_SetText_Gate
-    auto* t = static_cast<uint8_t*>(g_trampoline);
-    t[0] = 0xE9;
-    *reinterpret_cast<int32_t*>(t + 1) =
-        static_cast<int32_t>(reinterpret_cast<uint8_t*>(&Hook_SetText_Gate) - (t + 5));
-
-    DWORD oldProtect = 0;
-    if (!VirtualProtect(g_patchSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-        Log("InstallHook: VirtualProtect failed (%lu)", GetLastError());
-        return false;
-    }
-
-    const int32_t newRel = static_cast<int32_t>(t - (g_patchSite + 5));
-    g_patchSite[0] = 0xE8;
-    *reinterpret_cast<int32_t*>(g_patchSite + 1) = newRel;
-
-    VirtualProtect(g_patchSite, 5, oldProtect, &oldProtect);
-    FlushInstructionCache(GetCurrentProcess(), g_patchSite, 5);
 
     InterlockedExchange(&g_ready, 1);
     // DLL is only injected when the Extra feature is on — start enabled so a missed
     // SetEnabled remote-thread call cannot leave the hook silently inert.
     InterlockedExchange(&g_enabled, 1);
-    Log("InstallHook: ok site=%p statusBase=%p original=%p enabled=1", g_patchSite, g_statusBase, g_originalSetText);
+    Log("InstallHook: ready enabled=1 leaveHooks=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p",
+        leaveOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
+        g_localPlayer, g_unitTypeHeads, g_typeCountRows);
     return true;
 }
 
 void RemoveHook()
 {
-    if (!g_patchSite) return;
-    DWORD oldProtect = 0;
-    if (VirtualProtect(g_patchSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-        memcpy(g_patchSite, g_originalCall, 5);
-        VirtualProtect(g_patchSite, 5, oldProtect, &oldProtect);
-        FlushInstructionCache(GetCurrentProcess(), g_patchSite, 5);
+    Unpatch7(g_leaveWriteH1, g_origLeaveH1, &g_leaveTrampH1);
+    g_leaveWriteH1 = nullptr;
+    Unpatch7(g_leaveWriteH2, g_origLeaveH2, &g_leaveTrampH2);
+    g_leaveWriteH2 = nullptr;
+    Unpatch7(g_unitGainedSite, g_origUnitGained, &g_unitGainedTramp);
+    g_unitGainedSite = nullptr;
+    g_originalUnitGained = nullptr;
+    Unpatch7(g_unitLostSite, g_origUnitLost, &g_unitLostTramp);
+    g_unitLostSite = nullptr;
+    g_originalUnitLost = nullptr;
+    Unpatch7(g_eliminateSite, g_origEliminate, &g_eliminateTramp);
+    g_eliminateSite = nullptr;
+    g_originalEliminate = nullptr;
+
+    if (g_patchSite) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_patchSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_patchSite, g_originalCall, 5);
+            VirtualProtect(g_patchSite, 5, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_patchSite, 5);
+        }
+        g_patchSite = nullptr;
     }
     if (g_trampoline) {
         VirtualFree(g_trampoline, 0, MEM_RELEASE);
         g_trampoline = nullptr;
     }
-    g_patchSite = nullptr;
     g_originalSetText = nullptr;
     g_statusBase = nullptr;
+    g_defeatBase = nullptr;
+    g_unitTypeHeads = nullptr;
+    g_typeCountRows = nullptr;
+    InterlockedExchange(&g_censusDone, 0);
+    for (int i = 0; i < 8; ++i) {
+        InterlockedExchange(&g_leftFlags[i], 0);
+        InterlockedExchange(&g_everHadAssets[i], 0);
+        InterlockedExchange(&g_liveAssets[i], 0);
+        InterlockedExchange(&g_units[i], 0);
+        InterlockedExchange(&g_buildings[i], 0);
+    }
     InterlockedExchange(&g_ready, 0);
     Log("RemoveHook");
 }
@@ -247,7 +1296,8 @@ extern "C" __declspec(dllexport) DWORD __stdcall AllyLeave_SetEnabled(LPVOID ena
 {
     const LONG on = enabled ? 1 : 0;
     InterlockedExchange(&g_enabled, on);
-    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld", on, g_ready, g_hitCount, g_recolorCount);
+    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld",
+        on, g_ready, g_hitCount, g_recolorCount, g_leaveEventCount);
     return 1;
 }
 
@@ -275,7 +1325,18 @@ static DWORD WINAPI InstallThread(LPVOID)
     for (int i = 0; i < 50 && !InstallHook(); ++i) {
         Sleep(100);
     }
-    if (!g_ready) Log("InstallThread: gave up");
+    if (!g_ready) {
+        Log("InstallThread: gave up");
+        return 0;
+    }
+    // After map objects are linked, take the initial per-player units/buildings snapshot.
+    for (int i = 0; i < 40 && !g_censusDone; ++i) {
+        Sleep(250);
+        if (g_unitTypeHeads && ResyncCensus(nullptr, "boot")) {
+            break;
+        }
+    }
+    if (!g_censusDone) Log("InstallThread: census still pending");
     return 0;
 }
 
