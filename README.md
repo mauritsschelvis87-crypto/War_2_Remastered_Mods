@@ -1,6 +1,6 @@
 # Warcraft II — Quality of Life Modding
 
-**Version 1.0.2**
+**Version 1.0.3**
 
 Windows WPF tool for safely changing confirmed Warcraft II Remastered player colors, plus optional multiplayer QoL.
 
@@ -9,7 +9,7 @@ Windows WPF tool for safely changing confirmed Warcraft II Remastered player col
 - **Players 1–7:** minimap dots, unit/team palette bands, and victory/ally bars
 - **Player 2:** unit band `212–215` + minimap palette index `1` (exe table `0x008C8D84`) + ally/victory skins
 - **Player 8:** still locked (shared yellow / minimap index `2`)
-- **Extra:** mark gone players and computer/NPC clans on the Alliances screen (`[X]` + red name). Covers human leave/drop/eliminate and local computer wipe when units and buildings are gone (zeppelin / flying machine do not block wipe, same as the game)
+- **Extra:** mark gone players and computer/NPC clans on the Alliances screen (`[X]` + red name). Covers human leave/drop/eliminate and local computer wipe when units and buildings are gone (zeppelin / flying machine do not block wipe, same as the game). Also optional **chat during pause screen** (read + send while paused). Enable once in the Extra tab — a background watcher (`AllyLeaveWatch`) starts with Windows and injects when the game runs; Studio can stay closed. Preference is stored in `mod\extra-features.json` and survives reboot.
 
 ## Install from source
 

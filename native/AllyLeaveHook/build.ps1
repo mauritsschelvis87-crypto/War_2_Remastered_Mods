@@ -22,7 +22,13 @@ $cmd = @"
 call "$vcvars" x86 >nul
 cl /nologo /O2 /W3 /EHsc /LD "$here\AllyLeaveHook.cpp" /Fe:"$OutDir\AllyLeaveHook.dll" /link /nologo /DLL /OUT:"$OutDir\AllyLeaveHook.dll"
 if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc /LD "$here\PauseChatHook.cpp" /Fe:"$OutDir\PauseChatHook.dll" /link /nologo /DLL /OUT:"$OutDir\PauseChatHook.dll"
+if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectAllyLeave.cpp" /Fe:"$OutDir\InjectAllyLeave.exe" /link /nologo
+if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc "$here\InjectPauseChat.cpp" /Fe:"$OutDir\InjectPauseChat.exe" /link /nologo
+if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc "$here\AllyLeaveWatch.cpp" /Fe:"$OutDir\AllyLeaveWatch.exe" /link /nologo /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup Advapi32.lib
 if errorlevel 1 exit /b 1
 del /q *.obj 2>nul
 exit /b 0
@@ -42,4 +48,7 @@ try {
 }
 
 Write-Host "Built: $OutDir\AllyLeaveHook.dll"
+Write-Host "Built: $OutDir\PauseChatHook.dll"
 Write-Host "Built: $OutDir\InjectAllyLeave.exe"
+Write-Host "Built: $OutDir\InjectPauseChat.exe"
+Write-Host "Built: $OutDir\AllyLeaveWatch.exe"

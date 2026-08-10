@@ -1,8 +1,8 @@
 <Window x:Class="PlayerColorStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Warcraft II — Quality of Life Modding"
-        Width="1120" Height="820" MinWidth="960" MinHeight="700"
+        Title="Warcraft II Remastered — Quality of Life Modding"
+        Width="1120" Height="920" MinWidth="960" MinHeight="780"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource WindowBrush}" Foreground="White">
     <Grid Margin="24" Background="{StaticResource WindowBrush}">
@@ -11,14 +11,14 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TabControl>
-            <TabItem Header="Colors">
+        <TabControl x:Name="MainTabs" SelectionChanged="MainTabs_SelectionChanged">
+            <TabItem Header="Player colors" Tag="colors">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{StaticResource PanelBrush}">
                     <StackPanel Background="{StaticResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="White"
                                    Text="Minimap, victory and ally screen follow the selected colors."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White"
-                                   Text="Player 8 cannot be changed yet (shared yellow palette with the build bar). Player 2 uses exclusive band 212–215."/>
+                                   Text="Player 8 cannot be changed yet, I am working on it."/>
                         <ItemsControl ItemsSource="{Binding Cards}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -78,18 +78,52 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Extra">
+            <TabItem Header="Util colors" Tag="util">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{StaticResource PanelBrush}">
                     <StackPanel Background="{StaticResource PanelBrush}">
-                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White"
-                                   Text="Optional multiplayer QoL. These features use a runtime hook and are experimental."/>
+                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="White"
+                                   Text="Utility colors used by the game UI, such as selection highlights."/>
+                        <!-- Invisible spacer: same height as Player colors second line so boxes start level. -->
+                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White" Visibility="Hidden"
+                                   Text="Player 8 cannot be changed yet, I am working on it."/>
                         <Border Padding="14" CornerRadius="8"
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
-                            <StackPanel>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="White"
+                                           Text="Selection highlight"/>
+                                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="Coming soon. This will let you change the color used when selecting your own units."/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Extra" Tag="extra">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{StaticResource PanelBrush}">
+                    <StackPanel Background="{StaticResource PanelBrush}">
+                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="White"
+                                   Text="Optional extras for multiplayer games to increase the quality of life."/>
+                        <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
+                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White" Visibility="Hidden"
+                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                        <Border Padding="14" CornerRadius="8" Margin="0,0,0,12"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel VerticalAlignment="Center">
                                 <CheckBox IsChecked="{Binding AllyLeaveRedNames}"
-                                          Content="Mark gone players and computers on the Alliances screen"/>
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          Content="Mark gone players and computers on the alliance screen (F11)."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="Alliances opens with F11 (or Allies button upper-right) — not F5. When a human leaves/drops or a computer/NPC clan is wiped (no units and no buildings left), that row shows '[X] Clan Name' in red. Keep Extra ON and leave this app open while starting the game so the hook injects. Keep Alliances open to see marks update live. Status bar must say the marker is enabled; also check %TEMP%\war2_ally_leave_hook.log."/>
+                                           Text="When a player or computer leaves the game by disconnect, defeat or surrender, the name in the alliances screen turns red."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Padding="14" CornerRadius="8"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding ChatDuringPauseScreen}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                              Content="Chat during pause screen."/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="Allows reading and sending chat while the multiplayer game is paused."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -97,15 +131,38 @@
             </TabItem>
         </TabControl>
 
-        <Grid Grid.Row="1" Margin="0,20,0,0">
+        <Grid Grid.Row="1" Margin="0,12,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock VerticalAlignment="Center" Foreground="White" Text="{Binding Status}"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Apply" Width="110" Height="36"
-                        Background="{StaticResource AccentBrush}" BorderBrush="#FF8EC4FF" Click="Apply_Click"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <ItemsControl ItemsSource="{Binding StatusLines}" VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                <TextBlock VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Margin="0,0,8,0"
+                                           Text="{Binding Icon}" Foreground="{Binding IconBrush}"/>
+                                <TextBlock VerticalAlignment="Center" Foreground="White" Text="{Binding Text}"
+                                           TextWrapping="Wrap" MaxWidth="520"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ProgressBar Width="140" Height="8" Margin="12,0,0,0" VerticalAlignment="Center"
+                             IsIndeterminate="True"
+                             Visibility="{Binding IsApplying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Content="Apply" Width="110" Height="36" Foreground="White"
+                        Background="{Binding ApplyButtonBrush}" BorderBrush="{Binding ApplyButtonBorderBrush}"
+                        IsEnabled="{Binding IsApplyEnabled}"
+                        Click="Apply_Click"/>
                 <Button Content="Close" Width="110" Height="36" Margin="12,0,0,0"
                         IsCancel="True" Click="Close_Click"/>
             </StackPanel>

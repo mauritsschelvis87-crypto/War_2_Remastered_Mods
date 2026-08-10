@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,10 +26,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly string _nativeDir;
     private readonly DispatcherTimer _hookWatchTimer;
     private bool _allyLeaveRedNames;
+    private bool _appliedAllyLeaveRedNames;
+    private bool _chatDuringPauseScreen;
+    private bool _appliedChatDuringPauseScreen;
     private bool _hookInjectedForRunningGame;
-    private string _status = "Ready. Close Warcraft II before applying colors.";
+    private bool _pauseChatInjectedForRunningGame;
+    private bool _isApplying;
+    private string _activeTab = "colors";
+    private System.Windows.Media.Brush _applyButtonBrush = CreateBrush(0x2E, 0xA8, 0x5C);
+    private System.Windows.Media.Brush _applyButtonBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
+    private readonly Dictionary<int, string> _appliedHexByPlayer = new();
 
     public ObservableCollection<ColorCard> Cards { get; } = [];
+    public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
 
     public bool AllyLeaveRedNames
     {
@@ -38,17 +48,54 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_allyLeaveRedNames == value) return;
             _allyLeaveRedNames = value;
             OnPropertyChanged();
-            if (!string.IsNullOrEmpty(_extraConfigPath))
-                SaveExtraFeatures();
-            _hookInjectedForRunningGame = false;
-            UpdateAllyLeaveHookStatus(forceInject: value);
+            RefreshTabStatus();
         }
     }
 
-    public string Status
+    public bool ChatDuringPauseScreen
     {
-        get => _status;
-        set { _status = value; OnPropertyChanged(); }
+        get => _chatDuringPauseScreen;
+        set
+        {
+            if (_chatDuringPauseScreen == value) return;
+            _chatDuringPauseScreen = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    public bool IsApplying
+    {
+        get => _isApplying;
+        set
+        {
+            if (_isApplying == value) return;
+            _isApplying = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsApplyEnabled));
+        }
+    }
+
+    public bool IsApplyEnabled => !_isApplying;
+
+    public System.Windows.Media.Brush ApplyButtonBrush
+    {
+        get => _applyButtonBrush;
+        set
+        {
+            _applyButtonBrush = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public System.Windows.Media.Brush ApplyButtonBorderBrush
+    {
+        get => _applyButtonBorderBrush;
+        set
+        {
+            _applyButtonBorderBrush = value;
+            OnPropertyChanged();
+        }
     }
 
     public MainWindow()
@@ -57,7 +104,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         DataContext = this;
 
         _hookWatchTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _hookWatchTimer.Tick += (_, _) => UpdateAllyLeaveHookStatus(forceInject: false);
+        _hookWatchTimer.Tick += (_, _) => UpdateExtraHookStatus(forceInject: false);
 
         try
         {
@@ -67,9 +114,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _extraConfigPath = Path.Combine(modDir, "extra-features.json");
             _nativeDir = Path.Combine(modDir, "native");
             LoadCards();
+            CaptureAppliedColors();
+            foreach (var card in Cards)
+            {
+                card.PropertyChanged += (_, args) =>
+                {
+                    if (_activeTab != "colors") return;
+                    if (args.PropertyName is null or nameof(ColorCard.Hex))
+                        RefreshTabStatus();
+                };
+            }
             LoadExtraFeatures();
             _hookWatchTimer.Start();
-            UpdateAllyLeaveHookStatus(forceInject: AllyLeaveRedNames);
+            UpdateExtraHookStatus(forceInject: _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen);
+            RefreshTabStatus();
         }
         catch (Exception ex)
         {
@@ -77,9 +135,121 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _configPath = string.Empty;
             _extraConfigPath = string.Empty;
             _nativeDir = string.Empty;
-            Status = ex.Message;
+            SetStatusLines(StatusLine("✕", PendingIconBrush, ex.Message));
             WpfMessageBox.Show(ex.Message, "Quality of Life Modding", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private void MainTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // TabControl bubbles SelectionChanged from child controls — only handle tab switches.
+        if (!ReferenceEquals(e.Source, MainTabs)) return;
+        if (MainTabs.SelectedItem is not TabItem tab) return;
+        _activeTab = tab.Tag as string ?? "colors";
+        RefreshTabStatus();
+    }
+
+    private void CaptureAppliedColors()
+    {
+        _appliedHexByPlayer.Clear();
+        foreach (var card in Cards)
+            _appliedHexByPlayer[card.Player] = ColorCard.NormalizeHex(card.Hex);
+    }
+
+    private bool HasPendingColorChanges()
+    {
+        foreach (var card in Cards.Where(c => c.IsEnabled))
+        {
+            var current = ColorCard.NormalizeHex(card.Hex);
+            if (!_appliedHexByPlayer.TryGetValue(card.Player, out var applied))
+                return true;
+            if (!string.Equals(current, applied, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
+    private bool HasManualAppliedColors() =>
+        Cards.Any(card =>
+            card.IsEnabled &&
+            _appliedHexByPlayer.TryGetValue(card.Player, out var applied) &&
+            !string.Equals(applied, ColorCard.NormalizeHex(card.VanillaHex), StringComparison.OrdinalIgnoreCase));
+
+    private static readonly System.Windows.Media.Brush PendingIconBrush = CreateBrush(0xE5, 0x3E, 0x3E);
+    private static readonly System.Windows.Media.Brush ReadyIconBrush = CreateBrush(0x2E, 0xC8, 0x5A);
+    private static readonly System.Windows.Media.Brush PendingButtonBrush = CreateBrush(0xC4, 0x2B, 0x2B);
+    private static readonly System.Windows.Media.Brush PendingButtonBorderBrush = CreateBrush(0xE5, 0x5A, 0x5A);
+    private static readonly System.Windows.Media.Brush ReadyButtonBrush = CreateBrush(0x2E, 0xA8, 0x5C);
+    private static readonly System.Windows.Media.Brush ReadyButtonBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
+
+    private static System.Windows.Media.Brush CreateBrush(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
+    private bool HasPendingMarkGone() => _allyLeaveRedNames != _appliedAllyLeaveRedNames;
+    private bool HasPendingChatPause() => _chatDuringPauseScreen != _appliedChatDuringPauseScreen;
+    private bool HasPendingExtraChanges() => HasPendingMarkGone() || HasPendingChatPause();
+
+    private bool HasAnyPendingChanges() => HasPendingColorChanges() || HasPendingExtraChanges();
+
+    private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
+        new(icon, brush, text);
+
+    private void SetStatusLines(params StatusLineItem[] lines)
+    {
+        StatusLines.Clear();
+        foreach (var line in lines)
+            StatusLines.Add(line);
+    }
+
+    private StatusLineItem BuildColorsLine()
+    {
+        if (HasPendingColorChanges())
+        {
+            return StatusLine("✕", PendingIconBrush,
+                "For the mod \"player colors\" to take effect, please apply first. Please restart Warcraft II for the mods to take effect");
+        }
+
+        return HasManualAppliedColors()
+            ? StatusLine("✓", ReadyIconBrush,
+                "Manual colors are being used. Please restart Warcraft II Remastered for the mods to take effect.")
+            : StatusLine("✓", ReadyIconBrush, "Using the original Warcraft II colors");
+    }
+
+    private void RefreshTabStatus()
+    {
+        if (_isApplying) return;
+
+        var pending = HasAnyPendingChanges();
+        ApplyButtonBrush = pending ? PendingButtonBrush : ReadyButtonBrush;
+        ApplyButtonBorderBrush = pending ? PendingButtonBorderBrush : ReadyButtonBorderBrush;
+
+        if (_activeTab == "extra")
+        {
+            if (HasPendingExtraChanges())
+            {
+                SetStatusLines(StatusLine("✕", PendingIconBrush,
+                    "Changes have been made, please apply for the changes to take place."));
+            }
+            else
+            {
+                SetStatusLines(StatusLine("✓", ReadyIconBrush,
+                    "Mods have been installed. Restart Warcraft II Remastered to take effect"));
+            }
+            return;
+        }
+
+        if (_activeTab == "util")
+        {
+            SetStatusLines(StatusLine("✓", ReadyIconBrush,
+                "Util colors are not editable yet."));
+            return;
+        }
+
+        SetStatusLines(BuildColorsLine());
     }
 
     private static string FindEnginePath()
@@ -148,7 +318,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if ((sender as FrameworkElement)?.Tag is not ColorCard card) return;
         using var dialog = new Forms.ColorDialog { FullOpen = true, Color = System.Drawing.ColorTranslator.FromHtml(card.Hex) };
         if (dialog.ShowDialog() == Forms.DialogResult.OK)
+        {
             card.Hex = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+            RefreshTabStatus();
+        }
     }
 
     private void Hex_LostFocus(object sender, RoutedEventArgs e)
@@ -159,51 +332,68 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             WpfMessageBox.Show($"{card.Name}: use a six-digit hex color, for example #3B82F6.", "Invalid color",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             card.Hex = card.LastValidHex;
+            RefreshTabStatus();
             return;
         }
         card.Hex = card.Hex;
+        RefreshTabStatus();
     }
 
     private void ResetCard_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.Tag is ColorCard card) card.Reset();
+        if ((sender as FrameworkElement)?.Tag is not ColorCard card) return;
+        card.Reset();
+        RefreshTabStatus();
     }
 
     private void LoadExtraFeatures()
     {
-        if (!File.Exists(_extraConfigPath)) return;
-        var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        AllyLeaveRedNames = extra?.AllyLeaveRedNames ?? false;
-    }
+        var markGone = false;
+        var chatPause = false;
+        if (File.Exists(_extraConfigPath))
+        {
+            var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            markGone = extra?.AllyLeaveRedNames ?? false;
+            chatPause = extra?.ChatDuringPauseScreen ?? false;
+        }
 
-    private void SaveExtraFeatures()
-    {
-        var extra = new ExtraFeaturesConfig { AllyLeaveRedNames = AllyLeaveRedNames };
-        File.WriteAllText(_extraConfigPath, JsonSerializer.Serialize(extra, new JsonSerializerOptions { WriteIndented = true }));
+        _allyLeaveRedNames = markGone;
+        _appliedAllyLeaveRedNames = markGone;
+        _chatDuringPauseScreen = chatPause;
+        _appliedChatDuringPauseScreen = chatPause;
+        OnPropertyChanged(nameof(AllyLeaveRedNames));
+        OnPropertyChanged(nameof(ChatDuringPauseScreen));
     }
 
     private static bool IsWarcraftIiRunning() =>
         Process.GetProcessesByName("Warcraft II").Length > 0;
 
+    private void UpdateExtraHookStatus(bool forceInject)
+    {
+        UpdateAllyLeaveHookStatus(forceInject);
+        UpdatePauseChatHookStatus(forceInject);
+    }
+
     private void UpdateAllyLeaveHookStatus(bool forceInject)
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
 
-        if (!AllyLeaveRedNames)
+        if (!_appliedAllyLeaveRedNames)
         {
             if (IsWarcraftIiRunning() && forceInject)
             {
-                try { Status = SyncAllyLeaveHook(throwOnError: false); }
-                catch (Exception ex) { Status = ex.Message; }
+                try { SyncAllyLeaveHook(throwOnError: false); }
+                catch { /* keep tab status friendly */ }
             }
+            if (_activeTab == "extra") RefreshTabStatus();
             return;
         }
 
         if (!IsWarcraftIiRunning())
         {
             _hookInjectedForRunningGame = false;
-            Status = "Extra ON — start Warcraft II; hook auto-loads. Then open Alliances with F11.";
+            if (_activeTab == "extra") RefreshTabStatus();
             return;
         }
 
@@ -212,28 +402,89 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             var message = SyncAllyLeaveHook(throwOnError: false);
-            if (!string.IsNullOrWhiteSpace(message) &&
-                message.Contains("enabled", StringComparison.OrdinalIgnoreCase))
-            {
-                _hookInjectedForRunningGame = true;
-                Status = message.Trim() + " Marker: [X] red name on F11 Alliances (players + computers).";
-            }
-            else
-            {
-                _hookInjectedForRunningGame = false;
-                Status = string.IsNullOrWhiteSpace(message)
-                    ? "Extra hook inject failed (no message). Run Studio as admin if needed."
-                    : message;
-            }
+            _hookInjectedForRunningGame =
+                !string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
         }
-        catch (Exception ex)
+        catch
         {
             _hookInjectedForRunningGame = false;
-            Status = "Extra hook error: " + ex.Message;
+        }
+
+        if (_activeTab == "extra") RefreshTabStatus();
+    }
+
+    private void UpdatePauseChatHookStatus(bool forceInject)
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!_appliedChatDuringPauseScreen)
+        {
+            if (IsWarcraftIiRunning() && forceInject)
+            {
+                try { SyncPauseChatHook(throwOnError: false); }
+                catch { /* keep tab status friendly */ }
+            }
+            return;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _pauseChatInjectedForRunningGame = false;
+            return;
+        }
+
+        if (_pauseChatInjectedForRunningGame && !forceInject) return;
+
+        try
+        {
+            var message = SyncPauseChatHook(throwOnError: false);
+            _pauseChatInjectedForRunningGame =
+                !string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _pauseChatInjectedForRunningGame = false;
         }
     }
 
-    private void TryAutoInjectAllyLeaveHook() => UpdateAllyLeaveHookStatus(forceInject: false);
+    private void SyncAllyLeaveWatch()
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+        var watch = Path.Combine(_nativeDir, "AllyLeaveWatch.exe");
+        if (!File.Exists(watch)) return;
+
+        try
+        {
+            var anyExtra = _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen;
+            var args = anyExtra ? "--install-startup" : "--uninstall-startup";
+            var start = new ProcessStartInfo(watch, args)
+            {
+                WorkingDirectory = _nativeDir,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            using var process = Process.Start(start);
+            process?.WaitForExit(5000);
+
+            if (anyExtra)
+            {
+                // Ensure a watcher instance is running (second start is a no-op via mutex).
+                var run = new ProcessStartInfo(watch)
+                {
+                    WorkingDirectory = _nativeDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                };
+                Process.Start(run)?.Dispose();
+            }
+        }
+        catch
+        {
+            // Watcher is best-effort; inject from Studio still works while open.
+        }
+    }
 
     private string SyncAllyLeaveHook(bool throwOnError = true)
     {
@@ -249,12 +500,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (!IsWarcraftIiRunning())
         {
             _hookInjectedForRunningGame = false;
-            return AllyLeaveRedNames
-                ? "Extra ON — start Warcraft II; hook auto-loads. Then open Alliances with F11."
+            return _appliedAllyLeaveRedNames
+                ? "Extra ON — watcher auto-injects when Warcraft II starts (Studio can close). F11 Alliances."
                 : "Extra setting saved.";
         }
 
-        var args = AllyLeaveRedNames ? "--enable" : "--disable";
+        var args = _appliedAllyLeaveRedNames ? "--enable" : "--disable";
         var start = new ProcessStartInfo(injector, args)
         {
             UseShellExecute = false,
@@ -278,12 +529,61 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return message;
         }
 
-        _hookInjectedForRunningGame = AllyLeaveRedNames;
+        _hookInjectedForRunningGame = _appliedAllyLeaveRedNames;
         return string.IsNullOrWhiteSpace(output) ? "Extra hook updated." : output;
     }
 
-    private void Apply_Click(object sender, RoutedEventArgs e)
+    private string SyncPauseChatHook(bool throwOnError = true)
     {
+        var injector = Path.Combine(_nativeDir, "InjectPauseChat.exe");
+        var dll = Path.Combine(_nativeDir, "PauseChatHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var missing = "Pause-chat hook files are missing. Rebuild mod/native.";
+            if (throwOnError) throw new InvalidOperationException(missing);
+            return missing;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _pauseChatInjectedForRunningGame = false;
+            return _appliedChatDuringPauseScreen
+                ? "Chat-during-pause ON — watcher auto-injects when Warcraft II starts."
+                : "Chat-during-pause setting saved.";
+        }
+
+        var args = _appliedChatDuringPauseScreen ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start the pause-chat injector.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+        {
+            _pauseChatInjectedForRunningGame = false;
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Pause-chat hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        _pauseChatInjectedForRunningGame = _appliedChatDuringPauseScreen;
+        return string.IsNullOrWhiteSpace(output) ? "Pause-chat hook updated." : output;
+    }
+
+    private async void Apply_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isApplying) return;
+
         try
         {
             // Commit any hex TextBox still focused so the latest typed value is saved.
@@ -296,33 +596,57 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     throw new InvalidOperationException($"{card.Name} has an invalid color.");
             }
 
+            IsApplying = true;
+            SetStatusLines(StatusLine("", ReadyIconBrush, "Installing mod…"));
+            ApplyButtonBrush = ReadyButtonBrush;
+            ApplyButtonBorderBrush = ReadyButtonBorderBrush;
+
             var config = new ColorConfig { Players = Cards.Select(card => new PlayerColor(card.Player, card.Hex)).ToList() };
-            File.WriteAllText(_configPath, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
-            SaveExtraFeatures();
+            var configJson = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            var markGoneEnabled = AllyLeaveRedNames;
+            var chatPauseEnabled = ChatDuringPauseScreen;
 
-            Status = "Applying…";
-            var result = RunEngine("-ApplySavedConfigOnly");
-            if (result.ExitCode != 0)
+            await Task.Run(() =>
             {
-                var details = string.Join(Environment.NewLine,
-                    new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
-                throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
-                    ? "Apply failed with no error details."
-                    : details);
-            }
+                File.WriteAllText(_configPath, configJson);
+                File.WriteAllText(_extraConfigPath,
+                    JsonSerializer.Serialize(new ExtraFeaturesConfig
+                    {
+                        AllyLeaveRedNames = markGoneEnabled,
+                        ChatDuringPauseScreen = chatPauseEnabled,
+                    }, new JsonSerializerOptions { WriteIndented = true }));
 
-            var hookStatus = SyncAllyLeaveHook();
-            Status = "Applied. " + hookStatus;
-            WpfMessageBox.Show(
-                "Colors were applied to the minimap and victory/ally bars.\n\n" +
-                hookStatus + "\n\n" +
-                "Restart Warcraft II if color changes do not show yet.",
-                "Quality of Life Modding", MessageBoxButton.OK, MessageBoxImage.Information);
+                var result = RunEngine("-ApplySavedConfigOnly");
+                if (result.ExitCode != 0)
+                {
+                    var details = string.Join(Environment.NewLine,
+                        new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
+                        ? "Apply failed with no error details."
+                        : details);
+                }
+            });
+
+            _appliedAllyLeaveRedNames = markGoneEnabled;
+            _appliedChatDuringPauseScreen = chatPauseEnabled;
+            _hookInjectedForRunningGame = false;
+            _pauseChatInjectedForRunningGame = false;
+            SyncAllyLeaveWatch();
+            try { SyncAllyLeaveHook(throwOnError: false); }
+            catch { /* optional while Extra is off */ }
+            try { SyncPauseChatHook(throwOnError: false); }
+            catch { /* optional while Extra is off */ }
+
+            CaptureAppliedColors();
         }
         catch (Exception ex)
         {
-            Status = "Apply failed.";
             WpfMessageBox.Show(ex.Message, "Apply failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsApplying = false;
+            RefreshTabStatus();
         }
     }
 
@@ -372,8 +696,10 @@ public sealed class ColorCard : INotifyPropertyChanged
     public static bool IsValidHex(string? value) =>
         value is not null && System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), "^#?[0-9a-fA-F]{6}$");
 
-    private static string Normalize(string value) =>
+    public static string NormalizeHex(string value) =>
         value.Trim().StartsWith('#') ? value.Trim().ToUpperInvariant() : $"#{value.Trim().ToUpperInvariant()}";
+
+    private static string Normalize(string value) => NormalizeHex(value);
 
     private static System.Windows.Media.Brush ToBrush(string hex) =>
         new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(hex)!);
@@ -393,4 +719,19 @@ public sealed record PlayerColor(int Player, string Color);
 public sealed class ExtraFeaturesConfig
 {
     public bool AllyLeaveRedNames { get; set; }
+    public bool ChatDuringPauseScreen { get; set; }
+}
+
+public sealed class StatusLineItem
+{
+    public string Icon { get; }
+    public System.Windows.Media.Brush IconBrush { get; }
+    public string Text { get; }
+
+    public StatusLineItem(string icon, System.Windows.Media.Brush iconBrush, string text)
+    {
+        Icon = icon;
+        IconBrush = iconBrush;
+        Text = text;
+    }
 }

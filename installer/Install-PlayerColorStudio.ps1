@@ -51,10 +51,19 @@ try {
     Copy-Item -Path (Join-Path $stage 'app\*') -Destination $appTarget -Recurse -Force
     Copy-Item -Path (Join-Path $engineSource '*') -Destination $modTarget -Recurse -Force
 
+    $watch = Join-Path $modTarget 'native\AllyLeaveWatch.exe'
+    $extraConfig = Join-Path $modTarget 'extra-features.json'
+    if ((Test-Path -LiteralPath $watch) -and (Test-Path -LiteralPath $extraConfig) -and
+        ((Get-Content -LiteralPath $extraConfig -Raw) -match '"AllyLeaveRedNames"\s*:\s*true')) {
+        Start-Process -FilePath $watch -ArgumentList '--install-startup' -WorkingDirectory (Split-Path $watch -Parent) -WindowStyle Hidden
+        Write-Host 'Extra watcher registered for Windows startup (Extra was already ON).'
+    }
+
     if (!$NoLaunch) {
         Start-Process -FilePath (Join-Path $appTarget 'PlayerColorStudio.exe') -WorkingDirectory $appTarget
     }
     Write-Host "Installed Quality of Life Modding: $installRoot"
+    Write-Host 'Tip: turn Extra ON once in the app to auto-inject on every game launch (no need to keep the app open).'
 }
 finally {
     if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
