@@ -25,7 +25,8 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TabPanel Grid.Row="0" IsItemsHost="True" Background="{StaticResource WindowBrush}"/>
+                            <DockPanel Grid.Row="0" IsItemsHost="True" LastChildFill="False"
+                                       Background="{StaticResource WindowBrush}"/>
                             <Border Grid.Row="1" Background="{StaticResource PanelBrush}"
                                     BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
                                 <ContentPresenter ContentSource="SelectedContent" Margin="{TemplateBinding Padding}"/>
@@ -198,7 +199,85 @@
             <Setter Property="Background" Value="#FF334868"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderBrush" Value="#FF5A7398"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.92"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <!-- Keep brand colors while Apply runs; only dim slightly. -->
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ProgressBar">
+            <Setter Property="Background" Value="#FF162338"/>
+            <Setter Property="Foreground" Value="#FF4CC37A"/>
+            <Setter Property="BorderBrush" Value="#FF5A7398"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3"
+                                ClipToBounds="True">
+                            <Grid>
+                                <Border x:Name="PART_Track" Background="{TemplateBinding Background}"/>
+                                <Border x:Name="PART_Indicator"
+                                        HorizontalAlignment="Left"
+                                        Background="{TemplateBinding Foreground}"/>
+                                <Border x:Name="Animation" Width="48" HorizontalAlignment="Left"
+                                        Background="{TemplateBinding Foreground}"
+                                        Visibility="Collapsed" Opacity="0.85">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform x:Name="AnimationTransform" X="0"/>
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsIndeterminate" Value="True">
+                                <Setter TargetName="PART_Indicator" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="Animation" Property="Visibility" Value="Visible"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard x:Name="IndeterminateStoryboard">
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="AnimationTransform"
+                                                             Storyboard.TargetProperty="X"
+                                                             From="-48" To="140" Duration="0:0:1.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="IndeterminateStoryboard"/>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="8,6"/>
@@ -250,6 +329,66 @@
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="HelpExpanderStyle" TargetType="Expander">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="IsExpanded" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <StackPanel>
+                            <DockPanel LastChildFill="True">
+                                <ToggleButton x:Name="HeaderToggle"
+                                              DockPanel.Dock="Right"
+                                              Width="28" Height="28"
+                                              Margin="8,0,0,0"
+                                              VerticalAlignment="Center"
+                                              Focusable="False"
+                                              IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              Cursor="Hand"
+                                              ToolTip="Show or hide what this color changes">
+                                    <Path x:Name="Arrow"
+                                          Data="M 0,0 L 6,6 L 12,0"
+                                          Stroke="#FFB8C4D8"
+                                          StrokeThickness="1.8"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <RotateTransform Angle="0"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </ToggleButton>
+                                <ContentPresenter ContentSource="Header"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True"/>
+                            </DockPanel>
+                            <ContentPresenter x:Name="ExpandSite"
+                                              Margin="0,10,0,0"
+                                              Visibility="Collapsed"
+                                              ContentSource="Content"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Arrow" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <RotateTransform Angle="180"/>
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

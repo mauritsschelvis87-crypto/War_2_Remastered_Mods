@@ -2,6 +2,7 @@
 param(
     [string]$GameRootPath = 'C:\Program Files (x86)\Warcraft II Remastered',
     [switch]$ApplySavedConfigOnly,
+    [switch]$ApplyDragSelectFromExtra,
     [switch]$RestoreOnly,
     [switch]$SyncVanillaBackup,
     [switch]$GetDefaultConfig
@@ -41,16 +42,22 @@ $PlayerMinimapPplOnlyIndices = @{
     1 = @(1)
 }
 
-# Unit/building selection outline = bright green at palette index 250 (0,63,0).
-# Enemy selection = forest.ppl index 249. Build stage red = indices 201/202.
-# Gold mine selection uses indices 236-238 (gold band) — left vanilla for now.
+# Self highlight green = palette index 250 (own units, buildings, drag box, related UI).
+# Enemy highlight = index 249 (also used by some build UI — customize carefully).
+# Ally highlight = index 251 (Other-colors ally slot; was previously "shared yellow").
+# Critter minimap = index 247 (dots only; selection outline uses Ally / 251).
+# Gold mine highlight = indices 236, 237, 238 (resource gold band).
+# Oil patch highlight = index 246 (resource selection outline path uses 0xF6).
 $SelectionHighlightPaletteIndex = 250
 $EnemySelectionHighlightPaletteIndex = 249
+$AllyHighlightPaletteIndex = 251
+$CritterHighlightPaletteIndex = 247
 $BuildStageRedPaletteIndices = @(201, 202)
-$GoldMineSelectionPaletteIndices = @(236, 237, 238)
+$GoldMineHighlightPaletteIndices = @(236, 237, 238)
+$OilPatchHighlightPaletteIndex = 246
 
-# Enemy highlight shares palette index 249 with build UI — customization paused in desktop.
-$EnemySelectionHighlightUiDisabled = $true
+# Enemy highlight shares palette index 249 with some build UI chrome.
+$EnemySelectionHighlightUiDisabled = $false
 $EnemySelectionDisplayHex = '#FF0000'
 
 # First palette index per player, used to read/write JSON defaults from authentic backup.
@@ -215,7 +222,13 @@ function Sync-AuthenticVanillaBackup {
     $colors = foreach ($idx in $VanillaJsonColorIndices) {
         Get-ColorFromPaletteBytes $pplBytes $idx
     }
-    Save-ColorsToJson @(Get-DefaultPlayerColors) (Get-DefaultSelectionHighlightHex) (Get-DefaultEnemySelectionHighlightHex)
+    Save-ColorsToJson @(Get-DefaultPlayerColors) `
+        (Get-DefaultSelectionHighlightHex) `
+        (Get-DefaultEnemySelectionHighlightHex) `
+        (Get-DefaultAllyHighlightHex) `
+        (Get-DefaultCritterHighlightHex) `
+        (Get-DefaultGoldMineHighlightHex) `
+        (Get-DefaultOilPatchHighlightHex)
     Write-ApplyLog "Captured backup\vanilla from $GameRootPath (Scan and Repair source)"
 }
 
@@ -277,7 +290,13 @@ function Restore-OriginalPaletteFiles {
     foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson))) {
         Restore-FromBackup $rel
     }
-    Save-ColorsToJson @(Get-DefaultPlayerColors) (Get-DefaultSelectionHighlightHex) (Get-DefaultEnemySelectionHighlightHex)
+    Save-ColorsToJson @(Get-DefaultPlayerColors) `
+        (Get-DefaultSelectionHighlightHex) `
+        (Get-DefaultEnemySelectionHighlightHex) `
+        (Get-DefaultAllyHighlightHex) `
+        (Get-DefaultCritterHighlightHex) `
+        (Get-DefaultGoldMineHighlightHex) `
+        (Get-DefaultOilPatchHighlightHex)
     Write-ApplyLog "Restored authentic vanilla game files and player-colors.json"
 }
 
@@ -309,9 +328,11 @@ function Test-GameRunning {
     return $null -ne (Get-Process -Name 'Warcraft II' -ErrorAction SilentlyContinue)
 }
 
-# UI slots restored from vanilla after each apply (build bar gradient, enemy/build red, goldmine, mine selection)
-$PreservePaletteIndicesPpl = @(251, 189, 190, 191, 249) + $BuildStageRedPaletteIndices + $GoldMineSelectionPaletteIndices
-$PreservePaletteIndicesBin = @(251) + $BuildStageRedPaletteIndices + $GoldMineSelectionPaletteIndices
+# UI slots restored from vanilla after each apply unless customized below.
+# 189-191 = build-bar yellows; 201-202 = build-stage red.
+# 251 is ally highlight (customized); not preserved.
+$PreservePaletteIndicesPpl = @(245, 189, 190, 191) + $BuildStageRedPaletteIndices
+$PreservePaletteIndicesBin = @(245) + $BuildStageRedPaletteIndices
 
 $TilesetPalettePairs = @(
     @{
@@ -398,8 +419,68 @@ function Set-EnemySelectionHighlightOnBytes($bytes, $color) {
     Set-PaletteIndexFromColor $bytes $EnemySelectionHighlightPaletteIndex $color
 }
 
+function Get-DefaultAllyHighlightHex {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        return '#FFFF00'
+    }
+    $bytes = Read-FileBytes $pplPath
+    return Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $AllyHighlightPaletteIndex)
+}
+
+function Set-AllyHighlightOnBytes($bytes, $color) {
+    Set-PaletteIndexFromColor $bytes $AllyHighlightPaletteIndex $color
+}
+
+function Get-DefaultCritterHighlightHex {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        return '#C0C0C0'
+    }
+    $bytes = Read-FileBytes $pplPath
+    return Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $CritterHighlightPaletteIndex)
+}
+
+function Set-CritterHighlightOnBytes($bytes, $color) {
+    Set-PaletteIndexFromColor $bytes $CritterHighlightPaletteIndex $color
+}
+
+function Get-DefaultGoldMineHighlightHex {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        return '#694114'
+    }
+    $bytes = Read-FileBytes $pplPath
+    return Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $GoldMineHighlightPaletteIndices[0])
+}
+
+function Set-GoldMineHighlightOnBytes($bytes, $color) {
+    foreach ($idx in $GoldMineHighlightPaletteIndices) {
+        Set-PaletteIndexFromColor $bytes $idx $color
+    }
+}
+
+function Get-DefaultOilPatchHighlightHex {
+    $pplPath = Get-VanillaBackupPath 'x86\Data\Art\bgs\Forest\forest.ppl'
+    if (!$pplPath) {
+        return '#FFFBF3'
+    }
+    $bytes = Read-FileBytes $pplPath
+    return Convert-ColorToHex (Get-ColorFromPaletteBytes $bytes $OilPatchHighlightPaletteIndex)
+}
+
+function Set-OilPatchHighlightOnBytes($bytes, $color) {
+    Set-PaletteIndexFromColor $bytes $OilPatchHighlightPaletteIndex $color
+}
+
 function Get-SelectionPatchPaletteIndices {
-    return @($SelectionHighlightPaletteIndex)
+    return @(
+        $SelectionHighlightPaletteIndex,
+        $EnemySelectionHighlightPaletteIndex,
+        $AllyHighlightPaletteIndex,
+        $CritterHighlightPaletteIndex,
+        $OilPatchHighlightPaletteIndex
+    ) + $GoldMineHighlightPaletteIndices
 }
 
 function Get-AllyBarCursorColor($color) {
@@ -476,7 +557,11 @@ function Apply-MinimapAndAllyColors {
     param(
         [object[]]$Colors,
         $SelectionHighlightColor,
-        $EnemySelectionHighlightColor
+        $EnemySelectionHighlightColor,
+        $AllyHighlightColor,
+        $CritterHighlightColor,
+        $GoldMineHighlightColor,
+        $OilPatchHighlightColor
     )
 
     $colors = @($Colors)
@@ -488,6 +573,18 @@ function Apply-MinimapAndAllyColors {
     }
     if (!$EnemySelectionHighlightColor) {
         $EnemySelectionHighlightColor = Get-EnemySelectionHighlightColorForApply
+    }
+    if (!$AllyHighlightColor) {
+        $AllyHighlightColor = Convert-HexToColor (Get-DefaultAllyHighlightHex)
+    }
+    if (!$CritterHighlightColor) {
+        $CritterHighlightColor = Convert-HexToColor (Get-DefaultCritterHighlightHex)
+    }
+    if (!$GoldMineHighlightColor) {
+        $GoldMineHighlightColor = Convert-HexToColor (Get-DefaultGoldMineHighlightHex)
+    }
+    if (!$OilPatchHighlightColor) {
+        $OilPatchHighlightColor = Convert-HexToColor (Get-DefaultOilPatchHighlightHex)
     }
 
     $gameRunning = Test-GameRunning
@@ -519,6 +616,11 @@ function Apply-MinimapAndAllyColors {
         Set-PlayerColorsOnBytes $pplBytes $colors -IncludePplOnlyMinimap
         Restore-PreservedPaletteSlots $pplBytes $vanillaPpl $PreservePaletteIndicesPpl
         Set-SelectionHighlightOnBytes $pplBytes $SelectionHighlightColor
+        Set-EnemySelectionHighlightOnBytes $pplBytes $EnemySelectionHighlightColor
+        Set-AllyHighlightOnBytes $pplBytes $AllyHighlightColor
+        Set-CritterHighlightOnBytes $pplBytes $CritterHighlightColor
+        Set-GoldMineHighlightOnBytes $pplBytes $GoldMineHighlightColor
+        Set-OilPatchHighlightOnBytes $pplBytes $OilPatchHighlightColor
 
         # mapColors.bin: unit bands only — never low minimap slots 1/2 (different file format).
         Set-PlayerColorsOnBytes $binBytes $colors
@@ -568,8 +670,53 @@ function Apply-MinimapAndAllyColors {
     }
 
     $oEnemy = $EnemySelectionHighlightPaletteIndex * 3
-    if ($ppl[$oEnemy] -ne $vanillaPpl[$oEnemy] -or $ppl[$oEnemy + 1] -ne $vanillaPpl[$oEnemy + 1] -or $ppl[$oEnemy + 2] -ne $vanillaPpl[$oEnemy + 2]) {
-        throw "Patch mislukt op forest.ppl (idx $EnemySelectionHighlightPaletteIndex, enemy/build red moet vanilla blijven)."
+    $expectedEnemy = @(
+        (Scale-Channel $EnemySelectionHighlightColor.R)
+        (Scale-Channel $EnemySelectionHighlightColor.G)
+        (Scale-Channel $EnemySelectionHighlightColor.B)
+    )
+    if ($ppl[$oEnemy] -ne $expectedEnemy[0] -or $ppl[$oEnemy + 1] -ne $expectedEnemy[1] -or $ppl[$oEnemy + 2] -ne $expectedEnemy[2]) {
+        throw "Patch mislukt op forest.ppl (idx $EnemySelectionHighlightPaletteIndex, enemy highlight)."
+    }
+
+    $oAlly = $AllyHighlightPaletteIndex * 3
+    $expectedAlly = @(
+        (Scale-Channel $AllyHighlightColor.R)
+        (Scale-Channel $AllyHighlightColor.G)
+        (Scale-Channel $AllyHighlightColor.B)
+    )
+    if ($ppl[$oAlly] -ne $expectedAlly[0] -or $ppl[$oAlly + 1] -ne $expectedAlly[1] -or $ppl[$oAlly + 2] -ne $expectedAlly[2]) {
+        throw "Patch mislukt op forest.ppl (idx $AllyHighlightPaletteIndex, ally highlight)."
+    }
+
+    $oCritter = $CritterHighlightPaletteIndex * 3
+    $expectedCritter = @(
+        (Scale-Channel $CritterHighlightColor.R)
+        (Scale-Channel $CritterHighlightColor.G)
+        (Scale-Channel $CritterHighlightColor.B)
+    )
+    if ($ppl[$oCritter] -ne $expectedCritter[0] -or $ppl[$oCritter + 1] -ne $expectedCritter[1] -or $ppl[$oCritter + 2] -ne $expectedCritter[2]) {
+        throw "Patch mislukt op forest.ppl (idx $CritterHighlightPaletteIndex, critter minimap)."
+    }
+
+    $oGold = $GoldMineHighlightPaletteIndices[0] * 3
+    $expectedGold = @(
+        (Scale-Channel $GoldMineHighlightColor.R)
+        (Scale-Channel $GoldMineHighlightColor.G)
+        (Scale-Channel $GoldMineHighlightColor.B)
+    )
+    if ($ppl[$oGold] -ne $expectedGold[0] -or $ppl[$oGold + 1] -ne $expectedGold[1] -or $ppl[$oGold + 2] -ne $expectedGold[2]) {
+        throw "Patch mislukt op forest.ppl (idx $($GoldMineHighlightPaletteIndices[0]), gold mine highlight)."
+    }
+
+    $oOil = $OilPatchHighlightPaletteIndex * 3
+    $expectedOil = @(
+        (Scale-Channel $OilPatchHighlightColor.R)
+        (Scale-Channel $OilPatchHighlightColor.G)
+        (Scale-Channel $OilPatchHighlightColor.B)
+    )
+    if ($ppl[$oOil] -ne $expectedOil[0] -or $ppl[$oOil + 1] -ne $expectedOil[1] -or $ppl[$oOil + 2] -ne $expectedOil[2]) {
+        throw "Patch mislukt op forest.ppl (idx $OilPatchHighlightPaletteIndex, oil patch highlight)."
     }
 
     foreach ($buildIdx in $BuildStageRedPaletteIndices) {
@@ -589,11 +736,45 @@ function Apply-MinimapAndAllyColors {
         $PlayerColorIndices.Keys | Where-Object { $DisabledPlayerIndices -notcontains $_ } | ForEach-Object { $_ + 1 } | Sort-Object
     ) -join ','
     Write-ApplyLog "Applied minimap + ally + selection highlight to $root (players $patchedPlayers)"
+    if ($gameRunning) {
+        Write-Host 'Warcraft II is running — restart the game to load the new colors.'
+    }
     return $gameRunning
 }
 
 function Get-PlayerColorsJsonPath {
     return Join-Path (Split-Path -Parent $PSCommandPath) 'player-colors.json'
+}
+
+function Get-ExtraFeaturesJsonPath {
+    return Join-Path (Split-Path -Parent $PSCommandPath) 'extra-features.json'
+}
+
+function Read-ExtraDragSelectConfig {
+    $path = Get-ExtraFeaturesJsonPath
+    $enabled = $false
+    $hex = $null
+    if (Test-Path -LiteralPath $path) {
+        try {
+            $raw = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+            if ($raw.DragSelectColorEnabled -eq $true) { $enabled = $true }
+            if ($raw.DragSelectColor) { $hex = [string]$raw.DragSelectColor }
+        } catch {
+            Write-ApplyLog "Kon extra-features.json niet lezen: $($_.Exception.Message)"
+        }
+    }
+    if (!$hex) { $hex = Get-DefaultSelectionHighlightHex }
+    return [pscustomobject]@{ Enabled = $enabled; Hex = $hex }
+}
+
+function Apply-DragSelectPaletteColor {
+    param(
+        [bool]$Enabled,
+        [string]$ColorHex
+    )
+    # Drag-select cannot safely own a separate palette slot yet: index 250 is shared by
+    # unit outlines, the rubber-band, and other UI greens. Selection owns 250 instead.
+    Write-ApplyLog "Drag-select palette apply skipped (shared index 250; use Selection). enabled=$Enabled color=$ColorHex"
 }
 
 function Load-ColorsFromJsonOrDefault {
@@ -632,7 +813,7 @@ function Load-SelectionHighlightFromJsonOrDefault {
 }
 
 function Get-EnemySelectionHighlightColorForApply {
-    return Convert-HexToColor (Get-DefaultEnemySelectionHighlightHex)
+    return Load-EnemySelectionHighlightFromJsonOrDefault
 }
 
 function Load-EnemySelectionHighlightFromJsonOrDefault {
@@ -651,7 +832,71 @@ function Load-EnemySelectionHighlightFromJsonOrDefault {
     return Convert-HexToColor (Get-DefaultEnemySelectionHighlightHex)
 }
 
-function Save-ColorsToJson($colors, [string]$selectionHighlightHex, [string]$enemySelectionHighlightHex) {
+function Load-AllyHighlightFromJsonOrDefault {
+    $jsonPath = Get-PlayerColorsJsonPath
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return Convert-HexToColor (Get-DefaultAllyHighlightHex)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    if ($raw.allyHighlight) {
+        return Convert-HexToColor ([string]$raw.allyHighlight)
+    }
+    return Convert-HexToColor (Get-DefaultAllyHighlightHex)
+}
+
+function Load-CritterHighlightFromJsonOrDefault {
+    $jsonPath = Get-PlayerColorsJsonPath
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return Convert-HexToColor (Get-DefaultCritterHighlightHex)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    if ($raw.critterHighlight) {
+        return Convert-HexToColor ([string]$raw.critterHighlight)
+    }
+    return Convert-HexToColor (Get-DefaultCritterHighlightHex)
+}
+
+function Load-GoldMineHighlightFromJsonOrDefault {
+    $jsonPath = Get-PlayerColorsJsonPath
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return Convert-HexToColor (Get-DefaultGoldMineHighlightHex)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    if ($raw.goldMineHighlight) {
+        return Convert-HexToColor ([string]$raw.goldMineHighlight)
+    }
+    # Legacy combined field from older Studio / configs.
+    if ($raw.goldMineOilHighlight) {
+        return Convert-HexToColor ([string]$raw.goldMineOilHighlight)
+    }
+    return Convert-HexToColor (Get-DefaultGoldMineHighlightHex)
+}
+
+function Load-OilPatchHighlightFromJsonOrDefault {
+    $jsonPath = Get-PlayerColorsJsonPath
+    if (!(Test-Path -LiteralPath $jsonPath)) {
+        return Convert-HexToColor (Get-DefaultOilPatchHighlightHex)
+    }
+
+    $raw = Get-Content -LiteralPath $jsonPath -Raw | ConvertFrom-Json
+    if ($raw.oilPatchHighlight) {
+        return Convert-HexToColor ([string]$raw.oilPatchHighlight)
+    }
+    return Convert-HexToColor (Get-DefaultOilPatchHighlightHex)
+}
+
+function Save-ColorsToJson(
+    $colors,
+    [string]$selectionHighlightHex,
+    [string]$enemySelectionHighlightHex,
+    [string]$allyHighlightHex,
+    [string]$critterHighlightHex,
+    [string]$goldMineHighlightHex,
+    [string]$oilPatchHighlightHex
+) {
     try {
         if (!$selectionHighlightHex) {
             $selectionHighlightHex = Get-DefaultSelectionHighlightHex
@@ -662,6 +907,18 @@ function Save-ColorsToJson($colors, [string]$selectionHighlightHex, [string]$ene
             } else {
                 Get-DefaultEnemySelectionHighlightHex
             }
+        }
+        if (!$allyHighlightHex) {
+            $allyHighlightHex = Get-DefaultAllyHighlightHex
+        }
+        if (!$critterHighlightHex) {
+            $critterHighlightHex = Get-DefaultCritterHighlightHex
+        }
+        if (!$goldMineHighlightHex) {
+            $goldMineHighlightHex = Get-DefaultGoldMineHighlightHex
+        }
+        if (!$oilPatchHighlightHex) {
+            $oilPatchHighlightHex = Get-DefaultOilPatchHighlightHex
         }
         $players = for ($i = 0; $i -lt 8; $i++) {
             [pscustomobject]@{
@@ -674,6 +931,10 @@ function Save-ColorsToJson($colors, [string]$selectionHighlightHex, [string]$ene
             players                  = $players
             selectionHighlight       = $selectionHighlightHex
             enemySelectionHighlight  = $enemySelectionHighlightHex
+            allyHighlight            = $allyHighlightHex
+            critterHighlight         = $critterHighlightHex
+            goldMineHighlight        = $goldMineHighlightHex
+            oilPatchHighlight        = $oilPatchHighlightHex
         } | ConvertTo-Json -Depth 5)
         [IO.File]::WriteAllText((Get-PlayerColorsJsonPath), $json, [Text.UTF8Encoding]::new($false))
     } catch {
@@ -702,7 +963,15 @@ if ($GetDefaultConfig) {
             color = Convert-ColorToHex (Get-PlayerDisplayColor $defaultColors $i)
         }
     }
-    [pscustomobject]@{ players = $players } | ConvertTo-Json -Compress
+    [pscustomobject]@{
+        players = $players
+        selectionHighlight = (Get-DefaultSelectionHighlightHex)
+        enemySelectionHighlight = (Get-DefaultEnemySelectionHighlightHex)
+        allyHighlight = (Get-DefaultAllyHighlightHex)
+        critterHighlight = (Get-DefaultCritterHighlightHex)
+        goldMineHighlight = (Get-DefaultGoldMineHighlightHex)
+        oilPatchHighlight = (Get-DefaultOilPatchHighlightHex)
+    } | ConvertTo-Json -Compress
     exit 0
 }
 
@@ -717,16 +986,32 @@ if ($RestoreOnly) {
     exit 0
 }
 
+if ($ApplyDragSelectFromExtra) {
+    # Kept for Studio compatibility; drag no longer patches a separate palette slot.
+    Ensure-VanillaBackupReady
+    Write-ApplyLog 'ApplyDragSelectFromExtra: no-op (Selection owns shared index 250).'
+    exit 0
+}
+
 if ($ApplySavedConfigOnly) {
     Ensure-VanillaBackupReady
     $loaded = Load-ColorsFromJsonOrDefault
     $highlight = Load-SelectionHighlightFromJsonOrDefault
+    $enemy = Load-EnemySelectionHighlightFromJsonOrDefault
+    $ally = Load-AllyHighlightFromJsonOrDefault
+    $critter = Load-CritterHighlightFromJsonOrDefault
+    $gold = Load-GoldMineHighlightFromJsonOrDefault
+    $oil = Load-OilPatchHighlightFromJsonOrDefault
     Apply-MinimapAndAllyColors -Colors @($loaded) `
         -SelectionHighlightColor $highlight `
-        -EnemySelectionHighlightColor (Get-EnemySelectionHighlightColorForApply)
+        -EnemySelectionHighlightColor $enemy `
+        -AllyHighlightColor $ally `
+        -CritterHighlightColor $critter `
+        -GoldMineHighlightColor $gold `
+        -OilPatchHighlightColor $oil
     exit 0
 }
 
-Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -RestoreOnly, or -SyncVanillaBackup.'
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
 exit 1
 

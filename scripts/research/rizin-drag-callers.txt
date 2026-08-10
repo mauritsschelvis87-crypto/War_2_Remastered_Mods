@@ -1,0 +1,79 @@
+[2K
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+ERROR: Cannot peek memory without specifying an address (esil address: 0x0061581b)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x00615869)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x006158d0)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x00615937)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e91b0)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e8897)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e896f)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e8227)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e82b6)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e21ef)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e554a)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e5566)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e559e)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e55ba)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e565f)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e5674)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e5686)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e56ae)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e56c4)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e56d6)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e5715)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e572a)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e573c)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e5765)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e577b)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005e578d)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c79b3)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c7a01)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c7ec7)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c8427)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c8475)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c1a2c)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x005c1a60)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x00615a0a)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x00615a6d)
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+WARNING: (D:/a/rizin/rizin/librz/core/analysis_tp.c:84):var_rename: code should not be reached
+ERROR: Cannot peek memory without specifying an address (esil address: 0x00404609)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x004042a5)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x00404489)
+ERROR: Cannot peek memory without specifying an address (esil address: 0x004040c5)
+===== axt 4e4ea0 =====
+(nofunc) 0x4e73dc [DATA] mov dword [esi+0x2e], 0x4e4ea0
+(nofunc) 0x4e740f [DATA] mov ecx, 0x4e4ea0
+===== axt 4e4ed9 =====
+===== axt 5999a0 rect draw =====
+(nofunc) 0x4a4ff5 [CALL] call fcn.005999a0
+(nofunc) 0x4a502f [CALL] call fcn.005999a0
+(nofunc) 0x4a5193 [CALL] call fcn.005999a0
+(nofunc) 0x4a5293 [CALL] call fcn.005999a0
+(nofunc) 0x4a5589 [CALL] call fcn.005999a0
+(nofunc) 0x4a5786 [CALL] call fcn.005999a0
+(nofunc) 0x4a57fc [CALL] call fcn.005999a0
+fcn.004a5c80 0x4a5ceb [CALL] call fcn.005999a0
+fcn.004a5c80 0x4a5d2f [CALL] call fcn.005999a0
+fcn.004a5ef0 0x4a5f2e [CALL] call fcn.005999a0
+(nofunc) 0x4e4f0e [CALL] call fcn.005999a0
+(nofunc) 0x4e6855 [CALL] call fcn.005999a0
+(nofunc) 0x4e6882 [CALL] call fcn.005999a0
+===== search mouse-ish globals near drag =====
+===== find mov [96512c],0xfa unique =====
+[2K
+0x004e4ed9 7 hit.bytes.0

@@ -1,0 +1,163 @@
+===== drag site broader =====
+            0x004e4e80      55             push  ebp
+            0x004e4e81      8bec           mov   ebp, esp
+            0x004e4e83      8b4508         mov   eax, dword [ebp+0x08]
+            0x004e4e86      80782e25       cmp   byte [eax+0x2e], 0x25 ; '%'
+        ÔöîÔöÇ< 0x004e4e8a      750d           jnz   0x4e4e99
+        Ôöé   0x004e4e8c      80786c03       cmp   byte [eax+0x6c], 0x03
+       ÔöîÔöÇÔöÇ< 0x004e4e90      7507           jnz   0x4e4e99
+       ÔöéÔöé   0x004e4e92      b801000000     mov   eax, 0x01
+       ÔöéÔöé   0x004e4e97      5d             pop   ebp
+       ÔöéÔöé   0x004e4e98      c3             ret
+       ÔööÔööÔöÇ> 0x004e4e99      33c0           xor   eax, eax
+            0x004e4e9b      5d             pop   ebp
+            0x004e4e9c      c3             ret
+            0x004e4e9d      cc             int3
+            0x004e4e9e      cc             int3
+            0x004e4e9f      cc             int3
+            0x004e4ea0      55             push  ebp
+            0x004e4ea1      8bec           mov   ebp, esp
+            0x004e4ea3      0fb605cd8c91.  movzx eax, byte [0x918ccd]  ; [0x918ccd:1]=0
+            0x004e4eaa      56             push  esi
+            0x004e4eab      50             push  eax
+            0x004e4eac      e81fb30000     call  0x4f01d0
+            0x004e4eb1      8b7508         mov   esi, dword [ebp+0x08]
+            0x004e4eb4      56             push  esi
+            0x004e4eb5      e846fdffff     call  0x4e4c00
+            0x004e4eba      8b4e26         mov   ecx, dword [esi+0x26]
+            0x004e4ebd      83c408         add   esp, 0x08
+            0x004e4ec0      85c9           test  ecx, ecx
+        ÔöîÔöÇ< 0x004e4ec2      7452           jz    0x4e4f16
+        Ôöé   0x004e4ec4      0fb605b48c8c.  movzx eax, byte [0x8c8cb4]  ; [0x8c8cb4:1]=60
+        Ôöé   0x004e4ecb      668b04458817.  mov   ax, word [eax*2+0x8c1788]
+        Ôöé   0x004e4ed3      66854114       test  word [ecx+0x14], ax
+       ÔöîÔöÇÔöÇ< 0x004e4ed7      743d           jz    0x4e4f16
+       ÔöéÔöé   0x004e4ed9      c6052c519600.  mov   byte [0x96512c], 0xfa ; [0xfa:1]=255 ; 250
+       ÔöéÔöé   0x004e4ee0      0fb74e06       movzx ecx, word [esi+0x06]
+       ÔöéÔöé   0x004e4ee4      0fb7460a       movzx eax, word [esi+0x0a]
+       ÔöéÔöé   0x004e4ee8      0fb75604       movzx edx, word [esi+0x04]
+       ÔöéÔöé   0x004e4eec      662bc1         sub   ax, cx
+       ÔöéÔöé   0x004e4eef      6683e807       sub   ax, 0x07
+       ÔöéÔöé   0x004e4ef3      0fb7c0         movzx eax, ax
+       ÔöéÔöé   0x004e4ef6      50             push  eax
+       ÔöéÔöé   0x004e4ef7      0fb74608       movzx eax, word [esi+0x08]
+       ÔöéÔöé   0x004e4efb      662bc2         sub   ax, dx
+       ÔöéÔöé   0x004e4efe      6683e807       sub   ax, 0x07
+       ÔöéÔöé   0x004e4f02      0fb7c0         movzx eax, ax
+       ÔöéÔöé   0x004e4f05      50             push  eax
+       ÔöéÔöé   0x004e4f06      8d4104         lea   eax, dword [ecx+0x04]
+       ÔöéÔöé   0x004e4f09      50             push  eax
+       ÔöéÔöé   0x004e4f0a      8d4204         lea   eax, dword [edx+0x04]
+       ÔöéÔöé   0x004e4f0d      50             push  eax
+       ÔöéÔöé   0x004e4f0e      e88d4a0b00     call  0x5999a0
+       ÔöéÔöé   0x004e4f13      83c410         add   esp, 0x10
+       ÔööÔööÔöÇ> 0x004e4f16      5e             pop   esi
+            0x004e4f17      5d             pop   ebp
+            0x004e4f18      c3             ret
+            0x004e4f19      cc             int3
+            0x004e4f1a      cc             int3
+            0x004e4f1b      cc             int3
+            0x004e4f1c      cc             int3
+            0x004e4f1d      cc             int3
+            0x004e4f1e      cc             int3
+            0x004e4f1f      cc             int3
+            0x004e4f20      55             push  ebp
+            0x004e4f21      8bec           mov   ebp, esp
+            0x004e4f23      56             push  esi
+            0x004e4f24      6afb           push  0xfffffffb            ; 0xfb ; 251
+            0x004e4f26      ff7508         push  dword [ebp+0x08]
+            0x004e4f29      e8e2e1fbff     call  0x4a3110
+            0x004e4f2e      8bf0           mov   esi, eax
+            0x004e4f30      83c408         add   esp, 0x08
+            0x004e4f33      66837e2000     cmp   word [esi+0x20], 0x00
+        ÔöîÔöÇ< 0x004e4f38      7d1f           jnl   0x4e4f59
+        Ôöé   0x004e4f3a      660f1f440000   nop   word [eax+eax*1], ax
+       ÔöîÔöÇÔöÇ> 0x004e4f40      56             push  esi
+       ÔòÄÔöé   0x004e4f41      c74614000000.  mov   dword [esi+0x14], 0x00
+       ÔòÄÔöé   0x004e4f48      e893eafbff     call  0x4a39e0
+       ÔòÄÔöé   0x004e4f4d      8b36           mov   esi, dword [esi]
+       ÔòÄÔöé   0x004e4f4f      83c404         add   esp, 0x04
+       ÔòÄÔöé   0x004e4f52      66837e2000     cmp   word [esi+0x20], 0x00
+       ÔööÔöÇÔöÇ< 0x004e4f57      7ce7           jl    0x4e4f40
+===== search imm 0xF4 usage as color store =====
+===== B0 F4 =====
+[2K
+[2K
+0x0040d996 2 hit.bytes.0
+0x0040d9be 2 hit.bytes.1
+0x0041cf96 2 hit.bytes.2
+0x0041cfbe 2 hit.bytes.3
+0x00433676 2 hit.bytes.4
+0x0043369e 2 hit.bytes.5
+0x004386d6 2 hit.bytes.6
+0x004386fe 2 hit.bytes.7
+0x0043d496 2 hit.bytes.8
+0x0043d4be 2 hit.bytes.9
+0x005b91d9 2 hit.bytes.10
+0x005b91eb 2 hit.bytes.11
+0x005e461c 2 hit.bytes.12
+0x0063f8ba 2 hit.bytes.13
+0x006f97e8 2 hit.bytes.14
+0x0083540c 2 hit.bytes.15
+0x008aa314 2 hit.bytes.16
+0x008ba514 2 hit.bytes.17
+===== push F4 =====
+[2K
+0x00476fbf 2 hit.bytes.0
+0x00479fdd 2 hit.bytes.1
+0x0047a15a 2 hit.bytes.2
+0x0047a407 2 hit.bytes.3
+0x0047c072 2 hit.bytes.4
+0x0047d22b 2 hit.bytes.5
+0x0047d391 2 hit.bytes.6
+0x0047d4ee 2 hit.bytes.7
+0x0047d626 2 hit.bytes.8
+0x0047d98c 2 hit.bytes.9
+0x0047dafd 2 hit.bytes.10
+0x0047ffe7 2 hit.bytes.11
+0x00480b6b 2 hit.bytes.12
+0x00480ce2 2 hit.bytes.13
+0x0048a62d 2 hit.bytes.14
+0x0048b9e1 2 hit.bytes.15
+0x0048d638 2 hit.bytes.16
+0x0048d6a1 2 hit.bytes.17
+0x0048f6a0 2 hit.bytes.18
+0x0055ef97 2 hit.bytes.19
+0x0055efac 2 hit.bytes.20
+0x0055efec 2 hit.bytes.21
+0x0055f001 2 hit.bytes.22
+0x00560574 2 hit.bytes.23
+0x005605c1 2 hit.bytes.24
+0x005644d2 2 hit.bytes.25
+0x0080b200 2 hit.bytes.26
+0x0080cc1a 2 hit.bytes.27
+0x00813fb4 2 hit.bytes.28
+0x0081417d 2 hit.bytes.29
+0x0085099a 2 hit.bytes.30
+0x00851282 2 hit.bytes.31
+0x00851d9a 2 hit.bytes.32
+0x0085f642 2 hit.bytes.33
+0x0085fe5a 2 hit.bytes.34
+0x0086078a 2 hit.bytes.35
+0x00860fb2 2 hit.bytes.36
+0x008617b2 2 hit.bytes.37
+0x00861fb2 2 hit.bytes.38
+0x008627e2 2 hit.bytes.39
+0x0086343a 2 hit.bytes.40
+0x00863f1a 2 hit.bytes.41
+0x008647b2 2 hit.bytes.42
+0x0086502a 2 hit.bytes.43
+0x00865c5a 2 hit.bytes.44
+0x0086655a 2 hit.bytes.45
+0x00866dea 2 hit.bytes.46
+0x0086787a 2 hit.bytes.47
+0x0086811a 2 hit.bytes.48
+0x00868972 2 hit.bytes.49
+0x008691a2 2 hit.bytes.50
+0x008699f2 2 hit.bytes.51
+0x0086a1f2 2 hit.bytes.52
+0x0086aa12 2 hit.bytes.53
+0x0086b232 2 hit.bytes.54
+0x008831b5 2 hit.bytes.55
+0x00891a3c 2 hit.bytes.56
+0x00891b05 2 hit.bytes.57

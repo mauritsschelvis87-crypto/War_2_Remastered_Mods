@@ -1,0 +1,468 @@
+// Warcraft II Remastered — color multiplayer chat *names* only.
+//
+// In-game chat is drawn via NKMapMessages → DrawTextColored (0x5AEEB0).
+// That API takes one ARGB for the whole string, so we:
+//   1) draw the full line in the default (body) color
+//   2) redraw only "Name:" on top in the Studio player color
+//
+// Names matched against in-game table 0x91ADA8 / stride 0x38.
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <cstdarg>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+
+namespace {
+
+constexpr size_t kPlayerStride = 0x38;
+constexpr uint32_t kPreferredImageBase = 0x00400000;
+constexpr uint32_t kPreferredName0 = 0x0091ADA8;
+constexpr uint32_t kPreferredDrawColored = 0x005AEEB0;
+constexpr uint32_t kPreferredDrawImpl = 0x005AED00; // called only by 0x5AEEB0 (not 0x5AEE20)
+constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
+
+using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
+
+volatile LONG g_enabled = 0;
+volatile LONG g_ready = 0;
+volatile LONG g_hits = 0;
+volatile LONG g_recolors = 0;
+
+uint8_t* g_drawSite = nullptr;
+uint8_t g_originalPrologue[8]{};
+void* g_trampoline = nullptr;
+DrawColoredFn g_originalDraw = nullptr;
+char* g_playerName0 = nullptr;
+
+uint32_t g_colors[8]{};
+char g_logPath[MAX_PATH]{};
+
+void Log(const char* fmt, ...)
+{
+    if (!g_logPath[0]) {
+        char temp[MAX_PATH]{};
+        GetTempPathA(MAX_PATH, temp);
+        sprintf_s(g_logPath, "%swar2_chat_name_color_hook.log", temp);
+    }
+    FILE* f = nullptr;
+    if (fopen_s(&f, g_logPath, "a") != 0 || !f) return;
+    SYSTEMTIME st{};
+    GetLocalTime(&st);
+    fprintf(f, "%02u:%02u:%02u.%03u ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+    fputc('\n', f);
+    fclose(f);
+}
+
+bool IsLikelyCode(const uint8_t* p, size_t n)
+{
+    __try {
+        volatile uint8_t sum = 0;
+        for (size_t i = 0; i < n; ++i) sum = static_cast<uint8_t>(sum + p[i]);
+        (void)sum;
+        return true;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+
+bool MatchBytes(const uint8_t* p, const uint8_t* pat, const char* mask)
+{
+    for (size_t i = 0; mask[i]; ++i) {
+        if (mask[i] == 'x' && p[i] != pat[i]) return false;
+    }
+    return true;
+}
+
+uint8_t* FindPattern(uint8_t* base, size_t imageSize, const uint8_t* pat, const char* mask)
+{
+    const size_t len = strlen(mask);
+    if (imageSize < len) return nullptr;
+    for (size_t i = 0; i + len <= imageSize; ++i) {
+        uint8_t* p = base + i;
+        if (!IsLikelyCode(p, len)) continue;
+        if (MatchBytes(p, pat, mask)) return p;
+    }
+    return nullptr;
+}
+
+uint32_t PackColor(uint8_t r, uint8_t g, uint8_t b)
+{
+    return 0xFF000000u | (static_cast<uint32_t>(b) << 16) | (static_cast<uint32_t>(g) << 8) | r;
+}
+
+uint32_t ParseHexColor(const char* hex)
+{
+    if (!hex) return PackColor(0xDC, 0xDC, 0xDC);
+    while (*hex == '#' || *hex == ' ' || *hex == '"') ++hex;
+    unsigned r = 0xDC, g = 0xDC, b = 0xDC;
+    if (sscanf_s(hex, "%02x%02x%02x", &r, &g, &b) == 3) {
+        return PackColor(static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b));
+    }
+    return PackColor(0xDC, 0xDC, 0xDC);
+}
+
+void SetDefaultColors()
+{
+    const char* defs[8] = {
+        "#A60000", "#0096FF", "#2DB696", "#9A49B2",
+        "#FB8E14", "#28283D", "#E3E3E3", "#FFF759"
+    };
+    for (int i = 0; i < 8; ++i) g_colors[i] = ParseHexColor(defs[i]);
+}
+
+bool ReadFileAll(const wchar_t* path, char* buf, size_t bufSize, size_t* outLen)
+{
+    HANDLE file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                              nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) return false;
+    DWORD read = 0;
+    const BOOL ok = ReadFile(file, buf, static_cast<DWORD>(bufSize - 1), &read, nullptr);
+    CloseHandle(file);
+    if (!ok) return false;
+    buf[read] = 0;
+    if (outLen) *outLen = read;
+    return true;
+}
+
+void LoadColorsFromJson()
+{
+    SetDefaultColors();
+
+    wchar_t dllPath[MAX_PATH]{};
+    HMODULE self = nullptr;
+    if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                            reinterpret_cast<LPCWSTR>(&LoadColorsFromJson), &self) || !self) {
+        Log("LoadColors: no self module");
+        return;
+    }
+    if (!GetModuleFileNameW(self, dllPath, MAX_PATH)) return;
+
+    wchar_t* slash = wcsrchr(dllPath, L'\\');
+    if (!slash) slash = wcsrchr(dllPath, L'/');
+    if (slash) slash[1] = 0;
+
+    wchar_t jsonPath[MAX_PATH]{};
+    swprintf_s(jsonPath, L"%s..\\player-colors.json", dllPath);
+
+    wchar_t full[MAX_PATH]{};
+    if (GetFullPathNameW(jsonPath, MAX_PATH, full, nullptr) == 0) {
+        wcsncpy_s(full, jsonPath, _TRUNCATE);
+    }
+
+    char buf[8192]{};
+    size_t len = 0;
+    if (!ReadFileAll(full, buf, sizeof(buf), &len)) {
+        Log("LoadColors: missing %ls — using defaults", full);
+        return;
+    }
+
+    for (int player = 1; player <= 8; ++player) {
+        char key[32]{};
+        sprintf_s(key, "\"player\": %d", player);
+        const char* p = strstr(buf, key);
+        if (!p) {
+            sprintf_s(key, "\"player\":%d", player);
+            p = strstr(buf, key);
+        }
+        if (!p) continue;
+        const char* colorKey = strstr(p, "\"color\"");
+        if (!colorKey || colorKey > p + 120) continue;
+        const char* hash = strchr(colorKey, '#');
+        if (!hash || hash > colorKey + 40) continue;
+        g_colors[player - 1] = ParseHexColor(hash);
+    }
+    Log("LoadColors: ok from %ls", full);
+}
+
+const char* PlayerName(int index)
+{
+    if (!g_playerName0 || index < 0 || index > 7) return nullptr;
+    __try {
+        return g_playerName0 + index * static_cast<int>(kPlayerStride);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return nullptr;
+    }
+}
+
+bool NameEquals(const char* a, size_t aLen, const char* b)
+{
+    if (!a || !b || aLen == 0) return false;
+    size_t i = 0;
+    for (; i < aLen && b[i]; ++i) {
+        const char ca = (a[i] >= 'A' && a[i] <= 'Z') ? static_cast<char>(a[i] - 'A' + 'a') : a[i];
+        const char cb = (b[i] >= 'A' && b[i] <= 'Z') ? static_cast<char>(b[i] - 'A' + 'a') : b[i];
+        if (ca != cb) return false;
+    }
+    return i == aLen && b[i] == 0;
+}
+
+int MatchPlayerIndex(const char* text, size_t* nameLenOut)
+{
+    if (nameLenOut) *nameLenOut = 0;
+    if (!text || !text[0]) return -1;
+
+    const char* start = text;
+    while (*start && (static_cast<unsigned char>(*start) < 0x20 || *start == ' ')) ++start;
+
+    const char* colon = strchr(start, ':');
+    if (!colon || colon == start) return -1;
+    size_t nameLen = static_cast<size_t>(colon - start);
+    while (nameLen > 0 && (start[nameLen - 1] == ' ' || start[nameLen - 1] == '\t')) --nameLen;
+    if (nameLen == 0 || nameLen > 64) return -1;
+
+    for (int i = 0; i < 8; ++i) {
+        const char* slot = PlayerName(i);
+        if (!slot) continue;
+        __try {
+            if (slot[0] && NameEquals(start, nameLen, slot)) {
+                // Include colon in the overdrawn prefix: "Name:"
+                if (nameLenOut) *nameLenOut = static_cast<size_t>(colon - text) + 1;
+                return i;
+            }
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+    return -1;
+}
+
+void LogPlayerNames()
+{
+    if (!g_playerName0) {
+        Log("names: null");
+        return;
+    }
+    for (int i = 0; i < 8; ++i) {
+        const char* n = PlayerName(i);
+        __try {
+            Log("name[%d]=%s", i, (n && n[0]) ? n : "(empty)");
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            Log("name[%d]=<fault>", i);
+        }
+    }
+}
+
+bool PatchPrologue7(uint8_t* site, void* hook, uint8_t* savedOrig, void** trampOut, void** originalOut)
+{
+    memcpy(savedOrig, site, 7);
+    void* tramp = VirtualAlloc(nullptr, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!tramp) return false;
+
+    auto* t = static_cast<uint8_t*>(tramp);
+    memcpy(t, site, 7);
+    t[7] = 0xE9;
+    *reinterpret_cast<int32_t*>(t + 8) =
+        static_cast<int32_t>((site + 7) - (t + 12));
+
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        VirtualFree(tramp, 0, MEM_RELEASE);
+        return false;
+    }
+
+    site[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(site + 1) =
+        static_cast<int32_t>(static_cast<uint8_t*>(hook) - (site + 5));
+    site[5] = 0x90;
+    site[6] = 0x90;
+
+    VirtualProtect(site, 7, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), site, 7);
+    *trampOut = tramp;
+    *originalOut = tramp;
+    return true;
+}
+
+} // namespace
+
+extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, uint32_t color)
+{
+    if (!g_originalDraw) return;
+
+    if (!g_enabled || !ui || !text || !text[0]) {
+        g_originalDraw(ui, text, color);
+        return;
+    }
+
+    const LONG hits = InterlockedIncrement(&g_hits);
+    size_t prefixLen = 0;
+    const int player = MatchPlayerIndex(text, &prefixLen);
+
+    if (player < 0 || prefixLen == 0 || prefixLen >= 96) {
+        if (hits <= 30) Log("hit#%ld pass text=%.80s", hits, text);
+        g_originalDraw(ui, text, color);
+        return;
+    }
+
+    // Body color: keep the game's default for this line when it looks like
+    // "already our player color" (shouldn't), otherwise prefer the passed color
+    // and fall back to a neutral light gray.
+    uint32_t bodyColor = color;
+    if (bodyColor == 0 || bodyColor == g_colors[player]) bodyColor = kBodyColor;
+
+    char namePrefix[96]{};
+    memcpy(namePrefix, text, prefixLen);
+    namePrefix[prefixLen] = 0;
+
+    // Full line in body color, then name+':' overlaid in player color.
+    g_originalDraw(ui, text, bodyColor);
+    g_originalDraw(ui, namePrefix, g_colors[player]);
+
+    InterlockedIncrement(&g_recolors);
+    if (hits <= 40 || (hits % 50) == 0) {
+        Log("recolor-name p=%d body=%08X name=%08X text=%.60s",
+            player, bodyColor, g_colors[player], text);
+    }
+}
+
+static void __declspec(naked) Hook_DrawColored()
+{
+    __asm {
+        // Site prologue was: push ebp; mov ebp,esp; mov eax,[ebp+0x10]; push eax
+        // We replace it entirely and forward to our cdecl handler.
+        jmp ChatNameColor_OnDrawColored
+    }
+}
+
+namespace {
+
+uint8_t* FindDrawTextColored(uint8_t* base, size_t imageSize)
+{
+    // 0x5AEE20 / 0x5AEEB0 share the same prologue; only 0x5AEEB0 calls 0x5AED00.
+    //   push ebp; mov ebp,esp
+    //   mov eax,[ebp+10]; push eax; mov ecx,[ebp+0C]; push ecx
+    //   call strlen; add esp,4; push eax
+    //   mov edx,[ebp+0C]; push edx; mov eax,[ebp+8]; push eax
+    //   call DrawImpl
+    const uint8_t pat[] = {
+        0x55, 0x8B, 0xEC,
+        0x8B, 0x45, 0x10, 0x50,
+        0x8B, 0x4D, 0x0C, 0x51,
+        0xE8, 0x00, 0x00, 0x00, 0x00,
+        0x83, 0xC4, 0x04, 0x50,
+        0x8B, 0x55, 0x0C, 0x52,
+        0x8B, 0x45, 0x08, 0x50,
+        0xE8
+    };
+    const char* mask = "xxxxxxxxxxx????xxxxxxxxxxxxx";
+    const size_t len = strlen(mask);
+    const uint8_t* expectedImpl = base + (kPreferredDrawImpl - kPreferredImageBase);
+
+    if (imageSize < len + 5) return nullptr;
+    for (size_t i = 0; i + len + 4 < imageSize; ++i) {
+        uint8_t* p = base + i;
+        if (!IsLikelyCode(p, len + 4)) continue;
+        if (!MatchBytes(p, pat, mask)) continue;
+        const int32_t rel = *reinterpret_cast<int32_t*>(p + 0x1D);
+        const uint8_t* target = (p + 0x1C) + 5 + rel;
+        if (target == expectedImpl) return p;
+    }
+
+    // Fallback: preferred VA under ASLR.
+    uint8_t* site = base + (kPreferredDrawColored - kPreferredImageBase);
+    if (site[0] == 0x55 && site[1] == 0x8B && site[2] == 0xEC) return site;
+    return nullptr;
+}
+
+bool InstallDrawColoredHook(uint8_t* base, size_t imageSize)
+{
+    uint8_t* site = FindDrawTextColored(base, imageSize);
+    if (!site) {
+        Log("Install: DrawTextColored (→5AED00) not found");
+        return false;
+    }
+
+    if (!PatchPrologue7(site, reinterpret_cast<void*>(&Hook_DrawColored),
+                        g_originalPrologue, &g_trampoline,
+                        reinterpret_cast<void**>(&g_originalDraw))) {
+        Log("Install: PatchPrologue7 failed");
+        return false;
+    }
+
+    g_drawSite = site;
+    g_playerName0 = reinterpret_cast<char*>(base + (kPreferredName0 - kPreferredImageBase));
+    Log("Install: ok drawColored=%p tramp=%p names=%p (chat path)", site, g_originalDraw, g_playerName0);
+    return true;
+}
+
+bool InstallHook()
+{
+    HMODULE game = GetModuleHandleW(L"Warcraft II.exe");
+    if (!game) game = GetModuleHandleW(nullptr);
+    if (!game) {
+        Log("InstallHook: no module");
+        return false;
+    }
+
+    auto* dos = reinterpret_cast<IMAGE_DOS_HEADER*>(game);
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return false;
+    auto* nt = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<uint8_t*>(game) + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE) return false;
+
+    auto* base = reinterpret_cast<uint8_t*>(game);
+    const size_t imageSize = nt->OptionalHeader.SizeOfImage;
+    LoadColorsFromJson();
+    return InstallDrawColoredHook(base, imageSize);
+}
+
+void RemoveHook()
+{
+    if (g_drawSite && g_originalPrologue[0]) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_drawSite, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_drawSite, g_originalPrologue, 7);
+            VirtualProtect(g_drawSite, 7, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_drawSite, 7);
+        }
+    }
+    if (g_trampoline) {
+        VirtualFree(g_trampoline, 0, MEM_RELEASE);
+        g_trampoline = nullptr;
+    }
+    g_drawSite = nullptr;
+    g_originalDraw = nullptr;
+    g_playerName0 = nullptr;
+    InterlockedExchange(&g_ready, 0);
+}
+
+} // namespace
+
+BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
+{
+    if (reason == DLL_PROCESS_ATTACH) {
+        DisableThreadLibraryCalls(module);
+        if (InstallHook()) {
+            InterlockedExchange(&g_ready, 1);
+            InterlockedExchange(&g_enabled, 1);
+            LogPlayerNames();
+            Log("DllMain: ready+enabled (name-only overlay)");
+        } else {
+            Log("DllMain: install failed");
+        }
+    } else if (reason == DLL_PROCESS_DETACH) {
+        RemoveHook();
+    }
+    return TRUE;
+}
+
+extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_IsReady(LPVOID)
+{
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetEnabled(LPVOID enabled)
+{
+    const LONG on = enabled ? 1 : 0;
+    if (on) LoadColorsFromJson();
+    InterlockedExchange(&g_enabled, on);
+    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld",
+        on, InterlockedCompareExchange(&g_ready, 0, 0),
+        InterlockedCompareExchange(&g_hits, 0, 0),
+        InterlockedCompareExchange(&g_recolors, 0, 0));
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}

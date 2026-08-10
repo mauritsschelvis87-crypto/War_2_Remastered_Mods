@@ -20,24 +20,39 @@ namespace PlayerColorStudio;
 
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private const string DefaultGameRootPath = @"C:\Program Files (x86)\Warcraft II Remastered";
+    private const string IncorrectPathStatusMessage =
+        "Incorrect path, select your Warcraft II install folder to continue";
+
     private readonly string _enginePath;
     private readonly string _configPath;
     private readonly string _extraConfigPath;
+    private readonly string _settingsPath = string.Empty;
     private readonly string _nativeDir;
     private readonly DispatcherTimer _hookWatchTimer;
     private bool _allyLeaveRedNames;
     private bool _appliedAllyLeaveRedNames;
     private bool _chatDuringPauseScreen;
     private bool _appliedChatDuringPauseScreen;
+    private bool _chatColoredNames;
+    private bool _appliedChatColoredNames;
+    private bool _appliedDragSelectColorEnabled;
     private bool _hookInjectedForRunningGame;
     private bool _pauseChatInjectedForRunningGame;
+    private bool _chatNameColorInjectedForRunningGame;
+    private bool _dragSelectInjectedForRunningGame;
     private bool _isApplying;
+    private bool _skipNextStatusRefresh;
     private string _activeTab = "colors";
+    private string _gameInstallPath = DefaultGameRootPath;
+    private string _appliedGameInstallPath = DefaultGameRootPath;
     private System.Windows.Media.Brush _applyButtonBrush = CreateBrush(0x2E, 0xA8, 0x5C);
     private System.Windows.Media.Brush _applyButtonBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
     private readonly Dictionary<int, string> _appliedHexByPlayer = new();
+    private readonly Dictionary<string, string> _appliedOtherHexByKey = new(StringComparer.OrdinalIgnoreCase);
 
     public ObservableCollection<ColorCard> Cards { get; } = [];
+    public ObservableCollection<ColorCard> OtherCards { get; } = [];
     public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
 
     public bool AllyLeaveRedNames
@@ -64,6 +79,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    public bool ChatColoredNames
+    {
+        get => _chatColoredNames;
+        set
+        {
+            if (_chatColoredNames == value) return;
+            _chatColoredNames = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
     public bool IsApplying
     {
         get => _isApplying;
@@ -73,10 +100,51 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _isApplying = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsApplyEnabled));
+            // Restart indeterminate animation when Apply/Restore begins.
+            if (value && ApplyProgressBar is not null)
+            {
+                ApplyProgressBar.IsIndeterminate = false;
+                ApplyProgressBar.IsIndeterminate = true;
+            }
         }
     }
 
     public bool IsApplyEnabled => !_isApplying;
+
+    public bool IsApplyVisible => _activeTab is "colors" or "other" or "feature" or "bugfixes" or "path";
+
+    public bool IsRestoreVisible => _activeTab == "info";
+
+    public string GameInstallPath
+    {
+        get => _gameInstallPath;
+        set
+        {
+            var next = value ?? string.Empty;
+            if (_gameInstallPath == next) return;
+            _gameInstallPath = next;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+    };
+
+    public string AppVersionText
+    {
+        get
+        {
+            var version = typeof(MainWindow).Assembly.GetName().Version;
+            return version is null
+                ? "Version unknown"
+                : $"Version {version.Major}.{version.Minor}.{version.Build}";
+        }
+    }
 
     public System.Windows.Media.Brush ApplyButtonBrush
     {
@@ -112,9 +180,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var modDir = Path.GetDirectoryName(_enginePath)!;
             _configPath = Path.Combine(modDir, "player-colors.json");
             _extraConfigPath = Path.Combine(modDir, "extra-features.json");
+            _settingsPath = Path.Combine(modDir, "studio-settings.json");
             _nativeDir = Path.Combine(modDir, "native");
+            LoadGameInstallPath(modDir);
             LoadCards();
             CaptureAppliedColors();
+            CaptureAppliedUtilColors();
             foreach (var card in Cards)
             {
                 card.PropertyChanged += (_, args) =>
@@ -124,9 +195,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         RefreshTabStatus();
                 };
             }
+            WireOtherCards();
             LoadExtraFeatures();
             _hookWatchTimer.Start();
-            UpdateExtraHookStatus(forceInject: _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen);
+            UpdateExtraHookStatus(forceInject: _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen ||
+                _appliedChatColoredNames || _appliedDragSelectColorEnabled);
             RefreshTabStatus();
         }
         catch (Exception ex)
@@ -146,6 +219,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (!ReferenceEquals(e.Source, MainTabs)) return;
         if (MainTabs.SelectedItem is not TabItem tab) return;
         _activeTab = tab.Tag as string ?? "colors";
+        OnPropertyChanged(nameof(IsApplyVisible));
+        OnPropertyChanged(nameof(IsRestoreVisible));
         RefreshTabStatus();
     }
 
@@ -156,6 +231,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedHexByPlayer[card.Player] = ColorCard.NormalizeHex(card.Hex);
     }
 
+    private void WireOtherCards()
+    {
+        foreach (var card in OtherCards)
+            WireUtilCard(card);
+    }
+
+    private void WireUtilCard(ColorCard? card)
+    {
+        if (card is null) return;
+        card.PropertyChanged += (_, args) =>
+        {
+            if (_activeTab != "other") return;
+            if (args.PropertyName is null or nameof(ColorCard.Hex))
+                RefreshTabStatus();
+        };
+    }
+
+    private void CaptureAppliedUtilColors()
+    {
+        _appliedOtherHexByKey.Clear();
+        foreach (var card in OtherCards)
+            _appliedOtherHexByKey[card.ConfigKey] = ColorCard.NormalizeHex(card.Hex);
+    }
+
+    private bool HasPendingUtilChanges()
+    {
+        foreach (var card in OtherCards.Where(c => c.IsEnabled))
+        {
+            if (!_appliedOtherHexByKey.TryGetValue(card.ConfigKey, out var applied))
+                return true;
+            if (!string.Equals(ColorCard.NormalizeHex(card.Hex), applied, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
     private bool HasPendingColorChanges()
     {
         foreach (var card in Cards.Where(c => c.IsEnabled))
@@ -168,6 +278,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         return false;
     }
+
+    private bool HasManualAppliedUtilColors() =>
+        OtherCards.Any(card =>
+            card.IsEnabled &&
+            _appliedOtherHexByKey.TryGetValue(card.ConfigKey, out var applied) &&
+            !string.Equals(applied, ColorCard.NormalizeHex(card.VanillaHex), StringComparison.OrdinalIgnoreCase));
 
     private bool HasManualAppliedColors() =>
         Cards.Any(card =>
@@ -191,9 +307,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private bool HasPendingMarkGone() => _allyLeaveRedNames != _appliedAllyLeaveRedNames;
     private bool HasPendingChatPause() => _chatDuringPauseScreen != _appliedChatDuringPauseScreen;
-    private bool HasPendingExtraChanges() => HasPendingMarkGone() || HasPendingChatPause();
-
-    private bool HasAnyPendingChanges() => HasPendingColorChanges() || HasPendingExtraChanges();
+    private bool HasPendingChatColoredNames() => _chatColoredNames != _appliedChatColoredNames;
+    private bool HasPendingFeatureChanges() => HasPendingMarkGone() || HasPendingChatColoredNames();
+    private bool HasPendingBugFixChanges() => HasPendingChatPause();
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
         new(icon, brush, text);
@@ -219,17 +335,41 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             : StatusLine("✓", ReadyIconBrush, "Using the original Warcraft II colors");
     }
 
+    private StatusLineItem BuildUtilLine()
+    {
+        if (HasPendingUtilChanges())
+        {
+            return StatusLine("✕", PendingIconBrush,
+                "Changes have been made, please apply for the changes to take place.");
+        }
+
+        return HasManualAppliedUtilColors()
+            ? StatusLine("✓", ReadyIconBrush,
+                "Manual other colors are being used. Restart Warcraft II Remastered to take effect.")
+            : StatusLine("✓", ReadyIconBrush, "Using the original Warcraft II other colors");
+    }
+
+    private bool HasPendingChangesForActiveTab() => _activeTab switch
+    {
+        "colors" => HasPendingColorChanges(),
+        "other" => HasPendingUtilChanges(),
+        "feature" => HasPendingFeatureChanges(),
+        "bugfixes" => HasPendingBugFixChanges(),
+        "path" => HasPendingPathChanges(),
+        _ => false,
+    };
+
     private void RefreshTabStatus()
     {
         if (_isApplying) return;
 
-        var pending = HasAnyPendingChanges();
+        var pending = HasPendingChangesForActiveTab();
         ApplyButtonBrush = pending ? PendingButtonBrush : ReadyButtonBrush;
         ApplyButtonBorderBrush = pending ? PendingButtonBorderBrush : ReadyButtonBorderBrush;
 
-        if (_activeTab == "extra")
+        if (_activeTab is "feature" or "bugfixes")
         {
-            if (HasPendingExtraChanges())
+            if (HasPendingChangesForActiveTab())
             {
                 SetStatusLines(StatusLine("✕", PendingIconBrush,
                     "Changes have been made, please apply for the changes to take place."));
@@ -242,10 +382,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        if (_activeTab == "util")
+        if (_activeTab == "other")
         {
-            SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                "Util colors are not editable yet."));
+            SetStatusLines(BuildUtilLine());
+            return;
+        }
+
+        if (_activeTab == "path")
+        {
+            SetStatusLines(BuildPathLine());
+            return;
+        }
+
+        if (_activeTab == "info")
+        {
+            SetStatusLines(StatusLine("✓", ReadyIconBrush, AppVersionText));
             return;
         }
 
@@ -264,42 +415,146 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         throw new FileNotFoundException("The patch engine was not found. Reinstall Quality of Life Modding.");
     }
 
-    private void LoadCards()
+    private void LoadGameInstallPath(string modDir)
     {
-        var defaults = ReadDefaultConfig();
-        var saved = File.Exists(_configPath)
-            ? JsonSerializer.Deserialize<ColorConfig>(File.ReadAllText(_configPath)) ?? defaults
-            : defaults;
+        var fromSettings = TryReadSavedGameRoot();
+        var inferred = TryInferGameRootFromModDir(modDir);
+        var chosen = !string.IsNullOrWhiteSpace(fromSettings)
+            ? fromSettings!
+            : (!string.IsNullOrWhiteSpace(inferred) ? inferred! : DefaultGameRootPath);
+        _gameInstallPath = NormalizeGameRoot(chosen);
+        _appliedGameInstallPath = _gameInstallPath;
+        OnPropertyChanged(nameof(GameInstallPath));
+    }
 
-        foreach (var vanilla in defaults.Players.OrderBy(p => p.Player))
+    private string? TryReadSavedGameRoot()
+    {
+        if (!File.Exists(_settingsPath)) return null;
+        try
         {
-            var disabled = vanilla.Player is 8;
-            // Player 8 stays locked (shared yellow band). Player 2 patches exclusive 212-215.
-            var current = disabled
-                ? vanilla.Color
-                : (saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color);
-            Cards.Add(new ColorCard(vanilla.Player, current, vanilla.Color, !disabled));
+            var settings = JsonSerializer.Deserialize<StudioSettings>(File.ReadAllText(_settingsPath), JsonOpts);
+            return string.IsNullOrWhiteSpace(settings?.GameRootPath) ? null : settings!.GameRootPath.Trim();
+        }
+        catch
+        {
+            return null;
         }
     }
 
-    private ColorConfig ReadDefaultConfig()
+    private static string? TryInferGameRootFromModDir(string modDir)
     {
-        var result = RunEngine("-GetDefaultConfig");
-        if (result.ExitCode != 0)
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error);
-
-        var json = result.Output.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)
-            .LastOrDefault(line => line.TrimStart().StartsWith("{", StringComparison.Ordinal))
-            ?? throw new InvalidOperationException("The patch engine did not return default colors.");
-        return JsonSerializer.Deserialize<ColorConfig>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-            ?? throw new InvalidOperationException("The patch engine returned an invalid default color configuration.");
+        // ...\GameRoot\x86\Mods\PlayerColorStudio\mod
+        var studio = Directory.GetParent(modDir);
+        var mods = studio?.Parent;
+        var x86 = mods?.Parent;
+        var root = x86?.Parent;
+        if (root is null) return null;
+        return IsValidGameRoot(root.FullName) ? root.FullName : null;
     }
 
-    private (int ExitCode, string Output, string Error) RunEngine(string arguments)
+    private static string NormalizeGameRoot(string path)
     {
+        var trimmed = path.Trim().TrimEnd('\\', '/');
+        return string.IsNullOrWhiteSpace(trimmed) ? DefaultGameRootPath : trimmed;
+    }
+
+    private static bool IsValidGameRoot(string path) =>
+        !string.IsNullOrWhiteSpace(path) &&
+        Directory.Exists(Path.Combine(path, "x86", "Data"));
+
+    private bool HasPendingPathChanges() =>
+        !string.Equals(
+            NormalizeGameRoot(GameInstallPath),
+            NormalizeGameRoot(_appliedGameInstallPath),
+            StringComparison.OrdinalIgnoreCase);
+
+    private StatusLineItem BuildPathLine()
+    {
+        var path = NormalizeGameRoot(GameInstallPath);
+        if (HasPendingPathChanges())
+        {
+            return StatusLine("✕", PendingIconBrush,
+                "Path changed — press Apply to save it for color and feature patches.");
+        }
+
+        if (!IsValidGameRoot(path))
+        {
+            return StatusLine("✕", PendingIconBrush,
+                "Install folder not found (need an x86\\Data folder). Browse to your Warcraft II Remastered folder.");
+        }
+
+        return StatusLine("✓", ReadyIconBrush, $"Using game install: {path}");
+    }
+
+    private void ShowIncorrectPathStatus()
+    {
+        _skipNextStatusRefresh = true;
+        SetStatusLines(StatusLine("✕", PendingIconBrush, IncorrectPathStatusMessage));
+        ApplyButtonBrush = PendingButtonBrush;
+        ApplyButtonBorderBrush = PendingButtonBorderBrush;
+    }
+
+    private bool IsCurrentApplyPathValid()
+    {
+        // Path tab validates what the user typed; other tabs use the last saved path.
+        var path = _activeTab == "path"
+            ? NormalizeGameRoot(GameInstallPath)
+            : NormalizeGameRoot(_appliedGameInstallPath);
+        return IsValidGameRoot(path);
+    }
+
+    private void SaveGameInstallPath(string path)
+    {
+        var normalized = NormalizeGameRoot(path);
+        if (!IsValidGameRoot(normalized))
+        {
+            throw new InvalidOperationException(IncorrectPathStatusMessage);
+        }
+
+        var settings = new StudioSettings { GameRootPath = normalized };
+        File.WriteAllText(_settingsPath, JsonSerializer.Serialize(settings, JsonOpts));
+        _gameInstallPath = normalized;
+        _appliedGameInstallPath = normalized;
+        OnPropertyChanged(nameof(GameInstallPath));
+    }
+
+    private void BrowseGamePath_Click(object sender, RoutedEventArgs e)
+    {
+        using var dialog = new Forms.FolderBrowserDialog
+        {
+            Description = "Select the Warcraft II Remastered install folder",
+            UseDescriptionForTitle = true,
+            SelectedPath = Directory.Exists(NormalizeGameRoot(GameInstallPath))
+                ? NormalizeGameRoot(GameInstallPath)
+                : DefaultGameRootPath,
+        };
+        if (dialog.ShowDialog() != Forms.DialogResult.OK) return;
+        GameInstallPath = dialog.SelectedPath;
+    }
+
+    private void DefaultGamePath_Click(object sender, RoutedEventArgs e)
+    {
+        GameInstallPath = DefaultGameRootPath;
+    }
+
+    private void GameInstallPath_LostFocus(object sender, RoutedEventArgs e) =>
+        RefreshTabStatus();
+
+    private string RequireAppliedGameRoot()
+    {
+        var path = NormalizeGameRoot(_appliedGameInstallPath);
+        if (!IsValidGameRoot(path))
+            throw new InvalidOperationException(IncorrectPathStatusMessage);
+        return path;
+    }
+
+    private (int ExitCode, string Output, string Error) RunEngine(string arguments, bool requireValidGameRoot = true)
+    {
+        var gameRoot = requireValidGameRoot
+            ? RequireAppliedGameRoot()
+            : NormalizeGameRoot(_appliedGameInstallPath);
         var start = new ProcessStartInfo("powershell.exe",
-            $"-NoProfile -ExecutionPolicy Bypass -File \"{_enginePath}\" {arguments}")
+            $"-NoProfile -ExecutionPolicy Bypass -File \"{_enginePath}\" {arguments} -GameRootPath \"{gameRoot}\"")
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,
@@ -311,6 +566,205 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var error = process.StandardError.ReadToEnd();
         process.WaitForExit();
         return (process.ExitCode, output.Trim(), error.Trim());
+    }
+
+    private void LoadCards()
+    {
+        var defaults = ReadDefaultConfig();
+        var saved = File.Exists(_configPath)
+            ? JsonSerializer.Deserialize<ColorConfig>(File.ReadAllText(_configPath), JsonOpts) ?? defaults
+            : defaults;
+        if (saved.Players.Count == 0) saved = defaults;
+
+        foreach (var vanilla in defaults.Players.OrderBy(p => p.Player))
+        {
+            var disabled = vanilla.Player is 8;
+            // Player 8 stays locked (shared yellow band). Player 2 patches exclusive 212-215.
+            var current = disabled
+                ? vanilla.Color
+                : (saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color);
+            var description = disabled
+                ? "This player color cannot be changed yet because it is shared with other game elements."
+                : "Changes this player's color on the minimap, units/buildings, and the victory/ally bars.";
+            Cards.Add(new ColorCard(vanilla.Player, current, vanilla.Color, !disabled, description: description));
+        }
+
+        OtherCards.Clear();
+        OtherCards.Add(MakeOtherCard(
+            defaults.SelectionHighlight, saved.SelectionHighlight, "#00FF00",
+            "selectionHighlight", "Self highlight",
+            "Changes the glow around your own units and buildings when they are selected, " +
+            "the box you drag to select many units at once, and the matching selected dots on the minimap. " +
+            "These always use the same color.",
+            enabled: true));
+        OtherCards.Add(MakeOtherCard(
+            defaults.EnemySelectionHighlight, saved.EnemySelectionHighlight, "#FF0000",
+            "enemySelectionHighlight", "Enemy highlight",
+            "Would change the glow around enemy units and buildings when you select them. " +
+            "This color cannot be changed yet.",
+            enabled: false));
+        OtherCards.Add(MakeOtherCard(
+            defaults.AllyHighlight, saved.AllyHighlight, "#FFFF00",
+            "allyHighlight", "Ally highlight",
+            "Would change the glow around allied units and buildings when you select them. " +
+            "This color cannot be changed yet.",
+            enabled: false));
+        OtherCards.Add(MakeOtherCard(
+            FirstNonEmpty(defaults.GoldMineHighlight, defaults.GoldMineOilHighlight),
+            FirstNonEmpty(saved.GoldMineHighlight, saved.GoldMineOilHighlight),
+            "#694114",
+            "goldMineHighlight", "Gold mine",
+            "Would change the highlight color for gold mines when you select them. " +
+            "This color cannot be changed yet.",
+            enabled: false));
+        OtherCards.Add(MakeOtherCard(
+            defaults.OilPatchHighlight, saved.OilPatchHighlight, "#FFFBF3",
+            "oilPatchHighlight", "Oil patch",
+            "Would change the highlight color for oil patches when you select them. " +
+            "This color cannot be changed yet.",
+            enabled: false));
+        OtherCards.Add(MakeOtherCard(
+            defaults.CritterHighlight, saved.CritterHighlight, "#A2A2A6",
+            "critterHighlight", "Critter minimap",
+            "Changes the minimap color for critters.",
+            enabled: true));
+    }
+
+    private static string? FirstNonEmpty(params string?[] values) =>
+        values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+
+    private static ColorCard MakeOtherCard(
+        string? vanillaSource,
+        string? currentSource,
+        string fallback,
+        string configKey,
+        string name,
+        string description,
+        bool enabled)
+    {
+        var vanilla = ColorCard.NormalizeHex(string.IsNullOrWhiteSpace(vanillaSource) ? fallback : vanillaSource!);
+        // Locked slots always show vanilla; only Self highlight is editable for now.
+        var current = enabled
+            ? ColorCard.NormalizeHex(string.IsNullOrWhiteSpace(currentSource) ? vanilla : currentSource!)
+            : vanilla;
+        return new ColorCard(0, current, vanilla, enabled, name, description, configKey);
+    }
+
+    private ColorConfig ReadDefaultConfig()
+    {
+        var result = RunEngine("-GetDefaultConfig", requireValidGameRoot: false);
+        if (result.ExitCode == 0)
+        {
+            var json = result.Output.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)
+                .LastOrDefault(line => line.TrimStart().StartsWith("{", StringComparison.Ordinal));
+            if (json is not null)
+            {
+                var parsed = JsonSerializer.Deserialize<ColorConfig>(json, JsonOpts);
+                if (parsed is not null) return parsed;
+            }
+        }
+
+        // App still opens if the game path is wrong; Path tab can fix it.
+        return new ColorConfig
+        {
+            Players =
+            [
+                new PlayerColor(1, "#C00000"),
+                new PlayerColor(2, "#0094FC"),
+                new PlayerColor(3, "#00A800"),
+                new PlayerColor(4, "#C04800"),
+                new PlayerColor(5, "#A800A8"),
+                new PlayerColor(6, "#00A8A8"),
+                new PlayerColor(7, "#C0C0C0"),
+                new PlayerColor(8, "#FFF759"),
+            ],
+            SelectionHighlight = "#00FF00",
+            EnemySelectionHighlight = "#FF0000",
+            AllyHighlight = "#FFFF00",
+            CritterHighlight = "#A2A2A6",
+            GoldMineHighlight = "#694114",
+            OilPatchHighlight = "#FFFBF3",
+        };
+    }
+
+    private string OtherAppliedOrCurrent(string key, string fallback)
+    {
+        if (_appliedOtherHexByKey.TryGetValue(key, out var applied))
+            return applied;
+        var card = OtherCards.FirstOrDefault(c =>
+            string.Equals(c.ConfigKey, key, StringComparison.OrdinalIgnoreCase));
+        return card is null ? fallback : ColorCard.NormalizeHex(card.Hex);
+    }
+
+    private string OtherCurrent(string key, string fallback)
+    {
+        var card = OtherCards.FirstOrDefault(c =>
+            string.Equals(c.ConfigKey, key, StringComparison.OrdinalIgnoreCase));
+        return card is null ? fallback : ColorCard.NormalizeHex(card.Hex);
+    }
+
+    private ColorConfig BuildColorConfigForColorsApply() => new()
+    {
+        Players = Cards.Select(card => new PlayerColor(card.Player, card.Hex)).ToList(),
+        SelectionHighlight = OtherAppliedOrCurrent("selectionHighlight", "#00FF00"),
+        EnemySelectionHighlight = OtherAppliedOrCurrent("enemySelectionHighlight", "#FF0000"),
+        AllyHighlight = OtherAppliedOrCurrent("allyHighlight", "#FFFF00"),
+        CritterHighlight = OtherAppliedOrCurrent("critterHighlight", "#A2A2A6"),
+        GoldMineHighlight = OtherAppliedOrCurrent("goldMineHighlight", "#694114"),
+        OilPatchHighlight = OtherAppliedOrCurrent("oilPatchHighlight", "#FFFBF3"),
+    };
+
+    private ColorConfig BuildColorConfigForUtilApply()
+    {
+        foreach (var card in OtherCards)
+        {
+            if (!ColorCard.IsValidHex(card.Hex))
+                throw new InvalidOperationException($"{card.Name} has an invalid color.");
+        }
+
+        return new ColorConfig
+        {
+            Players = Cards.Select(card =>
+            {
+                var hex = _appliedHexByPlayer.TryGetValue(card.Player, out var applied)
+                    ? applied
+                    : card.Hex;
+                return new PlayerColor(card.Player, hex);
+            }).ToList(),
+            SelectionHighlight = OtherCurrent("selectionHighlight", "#00FF00"),
+            EnemySelectionHighlight = OtherCurrent("enemySelectionHighlight", "#FF0000"),
+            AllyHighlight = OtherCurrent("allyHighlight", "#FFFF00"),
+            CritterHighlight = OtherCurrent("critterHighlight", "#A2A2A6"),
+            GoldMineHighlight = OtherCurrent("goldMineHighlight", "#694114"),
+            OilPatchHighlight = OtherCurrent("oilPatchHighlight", "#FFFBF3"),
+        };
+    }
+
+    private void WriteColorConfigAndApply(ColorConfig config)
+    {
+        File.WriteAllText(_configPath, JsonSerializer.Serialize(config, JsonOpts));
+        var result = RunEngine("-ApplySavedConfigOnly");
+        if (result.ExitCode != 0)
+        {
+            var details = string.Join(Environment.NewLine,
+                new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
+                ? "Apply failed with no error details."
+                : details);
+        }
+    }
+
+    private void WriteExtraFeaturesFile(bool allyLeave, bool chatPause, bool chatColoredNames, bool dragEnabled, string dragHex)
+    {
+        var extraJson = JsonSerializer.Serialize(new ExtraFeaturesConfig
+        {
+            AllyLeaveRedNames = allyLeave,
+            ChatDuringPauseScreen = chatPause,
+            ChatColoredNames = chatColoredNames,
+            DragSelectColorEnabled = dragEnabled,
+            DragSelectColor = dragHex,
+        }, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(_extraConfigPath, extraJson);
     }
 
     private void ChooseColor_Click(object sender, RoutedEventArgs e)
@@ -350,20 +804,38 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var markGone = false;
         var chatPause = false;
+        var chatColored = false;
+        var dragEnabled = false;
+
         if (File.Exists(_extraConfigPath))
         {
             var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             markGone = extra?.AllyLeaveRedNames ?? false;
             chatPause = extra?.ChatDuringPauseScreen ?? false;
+            chatColored = extra?.ChatColoredNames ?? false;
+            // Separate drag color is not safe yet (shares selection palette 250). Always keep off.
+            dragEnabled = false;
+            if (extra is not null && extra.DragSelectColorEnabled)
+            {
+                try
+                {
+                    WriteExtraFeaturesFile(markGone, chatPause, chatColored, dragEnabled: false, dragHex: "#00FF00");
+                }
+                catch { /* best-effort cleanup of pink drag config */ }
+            }
         }
 
         _allyLeaveRedNames = markGone;
         _appliedAllyLeaveRedNames = markGone;
         _chatDuringPauseScreen = chatPause;
         _appliedChatDuringPauseScreen = chatPause;
+        _chatColoredNames = chatColored;
+        _appliedChatColoredNames = chatColored;
+        _appliedDragSelectColorEnabled = dragEnabled;
         OnPropertyChanged(nameof(AllyLeaveRedNames));
         OnPropertyChanged(nameof(ChatDuringPauseScreen));
+        OnPropertyChanged(nameof(ChatColoredNames));
     }
 
     private static bool IsWarcraftIiRunning() =>
@@ -373,6 +845,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         UpdateAllyLeaveHookStatus(forceInject);
         UpdatePauseChatHookStatus(forceInject);
+        UpdateChatNameColorHookStatus(forceInject);
+        UpdateDragSelectHookStatus(forceInject);
     }
 
     private void UpdateAllyLeaveHookStatus(bool forceInject)
@@ -386,14 +860,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncAllyLeaveHook(throwOnError: false); }
                 catch { /* keep tab status friendly */ }
             }
-            if (_activeTab == "extra") RefreshTabStatus();
+            if (_activeTab is "feature" or "bugfixes") RefreshTabStatus();
             return;
         }
 
         if (!IsWarcraftIiRunning())
         {
             _hookInjectedForRunningGame = false;
-            if (_activeTab == "extra") RefreshTabStatus();
+            if (_activeTab is "feature" or "bugfixes") RefreshTabStatus();
             return;
         }
 
@@ -411,7 +885,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _hookInjectedForRunningGame = false;
         }
 
-        if (_activeTab == "extra") RefreshTabStatus();
+        if (_activeTab is "feature" or "bugfixes") RefreshTabStatus();
     }
 
     private void UpdatePauseChatHookStatus(bool forceInject)
@@ -457,7 +931,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            var anyExtra = _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen;
+            var anyExtra = _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen ||
+                _appliedChatColoredNames || _appliedDragSelectColorEnabled;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
@@ -580,9 +1055,181 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(output) ? "Pause-chat hook updated." : output;
     }
 
+    private void UpdateChatNameColorHookStatus(bool forceInject)
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!_appliedChatColoredNames)
+        {
+            if (IsWarcraftIiRunning() && forceInject)
+            {
+                try { SyncChatNameColorHook(throwOnError: false); }
+                catch { /* keep tab status friendly */ }
+            }
+            return;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _chatNameColorInjectedForRunningGame = false;
+            return;
+        }
+
+        if (_chatNameColorInjectedForRunningGame && !forceInject) return;
+
+        try
+        {
+            var message = SyncChatNameColorHook(throwOnError: false);
+            _chatNameColorInjectedForRunningGame =
+                !string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _chatNameColorInjectedForRunningGame = false;
+        }
+    }
+
+    private string SyncChatNameColorHook(bool throwOnError = true)
+    {
+        var injector = Path.Combine(_nativeDir, "InjectChatNameColor.exe");
+        var dll = Path.Combine(_nativeDir, "ChatNameColorHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var missing = "Chat-name-color hook files are missing. Rebuild mod/native.";
+            if (throwOnError) throw new InvalidOperationException(missing);
+            return missing;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _chatNameColorInjectedForRunningGame = false;
+            return _appliedChatColoredNames
+                ? "Chat name colors ON — watcher auto-injects when Warcraft II starts."
+                : "Chat name colors setting saved.";
+        }
+
+        var args = _appliedChatColoredNames ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start)
+            ?? throw new InvalidOperationException("Could not start the chat-name-color injector.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+        {
+            _chatNameColorInjectedForRunningGame = false;
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Chat-name-color hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        _chatNameColorInjectedForRunningGame = _appliedChatColoredNames;
+        return string.IsNullOrWhiteSpace(output) ? "Chat-name-color hook updated." : output;
+    }
+
+    private void UpdateDragSelectHookStatus(bool forceInject)
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!_appliedDragSelectColorEnabled)
+        {
+            if (IsWarcraftIiRunning() && forceInject)
+            {
+                try { SyncDragSelectHook(throwOnError: false); }
+                catch { /* keep tab status friendly */ }
+            }
+            return;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _dragSelectInjectedForRunningGame = false;
+            return;
+        }
+
+        if (_dragSelectInjectedForRunningGame && !forceInject) return;
+
+        try
+        {
+            var message = SyncDragSelectHook(throwOnError: false);
+            _dragSelectInjectedForRunningGame =
+                !string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _dragSelectInjectedForRunningGame = false;
+        }
+    }
+
+    private string SyncDragSelectHook(bool throwOnError = true)
+    {
+        var injector = Path.Combine(_nativeDir, "InjectDragSelect.exe");
+        var dll = Path.Combine(_nativeDir, "DragSelectHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var message = "Drag-select hook binaries are missing. Rebuild native tools.";
+            if (throwOnError) throw new FileNotFoundException(message);
+            return message;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _dragSelectInjectedForRunningGame = false;
+            return _appliedDragSelectColorEnabled
+                ? "Drag-select hook will inject when Warcraft II starts."
+                : "Drag-select hook idle (game not running).";
+        }
+
+        var args = _appliedDragSelectColorEnabled ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start InjectDragSelect.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+
+        if (process.ExitCode == 2)
+        {
+            _dragSelectInjectedForRunningGame = false;
+            return "Warcraft II is not running.";
+        }
+
+        if (process.ExitCode != 0)
+        {
+            _dragSelectInjectedForRunningGame = false;
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Drag-select hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        _dragSelectInjectedForRunningGame = _appliedDragSelectColorEnabled;
+        return string.IsNullOrWhiteSpace(output) ? "Drag-select hook updated." : output;
+    }
+
     private async void Apply_Click(object sender, RoutedEventArgs e)
     {
-        if (_isApplying) return;
+        if (_isApplying || !IsApplyVisible) return;
 
         try
         {
@@ -590,58 +1237,258 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (Keyboard.FocusedElement is UIElement focused)
                 focused.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
 
-            foreach (var card in Cards)
-            {
-                if (!ColorCard.IsValidHex(card.Hex))
-                    throw new InvalidOperationException($"{card.Name} has an invalid color.");
-            }
-
             IsApplying = true;
             SetStatusLines(StatusLine("", ReadyIconBrush, "Installing mod…"));
             ApplyButtonBrush = ReadyButtonBrush;
             ApplyButtonBorderBrush = ReadyButtonBorderBrush;
+            // Let the progress bar paint/animate before blocking work starts.
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+            await Task.Yield();
 
-            var config = new ColorConfig { Players = Cards.Select(card => new PlayerColor(card.Player, card.Hex)).ToList() };
-            var configJson = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
-            var markGoneEnabled = AllyLeaveRedNames;
-            var chatPauseEnabled = ChatDuringPauseScreen;
+            if (!IsCurrentApplyPathValid())
+            {
+                ShowIncorrectPathStatus();
+                return;
+            }
+
+            if (_activeTab == "colors")
+            {
+                foreach (var card in Cards)
+                {
+                    if (!ColorCard.IsValidHex(card.Hex))
+                        throw new InvalidOperationException($"{card.Name} has an invalid color.");
+                }
+
+                var config = BuildColorConfigForColorsApply();
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
+                await Task.Run(() => WriteColorConfigAndApply(config));
+                CaptureAppliedColors();
+                if (_appliedChatColoredNames)
+                {
+                    SetStatusLines(StatusLine("", ReadyIconBrush, "Updating chat name colors…"));
+                    await Task.Run(() =>
+                    {
+                        try { SyncChatNameColorHook(throwOnError: false); }
+                        catch { /* optional while game closed */ }
+                    });
+                }
+            }
+            else if (_activeTab == "other")
+            {
+                if (OtherCards.Count == 0)
+                    throw new InvalidOperationException("Other colors are not available.");
+                foreach (var card in OtherCards)
+                {
+                    if (!ColorCard.IsValidHex(card.Hex))
+                        throw new InvalidOperationException($"{card.Name} has an invalid color.");
+                }
+
+                var config = BuildColorConfigForUtilApply();
+                var ally = _appliedAllyLeaveRedNames;
+                var chat = _appliedChatDuringPauseScreen;
+                var chatNames = _appliedChatColoredNames;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Writing other colors…"));
+                await Task.Run(() =>
+                {
+                    // Keep drag-select hook off — Selection owns shared palette index 250.
+                    WriteExtraFeaturesFile(
+                        allyLeave: ally,
+                        chatPause: chat,
+                        chatColoredNames: chatNames,
+                        dragEnabled: false,
+                        dragHex: "#00FF00");
+                    WriteColorConfigAndApply(config);
+                });
+
+                CaptureAppliedUtilColors();
+                _appliedDragSelectColorEnabled = false;
+                _dragSelectInjectedForRunningGame = false;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
+                await Task.Run(() =>
+                {
+                    SyncAllyLeaveWatch();
+                    try { SyncDragSelectHook(throwOnError: false); }
+                    catch { /* optional while game is closed */ }
+                    try { SyncChatNameColorHook(throwOnError: false); }
+                    catch { /* reload colors if enabled */ }
+                });
+            }
+            else if (_activeTab == "feature")
+            {
+                var markGoneEnabled = AllyLeaveRedNames;
+                var chatPauseEnabled = _appliedChatDuringPauseScreen;
+                var chatNamesEnabled = ChatColoredNames;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature settings…"));
+                await Task.Run(() => WriteExtraFeaturesFile(
+                    allyLeave: markGoneEnabled,
+                    chatPause: chatPauseEnabled,
+                    chatColoredNames: chatNamesEnabled,
+                    dragEnabled: false,
+                    dragHex: "#00FF00"));
+
+                _appliedAllyLeaveRedNames = markGoneEnabled;
+                _appliedChatColoredNames = chatNamesEnabled;
+                _hookInjectedForRunningGame = false;
+                _chatNameColorInjectedForRunningGame = false;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
+                await Task.Run(() =>
+                {
+                    SyncAllyLeaveWatch();
+                    try { SyncAllyLeaveHook(throwOnError: false); }
+                    catch { /* optional while Feature is off */ }
+                    try { SyncChatNameColorHook(throwOnError: false); }
+                    catch { /* optional while Feature is off */ }
+                    try { SyncDragSelectHook(throwOnError: false); }
+                    catch { /* keep drag hook disabled */ }
+                });
+            }
+            else if (_activeTab == "bugfixes")
+            {
+                var markGoneEnabled = _appliedAllyLeaveRedNames;
+                var chatPauseEnabled = ChatDuringPauseScreen;
+                var chatNamesEnabled = _appliedChatColoredNames;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Bug fix settings…"));
+                await Task.Run(() => WriteExtraFeaturesFile(
+                    allyLeave: markGoneEnabled,
+                    chatPause: chatPauseEnabled,
+                    chatColoredNames: chatNamesEnabled,
+                    dragEnabled: false,
+                    dragHex: "#00FF00"));
+
+                _appliedChatDuringPauseScreen = chatPauseEnabled;
+                _pauseChatInjectedForRunningGame = false;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
+                await Task.Run(() =>
+                {
+                    SyncAllyLeaveWatch();
+                    try { SyncPauseChatHook(throwOnError: false); }
+                    catch { /* optional while Bug fix is off */ }
+                    try { SyncDragSelectHook(throwOnError: false); }
+                    catch { /* keep drag hook disabled */ }
+                });
+            }
+            else if (_activeTab == "path")
+            {
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Saving game install path…"));
+                SaveGameInstallPath(GameInstallPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            if (string.Equals(ex.Message, IncorrectPathStatusMessage, StringComparison.Ordinal) ||
+                !IsCurrentApplyPathValid())
+            {
+                ShowIncorrectPathStatus();
+            }
+            else
+            {
+                WpfMessageBox.Show(ex.Message, "Apply failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        finally
+        {
+            IsApplying = false;
+            if (_skipNextStatusRefresh)
+                _skipNextStatusRefresh = false;
+            else
+                RefreshTabStatus();
+        }
+    }
+
+    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private async void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isApplying) return;
+
+        var confirm = WpfMessageBox.Show(
+            "Restore all modded game files to the local vanilla backup and turn Extra features off?\n\n" +
+            "This is the fast restore. You can also use Battle.net Scan and Repair (slower).\n\n" +
+            "Restart Warcraft II afterwards.",
+            "Restore clean install",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            IsApplying = true;
+            SetStatusLines(StatusLine("", ReadyIconBrush, "Restoring vanilla files…"));
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+            await Task.Yield();
 
             await Task.Run(() =>
             {
-                File.WriteAllText(_configPath, configJson);
-                File.WriteAllText(_extraConfigPath,
-                    JsonSerializer.Serialize(new ExtraFeaturesConfig
-                    {
-                        AllyLeaveRedNames = markGoneEnabled,
-                        ChatDuringPauseScreen = chatPauseEnabled,
-                    }, new JsonSerializerOptions { WriteIndented = true }));
-
-                var result = RunEngine("-ApplySavedConfigOnly");
+                var result = RunEngine("-RestoreOnly");
                 if (result.ExitCode != 0)
                 {
                     var details = string.Join(Environment.NewLine,
                         new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
                     throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
-                        ? "Apply failed with no error details."
+                        ? "Restore failed with no error details."
                         : details);
                 }
+
+                var extraJson = JsonSerializer.Serialize(new ExtraFeaturesConfig
+                {
+                    AllyLeaveRedNames = false,
+                    ChatDuringPauseScreen = false,
+                    ChatColoredNames = false,
+                    DragSelectColorEnabled = false,
+                    DragSelectColor = "#00FF00",
+                }, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_extraConfigPath, extraJson);
             });
 
-            _appliedAllyLeaveRedNames = markGoneEnabled;
-            _appliedChatDuringPauseScreen = chatPauseEnabled;
+            _allyLeaveRedNames = false;
+            _appliedAllyLeaveRedNames = false;
+            _chatDuringPauseScreen = false;
+            _appliedChatDuringPauseScreen = false;
+            _chatColoredNames = false;
+            _appliedChatColoredNames = false;
+            _appliedDragSelectColorEnabled = false;
+            OnPropertyChanged(nameof(AllyLeaveRedNames));
+            OnPropertyChanged(nameof(ChatDuringPauseScreen));
+            OnPropertyChanged(nameof(ChatColoredNames));
+
+            Cards.Clear();
+            LoadCards();
+            CaptureAppliedColors();
+            CaptureAppliedUtilColors();
+            foreach (var card in Cards)
+            {
+                card.PropertyChanged += (_, args) =>
+                {
+                    if (_activeTab != "colors") return;
+                    if (args.PropertyName is null or nameof(ColorCard.Hex))
+                        RefreshTabStatus();
+                };
+            }
+            WireOtherCards();
+
             _hookInjectedForRunningGame = false;
             _pauseChatInjectedForRunningGame = false;
-            SyncAllyLeaveWatch();
-            try { SyncAllyLeaveHook(throwOnError: false); }
-            catch { /* optional while Extra is off */ }
-            try { SyncPauseChatHook(throwOnError: false); }
-            catch { /* optional while Extra is off */ }
+            _chatNameColorInjectedForRunningGame = false;
+            _dragSelectInjectedForRunningGame = false;
+            SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
+            await Task.Run(() =>
+            {
+                SyncAllyLeaveWatch();
+                try { SyncAllyLeaveHook(throwOnError: false); } catch { /* off */ }
+                try { SyncPauseChatHook(throwOnError: false); } catch { /* off */ }
+                try { SyncChatNameColorHook(throwOnError: false); } catch { /* off */ }
+                try { SyncDragSelectHook(throwOnError: false); } catch { /* off */ }
+            });
 
-            CaptureAppliedColors();
+            WpfMessageBox.Show(
+                "Vanilla files restored and Extra features turned off.\nRestart Warcraft II Remastered to finish.",
+                "Restore complete",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            WpfMessageBox.Show(ex.Message, "Apply failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            WpfMessageBox.Show(ex.Message, "Restore failed", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -649,8 +1496,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             RefreshTabStatus();
         }
     }
-
-    private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
@@ -661,7 +1506,9 @@ public sealed class ColorCard : INotifyPropertyChanged
 {
     private string _hex;
     public int Player { get; }
-    public string Name => $"Player {Player}";
+    public string Name { get; }
+    public string Description { get; }
+    public string ConfigKey { get; }
     public bool IsEnabled { get; }
     public string VanillaHex { get; }
     public string LastValidHex { get; private set; }
@@ -682,9 +1529,19 @@ public sealed class ColorCard : INotifyPropertyChanged
     public System.Windows.Media.Brush CurrentBrush => ToBrush(IsValidHex(Hex) ? Hex : LastValidHex);
     public System.Windows.Media.Brush VanillaBrush => ToBrush(VanillaHex);
 
-    public ColorCard(int player, string hex, string vanillaHex, bool enabled)
+    public ColorCard(
+        int player,
+        string hex,
+        string vanillaHex,
+        bool enabled,
+        string? name = null,
+        string? description = null,
+        string? configKey = null)
     {
         Player = player;
+        Name = name ?? $"Color player {player}";
+        Description = description ?? string.Empty;
+        ConfigKey = configKey ?? string.Empty;
         IsEnabled = enabled;
         VanillaHex = Normalize(vanillaHex);
         LastValidHex = IsValidHex(hex) ? Normalize(hex) : VanillaHex;
@@ -712,6 +1569,13 @@ public sealed class ColorCard : INotifyPropertyChanged
 public sealed class ColorConfig
 {
     public List<PlayerColor> Players { get; set; } = [];
+    public string? SelectionHighlight { get; set; }
+    public string? EnemySelectionHighlight { get; set; }
+    public string? AllyHighlight { get; set; }
+    public string? CritterHighlight { get; set; }
+    public string? GoldMineOilHighlight { get; set; }
+    public string? GoldMineHighlight { get; set; }
+    public string? OilPatchHighlight { get; set; }
 }
 
 public sealed record PlayerColor(int Player, string Color);
@@ -720,6 +1584,14 @@ public sealed class ExtraFeaturesConfig
 {
     public bool AllyLeaveRedNames { get; set; }
     public bool ChatDuringPauseScreen { get; set; }
+    public bool ChatColoredNames { get; set; }
+    public bool DragSelectColorEnabled { get; set; }
+    public string? DragSelectColor { get; set; }
+}
+
+public sealed class StudioSettings
+{
+    public string? GameRootPath { get; set; }
 }
 
 public sealed class StatusLineItem

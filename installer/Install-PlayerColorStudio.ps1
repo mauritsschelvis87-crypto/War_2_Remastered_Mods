@@ -53,10 +53,15 @@ try {
 
     $watch = Join-Path $modTarget 'native\AllyLeaveWatch.exe'
     $extraConfig = Join-Path $modTarget 'extra-features.json'
-    if ((Test-Path -LiteralPath $watch) -and (Test-Path -LiteralPath $extraConfig) -and
-        ((Get-Content -LiteralPath $extraConfig -Raw) -match '"AllyLeaveRedNames"\s*:\s*true')) {
-        Start-Process -FilePath $watch -ArgumentList '--install-startup' -WorkingDirectory (Split-Path $watch -Parent) -WindowStyle Hidden
-        Write-Host 'Extra watcher registered for Windows startup (Extra was already ON).'
+    if ((Test-Path -LiteralPath $watch) -and (Test-Path -LiteralPath $extraConfig)) {
+        $extraRaw = Get-Content -LiteralPath $extraConfig -Raw
+        $anyExtra = ($extraRaw -match '"AllyLeaveRedNames"\s*:\s*true') -or
+            ($extraRaw -match '"ChatDuringPauseScreen"\s*:\s*true') -or
+            ($extraRaw -match '"DragSelectColorEnabled"\s*:\s*true')
+        if ($anyExtra) {
+            Start-Process -FilePath $watch -ArgumentList '--install-startup' -WorkingDirectory (Split-Path $watch -Parent) -WindowStyle Hidden
+            Write-Host 'Extra watcher registered for Windows startup (Extra was already ON).'
+        }
     }
 
     if (!$NoLaunch) {
