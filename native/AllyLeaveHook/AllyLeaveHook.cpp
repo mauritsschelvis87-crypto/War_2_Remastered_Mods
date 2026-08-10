@@ -88,14 +88,38 @@ volatile LONG g_leftFlags[8]{};
 volatile LONG g_everHadAssets[8]{};
 volatile LONG g_forceRowLog = 0;
 volatile LONG g_verboseRows = 0;
+volatile DWORD g_lastCensusTick = 0;
+constexpr DWORD kCensusMinIntervalMs = 400;
 void* g_lastUi[8]{};
 char g_lastName[8][80]{};
 DWORD g_lastSetTextTick = 0;
 char g_nameBuf[8][160]{};
 char g_logPath[MAX_PATH]{};
+volatile LONG g_logQuiet = 0; // 1 = skip hot-path file logs (still log install/gone)
 
 void Log(const char* fmt, ...)
 {
+    if (!g_logPath[0]) {
+        char temp[MAX_PATH]{};
+        GetTempPathA(MAX_PATH, temp);
+        sprintf_s(g_logPath, "%swar2_ally_leave_hook.log", temp);
+    }
+    FILE* f = nullptr;
+    if (fopen_s(&f, g_logPath, "a") != 0 || !f) return;
+    SYSTEMTIME st{};
+    GetLocalTime(&st);
+    fprintf(f, "%02u:%02u:%02u.%03u ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+    fputc('\n', f);
+    fclose(f);
+}
+
+void LogHot(const char* fmt, ...)
+{
+    if (InterlockedCompareExchange(&g_logQuiet, 0, 0) != 0) return;
     if (!g_logPath[0]) {
         char temp[MAX_PATH]{};
         GetTempPathA(MAX_PATH, temp);
@@ -349,12 +373,16 @@ void ApplyCensus(const LONG unitsIn[8], const LONG buildingsIn[8], const char* r
     if (markDone) {
         InterlockedExchange(&g_censusDone, 1);
     }
-    Log("census(%s) done=%d u=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld b=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
-        reason ? reason : "?", markDone ? 1 : 0,
-        unitsIn[0], unitsIn[1], unitsIn[2], unitsIn[3],
-        unitsIn[4], unitsIn[5], unitsIn[6], unitsIn[7],
-        buildingsIn[0], buildingsIn[1], buildingsIn[2], buildingsIn[3],
-        buildingsIn[4], buildingsIn[5], buildingsIn[6], buildingsIn[7]);
+    static LONG s_censusLog = 0;
+    const LONG n = InterlockedIncrement(&s_censusLog);
+    if (n <= 6 || (n % 25) == 0) {
+        LogHot("census(%s) done=%d u=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld b=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
+            reason ? reason : "?", markDone ? 1 : 0,
+            unitsIn[0], unitsIn[1], unitsIn[2], unitsIn[3],
+            unitsIn[4], unitsIn[5], unitsIn[6], unitsIn[7],
+            buildingsIn[0], buildingsIn[1], buildingsIn[2], buildingsIn[3],
+            buildingsIn[4], buildingsIn[5], buildingsIn[6], buildingsIn[7]);
+    }
 }
 
 bool ResyncCensus(void* excludeUnit, const char* reason)
@@ -362,7 +390,7 @@ bool ResyncCensus(void* excludeUnit, const char* reason)
     LONG units[8]{};
     LONG buildings[8]{};
     if (!CensusFromWorld(excludeUnit, units, buildings)) {
-        Log("census(%s) FAILED heads=%p", reason ? reason : "?", g_unitTypeHeads);
+        LogHot("census(%s) FAILED heads=%p", reason ? reason : "?", g_unitTypeHeads);
         return false;
     }
     LONG any = 0;
@@ -372,11 +400,25 @@ bool ResyncCensus(void* excludeUnit, const char* reason)
     // Boot may run before map objects exist — keep retrying until we see assets.
     const bool isBoot = reason && strcmp(reason, "boot") == 0;
     if (isBoot && any == 0) {
-        Log("census(boot) empty — waiting for map");
+        LogHot("census(boot) empty — waiting for map");
         return false;
     }
     ApplyCensus(units, buildings, reason, true);
+    InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_lastCensusTick),
+        static_cast<LONG>(GetTickCount()));
     return true;
+}
+
+// Full world walk is expensive in MP — throttle unless forced (first census).
+bool ResyncCensusThrottled(void* excludeUnit, const char* reason, bool force)
+{
+    const DWORD now = GetTickCount();
+    const DWORD last = static_cast<DWORD>(InterlockedCompareExchange(
+        reinterpret_cast<volatile LONG*>(&g_lastCensusTick), 0, 0));
+    if (!force && g_censusDone && (now - last) < kCensusMinIntervalMs) {
+        return true; // keep using cached counters
+    }
+    return ResyncCensus(excludeUnit, reason);
 }
 
 bool AdjustTrackedAsset(int playerIndex, int type, int delta)
@@ -441,16 +483,13 @@ int CallHasForces(int playerIndex)
 
 void ClearGoneUi(int playerIndex)
 {
+    // Sticky for the rest of the match. Our unit census often false-positives
+    // ("unit again") right after a computer wipe and was clearing the mark.
     if (playerIndex < 0 || playerIndex > 7) return;
-    if (InterlockedExchange(&g_leftFlags[playerIndex], 0) != 0) {
-        Log("clearGone p=%d (unit again)", playerIndex);
-    }
-    // Undo a wipe-only defeat write so Alliances does not keep treating them dead.
-    if (g_defeatBase) {
-        __try {
-            if (g_defeatBase[playerIndex] == 2)
-                g_defeatBase[playerIndex] = 0;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
+    if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 0, 0) != 0) {
+        static LONG s_clearIgnore = 0;
+        if (InterlockedIncrement(&s_clearIgnore) <= 24) {
+            Log("clearGone ignored p=%d (sticky mark)", playerIndex);
         }
     }
 }
@@ -487,7 +526,7 @@ void MarkGoneUi(int playerIndex, const char* source)
     // UI flag only for local wipe — do not invent defeat/status (false positives
     // were sticky when our unit counter drifted below the real army size).
     InterlockedExchange(&g_forceRowLog, 1);
-    InterlockedExchange(&g_verboseRows, 96);
+    InterlockedExchange(&g_verboseRows, 4);
 
     Log("gone p=%d src=%s flags=1 liveUi=%d name=%s",
         playerIndex, source ? source : "?",
@@ -507,20 +546,12 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
         return;
     }
 
+    // UI flag only — never rewrite status/defeat here. The leave/drop hooks
+    // re-run the game's original store after this notify; writing status=3
+    // ourselves caused MP desyncs / drops / crashes when the stolen write
+    // path skipped or raced the real packet handling.
     InterlockedExchange(&g_leftFlags[playerIndex], 1);
     InterlockedIncrement(&g_leaveEventCount);
-
-    if (g_statusBase) {
-        g_statusBase[playerIndex] = 3;
-    }
-    if (g_defeatBase) {
-        // Keep local defeat flag in sync so F5 stays marked if status is rewritten.
-        __try {
-            if (g_defeatBase[playerIndex] == 0)
-                g_defeatBase[playerIndex] = 2;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-        }
-    }
 
     int msgType = -1;
     const char* typeName = nullptr;
@@ -534,18 +565,19 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
     }
 
     if (typeName) {
-        Log("gone p=%d src=%s type=%s(%d) flags=1", playerIndex, source, typeName, msgType);
+        Log("gone p=%d src=%s type=%s(%d) flags=1 (ui-only)", playerIndex, source, typeName, msgType);
     } else if (msgType >= 0) {
-        Log("gone p=%d src=%s type=%d flags=1", playerIndex, source, msgType);
+        Log("gone p=%d src=%s type=%d flags=1 (ui-only)", playerIndex, source, msgType);
     } else {
-        Log("gone p=%d src=%s flags=1", playerIndex, source);
+        Log("gone p=%d src=%s flags=1 (ui-only)", playerIndex, source);
     }
 }
 
 void RefreshWipeFromAssets()
 {
+    // Alliances SetText fires often — never full-census every row.
     if (!g_censusDone) {
-        ResyncCensus(nullptr, "ui");
+        ResyncCensusThrottled(nullptr, "ui", /*force=*/false);
         return;
     }
     for (int i = 0; i < 8; ++i) {
@@ -597,8 +629,8 @@ void __cdecl Hook_UnitGained(void* unit)
     // Do not ±1 during map-spawn before the initial census snapshot.
     if (!g_censusDone) {
         static LONG s_preLog = 0;
-        if (InterlockedIncrement(&s_preLog) <= 16) {
-            Log("unitGain(pre-census) p=%d type=%d flags=0x%02X excl=%d",
+        if (InterlockedIncrement(&s_preLog) <= 8) {
+            LogHot("unitGain(pre-census) p=%d type=%d flags=0x%02X excl=%d",
                 playerIndex, type, flags & 0xFF, IsExcludedWipeType(type) ? 1 : 0);
         }
         return;
@@ -612,8 +644,8 @@ void __cdecl Hook_UnitGained(void* unit)
     }
 
     static LONG s_gainLog = 0;
-    if (InterlockedIncrement(&s_gainLog) <= 48) {
-        Log("unitGain p=%d type=%d u=%ld b=%ld total=%ld excl=%d",
+    if (InterlockedIncrement(&s_gainLog) <= 12) {
+        LogHot("unitGain p=%d type=%d u=%ld b=%ld total=%ld excl=%d",
             playerIndex, type, g_units[playerIndex], g_buildings[playerIndex],
             g_liveAssets[playerIndex], IsExcludedWipeType(type) ? 1 : 0);
     }
@@ -632,14 +664,23 @@ void __cdecl Hook_UnitLost(void* unit)
     if (!ReadUnitMeta(unit, &playerIndex, &type, &flags, nullptr)) return;
     if (playerIndex < 0 || playerIndex > 7) return;
 
-    // Always resync everyone from game tables/lists so we catch clans whose
-    // spawn never hit our gain hook, and so one kill can mark any finished wipe.
-    ResyncCensus(unit, g_censusDone ? "lost" : "lost-init");
+    // Cheap path: ±1 like gain. Full world census only on first snapshot,
+    // when counters hit 0 (possible wipe), or every kCensusMinIntervalMs.
+    if (!g_censusDone) {
+        ResyncCensus(unit, "lost-init");
+    } else {
+        if ((flags & 0x80) != 0) {
+            AdjustTrackedAsset(playerIndex, type, -1);
+        }
+        const bool maybeWipe =
+            (g_units[playerIndex] + g_buildings[playerIndex]) <= 0;
+        ResyncCensusThrottled(unit, "lost", /*force=*/maybeWipe);
+    }
 
     static LONG s_wipeLog = 0;
-    if (InterlockedIncrement(&s_wipeLog) <= 96) {
+    if (InterlockedIncrement(&s_wipeLog) <= 16) {
         const int hf = CallHasForces(playerIndex);
-        Log("unitLost p=%d type=%d flags=0x%02X u=%ld b=%ld hf=%d ever=%ld name=%s",
+        LogHot("unitLost p=%d type=%d flags=0x%02X u=%ld b=%ld hf=%d ever=%ld name=%s",
             playerIndex, type, flags & 0xFF,
             g_units[playerIndex], g_buildings[playerIndex], hf,
             g_everHadAssets[playerIndex],
@@ -743,7 +784,13 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
     InterlockedIncrement(&g_hitCount);
     g_lastSetTextTick = GetTickCount();
 
-    RefreshWipeFromAssets();
+    // Throttle wipe refresh — SetText can fire many times per alliances paint.
+    static DWORD s_lastRefresh = 0;
+    const DWORD now = GetTickCount();
+    if ((now - s_lastRefresh) >= 200) {
+        s_lastRefresh = now;
+        RefreshWipeFromAssets();
+    }
 
     const uint8_t status =
         (g_statusBase && playerIndex >= 0 && playerIndex <= 7) ? g_statusBase[playerIndex] : 0xFF;
@@ -780,7 +827,7 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
             if (g_defeatBase) {
                 __try { d = g_defeatBase[i]; } __except (EXCEPTION_EXECUTE_HANDLER) { d = 0xFE; }
             }
-            Log("postGone snap[%d] status=%u defeat=%u left=%ld assets=%d",
+            LogHot("postGone snap[%d] status=%u defeat=%u left=%ld assets=%d",
                 i, s, d, g_leftFlags[i], PlayerAssetCount(i));
         }
     }
@@ -793,7 +840,7 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
             if (g_defeatBase) {
                 __try { d = g_defeatBase[i]; } __except (EXCEPTION_EXECUTE_HANDLER) { d = 0xFE; }
             }
-            Log("snap[%d] status=%u defeat=%u left=%ld assets=%d ever=%ld",
+            LogHot("snap[%d] status=%u defeat=%u left=%ld assets=%d ever=%ld",
                 i, s, d, g_leftFlags[i], PlayerAssetCount(i), g_everHadAssets[i]);
         }
     }
@@ -801,9 +848,10 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
     LONG verboseLeft = InterlockedExchangeAdd(&g_verboseRows, 0);
     if (verboseLeft > 0) InterlockedDecrement(&g_verboseRows);
     static LONG s_rowLog = 0;
-    const bool logRow = inactive || verboseLeft > 0 || InterlockedIncrement(&s_rowLog) <= 128;
+    const LONG rowN = InterlockedIncrement(&s_rowLog);
+    const bool logRow = inactive || verboseLeft > 0 || rowN <= 8 || (rowN % 500) == 0;
     if (logRow) {
-        Log("row p=%d status=%u defeat=%u left=%ld assets=%d enabled=%ld inactive=%d name=%s",
+        LogHot("row p=%d status=%u defeat=%u left=%ld assets=%d enabled=%ld inactive=%d name=%s",
             playerIndex, status, defeat, leftFlag, assets, g_enabled,
             inactive ? 1 : 0, name ? name : "(null)");
     }
@@ -851,7 +899,8 @@ void __declspec(naked) Hook_SetText_Gate()
     }
 }
 
-// After movzx eax, [esi+1]: eax = player. We replace the status write.
+// After movzx eax, [esi+1]: eax = player. Trampoline calls us then runs the
+// original status store (see PatchLeaveNotify).
 void __declspec(naked) Hook_LeaveWrite_H1_Gate()
 {
     __asm {
@@ -878,16 +927,25 @@ void __declspec(naked) Hook_LeaveWrite_H2_Gate()
     }
 }
 
-bool PatchCall7(uint8_t* site, void* gate, uint8_t* savedOrig, void** trampOut)
+// Replace a 7-byte status store with: call notifyGate ; [orig 7 bytes] via tramp.
+// Critical: the game's original store MUST still run after our UI notify.
+bool PatchLeaveNotify(uint8_t* site, void* gate, uint8_t* savedOrig, void** trampOut)
 {
     memcpy(savedOrig, site, 7);
-    void* tramp = VirtualAlloc(nullptr, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    void* tramp = VirtualAlloc(nullptr, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!tramp) return false;
 
     auto* t = static_cast<uint8_t*>(tramp);
-    t[0] = 0xE9;
+    // call gate (relative)
+    t[0] = 0xE8;
     *reinterpret_cast<int32_t*>(t + 1) =
         static_cast<int32_t>(static_cast<uint8_t*>(gate) - (t + 5));
+    // original 7-byte store
+    memcpy(t + 5, site, 7);
+    // jmp site+7
+    t[12] = 0xE9;
+    *reinterpret_cast<int32_t*>(t + 13) =
+        static_cast<int32_t>((site + 7) - (t + 17));
 
     DWORD oldProtect = 0;
     if (!VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
@@ -895,8 +953,10 @@ bool PatchCall7(uint8_t* site, void* gate, uint8_t* savedOrig, void** trampOut)
         return false;
     }
 
-    site[0] = 0xE8;
-    *reinterpret_cast<int32_t*>(site + 1) = static_cast<int32_t>(t - (site + 5));
+    // jmp tramp ; nop ; nop
+    site[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(site + 1) =
+        static_cast<int32_t>(static_cast<uint8_t*>(tramp) - (site + 5));
     site[5] = 0x90;
     site[6] = 0x90;
 
@@ -904,6 +964,12 @@ bool PatchCall7(uint8_t* site, void* gate, uint8_t* savedOrig, void** trampOut)
     FlushInstructionCache(GetCurrentProcess(), site, 7);
     *trampOut = tramp;
     return true;
+}
+
+bool PatchCall7(uint8_t* site, void* gate, uint8_t* savedOrig, void** trampOut)
+{
+    // Legacy name — leave hooks use PatchLeaveNotify so the original write runs.
+    return PatchLeaveNotify(site, gate, savedOrig, trampOut);
 }
 
 bool PatchFuncPrologue(uint8_t* site, void* hook, uint8_t* savedOrig, void** trampOut, void** originalOut)
@@ -1238,7 +1304,9 @@ bool InstallHook()
     // DLL is only injected when the Extra feature is on — start enabled so a missed
     // SetEnabled remote-thread call cannot leave the hook silently inert.
     InterlockedExchange(&g_enabled, 1);
-    Log("InstallHook: ready enabled=1 leaveHooks=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p",
+    // Quiet hot-path file I/O in MP (unitGain/lost/census/row). Gone/install still Log().
+    InterlockedExchange(&g_logQuiet, 1);
+    Log("InstallHook: ready enabled=1 leaveHooks=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p quiet=1",
         leaveOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
         g_localPlayer, g_unitTypeHeads, g_typeCountRows);
     return true;

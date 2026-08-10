@@ -182,14 +182,24 @@
                                            Text="When a player or computer leaves the game by disconnect, defeat or surrender, the name in the alliances screen turns red."/>
                             </StackPanel>
                         </Border>
-                        <Border Padding="14" CornerRadius="8"
+                        <Border Padding="14" CornerRadius="8" Margin="0,0,0,12"
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel VerticalAlignment="Center">
                                 <CheckBox IsChecked="{Binding ChatColoredNames}"
                                           IsEnabled="{Binding IsApplyEnabled}"
                                           Content="Show chat names in player color."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="Multiplayer chat lines from a player use that player's current color from Player colors (name and message on that line)."/>
+                                           Text="Multiplayer chat lines from a player use that player's current color from Player colors (name only on that line)."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Padding="14" CornerRadius="8"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding PauseColoredNames}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          Content="Show pause/resume names in player color."/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="Colors the player name in multiplayer pause notifications such as “Avent resumed the game.” Uses Player colors."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

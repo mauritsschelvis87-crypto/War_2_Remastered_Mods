@@ -36,10 +36,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedChatDuringPauseScreen;
     private bool _chatColoredNames;
     private bool _appliedChatColoredNames;
+    private bool _pauseColoredNames;
+    private bool _appliedPauseColoredNames;
     private bool _appliedDragSelectColorEnabled;
     private bool _hookInjectedForRunningGame;
     private bool _pauseChatInjectedForRunningGame;
     private bool _chatNameColorInjectedForRunningGame;
+    private bool _pauseNameColorInjectedForRunningGame;
     private bool _dragSelectInjectedForRunningGame;
     private bool _isApplying;
     private bool _skipNextStatusRefresh;
@@ -86,6 +89,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             if (_chatColoredNames == value) return;
             _chatColoredNames = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    public bool PauseColoredNames
+    {
+        get => _pauseColoredNames;
+        set
+        {
+            if (_pauseColoredNames == value) return;
+            _pauseColoredNames = value;
             OnPropertyChanged();
             RefreshTabStatus();
         }
@@ -199,7 +214,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             LoadExtraFeatures();
             _hookWatchTimer.Start();
             UpdateExtraHookStatus(forceInject: _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen ||
-                _appliedChatColoredNames || _appliedDragSelectColorEnabled);
+                _appliedChatColoredNames || _appliedPauseColoredNames || _appliedDragSelectColorEnabled);
             RefreshTabStatus();
         }
         catch (Exception ex)
@@ -308,7 +323,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool HasPendingMarkGone() => _allyLeaveRedNames != _appliedAllyLeaveRedNames;
     private bool HasPendingChatPause() => _chatDuringPauseScreen != _appliedChatDuringPauseScreen;
     private bool HasPendingChatColoredNames() => _chatColoredNames != _appliedChatColoredNames;
-    private bool HasPendingFeatureChanges() => HasPendingMarkGone() || HasPendingChatColoredNames();
+    private bool HasPendingPauseColoredNames() => _pauseColoredNames != _appliedPauseColoredNames;
+    private bool HasPendingFeatureChanges() =>
+        HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingPauseColoredNames();
     private bool HasPendingBugFixChanges() => HasPendingChatPause();
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
@@ -754,13 +771,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private void WriteExtraFeaturesFile(bool allyLeave, bool chatPause, bool chatColoredNames, bool dragEnabled, string dragHex)
+    private void WriteExtraFeaturesFile(
+        bool allyLeave,
+        bool chatPause,
+        bool chatColoredNames,
+        bool pauseColoredNames,
+        bool dragEnabled,
+        string dragHex)
     {
         var extraJson = JsonSerializer.Serialize(new ExtraFeaturesConfig
         {
             AllyLeaveRedNames = allyLeave,
             ChatDuringPauseScreen = chatPause,
             ChatColoredNames = chatColoredNames,
+            PauseColoredNames = pauseColoredNames,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
         }, new JsonSerializerOptions { WriteIndented = true });
@@ -805,6 +829,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var markGone = false;
         var chatPause = false;
         var chatColored = false;
+        var pauseColored = false;
         var dragEnabled = false;
 
         if (File.Exists(_extraConfigPath))
@@ -814,13 +839,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             markGone = extra?.AllyLeaveRedNames ?? false;
             chatPause = extra?.ChatDuringPauseScreen ?? false;
             chatColored = extra?.ChatColoredNames ?? false;
+            pauseColored = extra?.PauseColoredNames ?? false;
             // Separate drag color is not safe yet (shares selection palette 250). Always keep off.
             dragEnabled = false;
             if (extra is not null && extra.DragSelectColorEnabled)
             {
                 try
                 {
-                    WriteExtraFeaturesFile(markGone, chatPause, chatColored, dragEnabled: false, dragHex: "#00FF00");
+                    WriteExtraFeaturesFile(markGone, chatPause, chatColored, pauseColored,
+                        dragEnabled: false, dragHex: "#00FF00");
                 }
                 catch { /* best-effort cleanup of pink drag config */ }
             }
@@ -832,10 +859,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedChatDuringPauseScreen = chatPause;
         _chatColoredNames = chatColored;
         _appliedChatColoredNames = chatColored;
+        _pauseColoredNames = pauseColored;
+        _appliedPauseColoredNames = pauseColored;
         _appliedDragSelectColorEnabled = dragEnabled;
         OnPropertyChanged(nameof(AllyLeaveRedNames));
         OnPropertyChanged(nameof(ChatDuringPauseScreen));
         OnPropertyChanged(nameof(ChatColoredNames));
+        OnPropertyChanged(nameof(PauseColoredNames));
     }
 
     private static bool IsWarcraftIiRunning() =>
@@ -846,6 +876,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UpdateAllyLeaveHookStatus(forceInject);
         UpdatePauseChatHookStatus(forceInject);
         UpdateChatNameColorHookStatus(forceInject);
+        UpdatePauseNameColorHookStatus(forceInject);
         UpdateDragSelectHookStatus(forceInject);
     }
 
@@ -932,7 +963,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             var anyExtra = _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen ||
-                _appliedChatColoredNames || _appliedDragSelectColorEnabled;
+                _appliedChatColoredNames || _appliedPauseColoredNames || _appliedDragSelectColorEnabled;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
@@ -1138,6 +1169,89 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(output) ? "Chat-name-color hook updated." : output;
     }
 
+    private void UpdatePauseNameColorHookStatus(bool forceInject)
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!_appliedPauseColoredNames)
+        {
+            if (IsWarcraftIiRunning() && forceInject)
+            {
+                try { SyncPauseNameColorHook(throwOnError: false); }
+                catch { /* keep tab status friendly */ }
+            }
+            return;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _pauseNameColorInjectedForRunningGame = false;
+            return;
+        }
+
+        if (_pauseNameColorInjectedForRunningGame && !forceInject) return;
+
+        try
+        {
+            var message = SyncPauseNameColorHook(throwOnError: false);
+            _pauseNameColorInjectedForRunningGame =
+                !string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _pauseNameColorInjectedForRunningGame = false;
+        }
+    }
+
+    private string SyncPauseNameColorHook(bool throwOnError = true)
+    {
+        var injector = Path.Combine(_nativeDir, "InjectPauseNameColor.exe");
+        var dll = Path.Combine(_nativeDir, "ChatNameColorHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var missing = "Pause-name-color hook files are missing. Rebuild mod/native.";
+            if (throwOnError) throw new InvalidOperationException(missing);
+            return missing;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _pauseNameColorInjectedForRunningGame = false;
+            return _appliedPauseColoredNames
+                ? "Pause/resume name colors ON — watcher auto-injects when Warcraft II starts."
+                : "Pause/resume name colors setting saved.";
+        }
+
+        var args = _appliedPauseColoredNames ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start)
+            ?? throw new InvalidOperationException("Could not start the pause-name-color injector.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+        {
+            _pauseNameColorInjectedForRunningGame = false;
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Pause-name-color hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        _pauseNameColorInjectedForRunningGame = _appliedPauseColoredNames;
+        return string.IsNullOrWhiteSpace(output) ? "Pause-name-color hook updated." : output;
+    }
+
     private void UpdateDragSelectHookStatus(bool forceInject)
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
@@ -1263,12 +1377,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
                 await Task.Run(() => WriteColorConfigAndApply(config));
                 CaptureAppliedColors();
-                if (_appliedChatColoredNames)
+                if (_appliedChatColoredNames || _appliedPauseColoredNames)
                 {
-                    SetStatusLines(StatusLine("", ReadyIconBrush, "Updating chat name colors…"));
+                    SetStatusLines(StatusLine("", ReadyIconBrush, "Updating name colors…"));
                     await Task.Run(() =>
                     {
                         try { SyncChatNameColorHook(throwOnError: false); }
+                        catch { /* optional while game closed */ }
+                        try { SyncPauseNameColorHook(throwOnError: false); }
                         catch { /* optional while game closed */ }
                     });
                 }
@@ -1287,6 +1403,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var ally = _appliedAllyLeaveRedNames;
                 var chat = _appliedChatDuringPauseScreen;
                 var chatNames = _appliedChatColoredNames;
+                var pauseNames = _appliedPauseColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing other colors…"));
                 await Task.Run(() =>
                 {
@@ -1295,6 +1412,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         allyLeave: ally,
                         chatPause: chat,
                         chatColoredNames: chatNames,
+                        pauseColoredNames: pauseNames,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
@@ -1311,6 +1429,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* optional while game is closed */ }
                     try { SyncChatNameColorHook(throwOnError: false); }
                     catch { /* reload colors if enabled */ }
+                    try { SyncPauseNameColorHook(throwOnError: false); }
+                    catch { /* reload colors if enabled */ }
                 });
             }
             else if (_activeTab == "feature")
@@ -1318,18 +1438,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var markGoneEnabled = AllyLeaveRedNames;
                 var chatPauseEnabled = _appliedChatDuringPauseScreen;
                 var chatNamesEnabled = ChatColoredNames;
+                var pauseNamesEnabled = PauseColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature settings…"));
                 await Task.Run(() => WriteExtraFeaturesFile(
                     allyLeave: markGoneEnabled,
                     chatPause: chatPauseEnabled,
                     chatColoredNames: chatNamesEnabled,
+                    pauseColoredNames: pauseNamesEnabled,
                     dragEnabled: false,
                     dragHex: "#00FF00"));
 
                 _appliedAllyLeaveRedNames = markGoneEnabled;
                 _appliedChatColoredNames = chatNamesEnabled;
+                _appliedPauseColoredNames = pauseNamesEnabled;
                 _hookInjectedForRunningGame = false;
                 _chatNameColorInjectedForRunningGame = false;
+                _pauseNameColorInjectedForRunningGame = false;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
                 await Task.Run(() =>
                 {
@@ -1337,6 +1461,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     try { SyncAllyLeaveHook(throwOnError: false); }
                     catch { /* optional while Feature is off */ }
                     try { SyncChatNameColorHook(throwOnError: false); }
+                    catch { /* optional while Feature is off */ }
+                    try { SyncPauseNameColorHook(throwOnError: false); }
                     catch { /* optional while Feature is off */ }
                     try { SyncDragSelectHook(throwOnError: false); }
                     catch { /* keep drag hook disabled */ }
@@ -1347,11 +1473,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var markGoneEnabled = _appliedAllyLeaveRedNames;
                 var chatPauseEnabled = ChatDuringPauseScreen;
                 var chatNamesEnabled = _appliedChatColoredNames;
+                var pauseNamesEnabled = _appliedPauseColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Bug fix settings…"));
                 await Task.Run(() => WriteExtraFeaturesFile(
                     allyLeave: markGoneEnabled,
                     chatPause: chatPauseEnabled,
                     chatColoredNames: chatNamesEnabled,
+                    pauseColoredNames: pauseNamesEnabled,
                     dragEnabled: false,
                     dragHex: "#00FF00"));
 
@@ -1434,6 +1562,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     AllyLeaveRedNames = false,
                     ChatDuringPauseScreen = false,
                     ChatColoredNames = false,
+                    PauseColoredNames = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
                 }, new JsonSerializerOptions { WriteIndented = true });
@@ -1446,10 +1575,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedChatDuringPauseScreen = false;
             _chatColoredNames = false;
             _appliedChatColoredNames = false;
+            _pauseColoredNames = false;
+            _appliedPauseColoredNames = false;
             _appliedDragSelectColorEnabled = false;
             OnPropertyChanged(nameof(AllyLeaveRedNames));
             OnPropertyChanged(nameof(ChatDuringPauseScreen));
             OnPropertyChanged(nameof(ChatColoredNames));
+            OnPropertyChanged(nameof(PauseColoredNames));
 
             Cards.Clear();
             LoadCards();
@@ -1469,6 +1601,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _hookInjectedForRunningGame = false;
             _pauseChatInjectedForRunningGame = false;
             _chatNameColorInjectedForRunningGame = false;
+            _pauseNameColorInjectedForRunningGame = false;
             _dragSelectInjectedForRunningGame = false;
             SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
             await Task.Run(() =>
@@ -1477,6 +1610,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncAllyLeaveHook(throwOnError: false); } catch { /* off */ }
                 try { SyncPauseChatHook(throwOnError: false); } catch { /* off */ }
                 try { SyncChatNameColorHook(throwOnError: false); } catch { /* off */ }
+                try { SyncPauseNameColorHook(throwOnError: false); } catch { /* off */ }
                 try { SyncDragSelectHook(throwOnError: false); } catch { /* off */ }
             });
 
@@ -1585,6 +1719,7 @@ public sealed class ExtraFeaturesConfig
     public bool AllyLeaveRedNames { get; set; }
     public bool ChatDuringPauseScreen { get; set; }
     public bool ChatColoredNames { get; set; }
+    public bool PauseColoredNames { get; set; }
     public bool DragSelectColorEnabled { get; set; }
     public string? DragSelectColor { get; set; }
 }

@@ -25,7 +25,8 @@ constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
 
 using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
 
-volatile LONG g_enabled = 0;
+volatile LONG g_enabled = 0;       // chat "Name:" lines
+volatile LONG g_pauseEnabled = 0;  // "Name resumed/paused the game."
 volatile LONG g_ready = 0;
 volatile LONG g_hits = 0;
 volatile LONG g_recolors = 0;
@@ -202,7 +203,74 @@ bool NameEquals(const char* a, size_t aLen, const char* b)
     return i == aLen && b[i] == 0;
 }
 
-int MatchPlayerIndex(const char* text, size_t* nameLenOut)
+bool StartsWithIgnoreCase(const char* text, const char* prefix)
+{
+    if (!text || !prefix) return false;
+    for (; *prefix; ++text, ++prefix) {
+        const char ca = (*text >= 'A' && *text <= 'Z') ? static_cast<char>(*text - 'A' + 'a') : *text;
+        const char cb = (*prefix >= 'A' && *prefix <= 'Z') ? static_cast<char>(*prefix - 'A' + 'a') : *prefix;
+        if (!*text || ca != cb) return false;
+    }
+    return true;
+}
+
+int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut)
+{
+    if (channelLenOut) *channelLenOut = 0;
+    if (nameEndOut) *nameEndOut = 0;
+    if (!text || !text[0]) return -1;
+
+    const char* start = text;
+    while (*start && (static_cast<unsigned char>(*start) < 0x20 || *start == ' ')) ++start;
+
+    // Human MP: "(To All) Name: msg" / "(To Allies) Name: msg"
+    // Local/comp often: "Name: msg"
+    const char* nameStart = start;
+    static const char* kPrefixes[] = {
+        "(To All) ",
+        "(To Allies) ",
+        "To Enemies: ",
+        "To No One: ",
+        nullptr
+    };
+    for (int p = 0; kPrefixes[p]; ++p) {
+        if (StartsWithIgnoreCase(nameStart, kPrefixes[p])) {
+            nameStart += strlen(kPrefixes[p]);
+            break;
+        }
+    }
+    if (nameStart == start && StartsWithIgnoreCase(nameStart, "To ")) {
+        const char* firstColon = strchr(nameStart, ':');
+        if (firstColon && firstColon[1] == ' ') {
+            const char* after = firstColon + 2;
+            if (strchr(after, ':')) nameStart = after;
+        }
+    }
+    while (*nameStart == ' ' || *nameStart == '\t') ++nameStart;
+
+    const char* colon = strchr(nameStart, ':');
+    if (!colon || colon == nameStart) return -1;
+    size_t nameLen = static_cast<size_t>(colon - nameStart);
+    while (nameLen > 0 && (nameStart[nameLen - 1] == ' ' || nameStart[nameLen - 1] == '\t')) --nameLen;
+    if (nameLen == 0 || nameLen > 64) return -1;
+
+    for (int i = 0; i < 8; ++i) {
+        const char* slot = PlayerName(i);
+        if (!slot) continue;
+        __try {
+            if (slot[0] && NameEquals(nameStart, nameLen, slot)) {
+                if (channelLenOut) *channelLenOut = static_cast<size_t>(nameStart - text);
+                if (nameEndOut) *nameEndOut = static_cast<size_t>(colon - text) + 1;
+                return i;
+            }
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+    return -1;
+}
+
+// mp_resume_message: "%s resumed the game."  (no pause-with-name string in enUS)
+int MatchPauseResumePlayerIndex(const char* text, size_t* nameLenOut)
 {
     if (nameLenOut) *nameLenOut = 0;
     if (!text || !text[0]) return -1;
@@ -210,25 +278,31 @@ int MatchPlayerIndex(const char* text, size_t* nameLenOut)
     const char* start = text;
     while (*start && (static_cast<unsigned char>(*start) < 0x20 || *start == ' ')) ++start;
 
-    const char* colon = strchr(start, ':');
-    if (!colon || colon == start) return -1;
-    size_t nameLen = static_cast<size_t>(colon - start);
-    while (nameLen > 0 && (start[nameLen - 1] == ' ' || start[nameLen - 1] == '\t')) --nameLen;
-    if (nameLen == 0 || nameLen > 64) return -1;
-
+    int bestPlayer = -1;
+    size_t bestLen = 0;
     for (int i = 0; i < 8; ++i) {
         const char* slot = PlayerName(i);
         if (!slot) continue;
         __try {
-            if (slot[0] && NameEquals(start, nameLen, slot)) {
-                // Include colon in the overdrawn prefix: "Name:"
-                if (nameLenOut) *nameLenOut = static_cast<size_t>(colon - text) + 1;
-                return i;
+            if (!slot[0]) continue;
+            size_t nameLen = 0;
+            while (slot[nameLen] && nameLen < 64) ++nameLen;
+            if (nameLen == 0 || !NameEquals(start, nameLen, slot)) continue;
+            const char* after = start + nameLen;
+            while (*after == ' ' || *after == '\t') ++after;
+            if (!StartsWithIgnoreCase(after, "resumed") && !StartsWithIgnoreCase(after, "paused"))
+                continue;
+            if (nameLen > bestLen) {
+                bestLen = nameLen;
+                bestPlayer = i;
             }
         } __except (EXCEPTION_EXECUTE_HANDLER) {
         }
     }
-    return -1;
+
+    if (bestPlayer < 0) return -1;
+    if (nameLenOut) *nameLenOut = static_cast<size_t>(start - text) + bestLen;
+    return bestPlayer;
 }
 
 void LogPlayerNames()
@@ -284,39 +358,57 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
 {
     if (!g_originalDraw) return;
 
-    if (!g_enabled || !ui || !text || !text[0]) {
+    const bool chatOn = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
+    const bool pauseOn = InterlockedCompareExchange(&g_pauseEnabled, 0, 0) != 0;
+    if ((!chatOn && !pauseOn) || !ui || !text || !text[0]) {
         g_originalDraw(ui, text, color);
         return;
     }
 
     const LONG hits = InterlockedIncrement(&g_hits);
-    size_t prefixLen = 0;
-    const int player = MatchPlayerIndex(text, &prefixLen);
+    size_t channelLen = 0;
+    size_t nameEnd = 0;
+    int player = -1;
 
-    if (player < 0 || prefixLen == 0 || prefixLen >= 96) {
+    if (chatOn) player = MatchPlayerIndex(text, &channelLen, &nameEnd);
+    if (player < 0 && pauseOn) {
+        channelLen = 0;
+        player = MatchPauseResumePlayerIndex(text, &nameEnd);
+    }
+
+    if (player < 0 || nameEnd == 0 || nameEnd >= 160) {
         if (hits <= 30) Log("hit#%ld pass text=%.80s", hits, text);
         g_originalDraw(ui, text, color);
         return;
     }
 
-    // Body color: keep the game's default for this line when it looks like
-    // "already our player color" (shouldn't), otherwise prefer the passed color
-    // and fall back to a neutral light gray.
-    uint32_t bodyColor = color;
-    if (bodyColor == 0 || bodyColor == g_colors[player]) bodyColor = kBodyColor;
+    // Always use a neutral body — the game's passed chat color is often wrong
+    // for this path (e.g. purple) and made the whole line look off.
+    const uint32_t bodyColor = kBodyColor;
+    const uint32_t nameColor = g_colors[player];
 
-    char namePrefix[96]{};
-    memcpy(namePrefix, text, prefixLen);
-    namePrefix[prefixLen] = 0;
-
-    // Full line in body color, then name+':' overlaid in player color.
+    // 1) Full line in body color.
     g_originalDraw(ui, text, bodyColor);
-    g_originalDraw(ui, namePrefix, g_colors[player]);
+
+    // 2) Draw through end of "Name:" in player color.
+    char throughName[160]{};
+    memcpy(throughName, text, nameEnd);
+    throughName[nameEnd] = 0;
+    g_originalDraw(ui, throughName, nameColor);
+
+    // 3) If there was a channel prefix, redraw it in body color so only the
+    //    name stays player-colored: "(To All) " body + "Name:" player + " msg" body.
+    if (channelLen > 0 && channelLen < nameEnd && channelLen < sizeof(throughName)) {
+        char channelOnly[96]{};
+        memcpy(channelOnly, text, channelLen);
+        channelOnly[channelLen] = 0;
+        g_originalDraw(ui, channelOnly, bodyColor);
+    }
 
     InterlockedIncrement(&g_recolors);
     if (hits <= 40 || (hits % 50) == 0) {
-        Log("recolor-name p=%d body=%08X name=%08X text=%.60s",
-            player, bodyColor, g_colors[player], text);
+        Log("recolor-name p=%d ch=%u end=%u name=%08X text=%.60s",
+            player, (unsigned)channelLen, (unsigned)nameEnd, nameColor, text);
     }
 }
 
@@ -438,9 +530,11 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
         DisableThreadLibraryCalls(module);
         if (InstallHook()) {
             InterlockedExchange(&g_ready, 1);
-            InterlockedExchange(&g_enabled, 1);
+            // Injectors set chat / pause flags explicitly (separate Studio features).
+            InterlockedExchange(&g_enabled, 0);
+            InterlockedExchange(&g_pauseEnabled, 0);
             LogPlayerNames();
-            Log("DllMain: ready+enabled (name-only overlay)");
+            Log("DllMain: ready (awaiting SetEnabled chat/pause)");
         } else {
             Log("DllMain: install failed");
         }
@@ -460,8 +554,22 @@ extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetEnabled(LPVOID
     const LONG on = enabled ? 1 : 0;
     if (on) LoadColorsFromJson();
     InterlockedExchange(&g_enabled, on);
-    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld",
-        on, InterlockedCompareExchange(&g_ready, 0, 0),
+    Log("Chat SetEnabled=%ld pause=%ld ready=%ld hits=%ld recolors=%ld",
+        on, InterlockedCompareExchange(&g_pauseEnabled, 0, 0),
+        InterlockedCompareExchange(&g_ready, 0, 0),
+        InterlockedCompareExchange(&g_hits, 0, 0),
+        InterlockedCompareExchange(&g_recolors, 0, 0));
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+extern "C" __declspec(dllexport) DWORD __stdcall PauseNameColor_SetEnabled(LPVOID enabled)
+{
+    const LONG on = enabled ? 1 : 0;
+    if (on) LoadColorsFromJson();
+    InterlockedExchange(&g_pauseEnabled, on);
+    Log("Pause SetEnabled=%ld chat=%ld ready=%ld hits=%ld recolors=%ld",
+        on, InterlockedCompareExchange(&g_enabled, 0, 0),
+        InterlockedCompareExchange(&g_ready, 0, 0),
         InterlockedCompareExchange(&g_hits, 0, 0),
         InterlockedCompareExchange(&g_recolors, 0, 0));
     return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
