@@ -59,6 +59,14 @@ uint8_t* g_eliminateSite = nullptr;
 uint8_t g_origEliminate[7]{};
 void* g_eliminateTramp = nullptr;
 
+// Leave/drop/elim chat announce: void __cdecl @ 0x4F4F30 (player index).
+// Called for "Player %s left/dropped/eliminated" — more reliable than status-store H1.
+using AnnounceGoneFn = void(__cdecl*)(int player);
+AnnounceGoneFn g_originalAnnounceGone = nullptr;
+uint8_t* g_announceGoneSite = nullptr;
+uint8_t g_origAnnounceGone[7]{};
+void* g_announceGoneTramp = nullptr;
+
 SetTextFn g_originalSetText = nullptr;
 uint8_t* g_patchSite = nullptr;
 uint8_t g_originalCall[5]{};
@@ -97,13 +105,17 @@ char g_nameBuf[8][160]{};
 char g_logPath[MAX_PATH]{};
 volatile LONG g_logQuiet = 0; // 1 = skip hot-path file logs (still log install/gone)
 
+void EnsureLogPath()
+{
+    if (g_logPath[0]) return;
+    char temp[MAX_PATH]{};
+    GetTempPathA(MAX_PATH, temp);
+    sprintf_s(g_logPath, "%swar2_ally_leave_hook.log", temp);
+}
+
 void Log(const char* fmt, ...)
 {
-    if (!g_logPath[0]) {
-        char temp[MAX_PATH]{};
-        GetTempPathA(MAX_PATH, temp);
-        sprintf_s(g_logPath, "%swar2_ally_leave_hook.log", temp);
-    }
+    EnsureLogPath();
     FILE* f = nullptr;
     if (fopen_s(&f, g_logPath, "a") != 0 || !f) return;
     SYSTEMTIME st{};
@@ -120,11 +132,7 @@ void Log(const char* fmt, ...)
 void LogHot(const char* fmt, ...)
 {
     if (InterlockedCompareExchange(&g_logQuiet, 0, 0) != 0) return;
-    if (!g_logPath[0]) {
-        char temp[MAX_PATH]{};
-        GetTempPathA(MAX_PATH, temp);
-        sprintf_s(g_logPath, "%swar2_ally_leave_hook.log", temp);
-    }
+    EnsureLogPath();
     FILE* f = nullptr;
     if (fopen_s(&f, g_logPath, "a") != 0 || !f) return;
     SYSTEMTIME st{};
@@ -323,8 +331,9 @@ bool CensusFromUnitLists(void* excludeUnit, LONG unitsOut[8], LONG buildingsOut[
     return true;
 }
 
-bool CensusFromWorld(void* excludeUnit, LONG unitsOut[8], LONG buildingsOut[8])
+bool CensusFromWorld(void* excludeUnit, LONG unitsOut[8], LONG buildingsOut[8], bool* usedRowsOut)
 {
+    if (usedRowsOut) *usedRowsOut = false;
     LONG fromRowsU[8]{};
     LONG fromRowsB[8]{};
     LONG fromListU[8]{};
@@ -345,6 +354,7 @@ bool CensusFromWorld(void* excludeUnit, LONG unitsOut[8], LONG buildingsOut[8])
             unitsOut[i] = fromRowsU[i];
             buildingsOut[i] = fromRowsB[i];
         }
+        if (usedRowsOut) *usedRowsOut = true;
         return true;
     }
     if (listOk) {
@@ -389,7 +399,7 @@ bool ResyncCensus(void* excludeUnit, const char* reason)
 {
     LONG units[8]{};
     LONG buildings[8]{};
-    if (!CensusFromWorld(excludeUnit, units, buildings)) {
+    if (!CensusFromWorld(excludeUnit, units, buildings, nullptr)) {
         LogHot("census(%s) FAILED heads=%p", reason ? reason : "?", g_unitTypeHeads);
         return false;
     }
@@ -546,13 +556,6 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
         return;
     }
 
-    // UI flag only — never rewrite status/defeat here. The leave/drop hooks
-    // re-run the game's original store after this notify; writing status=3
-    // ourselves caused MP desyncs / drops / crashes when the stolen write
-    // path skipped or raced the real packet handling.
-    InterlockedExchange(&g_leftFlags[playerIndex], 1);
-    InterlockedIncrement(&g_leaveEventCount);
-
     int msgType = -1;
     const char* typeName = nullptr;
     if (packet) {
@@ -564,12 +567,34 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
         typeName = MsgTypeName(msgType);
     }
 
+    char srcBuf[48]{};
     if (typeName) {
-        Log("gone p=%d src=%s type=%s(%d) flags=1 (ui-only)", playerIndex, source, typeName, msgType);
+        sprintf_s(srcBuf, "%s/%s", source ? source : "?", typeName);
     } else if (msgType >= 0) {
-        Log("gone p=%d src=%s type=%d flags=1 (ui-only)", playerIndex, source, msgType);
+        sprintf_s(srcBuf, "%s/t=%d", source ? source : "?", msgType);
     } else {
-        Log("gone p=%d src=%s flags=1 (ui-only)", playerIndex, source);
+        sprintf_s(srcBuf, "%s", source ? source : "?");
+    }
+
+    // UI flag only — never rewrite status/defeat here (desync risk).
+    MarkGoneUi(playerIndex, srcBuf);
+}
+
+void PollStatusGoneMarks()
+{
+    if (!g_enabled || !g_statusBase) return;
+    for (int i = 0; i < 8; ++i) {
+        uint8_t status = 0;
+        __try {
+            status = g_statusBase[i];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            continue;
+        }
+        // Leave/drop/elim write 3. Empty lobby slots also sit at 3 — only mark
+        // slots we have already seen a real name or army for.
+        if (status == 3 && (g_everHadAssets[i] || g_lastName[i][0])) {
+            MarkGoneUi(i, "status3");
+        }
     }
 }
 
@@ -698,6 +723,19 @@ void __cdecl Hook_UnitLost(void* unit)
     }
 }
 
+void __cdecl Hook_AnnounceGone(int playerIndex)
+{
+    // Chat announce for left / dropped / eliminated — fire before original so
+    // the sticky UI flag is set even if Remastered resets status back to 1.
+    Log("announce call p=%d", playerIndex);
+    if (playerIndex >= 0 && playerIndex <= 7) {
+        MarkGoneUi(playerIndex, "announce");
+    }
+    if (g_originalAnnounceGone) {
+        g_originalAnnounceGone(playerIndex);
+    }
+}
+
 void __cdecl Hook_Eliminate(int playerIndex)
 {
     if (playerIndex >= 0 && playerIndex <= 7 && !IsLocalPlayer(playerIndex)) {
@@ -790,6 +828,7 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
     if ((now - s_lastRefresh) >= 200) {
         s_lastRefresh = now;
         RefreshWipeFromAssets();
+        PollStatusGoneMarks();
     }
 
     const uint8_t status =
@@ -1067,11 +1106,54 @@ bool InstallLeaveWriteHooks(uint8_t* base, size_t imageSize)
             Log("InstallLeaveWrite: H2 ok site=%p", g_leaveWriteH2);
         }
     } else {
-        Log("InstallLeaveWrite: H2 pattern not found");
-        ok = false;
+        // H2 is optional (eliminate helper); H1 alone is enough for leave packets.
+        Log("InstallLeaveWrite: H2 pattern not found (optional)");
     }
 
-    return ok;
+    return g_leaveWriteH1 != nullptr || g_leaveWriteH2 != nullptr;
+}
+
+bool InstallAnnounceGoneHook(uint8_t* base, size_t imageSize)
+{
+    // MUST match leave/drop/elim announce @ 0x4F4F30 (writes defeat=2).
+    // A near-twin at 0x4F43A0 writes defeat=1 and runs during normal play —
+    // hooking that twin caused false "player left" / MP drops.
+    //
+    // push ebp; mov ebp,esp; push esi; mov esi,[ebp+8]
+    // cmp byte [esi+defeat],0 ; jnz +0x19 ; mov byte [esi+defeat],2
+    const uint8_t pat[] = {
+        0x55,
+        0x8B, 0xEC,
+        0x56,
+        0x8B, 0x75, 0x08,
+        0x80, 0xBE, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x75, 0x19,
+        0xC6, 0x86, 0x00, 0x00, 0x00, 0x00, 0x02
+    };
+    const char* mask = "xxxxxxxxx????xxx????x";
+
+    uint8_t* hit = FindPattern(base, imageSize, pat, mask);
+    if (!hit || !IsLikelyCode(hit, sizeof(pat))) {
+        Log("InstallAnnounceGone: pattern not found (safe skip — chat leave still works)");
+        return false;
+    }
+    const uint32_t dispCmp = *reinterpret_cast<uint32_t*>(hit + 9);
+    const uint32_t dispMov = *reinterpret_cast<uint32_t*>(hit + 18);
+    if ((dispCmp & 0xFFFF) != 0xAA84 || dispCmp != dispMov) {
+        Log("InstallAnnounceGone: unexpected defeat disp cmp=0x%08X mov=0x%08X at %p",
+            dispCmp, dispMov, hit);
+        return false;
+    }
+    void* original = nullptr;
+    if (!PatchFuncPrologue(hit, &Hook_AnnounceGone, g_origAnnounceGone, &g_announceGoneTramp, &original)) {
+        Log("InstallAnnounceGone: patch failed (%lu)", GetLastError());
+        return false;
+    }
+    g_announceGoneSite = hit;
+    g_originalAnnounceGone = reinterpret_cast<AnnounceGoneFn>(original);
+    Log("InstallAnnounceGone: ok site=%p tramp=%p (defeat=2 leave path)",
+        g_announceGoneSite, g_announceGoneTramp);
+    return true;
 }
 
 bool InstallHasForces(uint8_t* base, size_t imageSize)
@@ -1282,6 +1364,7 @@ bool InstallHook()
 
     // Leave-write hooks first so g_statusBase may already be known; set-text is required.
     const bool leaveOk = InstallLeaveWriteHooks(base, imageSize);
+    const bool announceOk = InstallAnnounceGoneHook(base, imageSize);
     const bool forcesOk = InstallHasForces(base, imageSize);
     const bool wipeOk = InstallUnitCountHooks(base, imageSize);
     const bool elimOk = InstallEliminateHook(base, imageSize);
@@ -1306,8 +1389,8 @@ bool InstallHook()
     InterlockedExchange(&g_enabled, 1);
     // Quiet hot-path file I/O in MP (unitGain/lost/census/row). Gone/install still Log().
     InterlockedExchange(&g_logQuiet, 1);
-    Log("InstallHook: ready enabled=1 leaveHooks=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p quiet=1",
-        leaveOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
+    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p quiet=1",
+        leaveOk ? 1 : 0, announceOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
         g_localPlayer, g_unitTypeHeads, g_typeCountRows);
     return true;
 }
@@ -1327,6 +1410,9 @@ void RemoveHook()
     Unpatch7(g_eliminateSite, g_origEliminate, &g_eliminateTramp);
     g_eliminateSite = nullptr;
     g_originalEliminate = nullptr;
+    Unpatch7(g_announceGoneSite, g_origAnnounceGone, &g_announceGoneTramp);
+    g_announceGoneSite = nullptr;
+    g_originalAnnounceGone = nullptr;
 
     if (g_patchSite) {
         DWORD oldProtect = 0;
@@ -1385,6 +1471,43 @@ extern "C" __declspec(dllexport) DWORD __stdcall AllyLeave_GetStats(LPVOID)
     const LONG hits = g_hitCount > 0xFFFF ? 0xFFFF : g_hitCount;
     const LONG rec = g_recolorCount > 0xFFFF ? 0xFFFF : g_recolorCount;
     return (static_cast<DWORD>(rec) << 16) | static_cast<DWORD>(hits);
+}
+
+extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGone(int playerIndex)
+{
+    MarkGoneUi(playerIndex, "export");
+}
+
+extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const char* name)
+{
+    if (!name || !name[0]) return;
+
+    // Prefer alliances row names we have already seen.
+    for (int i = 0; i < 8; ++i) {
+        if (!g_lastName[i][0]) continue;
+        if (_stricmp(g_lastName[i], name) == 0) {
+            MarkGoneUi(i, "chat-name");
+            return;
+        }
+    }
+
+    // Fallback: in-game name table (same as chat color hook).
+    if (g_statusBase) {
+        const uintptr_t slide =
+            reinterpret_cast<uintptr_t>(g_statusBase) - kPreferredStatus;
+        auto* names = reinterpret_cast<char*>(0x0091ADA8u + slide);
+        for (int i = 0; i < 8; ++i) {
+            const char* slot = names + i * 0x38;
+            __try {
+                if (slot[0] && _stricmp(slot, name) == 0) {
+                    MarkGoneUi(i, "chat-table");
+                    return;
+                }
+            } __except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+        }
+    }
+    Log("MarkGoneByName: no slot for '%s'", name);
 }
 
 static DWORD WINAPI InstallThread(LPVOID)

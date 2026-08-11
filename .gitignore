@@ -19,6 +19,10 @@
 /backup/
 /mods/
 /tools/
+/dist/
+installer/SetupApp/payload.zip
+installer/SetupApp/bin/
+installer/SetupApp/obj/
 mod/backup/
 mod/native/
 *.exe

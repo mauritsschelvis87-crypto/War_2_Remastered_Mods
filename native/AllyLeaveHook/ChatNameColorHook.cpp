@@ -26,7 +26,6 @@ constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
 using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
 
 volatile LONG g_enabled = 0;       // chat "Name:" lines
-volatile LONG g_pauseEnabled = 0;  // "Name resumed/paused the game."
 volatile LONG g_ready = 0;
 volatile LONG g_hits = 0;
 volatile LONG g_recolors = 0;
@@ -36,9 +35,13 @@ uint8_t g_originalPrologue[8]{};
 void* g_trampoline = nullptr;
 DrawColoredFn g_originalDraw = nullptr;
 char* g_playerName0 = nullptr;
+uint8_t* g_localPlayer = nullptr; // VA 0x918CCD (+ slide)
 
 uint32_t g_colors[8]{};
 char g_logPath[MAX_PATH]{};
+
+using MarkGoneByNameFn = void(__stdcall*)(const char* name);
+using MarkGoneFn = void(__stdcall*)(int playerIndex);
 
 void Log(const char* fmt, ...)
 {
@@ -214,6 +217,17 @@ bool StartsWithIgnoreCase(const char* text, const char* prefix)
     return true;
 }
 
+int ReadLocalPlayerIndex()
+{
+    if (!g_localPlayer) return -1;
+    __try {
+        const int v = static_cast<int>(*g_localPlayer);
+        return (v >= 0 && v <= 7) ? v : -1;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
+
 int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut)
 {
     if (channelLenOut) *channelLenOut = 0;
@@ -254,55 +268,107 @@ int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut
     while (nameLen > 0 && (nameStart[nameLen - 1] == ' ' || nameStart[nameLen - 1] == '\t')) --nameLen;
     if (nameLen == 0 || nameLen > 64) return -1;
 
+    if (channelLenOut) *channelLenOut = static_cast<size_t>(nameStart - text);
+    if (nameEndOut) *nameEndOut = static_cast<size_t>(colon - text) + 1;
+
+    // Prefer the local player slot when the chat name matches — avoids painting
+    // your own lines with another slot's color if the name table is messy.
+    const int local = ReadLocalPlayerIndex();
+    if (local >= 0) {
+        const char* slot = PlayerName(local);
+        __try {
+            if (slot && slot[0] && NameEquals(nameStart, nameLen, slot))
+                return local;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+
+    int found = -1;
+    size_t foundLen = 0;
     for (int i = 0; i < 8; ++i) {
         const char* slot = PlayerName(i);
         if (!slot) continue;
         __try {
-            if (slot[0] && NameEquals(nameStart, nameLen, slot)) {
-                if (channelLenOut) *channelLenOut = static_cast<size_t>(nameStart - text);
-                if (nameEndOut) *nameEndOut = static_cast<size_t>(colon - text) + 1;
-                return i;
+            if (!slot[0] || !NameEquals(nameStart, nameLen, slot)) continue;
+            size_t slotLen = 0;
+            while (slot[slotLen] && slotLen < 64) ++slotLen;
+            if (slotLen > foundLen) {
+                foundLen = slotLen;
+                found = i;
             }
         } __except (EXCEPTION_EXECUTE_HANDLER) {
         }
     }
-    return -1;
+    return found;
 }
 
-// mp_resume_message: "%s resumed the game."  (no pause-with-name string in enUS)
-int MatchPauseResumePlayerIndex(const char* text, size_t* nameLenOut)
+void NotifyAllyLeaveByName(const char* name)
 {
-    if (nameLenOut) *nameLenOut = 0;
-    if (!text || !text[0]) return -1;
+    if (!name || !name[0]) return;
+    HMODULE ally = GetModuleHandleW(L"AllyLeaveHook.dll");
+    if (!ally) return;
+    auto fn = reinterpret_cast<MarkGoneByNameFn>(
+        GetProcAddress(ally, "AllyLeave_MarkGoneByName"));
+    if (fn) fn(name);
+}
 
+void NotifyAllyLeaveByIndex(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    HMODULE ally = GetModuleHandleW(L"AllyLeaveHook.dll");
+    if (!ally) return;
+    auto fn = reinterpret_cast<MarkGoneFn>(
+        GetProcAddress(ally, "AllyLeave_MarkGone"));
+    if (fn) fn(playerIndex);
+}
+
+// Detect "Player X left/dropped/eliminated" chat lines and mark ally-screen gone.
+void TryMarkLeaveFromChatText(const char* text)
+{
+    if (!text || !text[0]) return;
     const char* start = text;
     while (*start && (static_cast<unsigned char>(*start) < 0x20 || *start == ' ')) ++start;
 
-    int bestPlayer = -1;
-    size_t bestLen = 0;
-    for (int i = 0; i < 8; ++i) {
-        const char* slot = PlayerName(i);
-        if (!slot) continue;
-        __try {
-            if (!slot[0]) continue;
-            size_t nameLen = 0;
-            while (slot[nameLen] && nameLen < 64) ++nameLen;
-            if (nameLen == 0 || !NameEquals(start, nameLen, slot)) continue;
-            const char* after = start + nameLen;
-            while (*after == ' ' || *after == '\t') ++after;
-            if (!StartsWithIgnoreCase(after, "resumed") && !StartsWithIgnoreCase(after, "paused"))
-                continue;
-            if (nameLen > bestLen) {
-                bestLen = nameLen;
-                bestPlayer = i;
-            }
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-        }
-    }
+    static const char* kSuffixes[] = {
+        " left the game",
+        " was dropped",
+        " was eliminated",
+        nullptr
+    };
 
-    if (bestPlayer < 0) return -1;
-    if (nameLenOut) *nameLenOut = static_cast<size_t>(start - text) + bestLen;
-    return bestPlayer;
+    const char* hit = nullptr;
+    for (int s = 0; kSuffixes[s]; ++s) {
+        for (const char* p = start; *p; ++p) {
+            if (!StartsWithIgnoreCase(p, kSuffixes[s])) continue;
+            hit = p;
+            break;
+        }
+        if (hit) break;
+    }
+    if (!hit) return;
+
+    const char* nameStart = start;
+    if (StartsWithIgnoreCase(nameStart, "Player "))
+        nameStart += 7;
+    while (*nameStart == ' ' || *nameStart == '\t') ++nameStart;
+    if (nameStart >= hit || nameStart[0] == 0) return;
+
+    char name[80]{};
+    size_t n = static_cast<size_t>(hit - nameStart);
+    if (n == 0 || n >= sizeof(name)) return;
+    memcpy(name, nameStart, n);
+    name[n] = 0;
+    while (n > 0 && (name[n - 1] == ' ' || name[n - 1] == '\t')) name[--n] = 0;
+    if (n == 0) return;
+
+    Log("leave-chat name='%s' text=%.80s", name, text);
+    NotifyAllyLeaveByName(name);
+
+    size_t dummyCh = 0, dummyEnd = 0;
+    char fake[96]{};
+    sprintf_s(fake, "%s: x", name);
+    const int idx = MatchPlayerIndex(fake, &dummyCh, &dummyEnd);
+    if (idx >= 0) NotifyAllyLeaveByIndex(idx);
 }
 
 void LogPlayerNames()
@@ -357,10 +423,16 @@ bool PatchPrologue7(uint8_t* site, void* hook, uint8_t* savedOrig, void** trampO
 extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, uint32_t color)
 {
     if (!g_originalDraw) return;
+    if (!ui || !text || !text[0]) {
+        if (g_originalDraw) g_originalDraw(ui, text, color);
+        return;
+    }
+
+    // Always watch for leave/drop/elim lines (does not require chat-color feature).
+    TryMarkLeaveFromChatText(text);
 
     const bool chatOn = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
-    const bool pauseOn = InterlockedCompareExchange(&g_pauseEnabled, 0, 0) != 0;
-    if ((!chatOn && !pauseOn) || !ui || !text || !text[0]) {
+    if (!chatOn) {
         g_originalDraw(ui, text, color);
         return;
     }
@@ -368,16 +440,10 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     const LONG hits = InterlockedIncrement(&g_hits);
     size_t channelLen = 0;
     size_t nameEnd = 0;
-    int player = -1;
-
-    if (chatOn) player = MatchPlayerIndex(text, &channelLen, &nameEnd);
-    if (player < 0 && pauseOn) {
-        channelLen = 0;
-        player = MatchPauseResumePlayerIndex(text, &nameEnd);
-    }
+    const int player = MatchPlayerIndex(text, &channelLen, &nameEnd);
 
     if (player < 0 || nameEnd == 0 || nameEnd >= 160) {
-        if (hits <= 30) Log("hit#%ld pass text=%.80s", hits, text);
+        if (hits <= 30) Log("hit#%ld pass text=%.80s gameColor=%08X", hits, text, color);
         g_originalDraw(ui, text, color);
         return;
     }
@@ -407,8 +473,12 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
 
     InterlockedIncrement(&g_recolors);
     if (hits <= 40 || (hits % 50) == 0) {
-        Log("recolor-name p=%d ch=%u end=%u name=%08X text=%.60s",
-            player, (unsigned)channelLen, (unsigned)nameEnd, nameColor, text);
+        Log("recolor-name p=%d local=%d ch=%u end=%u name=%08X game=%08X text=%.60s",
+            player, ReadLocalPlayerIndex(), (unsigned)channelLen, (unsigned)nameEnd,
+            nameColor, color, text);
+        static LONG s_nameDump = 0;
+        if (InterlockedIncrement(&s_nameDump) <= 3)
+            LogPlayerNames();
     }
 }
 
@@ -478,7 +548,9 @@ bool InstallDrawColoredHook(uint8_t* base, size_t imageSize)
 
     g_drawSite = site;
     g_playerName0 = reinterpret_cast<char*>(base + (kPreferredName0 - kPreferredImageBase));
-    Log("Install: ok drawColored=%p tramp=%p names=%p (chat path)", site, g_originalDraw, g_playerName0);
+    g_localPlayer = base + (0x00918CCD - kPreferredImageBase);
+    Log("Install: ok drawColored=%p tramp=%p names=%p local=%p (chat path)",
+        site, g_originalDraw, g_playerName0, g_localPlayer);
     return true;
 }
 
@@ -530,11 +602,9 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
         DisableThreadLibraryCalls(module);
         if (InstallHook()) {
             InterlockedExchange(&g_ready, 1);
-            // Injectors set chat / pause flags explicitly (separate Studio features).
             InterlockedExchange(&g_enabled, 0);
-            InterlockedExchange(&g_pauseEnabled, 0);
             LogPlayerNames();
-            Log("DllMain: ready (awaiting SetEnabled chat/pause)");
+            Log("DllMain: ready (awaiting SetEnabled chat)");
         } else {
             Log("DllMain: install failed");
         }
@@ -554,21 +624,8 @@ extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetEnabled(LPVOID
     const LONG on = enabled ? 1 : 0;
     if (on) LoadColorsFromJson();
     InterlockedExchange(&g_enabled, on);
-    Log("Chat SetEnabled=%ld pause=%ld ready=%ld hits=%ld recolors=%ld",
-        on, InterlockedCompareExchange(&g_pauseEnabled, 0, 0),
-        InterlockedCompareExchange(&g_ready, 0, 0),
-        InterlockedCompareExchange(&g_hits, 0, 0),
-        InterlockedCompareExchange(&g_recolors, 0, 0));
-    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
-}
-
-extern "C" __declspec(dllexport) DWORD __stdcall PauseNameColor_SetEnabled(LPVOID enabled)
-{
-    const LONG on = enabled ? 1 : 0;
-    if (on) LoadColorsFromJson();
-    InterlockedExchange(&g_pauseEnabled, on);
-    Log("Pause SetEnabled=%ld chat=%ld ready=%ld hits=%ld recolors=%ld",
-        on, InterlockedCompareExchange(&g_enabled, 0, 0),
+    Log("Chat SetEnabled=%ld ready=%ld hits=%ld recolors=%ld",
+        on,
         InterlockedCompareExchange(&g_ready, 0, 0),
         InterlockedCompareExchange(&g_hits, 0, 0),
         InterlockedCompareExchange(&g_recolors, 0, 0));

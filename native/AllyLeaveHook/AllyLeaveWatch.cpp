@@ -22,8 +22,7 @@ struct ExtraFlags {
     bool pauseChat = false;
     bool dragSelect = false;
     bool chatNameColor = false;
-    bool pauseNameColor = false;
-    bool Any() const { return allyLeave || pauseChat || dragSelect || chatNameColor || pauseNameColor; }
+    bool Any() const { return allyLeave || pauseChat || dragSelect || chatNameColor; }
 };
 
 std::wstring ModuleDir()
@@ -84,7 +83,6 @@ ExtraFlags ReadExtraFlags()
     flags.pauseChat = ReadJsonBool(buf, "ChatDuringPauseScreen");
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
     flags.chatNameColor = ReadJsonBool(buf, "ChatColoredNames");
-    flags.pauseNameColor = ReadJsonBool(buf, "PauseColoredNames");
     return flags;
 }
 
@@ -170,7 +168,6 @@ void WatchLoop(HANDLE quitEvent)
     DWORD pauseInjectedPid = 0;
     DWORD dragInjectedPid = 0;
     DWORD chatNameInjectedPid = 0;
-    DWORD pauseNameInjectedPid = 0;
     ExtraFlags last = ReadExtraFlags();
     SetStartup(last.Any());
 
@@ -183,8 +180,7 @@ void WatchLoop(HANDLE quitEvent)
         const DWORD pid = FindWarcraftPid();
 
         if (flags.allyLeave != last.allyLeave || flags.pauseChat != last.pauseChat ||
-            flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
-            flags.pauseNameColor != last.pauseNameColor) {
+            flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);
@@ -202,10 +198,6 @@ void WatchLoop(HANDLE quitEvent)
                 RunInjector(L"InjectChatNameColor.exe", false);
                 chatNameInjectedPid = 0;
             }
-            if (!flags.pauseNameColor && pid != 0) {
-                RunInjector(L"InjectPauseNameColor.exe", false);
-                pauseNameInjectedPid = 0;
-            }
             last = flags;
         }
 
@@ -221,15 +213,11 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.chatNameColor && pid != 0 && pid != chatNameInjectedPid) {
             if (RunInjector(L"InjectChatNameColor.exe", true)) chatNameInjectedPid = pid;
         }
-        if (flags.pauseNameColor && pid != 0 && pid != pauseNameInjectedPid) {
-            if (RunInjector(L"InjectPauseNameColor.exe", true)) pauseNameInjectedPid = pid;
-        }
         if (pid == 0) {
             allyInjectedPid = 0;
             pauseInjectedPid = 0;
             dragInjectedPid = 0;
             chatNameInjectedPid = 0;
-            pauseNameInjectedPid = 0;
         }
 
         if (quitEvent) {
