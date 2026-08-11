@@ -21,6 +21,8 @@ namespace PlayerColorStudio;
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private const string DefaultGameRootPath = @"C:\Program Files (x86)\Warcraft II Remastered";
+    // Fixed name the Blizzard installer uses — the editor only works via this exe.
+    private const string MapEditorExeName = "Warcraft II Map Editor.exe";
     private const string IncorrectPathStatusMessage =
         "Incorrect path, select your Warcraft II install folder to continue";
 
@@ -48,6 +50,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _activeTab = "colors";
     private string _gameInstallPath = DefaultGameRootPath;
     private string _appliedGameInstallPath = DefaultGameRootPath;
+    private string _mapEditorPath = DefaultMapEditorPathFor(DefaultGameRootPath);
+    private string _appliedMapEditorPath = DefaultMapEditorPathFor(DefaultGameRootPath);
+    private string _mapsPath = DefaultMapsPathFor(DefaultGameRootPath);
+    private string _appliedMapsPath = DefaultMapsPathFor(DefaultGameRootPath);
     private System.Windows.Media.Brush _applyButtonBrush = CreateBrush(0x2E, 0xA8, 0x5C);
     private System.Windows.Media.Brush _applyButtonBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
     private readonly Dictionary<int, string> _appliedHexByPlayer = new();
@@ -128,7 +134,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsApplyEnabled => !_isApplying;
 
-    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes" or "path";
+    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes";
 
     public bool IsRestoreVisible => _activeTab == "info";
 
@@ -141,6 +147,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_gameInstallPath == next) return;
             _gameInstallPath = next;
             OnPropertyChanged();
+            SavePathSettings();
+            RefreshTabStatus();
+        }
+    }
+
+    public string MapEditorPath
+    {
+        get => _mapEditorPath;
+        set
+        {
+            var next = value ?? string.Empty;
+            if (_mapEditorPath == next) return;
+            _mapEditorPath = next;
+            OnPropertyChanged();
+            SavePathSettings();
+            RefreshTabStatus();
+        }
+    }
+
+    public string MapsPath
+    {
+        get => _mapsPath;
+        set
+        {
+            var next = value ?? string.Empty;
+            if (_mapsPath == next) return;
+            _mapsPath = next;
+            OnPropertyChanged();
+            SavePathSettings();
             RefreshTabStatus();
         }
     }
@@ -360,7 +395,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         "colors" => HasPendingColorChanges(),
         "feature" => HasPendingFeatureChanges(),
         "bugfixes" => HasPendingBugFixChanges(),
-        "path" => HasPendingPathChanges(),
         _ => false,
     };
 
@@ -404,7 +438,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (_activeTab == "path")
         {
-            SetStatusLines(BuildPathLine());
+            SetStatusLines(BuildPathLines());
             return;
         }
 
@@ -431,7 +465,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void LoadGameInstallPath(string modDir)
     {
-        var fromSettings = TryReadSavedGameRoot();
+        var settings = TryReadSavedSettings();
+        var fromSettings = string.IsNullOrWhiteSpace(settings?.GameRootPath) ? null : settings!.GameRootPath!.Trim();
         var inferred = TryInferGameRootFromModDir(modDir);
         var chosen = !string.IsNullOrWhiteSpace(fromSettings)
             ? fromSettings!
@@ -439,15 +474,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _gameInstallPath = NormalizeGameRoot(chosen);
         _appliedGameInstallPath = _gameInstallPath;
         OnPropertyChanged(nameof(GameInstallPath));
+
+        // Saved path wins if it is still the real editor; otherwise pick up the
+        // standard location the install wizard uses under the game root.
+        var savedEditor = settings?.MapEditorPath?.Trim();
+        _mapEditorPath = IsValidMapEditorPath(savedEditor ?? string.Empty)
+            ? savedEditor!
+            : (TryFindInstalledMapEditor(_gameInstallPath) ?? DefaultMapEditorPathFor(_gameInstallPath));
+        _appliedMapEditorPath = _mapEditorPath;
+        OnPropertyChanged(nameof(MapEditorPath));
+
+        // Saved path wins only if it passes the .pud check; otherwise fall back
+        // to a detected maps folder from the install.
+        var savedMaps = settings?.MapsPath?.Trim();
+        _mapsPath = IsValidMapsPath(savedMaps ?? string.Empty)
+            ? savedMaps!
+            : (TryFindInstalledMapsFolder(_gameInstallPath) ?? DefaultMapsPathFor(_gameInstallPath));
+        _appliedMapsPath = _mapsPath;
+        OnPropertyChanged(nameof(MapsPath));
     }
 
-    private string? TryReadSavedGameRoot()
+    private StudioSettings? TryReadSavedSettings()
     {
         if (!File.Exists(_settingsPath)) return null;
         try
         {
-            var settings = JsonSerializer.Deserialize<StudioSettings>(File.ReadAllText(_settingsPath), JsonOpts);
-            return string.IsNullOrWhiteSpace(settings?.GameRootPath) ? null : settings!.GameRootPath.Trim();
+            return JsonSerializer.Deserialize<StudioSettings>(File.ReadAllText(_settingsPath), JsonOpts);
         }
         catch
         {
@@ -476,28 +528,111 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         !string.IsNullOrWhiteSpace(path) &&
         Directory.Exists(Path.Combine(path, "x86", "Data"));
 
-    private bool HasPendingPathChanges() =>
-        !string.Equals(
-            NormalizeGameRoot(GameInstallPath),
-            NormalizeGameRoot(_appliedGameInstallPath),
-            StringComparison.OrdinalIgnoreCase);
+    private static string DefaultMapEditorPathFor(string gameRoot) =>
+        Path.Combine(gameRoot, "x86", MapEditorExeName);
 
-    private StatusLineItem BuildPathLine()
+    // The install wizard places the editor in x86 (and a copy in the root).
+    private static string? TryFindInstalledMapEditor(string gameRoot)
     {
-        var path = NormalizeGameRoot(GameInstallPath);
-        if (HasPendingPathChanges())
+        var candidates = new[]
         {
-            return StatusLine("✕", PendingIconBrush,
-                "Path changed — press Apply to save it for color and feature patches.");
+            Path.Combine(gameRoot, "x86", MapEditorExeName),
+            Path.Combine(gameRoot, MapEditorExeName),
+        };
+        return candidates.FirstOrDefault(File.Exists);
+    }
+
+    private static string DefaultMapsPathFor(string gameRoot) =>
+        Path.Combine(gameRoot, "x86", "Maps");
+
+    // Prefer a folder that actually holds .pud maps: some installs keep x86\Maps
+    // empty while the shipped maps live in x86\Data\Maps.
+    private static string? TryFindInstalledMapsFolder(string gameRoot)
+    {
+        var candidates = new[]
+        {
+            Path.Combine(gameRoot, "x86", "Maps"),
+            Path.Combine(gameRoot, "x86", "Data", "Maps"),
+        };
+        return candidates.FirstOrDefault(c => Directory.Exists(c) && FolderContainsPudFiles(c));
+    }
+
+    private static string NormalizePathText(string path) =>
+        (path ?? string.Empty).Trim().TrimEnd('\\', '/');
+
+    // The editor only works via its fixed exe name — any other exe is rejected.
+    private static bool IsValidMapEditorPath(string path)
+    {
+        var trimmed = (path ?? string.Empty).Trim();
+        return trimmed.Length > 0 &&
+               File.Exists(trimmed) &&
+               string.Equals(Path.GetFileName(trimmed), MapEditorExeName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Maps can sit in subfolders (e.g. x86\Maps\AllMaps) — search a few levels deep.
+    private static bool FolderContainsPudFiles(string path, int depth = 4)
+    {
+        try
+        {
+            if (Directory.EnumerateFiles(path, "*.pud").Any()) return true;
+            if (depth <= 0) return false;
+            foreach (var sub in Directory.EnumerateDirectories(path))
+            {
+                if (FolderContainsPudFiles(sub, depth - 1)) return true;
+            }
         }
+        catch
+        {
+            // Unreadable folder — treat as no maps.
+        }
+        return false;
+    }
+
+    private static bool IsValidMapsPath(string path)
+    {
+        var normalized = NormalizePathText(path);
+        return !string.IsNullOrWhiteSpace(normalized) &&
+               Directory.Exists(normalized) &&
+               FolderContainsPudFiles(normalized);
+    }
+
+    private StatusLineItem[] BuildPathLines()
+    {
+        var lines = new List<StatusLineItem>();
+        var path = NormalizeGameRoot(GameInstallPath);
 
         if (!IsValidGameRoot(path))
         {
-            return StatusLine("✕", PendingIconBrush,
-                "Install folder not found (need an x86\\Data folder). Browse to your Warcraft II Remastered folder.");
+            lines.Add(StatusLine("✕", PendingIconBrush,
+                "Install folder not found (need an x86\\Data folder). Browse to your Warcraft II Remastered folder."));
+        }
+        else
+        {
+            lines.Add(StatusLine("✓", ReadyIconBrush, $"Using game install: {path}"));
         }
 
-        return StatusLine("✓", ReadyIconBrush, $"Using game install: {path}");
+        lines.Add(IsValidMapEditorPath(MapEditorPath)
+            ? StatusLine("✓", ReadyIconBrush, "Map editor found.")
+            : StatusLine("✕", PendingIconBrush,
+                $"Map editor not found — the path must point to \"{MapEditorExeName}\" inside your install."));
+
+        var mapsPath = NormalizePathText(MapsPath);
+        if (!Directory.Exists(mapsPath))
+        {
+            lines.Add(StatusLine("✕", PendingIconBrush,
+                "Maps folder not found — browse to your maps folder (x86\\Maps)."));
+        }
+        else if (!FolderContainsPudFiles(mapsPath))
+        {
+            lines.Add(StatusLine("✕", PendingIconBrush,
+                "No .pud map files found in this folder — browse to your maps folder (x86\\Maps)."));
+        }
+        else
+        {
+            lines.Add(StatusLine("✓", ReadyIconBrush, "Maps folder found (contains .pud maps)."));
+        }
+
+        return [.. lines];
     }
 
     private void ShowIncorrectPathStatus()
@@ -508,28 +643,34 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ApplyButtonBorderBrush = PendingButtonBorderBrush;
     }
 
-    private bool IsCurrentApplyPathValid()
-    {
-        // Path tab validates what the user typed; other tabs use the last saved path.
-        var path = _activeTab == "path"
-            ? NormalizeGameRoot(GameInstallPath)
-            : NormalizeGameRoot(_appliedGameInstallPath);
-        return IsValidGameRoot(path);
-    }
+    private bool IsCurrentApplyPathValid() =>
+        IsValidGameRoot(NormalizeGameRoot(_appliedGameInstallPath));
 
-    private void SaveGameInstallPath(string path)
+    // Paths are saved the moment they change: whatever is set is remembered.
+    // The game root used by the other tabs only advances when it validates,
+    // so a half-typed path never breaks Apply/Restore.
+    private void SavePathSettings()
     {
-        var normalized = NormalizeGameRoot(path);
-        if (!IsValidGameRoot(normalized))
+        var root = NormalizeGameRoot(GameInstallPath);
+        if (IsValidGameRoot(root)) _appliedGameInstallPath = root;
+        _appliedMapEditorPath = NormalizePathText(MapEditorPath);
+        _appliedMapsPath = NormalizePathText(MapsPath);
+
+        if (string.IsNullOrEmpty(_settingsPath)) return;
+        try
         {
-            throw new InvalidOperationException(IncorrectPathStatusMessage);
+            var settings = new StudioSettings
+            {
+                GameRootPath = NormalizeGameRoot(_appliedGameInstallPath),
+                MapEditorPath = _appliedMapEditorPath,
+                MapsPath = _appliedMapsPath,
+            };
+            File.WriteAllText(_settingsPath, JsonSerializer.Serialize(settings, JsonOpts));
         }
-
-        var settings = new StudioSettings { GameRootPath = normalized };
-        File.WriteAllText(_settingsPath, JsonSerializer.Serialize(settings, JsonOpts));
-        _gameInstallPath = normalized;
-        _appliedGameInstallPath = normalized;
-        OnPropertyChanged(nameof(GameInstallPath));
+        catch
+        {
+            // Saving settings must never break typing in the path boxes.
+        }
     }
 
     private void BrowseGamePath_Click(object sender, RoutedEventArgs e)
@@ -549,6 +690,98 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void DefaultGamePath_Click(object sender, RoutedEventArgs e)
     {
         GameInstallPath = DefaultGameRootPath;
+    }
+
+    private void BrowseMapEditorPath_Click(object sender, RoutedEventArgs e)
+    {
+        var current = MapEditorPath.Trim();
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Select the Warcraft II map editor",
+            // Only the fixed editor exe works — hide everything else.
+            Filter = $"Warcraft II Map Editor|{MapEditorExeName}",
+            FileName = MapEditorExeName,
+            InitialDirectory = File.Exists(current)
+                ? Path.GetDirectoryName(current)
+                : NormalizeGameRoot(GameInstallPath),
+        };
+        if (dialog.ShowDialog() != true) return;
+        MapEditorPath = dialog.FileName;
+    }
+
+    private void DefaultMapEditorPath_Click(object sender, RoutedEventArgs e)
+    {
+        var root = NormalizeGameRoot(GameInstallPath);
+        MapEditorPath = TryFindInstalledMapEditor(root) ?? DefaultMapEditorPathFor(root);
+    }
+
+    private void OpenMapEditor_Click(object sender, RoutedEventArgs e)
+    {
+        var path = MapEditorPath.Trim();
+        if (!IsValidMapEditorPath(path))
+        {
+            WpfMessageBox.Show(
+                $"Map editor not found. The path must point to \"{MapEditorExeName}\" inside your install.",
+                "Open map editor", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        try
+        {
+            Process.Start(new ProcessStartInfo(path)
+            {
+                WorkingDirectory = Path.GetDirectoryName(path) ?? string.Empty,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            WpfMessageBox.Show(ex.Message, "Open map editor", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void BrowseMapsPath_Click(object sender, RoutedEventArgs e)
+    {
+        var current = NormalizePathText(MapsPath);
+        using var dialog = new Forms.FolderBrowserDialog
+        {
+            Description = "Select your Warcraft II maps folder",
+            UseDescriptionForTitle = true,
+            SelectedPath = Directory.Exists(current)
+                ? current
+                : NormalizeGameRoot(GameInstallPath),
+        };
+        if (dialog.ShowDialog() != Forms.DialogResult.OK) return;
+        MapsPath = dialog.SelectedPath;
+    }
+
+    private void DefaultMapsPath_Click(object sender, RoutedEventArgs e)
+    {
+        var root = NormalizeGameRoot(GameInstallPath);
+        MapsPath = TryFindInstalledMapsFolder(root) ?? DefaultMapsPathFor(root);
+    }
+
+    private void OpenMapsFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var path = NormalizePathText(MapsPath);
+        // Existence is enough to open in Explorer — the .pud check is status-only.
+        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+        {
+            WpfMessageBox.Show(
+                "Maps folder not found. Browse to your maps folder first.",
+                "Open maps folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"")
+            {
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            WpfMessageBox.Show(ex.Message, "Open maps folder", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void GameInstallPath_LostFocus(object sender, RoutedEventArgs e) =>
@@ -1330,11 +1563,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* keep drag hook disabled */ }
                 });
             }
-            else if (_activeTab == "path")
-            {
-                SetStatusLines(StatusLine("", ReadyIconBrush, "Saving game install path…"));
-                SaveGameInstallPath(GameInstallPath);
-            }
         }
         catch (Exception ex)
         {
@@ -1563,6 +1791,8 @@ public sealed class ExtraFeaturesConfig
 public sealed class StudioSettings
 {
     public string? GameRootPath { get; set; }
+    public string? MapEditorPath { get; set; }
+    public string? MapsPath { get; set; }
 }
 
 public sealed class StatusLineItem
