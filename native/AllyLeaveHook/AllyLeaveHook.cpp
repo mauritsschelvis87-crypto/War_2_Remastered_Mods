@@ -276,8 +276,13 @@ bool AnyLiveComputerController()
 void CacheSlotKindFromController(int playerIndex, uint8_t controller)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
+    // Controller bytes are only trustworthy pre-match. In-match the same byte
+    // is a status where 2 = ELIMINATED — an eliminated human reads as
+    // "computer controller 2" and was getting NPC-marked.
+    if (g_censusDone) return;
     if (IsComputerController(controller)) {
-        InterlockedExchange(&g_slotKind[playerIndex], 1);
+        // Classify unknown seats only; never flip an already-known human.
+        InterlockedCompareExchange(&g_slotKind[playerIndex], 1, -1);
         return;
     }
     // Lobby humans are status/controller 1 while computers are still 4/2/6/7.
@@ -296,14 +301,7 @@ void NoteHumanSlot(int playerIndex)
 
 void RefreshSlotKinds()
 {
-    // Two passes: first latch every live computer, then humans (needs AnyLiveComputer).
-    for (int i = 0; i < 8; ++i) {
-        const uint8_t controller = ReadLiveController(i);
-        if (controller == 0xFF) continue;
-        if (IsComputerController(controller)) {
-            InterlockedExchange(&g_slotKind[i], 1);
-        }
-    }
+    // Controller-based classification is lobby-only (see CacheSlotKindFromController).
     for (int i = 0; i < 8; ++i) {
         const uint8_t controller = ReadLiveController(i);
         if (controller == 0xFF) continue;
@@ -376,7 +374,8 @@ bool IsComputerSlot(int playerIndex)
     const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
     if (kind == 1) return true;
     if (kind == 0) return false;
-    if (IsComputerController(ReadLiveController(playerIndex))) return true;
+    // Unknown seat: only the name is safe evidence in-match. The controller
+    // byte doubles as status (2 = eliminated) and must not be used here.
     if (LooksLikeComputerName(g_lastName[playerIndex])) return true;
     return false;
 }
@@ -545,7 +544,11 @@ void ResetWipeTracking(const char* reason)
         InterlockedExchange(&g_liveAssets[i], 0);
         InterlockedExchange(&g_units[i], 0);
         InterlockedExchange(&g_buildings[i], 0);
+        InterlockedExchange(&g_slotKind[i], -1);
     }
+    // Re-arm lobby classification: controller-based kind latching is gated on
+    // !censusDone, so the next lobby must start from a clean census state.
+    InterlockedExchange(&g_censusDone, 0);
     static LONG s_resetLog = 0;
     if (InterlockedIncrement(&s_resetLog) <= 12) {
         Log("wipeTracking reset (%s)", reason ? reason : "?");
