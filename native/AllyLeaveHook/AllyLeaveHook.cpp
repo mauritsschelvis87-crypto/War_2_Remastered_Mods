@@ -50,7 +50,7 @@ constexpr int kFirstBuildingType = 58;
 // HasForces excludes these from wipe (still “alive” if only these remain → wiped).
 // 26/27 oil tanker, 28/29 transport, 40 flying machine, 41 zeppelin.
 constexpr int kMaxUnitTypesScan = 105;
-constexpr int kMaxPerTypeList = 96;
+constexpr int kMaxPerTypeList = 256;
 
 void** g_unitTypeHeads = nullptr;
 uint16_t** g_typeCountRows = nullptr; // 8C0B80[type] → word[8]
@@ -105,6 +105,14 @@ void* g_unitLostTramp = nullptr;
 
 volatile LONG g_leftFlags[8]{};
 volatile LONG g_everHadAssets[8]{};
+// Game HasForces once returned >0 for this seat (army truly online).
+volatile LONG g_everHadForces[8]{};
+// Seat had HasForces>0 continuously long enough to trust wipe detection.
+volatile LONG g_aliveConfirmed[8]{};
+// Tick when continuous HasForces>0 streak started (0 = none).
+volatile DWORD g_aliveSince[8]{};
+// First tick we saw a continuous zero-army for this seat (0 = not zeroing).
+volatile DWORD g_zeroArmySince[8]{};
 volatile LONG g_forceRowLog = 0;
 volatile LONG g_verboseRows = 0;
 volatile DWORD g_lastCensusTick = 0;
@@ -332,9 +340,19 @@ bool SourceLooksLikeNpcWipe(const char* source)
 }
 
 // Remaster/PUD computer labels vs Battle.net account names (e.g. "Avent").
+const char* NameForClassify(const char* name)
+{
+    if (!name) return "";
+    // Strip our own gone prefix so reclassification stays stable.
+    if (_strnicmp(name, "[X] ", 4) == 0) name += 4;
+    while (*name == ' ' || *name == '\t') ++name;
+    return name;
+}
+
 bool LooksLikeComputerName(const char* name)
 {
-    if (!name || !name[0]) return false;
+    name = NameForClassify(name);
+    if (!name[0]) return false;
     if (_strnicmp(name, "Computer", 8) == 0) return true;
     if (_strnicmp(name, "Nation of ", 10) == 0) return true;
     if (_stricmp(name, "Alliance Traitors") == 0) return true;
@@ -489,6 +507,51 @@ void NoteAssets(int playerIndex, int assets)
     InterlockedExchange(&g_everHadAssets[playerIndex], 1);
 }
 
+int CallHasForces(int playerIndex); // defined below
+
+void NoteHasForcesSample(int playerIndex, int hf)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    const DWORD now = GetTickCount();
+    if (hf > 0) {
+        InterlockedExchange(&g_everHadForces[playerIndex], 1);
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[playerIndex]), 0);
+        DWORD since = static_cast<DWORD>(InterlockedCompareExchange(
+            reinterpret_cast<volatile LONG*>(&g_aliveSince[playerIndex]), 0, 0));
+        if (since == 0) {
+            InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_aliveSince[playerIndex]),
+                static_cast<LONG>(now ? now : 1));
+            since = now ? now : 1;
+        }
+        // 8-player starts flicker HasForces; only arm wipe after a long live streak.
+        constexpr DWORD kAliveConfirmMs = 8000;
+        if ((now - since) >= kAliveConfirmMs) {
+            InterlockedExchange(&g_aliveConfirmed[playerIndex], 1);
+        }
+    } else {
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_aliveSince[playerIndex]), 0);
+    }
+}
+
+void ResetWipeTracking(const char* reason)
+{
+    for (int i = 0; i < 8; ++i) {
+        InterlockedExchange(&g_leftFlags[i], 0);
+        InterlockedExchange(&g_everHadAssets[i], 0);
+        InterlockedExchange(&g_everHadForces[i], 0);
+        InterlockedExchange(&g_aliveConfirmed[i], 0);
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_aliveSince[i]), 0);
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0);
+        InterlockedExchange(&g_liveAssets[i], 0);
+        InterlockedExchange(&g_units[i], 0);
+        InterlockedExchange(&g_buildings[i], 0);
+    }
+    static LONG s_resetLog = 0;
+    if (InterlockedIncrement(&s_resetLog) <= 12) {
+        Log("wipeTracking reset (%s)", reason ? reason : "?");
+    }
+}
+
 void CacheLiveAssets(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
@@ -636,7 +699,10 @@ void ApplyCensus(const LONG unitsIn[8], const LONG buildingsIn[8], const char* r
         InterlockedExchange(&g_buildings[i], buildingsIn[i]);
         CacheLiveAssets(i);
         const LONG total = unitsIn[i] + buildingsIn[i];
-        if (total > 0) NoteAssets(i, static_cast<int>(total));
+        if (total > 0) {
+            NoteAssets(i, static_cast<int>(total));
+            NoteHasForcesSample(i, CallHasForces(i));
+        }
     }
     if (markDone) {
         InterlockedExchange(&g_censusDone, 1);
@@ -719,27 +785,7 @@ bool IsLocalPlayer(int playerIndex)
 }
 
 void MarkGoneUi(int playerIndex, const char* source); // defined below
-
-void CheckWipe(int playerIndex, const char* source)
-{
-    if (playerIndex < 0 || playerIndex > 7) return;
-    if (IsLocalPlayer(playerIndex)) return;
-    CacheLiveAssets(playerIndex);
-    const LONG u = g_units[playerIndex];
-    const LONG b = g_buildings[playerIndex];
-    // Require a real army sighting first — name-only marks false-positive every
-    // seat at match start (F11 / alliances paint before units exist).
-    if (u == 0 && b == 0 && g_everHadAssets[playerIndex]) {
-        MarkGoneUi(playerIndex, source);
-    }
-}
-
-void CheckAllWipes(const char* source)
-{
-    for (int i = 0; i < 8; ++i) {
-        CheckWipe(i, source);
-    }
-}
+int CallHasForces(int playerIndex); // defined below
 
 int CallHasForces(int playerIndex)
 {
@@ -753,14 +799,26 @@ int CallHasForces(int playerIndex)
 
 void ClearGoneUi(int playerIndex)
 {
-    // Sticky for the rest of the match. Our unit census often false-positives
-    // ("unit again") right after a computer wipe and was clearing the mark.
     if (playerIndex < 0 || playerIndex > 7) return;
-    if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 0, 0) != 0) {
-        static LONG s_clearIgnore = 0;
-        if (InterlockedIncrement(&s_clearIgnore) <= 24) {
-            Log("clearGone ignored p=%d (sticky mark)", playerIndex);
+    if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 0, 0) == 0) return;
+
+    // Undo false start/spawn wipes: game still says this seat has forces.
+    // Real peon-wipe / elim leaves HasForces at 0 → stay sticky.
+    const int hf = CallHasForces(playerIndex);
+    NoteHasForcesSample(playerIndex, hf);
+    if (hf > 0) {
+        InterlockedExchange(&g_leftFlags[playerIndex], 0);
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[playerIndex]), 0);
+        static LONG s_clearOk = 0;
+        if (InterlockedIncrement(&s_clearOk) <= 16) {
+            Log("clearGone p=%d hf=%d (still has forces)", playerIndex, hf);
         }
+        return;
+    }
+
+    static LONG s_clearIgnore = 0;
+    if (InterlockedIncrement(&s_clearIgnore) <= 24) {
+        Log("clearGone ignored p=%d (sticky mark hf=%d)", playerIndex, hf);
     }
 }
 
@@ -858,6 +916,12 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
 void PollStatusGoneMarks()
 {
     if (!g_enabled || !g_statusBase) return;
+    // NPC feature must not use status==3: unused/lobby seats often sit at 3 and
+    // would sticky-mark computers (and misclassified humans) at match start.
+    const bool markComputers = InterlockedCompareExchange(&g_markComputers, 0, 0) != 0;
+    const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
+    if (markComputers && !markHumans) return;
+
     for (int i = 0; i < 8; ++i) {
         uint8_t status = 0;
         __try {
@@ -865,8 +929,6 @@ void PollStatusGoneMarks()
         } __except (EXCEPTION_EXECUTE_HANDLER) {
             continue;
         }
-        // Leave/drop/elim write 3. Empty lobby slots also sit at 3 — only mark
-        // slots we have already seen a real name or army for.
         if (status == 3 && (g_everHadAssets[i] || g_lastName[i][0])) {
             MarkGoneUi(i, "status3");
         }
@@ -880,15 +942,13 @@ void RefreshWipeFromAssets()
         ResyncCensusThrottled(nullptr, "ui", /*force=*/false);
         return;
     }
+    // Census is bookkeeping only. Marking/unmarking runs in the HasForces poll
+    // thread (PollWipeMarks) — the census misses seats on 8p maps (black) and
+    // was the source of every false start mark.
     for (int i = 0; i < 8; ++i) {
         CacheLiveAssets(i);
         const LONG total = g_units[i] + g_buildings[i];
-        if (total > 0) {
-            NoteAssets(i, static_cast<int>(total));
-            if (g_leftFlags[i]) ClearGoneUi(i);
-        } else if (g_everHadAssets[i] && !IsLocalPlayer(i)) {
-            CheckWipe(i, "ui");
-        }
+        if (total > 0) NoteAssets(i, static_cast<int>(total));
     }
 }
 
@@ -986,16 +1046,7 @@ void __cdecl Hook_UnitLost(void* unit)
             g_everHadAssets[playerIndex],
             g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
     }
-
-    CheckAllWipes("wipe");
-
-    // Game HasForces is what triggers official eliminate — mirror it for this seat.
-    if (!IsLocalPlayer(playerIndex) && CallHasForces(playerIndex) == 0) {
-        if (g_everHadAssets[playerIndex] || (flags & 0x80) != 0) {
-            NoteAssets(playerIndex, 1);
-            MarkGoneUi(playerIndex, "hasForces");
-        }
-    }
+    // Marking happens in PollWipeMarks (HasForces poll) — not from census here.
 }
 
 void __cdecl Hook_AnnounceGone(int playerIndex)
@@ -1015,6 +1066,8 @@ void __cdecl Hook_Eliminate(int playerIndex)
 {
     if (playerIndex >= 0 && playerIndex <= 7 && !IsLocalPlayer(playerIndex)) {
         NoteAssets(playerIndex, 1);
+        InterlockedExchange(&g_everHadForces[playerIndex], 1);
+        InterlockedExchange(&g_aliveConfirmed[playerIndex], 1);
         MarkGoneUi(playerIndex, "elim");
     }
     if (g_originalEliminate) {
@@ -1070,15 +1123,19 @@ bool HasVisibleName(const char* name)
 bool PlayerInactive(int playerIndex, const char* name)
 {
     if (playerIndex < 0 || playerIndex > 7) return false;
-    // Sticky mark already accepted for this seat.
+    // Sticky mark already accepted for this seat (set by wipe/elim only for NPCs).
     if (g_leftFlags[playerIndex]) return true;
+
+    const bool markComputers = InterlockedCompareExchange(&g_markComputers, 0, 0) != 0;
+    const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
+    // NPC-only mode: never auto-paint from status/defeat — those fire at join/start
+    // for seats that are not actually wiped yet (and sticky leftFlags forever).
+    if (markComputers && !markHumans) return false;
+
     if (!ShouldMarkSlot(playerIndex, "ui")) return false;
 
     if (g_statusBase) {
         const uint8_t status = g_statusBase[playerIndex];
-        // ONLY explicit gone value 3. Values 2/4/5/6/7 are lobby/controller
-        // codes — treating status>=2 as gone painted every computer red at
-        // match start (especially with a human in the lobby), then sticky.
         if (status == 3 && HasVisibleName(name)) return true;
     }
 
@@ -1129,8 +1186,9 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
     if (playerIndex >= 0 && playerIndex <= 7) {
         g_lastUi[playerIndex] = ui;
         if (name && name[0]) {
-            _snprintf_s(g_lastName[playerIndex], _TRUNCATE, "%s", name);
-            if (LooksLikeComputerName(name)) NoteComputerSlot(playerIndex);
+            const char* raw = NameForClassify(name);
+            _snprintf_s(g_lastName[playerIndex], _TRUNCATE, "%s", raw);
+            if (LooksLikeComputerName(raw)) NoteComputerSlot(playerIndex);
             else NoteHumanSlot(playerIndex);
         }
     }
@@ -1725,6 +1783,10 @@ void RemoveHook()
     for (int i = 0; i < 8; ++i) {
         InterlockedExchange(&g_leftFlags[i], 0);
         InterlockedExchange(&g_everHadAssets[i], 0);
+        InterlockedExchange(&g_everHadForces[i], 0);
+        InterlockedExchange(&g_aliveConfirmed[i], 0);
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_aliveSince[i]), 0);
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0);
         InterlockedExchange(&g_liveAssets[i], 0);
         InterlockedExchange(&g_units[i], 0);
         InterlockedExchange(&g_buildings[i], 0);
@@ -1803,6 +1865,69 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const c
     Log("MarkGoneByName: no slot for '%s'", name);
 }
 
+// Continuous NPC-wipe detection on the game's own HasForces (0x4F4240).
+// Runs in the poll thread — independent of F11 paints and of our census,
+// which both proved unreliable (census misses seats on 8p maps).
+static void PollWipeMarks()
+{
+    if (!g_enabled || !g_ready || !g_hasForces) return;
+
+    int local = -1;
+    if (g_localPlayer) {
+        __try {
+            local = static_cast<int>(*g_localPlayer);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            local = -1;
+        }
+    }
+    if (local < 0 || local > 7) return;
+
+    // Only while we ourselves are alive in a running match. Outside a match
+    // HasForces reads 0 for everyone → would mark every seat.
+    static DWORD s_localDeadSince = 0;
+    static bool s_matchSeen = false;
+    const int localHf = CallHasForces(local);
+    const DWORD now = GetTickCount();
+    if (localHf > 0) {
+        s_localDeadSince = 0;
+        s_matchSeen = true;
+    } else {
+        if (s_localDeadSince == 0) {
+            s_localDeadSince = now ? now : 1;
+        } else if (s_matchSeen && (now - s_localDeadSince) > 3000) {
+            // Match over / back to menu: drop all sticky state for the next game.
+            ResetWipeTracking("local-gone");
+            s_matchSeen = false;
+        }
+        return;
+    }
+
+    for (int i = 0; i < 8; ++i) {
+        if (i == local) continue;
+        const int hf = CallHasForces(i);
+        NoteHasForcesSample(i, hf); // maintains aliveSince → aliveConfirmed (8s)
+        if (hf > 0) {
+            if (g_leftFlags[i]) ClearGoneUi(i);
+            continue;
+        }
+        if (hf != 0) continue;      // helper unavailable — no census fallback
+        if (g_leftFlags[i]) continue;
+        // Never-alive seats (empty slots, not-yet-spawned) are not "gone".
+        if (!g_aliveConfirmed[i]) continue;
+
+        DWORD since = static_cast<DWORD>(InterlockedCompareExchange(
+            reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0, 0));
+        if (since == 0) {
+            InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]),
+                static_cast<LONG>(now ? now : 1));
+            continue;
+        }
+        if ((now - since) >= 2000) {
+            MarkGoneUi(i, "hf-poll");
+        }
+    }
+}
+
 static DWORD WINAPI InstallThread(LPVOID)
 {
     Log("InstallThread start");
@@ -1834,11 +1959,13 @@ static DWORD WINAPI InstallThread(LPVOID)
         InterlockedCompareExchange(&g_slotKind[6], 0, 0),
         InterlockedCompareExchange(&g_slotKind[7], 0, 0));
 
-    // Continue polling a few minutes so late lobby / pre-start screens are caught.
-    for (int i = 0; i < 600; ++i) { // ~2 minutes @ 200ms
+    // Poll forever: slot kinds for classification + HasForces wipe detection.
+    // The old 2-minute cap meant nothing was detected in longer matches.
+    for (int i = 0; g_ready; ++i) {
         Sleep(200);
         RefreshSlotKinds();
-        if ((i % 25) == 0) {
+        PollWipeMarks();
+        if ((i % 150) == 0) { // every ~30s
             Log("slotPoll[%d] c=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld anyComp=%d",
                 i,
                 InterlockedCompareExchange(&g_slotKind[0], 0, 0),
