@@ -166,11 +166,21 @@
                         <Border Padding="14" CornerRadius="8" Margin="0,0,0,12"
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel VerticalAlignment="Center">
-                                <CheckBox IsChecked="{Binding AllyLeaveRedNames}"
+                                <CheckBox IsChecked="{Binding AllyLeaveMarkComputers}"
                                           IsEnabled="{Binding IsApplyEnabled}"
-                                          Content="Mark gone players and computers on the alliance screen (F11)."/>
+                                          Content="Mark gone computers (NPCs) on the alliance screen (F11)."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="When a player or computer leaves the game by disconnect, defeat or surrender, the name in the alliances screen turns red."/>
+                                           Text="When a computer opponent is wiped out or eliminated, its name turns red on the alliances screen. Works in games that also have human players — only computer slots are marked."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Padding="14" CornerRadius="8" Margin="0,0,0,12"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding AllyLeaveMarkHumans}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          Content="Mark gone human players on the alliance screen (F11)."/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="When a human leaves, disconnects, or is eliminated, their name turns red. Coming next — enable later once computer marking is confirmed."/>
                             </StackPanel>
                         </Border>
                         <Border Padding="14" CornerRadius="8"

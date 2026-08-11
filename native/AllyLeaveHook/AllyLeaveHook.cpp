@@ -12,7 +12,7 @@
 
 namespace {
 
-constexpr uint32_t kRedTextColor = 0xFF0000FF; // bytes FF 00 00 FF = pure red RGB(255,0,0) + A
+constexpr uint32_t kRedTextColor = 0xFF0000FF; // pure red RGB(255,0,0) + A — same gone mark for every seat
 constexpr size_t kUiColorOffset = 0x20C;
 
 using SetTextFn = void(__cdecl*)(void* ui, const char* name, int prop);
@@ -22,6 +22,9 @@ volatile LONG g_ready = 0;
 volatile LONG g_hitCount = 0;
 volatile LONG g_recolorCount = 0;
 volatile LONG g_leaveEventCount = 0;
+// Feature split: mark computer (NPC) and/or human slots independently.
+volatile LONG g_markComputers = 1;
+volatile LONG g_markHumans = 0;
 
 uint8_t* g_statusBase = nullptr;
 // Per-player defeat/result flag at statusBase+0x21D8 (VA 0x91AA84).
@@ -30,6 +33,14 @@ uint8_t* g_defeatBase = nullptr;
 constexpr ptrdiff_t kDefeatFromStatus = 0x21D8;
 // Preferred VAs in Warcraft II.exe (ImageBase 0x400000).
 constexpr uintptr_t kPreferredStatus = 0x00918CAC;
+// Lobby/slot table: stride 0x26. Byte0 mirrors controller/status
+// (1=human, 2/4/6/7=computer variants, 3=gone, 5=empty). Byte2=race.
+// At match start computers are often remapped 4→1, so cache kind early.
+constexpr uintptr_t kPreferredSlotBase = 0x00916268;
+constexpr size_t kSlotStride = 0x26;
+uint8_t* g_slotBase = nullptr;
+// -1 unknown, 0 human, 1 computer
+volatile LONG g_slotKind[8]{ -1, -1, -1, -1, -1, -1, -1, -1 };
 // Per-unit-type linked-list heads (dword[type] → unit*, next at unit+0x68).
 constexpr uintptr_t kPreferredUnitTypeHeads = 0x00934848;
 // type → word[8] per-player counts (human/orc pairs often share one row).
@@ -144,6 +155,173 @@ void LogHot(const char* fmt, ...)
     va_end(ap);
     fputc('\n', f);
     fclose(f);
+}
+
+bool ReadJsonBoolKey(const char* buf, const char* key)
+{
+    const char* found = strstr(buf, key);
+    if (!found) return false;
+    const char* colon = strchr(found, ':');
+    if (!colon) return false;
+    for (const char* p = colon + 1; *p; ++p) {
+        if (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') continue;
+        if (*p == 't' || *p == 'T' || *p == '1') return true;
+        return false;
+    }
+    return false;
+}
+
+void LoadMarkModesFromJson()
+{
+    wchar_t dllPath[MAX_PATH]{};
+    HMODULE self = nullptr;
+    if (!GetModuleHandleExW(
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            reinterpret_cast<LPCWSTR>(&LoadMarkModesFromJson), &self) ||
+        !self) {
+        Log("LoadMarkModes: no self module");
+        return;
+    }
+    if (!GetModuleFileNameW(self, dllPath, MAX_PATH)) return;
+
+    wchar_t* slash = wcsrchr(dllPath, L'\\');
+    if (!slash) slash = wcsrchr(dllPath, L'/');
+    if (slash) slash[1] = 0;
+
+    wchar_t jsonPath[MAX_PATH]{};
+    swprintf_s(jsonPath, L"%s..\\extra-features.json", dllPath);
+    wchar_t full[MAX_PATH]{};
+    if (GetFullPathNameW(jsonPath, MAX_PATH, full, nullptr) == 0) {
+        wcsncpy_s(full, jsonPath, _TRUNCATE);
+    }
+
+    HANDLE file = CreateFileW(full, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                              nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+        Log("LoadMarkModes: missing %ls — default computers=1 humans=0", full);
+        InterlockedExchange(&g_markComputers, 1);
+        InterlockedExchange(&g_markHumans, 0);
+        return;
+    }
+
+    char buf[2048]{};
+    DWORD read = 0;
+    const BOOL ok = ReadFile(file, buf, sizeof(buf) - 1, &read, nullptr);
+    CloseHandle(file);
+    if (!ok || read == 0) {
+        Log("LoadMarkModes: empty config");
+        return;
+    }
+
+    const bool markComputers = ReadJsonBoolKey(buf, "AllyLeaveMarkComputers");
+    const bool markHumans = ReadJsonBoolKey(buf, "AllyLeaveMarkHumans");
+    const bool legacy = ReadJsonBoolKey(buf, "AllyLeaveRedNames");
+    LONG computers = markComputers ? 1 : 0;
+    LONG humans = markHumans ? 1 : 0;
+    if (!computers && !humans && legacy) {
+        // Pre-split configs marked everyone.
+        computers = 1;
+        humans = 1;
+    }
+    InterlockedExchange(&g_markComputers, computers);
+    InterlockedExchange(&g_markHumans, humans);
+    Log("LoadMarkModes: computers=%ld humans=%ld legacy=%d from %ls",
+        computers, humans, legacy ? 1 : 0, full);
+}
+
+bool IsComputerController(uint8_t controller)
+{
+    // Matches game helper at 0x4A0BE0 (minus empty/init 5).
+    return controller == 2 || controller == 4 || controller == 6 || controller == 7;
+}
+
+uint8_t ReadLiveController(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return 0xFF;
+    uint8_t controller = 0xFF;
+    if (g_statusBase) {
+        __try {
+            controller = g_statusBase[playerIndex];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            controller = 0xFF;
+        }
+    }
+    if (controller == 0xFF && g_slotBase) {
+        __try {
+            controller = g_slotBase[playerIndex * kSlotStride];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            controller = 0xFF;
+        }
+    }
+    return controller;
+}
+
+void CacheSlotKindFromController(int playerIndex, uint8_t controller)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    // Only latch computers. Never treat controller==1 as human (4→1 remap).
+    if (IsComputerController(controller)) {
+        InterlockedExchange(&g_slotKind[playerIndex], 1);
+    }
+}
+
+void RefreshSlotKinds()
+{
+    for (int i = 0; i < 8; ++i) {
+        const uint8_t controller = ReadLiveController(i);
+        if (controller == 0xFF) continue;
+        CacheSlotKindFromController(i, controller);
+    }
+}
+
+bool SourceLooksLikeHumanLeaveOnly(const char* source)
+{
+    // Clear human multiplayer leave channels. Do NOT include status3 — computers
+    // also end at status 3, and alliances UI polls status3 constantly.
+    if (!source || !source[0]) return false;
+    return _strnicmp(source, "announce", 8) == 0 ||
+           _strnicmp(source, "H1", 2) == 0 ||
+           _strnicmp(source, "H2", 2) == 0 ||
+           _strnicmp(source, "chat", 4) == 0;
+}
+
+bool IsComputerSlot(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return false;
+    RefreshSlotKinds();
+    const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
+    if (kind == 1) return true;
+    if (kind == 0) return false;
+    return IsComputerController(ReadLiveController(playerIndex));
+}
+
+// Computers-only restores the previously working wipe/elim/status paths and only
+// suppresses unambiguous human leave/chat events. Slot-kind caching is advisory.
+bool ShouldMarkSlot(int playerIndex, const char* source)
+{
+    if (playerIndex < 0 || playerIndex > 7) return false;
+
+    const bool markComputers = InterlockedCompareExchange(&g_markComputers, 0, 0) != 0;
+    const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
+    if (!markComputers && !markHumans) return false;
+
+    RefreshSlotKinds();
+    const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
+    const bool humanLeave = SourceLooksLikeHumanLeaveOnly(source);
+
+    if (markComputers && !markHumans) {
+        // Known computer → always mark. Unknown → mark unless this is a pure
+        // human leave packet (same wipe behavior as the last working build).
+        if (kind == 1 || IsComputerController(ReadLiveController(playerIndex)))
+            return true;
+        return !humanLeave;
+    }
+    if (markHumans && !markComputers) {
+        if (kind == 1) return false;
+        return humanLeave || kind == 0;
+    }
+    // Both modes on: mark everyone (legacy AllyLeaveRedNames behavior).
+    return true;
 }
 
 bool IsLikelyCode(const uint8_t* p, size_t n)
@@ -469,9 +647,12 @@ void CheckWipe(int playerIndex, const char* source)
     CacheLiveAssets(playerIndex);
     const LONG u = g_units[playerIndex];
     const LONG b = g_buildings[playerIndex];
-    if (u == 0 && b == 0 && g_everHadAssets[playerIndex]) {
-        MarkGoneUi(playerIndex, source);
-    }
+    if (u != 0 || b != 0) return;
+    // Remaster sometimes never latches everHadAssets for a seat (seen on black /
+    // player index 5). If we already know the alliances name, still mark.
+    if (!g_everHadAssets[playerIndex] && !g_lastName[playerIndex][0]) return;
+    NoteAssets(playerIndex, 1);
+    MarkGoneUi(playerIndex, source);
 }
 
 void CheckAllWipes(const char* source)
@@ -528,6 +709,19 @@ void ApplyGoneToUi(int playerIndex, void* ui, const char* name)
 void MarkGoneUi(int playerIndex, const char* source)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
+    if (!ShouldMarkSlot(playerIndex, source)) {
+        static LONG s_skip = 0;
+        if (InterlockedIncrement(&s_skip) <= 32) {
+            Log("gone skip p=%d src=%s computer=%d kind=%ld ctrl=%u markC=%ld markH=%ld",
+                playerIndex, source ? source : "?",
+                IsComputerSlot(playerIndex) ? 1 : 0,
+                InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0),
+                ReadLiveController(playerIndex),
+                InterlockedCompareExchange(&g_markComputers, 0, 0),
+                InterlockedCompareExchange(&g_markHumans, 0, 0));
+        }
+        return;
+    }
     if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 1, 0) != 0) {
         return;
     }
@@ -538,8 +732,10 @@ void MarkGoneUi(int playerIndex, const char* source)
     InterlockedExchange(&g_forceRowLog, 1);
     InterlockedExchange(&g_verboseRows, 4);
 
-    Log("gone p=%d src=%s flags=1 liveUi=%d name=%s",
+    Log("gone p=%d src=%s computer=%d kind=%ld flags=1 liveUi=%d name=%s",
         playerIndex, source ? source : "?",
+        IsComputerSlot(playerIndex) ? 1 : 0,
+        InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0),
         (g_lastSetTextTick != 0 && (GetTickCount() - g_lastSetTextTick) < 1000) ? 1 : 0,
         g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
 
@@ -611,7 +807,7 @@ void RefreshWipeFromAssets()
         if (total > 0) {
             NoteAssets(i, static_cast<int>(total));
             if (g_leftFlags[i]) ClearGoneUi(i);
-        } else if (g_everHadAssets[i] && !IsLocalPlayer(i)) {
+        } else if (!IsLocalPlayer(i) && (g_everHadAssets[i] || g_lastName[i][0])) {
             CheckWipe(i, "ui");
         }
     }
@@ -715,11 +911,16 @@ void __cdecl Hook_UnitLost(void* unit)
     CheckAllWipes("wipe");
 
     // Game HasForces is what triggers official eliminate — mirror it per slot.
-    if (!IsLocalPlayer(playerIndex) && CallHasForces(playerIndex) == 0) {
-        if (g_everHadAssets[playerIndex] || (flags & 0x80) != 0) {
-            NoteAssets(playerIndex, 1);
-            MarkGoneUi(playerIndex, "hasForces");
-        }
+    // Scan all seats: black/p5 has been observed to miss the single-slot path
+    // when everHadAssets never latched.
+    for (int i = 0; i < 8; ++i) {
+        if (IsLocalPlayer(i)) continue;
+        if (CallHasForces(i) != 0) continue;
+        if (!g_everHadAssets[i] && !g_lastName[i][0] && i != playerIndex) continue;
+        if (i == playerIndex && !g_everHadAssets[i] && !g_lastName[i][0] && (flags & 0x80) == 0)
+            continue;
+        NoteAssets(i, 1);
+        MarkGoneUi(i, i == playerIndex ? "hasForces" : "hasForces-scan");
     }
 }
 
@@ -771,8 +972,9 @@ void BindStatusBase(uint8_t* statusBase)
             reinterpret_cast<void**>(kPreferredUnitTypeHeads + slide);
         g_typeCountRows =
             reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
-        Log("BindUnitLists(via status): heads=%p rows=%p status=%p slide=0x%08X",
-            g_unitTypeHeads, g_typeCountRows, statusBase, (unsigned)slide);
+        g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
+        Log("BindUnitLists(via status): heads=%p rows=%p slot=%p status=%p slide=0x%08X",
+            g_unitTypeHeads, g_typeCountRows, g_slotBase, statusBase, (unsigned)slide);
     }
 }
 
@@ -794,7 +996,9 @@ bool HasVisibleName(const char* name)
 bool PlayerInactive(int playerIndex, const char* name)
 {
     if (playerIndex < 0 || playerIndex > 7) return false;
+    // Sticky mark already accepted for this seat.
     if (g_leftFlags[playerIndex]) return true;
+    if (!ShouldMarkSlot(playerIndex, "ui")) return false;
 
     if (g_statusBase) {
         const uint8_t status = g_statusBase[playerIndex];
@@ -827,6 +1031,7 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
     const DWORD now = GetTickCount();
     if ((now - s_lastRefresh) >= 200) {
         s_lastRefresh = now;
+        RefreshSlotKinds();
         RefreshWipeFromAssets();
         PollStatusGoneMarks();
     }
@@ -1381,7 +1586,11 @@ bool InstallHook()
             reinterpret_cast<void**>(kPreferredUnitTypeHeads + slide);
         g_typeCountRows =
             reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
+        g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
     }
+
+    LoadMarkModesFromJson();
+    RefreshSlotKinds();
 
     InterlockedExchange(&g_ready, 1);
     // DLL is only injected when the Extra feature is on — start enabled so a missed
@@ -1389,9 +1598,11 @@ bool InstallHook()
     InterlockedExchange(&g_enabled, 1);
     // Quiet hot-path file I/O in MP (unitGain/lost/census/row). Gone/install still Log().
     InterlockedExchange(&g_logQuiet, 1);
-    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p quiet=1",
+    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p slot=%p markC=%ld markH=%ld quiet=1",
         leaveOk ? 1 : 0, announceOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
-        g_localPlayer, g_unitTypeHeads, g_typeCountRows);
+        g_localPlayer, g_unitTypeHeads, g_typeCountRows, g_slotBase,
+        InterlockedCompareExchange(&g_markComputers, 0, 0),
+        InterlockedCompareExchange(&g_markHumans, 0, 0));
     return true;
 }
 
@@ -1430,6 +1641,7 @@ void RemoveHook()
     g_originalSetText = nullptr;
     g_statusBase = nullptr;
     g_defeatBase = nullptr;
+    g_slotBase = nullptr;
     g_unitTypeHeads = nullptr;
     g_typeCountRows = nullptr;
     InterlockedExchange(&g_censusDone, 0);
@@ -1439,6 +1651,7 @@ void RemoveHook()
         InterlockedExchange(&g_liveAssets[i], 0);
         InterlockedExchange(&g_units[i], 0);
         InterlockedExchange(&g_buildings[i], 0);
+        InterlockedExchange(&g_slotKind[i], -1);
     }
     InterlockedExchange(&g_ready, 0);
     Log("RemoveHook");
@@ -1449,9 +1662,12 @@ void RemoveHook()
 extern "C" __declspec(dllexport) DWORD __stdcall AllyLeave_SetEnabled(LPVOID enabled)
 {
     const LONG on = enabled ? 1 : 0;
+    if (on) LoadMarkModesFromJson();
     InterlockedExchange(&g_enabled, on);
-    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld",
-        on, g_ready, g_hitCount, g_recolorCount, g_leaveEventCount);
+    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld markC=%ld markH=%ld",
+        on, g_ready, g_hitCount, g_recolorCount, g_leaveEventCount,
+        InterlockedCompareExchange(&g_markComputers, 0, 0),
+        InterlockedCompareExchange(&g_markHumans, 0, 0));
     return 1;
 }
 

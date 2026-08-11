@@ -30,8 +30,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly string _settingsPath = string.Empty;
     private readonly string _nativeDir;
     private readonly DispatcherTimer _hookWatchTimer;
-    private bool _allyLeaveRedNames;
-    private bool _appliedAllyLeaveRedNames;
+    private bool _allyLeaveMarkComputers;
+    private bool _allyLeaveMarkHumans;
+    private bool _appliedAllyLeaveMarkComputers;
+    private bool _appliedAllyLeaveMarkHumans;
     private bool _chatDuringPauseScreen;
     private bool _appliedChatDuringPauseScreen;
     private bool _chatColoredNames;
@@ -55,17 +57,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ColorCard> OtherCards { get; } = [];
     public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
 
-    public bool AllyLeaveRedNames
+    public bool AllyLeaveMarkComputers
     {
-        get => _allyLeaveRedNames;
+        get => _allyLeaveMarkComputers;
         set
         {
-            if (_allyLeaveRedNames == value) return;
-            _allyLeaveRedNames = value;
+            if (_allyLeaveMarkComputers == value) return;
+            _allyLeaveMarkComputers = value;
             OnPropertyChanged();
             RefreshTabStatus();
         }
     }
+
+    public bool AllyLeaveMarkHumans
+    {
+        get => _allyLeaveMarkHumans;
+        set
+        {
+            if (_allyLeaveMarkHumans == value) return;
+            _allyLeaveMarkHumans = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    private bool AnyAllyLeaveApplied =>
+        _appliedAllyLeaveMarkComputers || _appliedAllyLeaveMarkHumans;
 
     public bool ChatDuringPauseScreen
     {
@@ -198,7 +215,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             WireOtherCards();
             LoadExtraFeatures();
             _hookWatchTimer.Start();
-            UpdateExtraHookStatus(forceInject: _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen ||
+            UpdateExtraHookStatus(forceInject: AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedDragSelectColorEnabled);
             RefreshTabStatus();
         }
@@ -306,7 +323,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return brush;
     }
 
-    private bool HasPendingMarkGone() => _allyLeaveRedNames != _appliedAllyLeaveRedNames;
+    private bool HasPendingMarkGone() =>
+        _allyLeaveMarkComputers != _appliedAllyLeaveMarkComputers ||
+        _allyLeaveMarkHumans != _appliedAllyLeaveMarkHumans;
     private bool HasPendingChatPause() => _chatDuringPauseScreen != _appliedChatDuringPauseScreen;
     private bool HasPendingChatColoredNames() => _chatColoredNames != _appliedChatColoredNames;
     private bool HasPendingFeatureChanges() => HasPendingMarkGone() || HasPendingChatColoredNames();
@@ -687,7 +706,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private void WriteExtraFeaturesFile(
-        bool allyLeave,
+        bool markComputers,
+        bool markHumans,
         bool chatPause,
         bool chatColoredNames,
         bool dragEnabled,
@@ -695,7 +715,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var extraJson = JsonSerializer.Serialize(new ExtraFeaturesConfig
         {
-            AllyLeaveRedNames = allyLeave,
+            AllyLeaveMarkComputers = markComputers,
+            AllyLeaveMarkHumans = markHumans,
+            // Legacy key: watcher / older builds treat this as "any ally-leave feature".
+            AllyLeaveRedNames = markComputers || markHumans,
             ChatDuringPauseScreen = chatPause,
             ChatColoredNames = chatColoredNames,
             DragSelectColorEnabled = dragEnabled,
@@ -758,7 +781,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void LoadExtraFeatures()
     {
-        var markGone = false;
+        var markComputers = false;
+        var markHumans = false;
         var chatPause = false;
         var chatColored = false;
         const bool dragEnabled = false;
@@ -767,25 +791,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            markGone = extra?.AllyLeaveRedNames ?? false;
+            markComputers = extra?.AllyLeaveMarkComputers ?? false;
+            markHumans = extra?.AllyLeaveMarkHumans ?? false;
+            // Migrate legacy single toggle → computers (NPC focus).
+            if (!markComputers && !markHumans && (extra?.AllyLeaveRedNames ?? false))
+                markComputers = true;
             chatPause = extra?.ChatDuringPauseScreen ?? false;
             chatColored = extra?.ChatColoredNames ?? false;
         }
 
-        _allyLeaveRedNames = markGone;
-        _appliedAllyLeaveRedNames = markGone;
+        _allyLeaveMarkComputers = markComputers;
+        _appliedAllyLeaveMarkComputers = markComputers;
+        _allyLeaveMarkHumans = markHumans;
+        _appliedAllyLeaveMarkHumans = markHumans;
         _chatDuringPauseScreen = chatPause;
         _appliedChatDuringPauseScreen = chatPause;
         _chatColoredNames = chatColored;
         _appliedChatColoredNames = chatColored;
         _appliedDragSelectColorEnabled = dragEnabled;
-        OnPropertyChanged(nameof(AllyLeaveRedNames));
+        OnPropertyChanged(nameof(AllyLeaveMarkComputers));
+        OnPropertyChanged(nameof(AllyLeaveMarkHumans));
         OnPropertyChanged(nameof(ChatDuringPauseScreen));
         OnPropertyChanged(nameof(ChatColoredNames));
 
         try
         {
-            WriteExtraFeaturesFile(markGone, chatPause, chatColored,
+            WriteExtraFeaturesFile(markComputers, markHumans, chatPause, chatColored,
                 dragEnabled: false, dragHex: "#00FF00");
         }
         catch { /* best-effort persist normalized flags */ }
@@ -806,7 +837,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
 
-        if (!_appliedAllyLeaveRedNames)
+        if (!AnyAllyLeaveApplied)
         {
             if (IsWarcraftIiRunning() && forceInject)
             {
@@ -884,7 +915,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            var anyExtra = _appliedAllyLeaveRedNames || _appliedChatDuringPauseScreen ||
+            var anyExtra = AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedDragSelectColorEnabled;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
@@ -928,12 +959,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (!IsWarcraftIiRunning())
         {
             _hookInjectedForRunningGame = false;
-            return _appliedAllyLeaveRedNames
-                ? "Extra ON — watcher auto-injects when Warcraft II starts (Studio can close). F11 Alliances."
-                : "Extra setting saved.";
+            return AnyAllyLeaveApplied
+                ? "Ally-leave ON — watcher auto-injects when Warcraft II starts (Studio can close). F11 Alliances."
+                : "Ally-leave setting saved.";
         }
 
-        var args = _appliedAllyLeaveRedNames ? "--enable" : "--disable";
+        var args = AnyAllyLeaveApplied ? "--enable" : "--disable";
         var start = new ProcessStartInfo(injector, args)
         {
             UseShellExecute = false,
@@ -957,7 +988,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return message;
         }
 
-        _hookInjectedForRunningGame = _appliedAllyLeaveRedNames;
+        _hookInjectedForRunningGame = AnyAllyLeaveApplied;
         return string.IsNullOrWhiteSpace(output) ? "Extra hook updated." : output;
     }
 
@@ -1218,7 +1249,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 }
 
                 var config = BuildColorConfigForColorsApply();
-                var ally = _appliedAllyLeaveRedNames;
+                var markComputers = _appliedAllyLeaveMarkComputers;
+                var markHumans = _appliedAllyLeaveMarkHumans;
                 var chat = _appliedChatDuringPauseScreen;
                 var chatNames = _appliedChatColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
@@ -1226,9 +1258,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     // Keep drag-select hook off — Self highlight owns shared palette index 250.
                     WriteExtraFeaturesFile(
-                        allyLeave: ally,
-                        chatPause: chat,
-                        chatColoredNames: chatNames,
+                        markComputers, markHumans, chat, chatNames,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
@@ -1249,18 +1279,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else if (_activeTab == "feature")
             {
-                var markGoneEnabled = AllyLeaveRedNames;
+                var markComputers = AllyLeaveMarkComputers;
+                var markHumans = AllyLeaveMarkHumans;
                 var chatPauseEnabled = _appliedChatDuringPauseScreen;
                 var chatNamesEnabled = ChatColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
                 await Task.Run(() => WriteExtraFeaturesFile(
-                    allyLeave: markGoneEnabled,
-                    chatPause: chatPauseEnabled,
-                    chatColoredNames: chatNamesEnabled,
+                    markComputers, markHumans, chatPauseEnabled, chatNamesEnabled,
                     dragEnabled: false,
                     dragHex: "#00FF00"));
 
-                _appliedAllyLeaveRedNames = markGoneEnabled;
+                _appliedAllyLeaveMarkComputers = markComputers;
+                _appliedAllyLeaveMarkHumans = markHumans;
                 _appliedChatColoredNames = chatNamesEnabled;
                 _hookInjectedForRunningGame = false;
                 _chatNameColorInjectedForRunningGame = false;
@@ -1278,14 +1308,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else if (_activeTab == "bugfixes")
             {
-                var markGoneEnabled = _appliedAllyLeaveRedNames;
+                var markComputers = _appliedAllyLeaveMarkComputers;
+                var markHumans = _appliedAllyLeaveMarkHumans;
                 var chatPauseEnabled = ChatDuringPauseScreen;
                 var chatNamesEnabled = _appliedChatColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Bug fix settings…"));
                 await Task.Run(() => WriteExtraFeaturesFile(
-                    allyLeave: markGoneEnabled,
-                    chatPause: chatPauseEnabled,
-                    chatColoredNames: chatNamesEnabled,
+                    markComputers, markHumans, chatPauseEnabled, chatNamesEnabled,
                     dragEnabled: false,
                     dragHex: "#00FF00"));
 
@@ -1365,6 +1394,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
                 var extraJson = JsonSerializer.Serialize(new ExtraFeaturesConfig
                 {
+                    AllyLeaveMarkComputers = false,
+                    AllyLeaveMarkHumans = false,
                     AllyLeaveRedNames = false,
                     ChatDuringPauseScreen = false,
                     ChatColoredNames = false,
@@ -1374,14 +1405,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 File.WriteAllText(_extraConfigPath, extraJson);
             });
 
-            _allyLeaveRedNames = false;
-            _appliedAllyLeaveRedNames = false;
+            _allyLeaveMarkComputers = false;
+            _appliedAllyLeaveMarkComputers = false;
+            _allyLeaveMarkHumans = false;
+            _appliedAllyLeaveMarkHumans = false;
             _chatDuringPauseScreen = false;
             _appliedChatDuringPauseScreen = false;
             _chatColoredNames = false;
             _appliedChatColoredNames = false;
             _appliedDragSelectColorEnabled = false;
-            OnPropertyChanged(nameof(AllyLeaveRedNames));
+            OnPropertyChanged(nameof(AllyLeaveMarkComputers));
+            OnPropertyChanged(nameof(AllyLeaveMarkHumans));
             OnPropertyChanged(nameof(ChatDuringPauseScreen));
             OnPropertyChanged(nameof(ChatColoredNames));
 
@@ -1516,6 +1550,9 @@ public sealed record PlayerColor(int Player, string Color);
 
 public sealed class ExtraFeaturesConfig
 {
+    public bool AllyLeaveMarkComputers { get; set; }
+    public bool AllyLeaveMarkHumans { get; set; }
+    /// <summary>Legacy: true when either mark mode is on (watcher / older hooks).</summary>
     public bool AllyLeaveRedNames { get; set; }
     public bool ChatDuringPauseScreen { get; set; }
     public bool ChatColoredNames { get; set; }

@@ -79,7 +79,10 @@ ExtraFlags ReadExtraFlags()
     CloseHandle(file);
     if (!ok || read == 0) return flags;
 
-    flags.allyLeave = ReadJsonBool(buf, "AllyLeaveRedNames");
+    flags.allyLeave =
+        ReadJsonBool(buf, "AllyLeaveMarkComputers") ||
+        ReadJsonBool(buf, "AllyLeaveMarkHumans") ||
+        ReadJsonBool(buf, "AllyLeaveRedNames");
     flags.pauseChat = ReadJsonBool(buf, "ChatDuringPauseScreen");
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
     flags.chatNameColor = ReadJsonBool(buf, "ChatColoredNames");
