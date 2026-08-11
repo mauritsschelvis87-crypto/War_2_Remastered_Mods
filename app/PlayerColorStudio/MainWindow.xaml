@@ -201,7 +201,7 @@
                                           IsEnabled="{Binding IsApplyEnabled}"
                                           Content="Chat during pause screen."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="Lets you read, type, and send chat while the multiplayer game is paused. Both players need this bug fix installed — if only one side has it, that player can send, but the other only sees the message after unpause."/>
+                                           Text="Lets you read, type, and send chat while the multiplayer game is paused. Both players need this bug fix installed — if only one side has it, that player can send, but the other only sees the message after unpause if the chat is within its timeframe."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
