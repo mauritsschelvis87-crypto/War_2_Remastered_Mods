@@ -792,9 +792,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             markComputers = extra?.AllyLeaveMarkComputers ?? false;
-            markHumans = extra?.AllyLeaveMarkHumans ?? false;
+            markHumans = false; // Human leave feature not ready — keep off.
             // Migrate legacy single toggle → computers (NPC focus).
-            if (!markComputers && !markHumans && (extra?.AllyLeaveRedNames ?? false))
+            if (!markComputers && (extra?.AllyLeaveRedNames ?? false))
                 markComputers = true;
             chatPause = extra?.ChatDuringPauseScreen ?? false;
             chatColored = extra?.ChatColoredNames ?? false;
@@ -1280,7 +1280,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else if (_activeTab == "feature")
             {
                 var markComputers = AllyLeaveMarkComputers;
-                var markHumans = AllyLeaveMarkHumans;
+                var markHumans = false; // Human leave feature not ready.
                 var chatPauseEnabled = _appliedChatDuringPauseScreen;
                 var chatNamesEnabled = ChatColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));

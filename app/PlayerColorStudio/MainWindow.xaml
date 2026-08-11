@@ -177,10 +177,10 @@
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel VerticalAlignment="Center">
                                 <CheckBox IsChecked="{Binding AllyLeaveMarkHumans}"
-                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          IsEnabled="False"
                                           Content="Mark gone human players on the alliance screen (F11)."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="When a human leaves, disconnects, or is eliminated, their name turns red. Coming next — enable later once computer marking is confirmed."/>
+                                           Text="Separate feature (not ready yet): humans need leave/disconnect detection, not the NPC wipe logic. Keep this off — only Mark gone computers is active."/>
                             </StackPanel>
                         </Border>
                         <Border Padding="14" CornerRadius="8"

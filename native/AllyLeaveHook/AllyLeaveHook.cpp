@@ -214,14 +214,15 @@ void LoadMarkModesFromJson()
     }
 
     const bool markComputers = ReadJsonBoolKey(buf, "AllyLeaveMarkComputers");
-    const bool markHumans = ReadJsonBoolKey(buf, "AllyLeaveMarkHumans");
+    // Human leave feature is a separate path (not ready). Force off so NPC-only
+    // configs never accidentally mark humans via wipe/elim.
+    const bool markHumans = false;
     const bool legacy = ReadJsonBoolKey(buf, "AllyLeaveRedNames");
     LONG computers = markComputers ? 1 : 0;
-    LONG humans = markHumans ? 1 : 0;
-    if (!computers && !humans && legacy) {
-        // Pre-split configs marked everyone.
+    LONG humans = 0;
+    if (!computers && legacy) {
+        // Pre-split configs → NPC focus only (not mark-everyone).
         computers = 1;
-        humans = 1;
     }
     InterlockedExchange(&g_markComputers, computers);
     InterlockedExchange(&g_markHumans, humans);
@@ -256,34 +257,99 @@ uint8_t ReadLiveController(int playerIndex)
     return controller;
 }
 
+bool AnyLiveComputerController()
+{
+    for (int i = 0; i < 8; ++i) {
+        if (IsComputerController(ReadLiveController(i))) return true;
+    }
+    return false;
+}
+
 void CacheSlotKindFromController(int playerIndex, uint8_t controller)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
-    // Only latch computers. Never treat controller==1 as human (4→1 remap).
     if (IsComputerController(controller)) {
         InterlockedExchange(&g_slotKind[playerIndex], 1);
+        return;
     }
+    // Lobby humans are status/controller 1 while computers are still 4/2/6/7.
+    // After remaster remaps computers 4→1 we must NOT latch those seats as human.
+    if (controller == 1 && AnyLiveComputerController()) {
+        InterlockedCompareExchange(&g_slotKind[playerIndex], 0, -1);
+    }
+}
+
+void NoteHumanSlot(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) == 1) return;
+    InterlockedExchange(&g_slotKind[playerIndex], 0);
 }
 
 void RefreshSlotKinds()
 {
+    // Two passes: first latch every live computer, then humans (needs AnyLiveComputer).
+    for (int i = 0; i < 8; ++i) {
+        const uint8_t controller = ReadLiveController(i);
+        if (controller == 0xFF) continue;
+        if (IsComputerController(controller)) {
+            InterlockedExchange(&g_slotKind[i], 1);
+        }
+    }
     for (int i = 0; i < 8; ++i) {
         const uint8_t controller = ReadLiveController(i);
         if (controller == 0xFF) continue;
         CacheSlotKindFromController(i, controller);
     }
+    if (g_localPlayer) {
+        int local = -1;
+        __try {
+            local = static_cast<int>(*g_localPlayer);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            local = -1;
+        }
+        if (local >= 0 && local <= 7) NoteHumanSlot(local);
+    }
 }
 
 bool SourceLooksLikeHumanLeaveOnly(const char* source)
 {
-    // Clear human multiplayer leave channels. Do NOT include status3 — computers
-    // also end at status 3, and alliances UI polls status3 constantly.
     if (!source || !source[0]) return false;
     return _strnicmp(source, "announce", 8) == 0 ||
            _strnicmp(source, "H1", 2) == 0 ||
            _strnicmp(source, "H2", 2) == 0 ||
            _strnicmp(source, "chat", 4) == 0;
 }
+
+bool SourceLooksLikeNpcWipe(const char* source)
+{
+    // Army wipe / eliminate — NPC path. Not human leave/disconnect.
+    if (!source || !source[0]) return false;
+    return _strnicmp(source, "wipe", 4) == 0 ||
+           _strnicmp(source, "ui", 2) == 0 ||
+           _strnicmp(source, "hasForces", 9) == 0 ||
+           _strnicmp(source, "elim", 4) == 0;
+}
+
+// Remaster/PUD computer labels vs Battle.net account names (e.g. "Avent").
+bool LooksLikeComputerName(const char* name)
+{
+    if (!name || !name[0]) return false;
+    if (_strnicmp(name, "Computer", 8) == 0) return true;
+    if (_strnicmp(name, "Nation of ", 10) == 0) return true;
+    if (_stricmp(name, "Alliance Traitors") == 0) return true;
+    const size_t n = strlen(name);
+    if (n >= 5 && _stricmp(name + (n - 5), " Clan") == 0) return true;
+    return false;
+}
+
+void NoteComputerSlot(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    InterlockedExchange(&g_slotKind[playerIndex], 1);
+}
+
+bool IsLocalPlayer(int playerIndex); // defined with wipe helpers below
 
 bool IsComputerSlot(int playerIndex)
 {
@@ -292,11 +358,12 @@ bool IsComputerSlot(int playerIndex)
     const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
     if (kind == 1) return true;
     if (kind == 0) return false;
-    return IsComputerController(ReadLiveController(playerIndex));
+    if (IsComputerController(ReadLiveController(playerIndex))) return true;
+    if (LooksLikeComputerName(g_lastName[playerIndex])) return true;
+    return false;
 }
 
-// Computers-only restores the previously working wipe/elim/status paths and only
-// suppresses unambiguous human leave/chat events. Slot-kind caching is advisory.
+// NPC feature only: never mark account humans. Human leave is a separate mod.
 bool ShouldMarkSlot(int playerIndex, const char* source)
 {
     if (playerIndex < 0 || playerIndex > 7) return false;
@@ -305,22 +372,35 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
     const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
     if (!markComputers && !markHumans) return false;
 
+    if (SourceLooksLikeHumanLeaveOnly(source)) {
+        NoteHumanSlot(playerIndex);
+    }
+
+    // Classify from alliances name: "Nation of… / … Clan" = NPC, account name = human.
+    // Controller bytes are remapped to 1 in-match so they alone are not enough.
+    if (g_lastName[playerIndex][0]) {
+        if (LooksLikeComputerName(g_lastName[playerIndex])) {
+            NoteComputerSlot(playerIndex);
+        } else if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) != 1) {
+            NoteHumanSlot(playerIndex);
+        }
+    }
+
     RefreshSlotKinds();
     const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
     const bool humanLeave = SourceLooksLikeHumanLeaveOnly(source);
 
     if (markComputers && !markHumans) {
-        // Known computer → always mark. Unknown → mark unless this is a pure
-        // human leave packet (same wipe behavior as the last working build).
-        if (kind == 1 || IsComputerController(ReadLiveController(playerIndex)))
-            return true;
-        return !humanLeave;
+        if (IsLocalPlayer(playerIndex) || kind == 0) return false;
+        if (humanLeave) return false;
+        return IsComputerSlot(playerIndex);
     }
     if (markHumans && !markComputers) {
-        if (kind == 1) return false;
-        return humanLeave || kind == 0;
+        if (IsComputerSlot(playerIndex)) return false;
+        return humanLeave ||
+               (source && _strnicmp(source, "status3", 7) == 0) ||
+               (source && _strnicmp(source, "elim", 4) == 0);
     }
-    // Both modes on: mark everyone (legacy AllyLeaveRedNames behavior).
     return true;
 }
 
@@ -647,12 +727,11 @@ void CheckWipe(int playerIndex, const char* source)
     CacheLiveAssets(playerIndex);
     const LONG u = g_units[playerIndex];
     const LONG b = g_buildings[playerIndex];
-    if (u != 0 || b != 0) return;
-    // Remaster sometimes never latches everHadAssets for a seat (seen on black /
-    // player index 5). If we already know the alliances name, still mark.
-    if (!g_everHadAssets[playerIndex] && !g_lastName[playerIndex][0]) return;
-    NoteAssets(playerIndex, 1);
-    MarkGoneUi(playerIndex, source);
+    // Require a real army sighting first — name-only marks false-positive every
+    // seat at match start (F11 / alliances paint before units exist).
+    if (u == 0 && b == 0 && g_everHadAssets[playerIndex]) {
+        MarkGoneUi(playerIndex, source);
+    }
 }
 
 void CheckAllWipes(const char* source)
@@ -807,7 +886,7 @@ void RefreshWipeFromAssets()
         if (total > 0) {
             NoteAssets(i, static_cast<int>(total));
             if (g_leftFlags[i]) ClearGoneUi(i);
-        } else if (!IsLocalPlayer(i) && (g_everHadAssets[i] || g_lastName[i][0])) {
+        } else if (g_everHadAssets[i] && !IsLocalPlayer(i)) {
             CheckWipe(i, "ui");
         }
     }
@@ -910,17 +989,12 @@ void __cdecl Hook_UnitLost(void* unit)
 
     CheckAllWipes("wipe");
 
-    // Game HasForces is what triggers official eliminate — mirror it per slot.
-    // Scan all seats: black/p5 has been observed to miss the single-slot path
-    // when everHadAssets never latched.
-    for (int i = 0; i < 8; ++i) {
-        if (IsLocalPlayer(i)) continue;
-        if (CallHasForces(i) != 0) continue;
-        if (!g_everHadAssets[i] && !g_lastName[i][0] && i != playerIndex) continue;
-        if (i == playerIndex && !g_everHadAssets[i] && !g_lastName[i][0] && (flags & 0x80) == 0)
-            continue;
-        NoteAssets(i, 1);
-        MarkGoneUi(i, i == playerIndex ? "hasForces" : "hasForces-scan");
+    // Game HasForces is what triggers official eliminate — mirror it for this seat.
+    if (!IsLocalPlayer(playerIndex) && CallHasForces(playerIndex) == 0) {
+        if (g_everHadAssets[playerIndex] || (flags & 0x80) != 0) {
+            NoteAssets(playerIndex, 1);
+            MarkGoneUi(playerIndex, "hasForces");
+        }
     }
 }
 
@@ -1002,9 +1076,10 @@ bool PlayerInactive(int playerIndex, const char* name)
 
     if (g_statusBase) {
         const uint8_t status = g_statusBase[playerIndex];
-        // Leave/drop/elim write 3. Only mark when the row has a real clan/name
-        // (empty slots often sit at status 3 with no useful label).
-        if (status >= 2 && HasVisibleName(name)) return true;
+        // ONLY explicit gone value 3. Values 2/4/5/6/7 are lobby/controller
+        // codes — treating status>=2 as gone painted every computer red at
+        // match start (especially with a human in the lobby), then sticky.
+        if (status == 3 && HasVisibleName(name)) return true;
     }
 
     if (g_defeatBase) {
@@ -1055,6 +1130,8 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         g_lastUi[playerIndex] = ui;
         if (name && name[0]) {
             _snprintf_s(g_lastName[playerIndex], _TRUNCATE, "%s", name);
+            if (LooksLikeComputerName(name)) NoteComputerSlot(playerIndex);
+            else NoteHumanSlot(playerIndex);
         }
     }
 
@@ -1736,14 +1813,45 @@ static DWORD WINAPI InstallThread(LPVOID)
         Log("InstallThread: gave up");
         return 0;
     }
-    // After map objects are linked, take the initial per-player units/buildings snapshot.
+    // Keep polling lobby controllers: computers are 4/2/6/7 until remaster
+    // remaps them to 1 at match start. Missing that window leaves kind=-1 forever.
     for (int i = 0; i < 40 && !g_censusDone; ++i) {
         Sleep(250);
+        RefreshSlotKinds();
         if (g_unitTypeHeads && ResyncCensus(nullptr, "boot")) {
             break;
         }
     }
+    RefreshSlotKinds();
     if (!g_censusDone) Log("InstallThread: census still pending");
+    Log("InstallThread: slotKinds c=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld",
+        InterlockedCompareExchange(&g_slotKind[0], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[1], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[2], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[3], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[4], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[5], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[6], 0, 0),
+        InterlockedCompareExchange(&g_slotKind[7], 0, 0));
+
+    // Continue polling a few minutes so late lobby / pre-start screens are caught.
+    for (int i = 0; i < 600; ++i) { // ~2 minutes @ 200ms
+        Sleep(200);
+        RefreshSlotKinds();
+        if ((i % 25) == 0) {
+            Log("slotPoll[%d] c=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld anyComp=%d",
+                i,
+                InterlockedCompareExchange(&g_slotKind[0], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[1], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[2], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[3], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[4], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[5], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[6], 0, 0),
+                InterlockedCompareExchange(&g_slotKind[7], 0, 0),
+                AnyLiveComputerController() ? 1 : 0);
+        }
+    }
     return 0;
 }
 
