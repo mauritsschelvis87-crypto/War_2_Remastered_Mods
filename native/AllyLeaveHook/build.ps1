@@ -36,8 +36,6 @@ cl /nologo /O2 /W3 /EHsc "$here\InjectDragSelect.cpp" /Fe:"$OutDir\InjectDragSel
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectChatNameColor.cpp" /Fe:"$OutDir\InjectChatNameColor.exe" /link /nologo
 if errorlevel 1 exit /b 1
-cl /nologo /O2 /W3 /EHsc "$here\InjectPauseNameColor.cpp" /Fe:"$OutDir\InjectPauseNameColor.exe" /link /nologo
-if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\AllyLeaveWatch.cpp" /Fe:"$OutDir\AllyLeaveWatch.exe" /link /nologo /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup Advapi32.lib
 if errorlevel 1 exit /b 1
 del /q *.obj 2>nul
@@ -65,5 +63,4 @@ Write-Host "Built: $OutDir\InjectAllyLeave.exe"
 Write-Host "Built: $OutDir\InjectPauseChat.exe"
 Write-Host "Built: $OutDir\InjectDragSelect.exe"
 Write-Host "Built: $OutDir\InjectChatNameColor.exe"
-Write-Host "Built: $OutDir\InjectPauseNameColor.exe"
 Write-Host "Built: $OutDir\AllyLeaveWatch.exe"

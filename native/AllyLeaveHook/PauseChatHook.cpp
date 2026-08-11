@@ -28,7 +28,7 @@ struct Patch {
     const char* name = nullptr;
 };
 
-constexpr size_t kMaxPatches = 16;
+constexpr size_t kMaxPatches = 20;
 Patch g_patches[kMaxPatches]{};
 size_t g_patchCount = 0;
 void* g_cave = nullptr;
@@ -241,6 +241,66 @@ bool BuildDispatchCave(uint8_t* siteCmp, uint8_t* caveSlot, size_t caveBytesLeft
     return true;
 }
 
+// After key-callback dispatch (~+0x48): xor ecx / cmp [pause],cl / setnz cl
+// is passed into UI as "isPaused". While Message: is open that still reports
+// paused=1 and blocks typed characters — even though we allow the dispatch.
+// Lie only when chatMode != 0; keep the real pause byte untouched (MP-safe).
+bool BuildPauseReportLieCave(uint8_t* dispatchSite, uint8_t* caveSlot, size_t caveBytesLeft,
+                             uint8_t** caveUsed)
+{
+    if (!dispatchSite || !g_pauseFlag || !g_chatMode) return false;
+    uint8_t* site = dispatchSite + 0x48;
+    if (!IsLikelyCode(site, 11)) return false;
+    if (site[0] != 0x33 || site[1] != 0xC9 || site[2] != 0x38 || site[3] != 0x0D)
+        return false;
+    if (site[8] != 0x0F || site[9] != 0x95 || site[10] != 0xC1) return false;
+    uint8_t* imm = *reinterpret_cast<uint8_t**>(site + 4);
+    if (imm != g_pauseFlag) return false;
+
+    uint8_t* cave = caveSlot;
+    size_t o = 0;
+    auto emit = [&](const void* p, size_t n) -> bool {
+        if (o + n > caveBytesLeft) return false;
+        memcpy(cave + o, p, n);
+        o += n;
+        return true;
+    };
+
+    // xor ecx, ecx
+    if (!emit("\x33\xC9", 2)) return false;
+
+    // cmp byte [chatMode], 0 / jnz done (cl stays 0)
+    uint8_t cmpChat[] = { 0x80, 0x3D, 0, 0, 0, 0, 0x00, 0x75, 0x00 };
+    *reinterpret_cast<uint32_t*>(cmpChat + 2) = reinterpret_cast<uint32_t>(g_chatMode);
+    const size_t jnzAt = o + 7;
+    if (!emit(cmpChat, sizeof(cmpChat))) return false;
+
+    // cmp byte [pause], cl / setnz cl
+    uint8_t cmpPause[] = { 0x38, 0x0D, 0, 0, 0, 0, 0x0F, 0x95, 0xC1 };
+    *reinterpret_cast<uint32_t*>(cmpPause + 2) = reinterpret_cast<uint32_t>(g_pauseFlag);
+    if (!emit(cmpPause, sizeof(cmpPause))) return false;
+
+    const size_t doneAt = o;
+    cave[jnzAt + 1] = static_cast<uint8_t>(doneAt - (jnzAt + 2));
+
+    // jmp back to push ecx (site + 11)
+    uint8_t jmpBack[5] = { 0xE9, 0, 0, 0, 0 };
+    *reinterpret_cast<int32_t*>(jmpBack + 1) =
+        static_cast<int32_t>((site + 11) - (cave + o + 5));
+    if (!emit(jmpBack, sizeof(jmpBack))) return false;
+
+    uint8_t sitePatch[11] = {
+        0xE9, 0, 0, 0, 0, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90
+    };
+    *reinterpret_cast<int32_t*>(sitePatch + 1) =
+        static_cast<int32_t>(cave - (site + 5));
+    if (!AddPatch(site, sitePatch, 11, NextPatchName("pause-report-lie"))) return false;
+
+    *caveUsed = cave + o;
+    Log("BuildPauseReportLieCave: site=%p cave=%p", site, cave);
+    return true;
+}
+
 // siteCmp: 80 3D pause 00 75 rr  — if chatMode || paused → skip, else cont.
 // Used on main-tick +0x67 so clearing pause for chat does not resume simulation.
 bool BuildTickFreezeCave(uint8_t* siteCmp, uint8_t* caveSlot, size_t caveBytesLeft,
@@ -298,6 +358,71 @@ bool BuildTickFreezeCave(uint8_t* siteCmp, uint8_t* caveSlot, size_t caveBytesLe
 
     *caveUsed = cave + o;
     Log("BuildTickFreezeCave: site=%p cave=%p", siteCmp, cave);
+    return true;
+}
+
+// Char append (~4A6476): cmp [pause],1 / jz skipAppend.
+// While Message: is open pause stays 1 (MP-safe), so typed chars never hit the
+// buffer. Allow append when chatMode != 0; keep the real pause byte untouched.
+bool BuildCharAppendCave(uint8_t* siteCmp, uint8_t* caveSlot, size_t caveBytesLeft,
+                         uint8_t** caveUsed)
+{
+    if (!siteCmp || !g_pauseFlag || !g_chatMode) return false;
+    if (!IsLikelyCode(siteCmp, 9)) return false;
+    if (siteCmp[0] != 0x80 || siteCmp[1] != 0x3D || siteCmp[7] != 0x74)
+        return false;
+    if (siteCmp[6] != 0x01) return false;
+    uint8_t* imm = *reinterpret_cast<uint8_t**>(siteCmp + 2);
+    if (imm != g_pauseFlag) return false;
+
+    const uint8_t rel = siteCmp[8];
+    uint8_t* cont = siteCmp + 9;
+    uint8_t* skip = cont + rel;
+
+    uint8_t* cave = caveSlot;
+    size_t o = 0;
+    auto emit = [&](const void* p, size_t n) -> bool {
+        if (o + n > caveBytesLeft) return false;
+        memcpy(cave + o, p, n);
+        o += n;
+        return true;
+    };
+
+    // cmp byte [chat], 0 / jnz cont
+    uint8_t cmpChat[] = { 0x80, 0x3D, 0, 0, 0, 0, 0x00, 0x75, 0x00 };
+    *reinterpret_cast<uint32_t*>(cmpChat + 2) = reinterpret_cast<uint32_t>(g_chatMode);
+    const size_t jnzContAt = o + 7;
+    if (!emit(cmpChat, sizeof(cmpChat))) return false;
+
+    // cmp byte [pause], 1 / jz skip
+    uint8_t cmpPause[] = { 0x80, 0x3D, 0, 0, 0, 0, 0x01, 0x74, 0x00 };
+    *reinterpret_cast<uint32_t*>(cmpPause + 2) = reinterpret_cast<uint32_t>(g_pauseFlag);
+    const size_t jzSkipAt = o + 7;
+    if (!emit(cmpPause, sizeof(cmpPause))) return false;
+
+    const size_t contAt = o;
+    cave[jnzContAt + 1] = static_cast<uint8_t>(contAt - (jnzContAt + 2));
+
+    uint8_t jmpCont[5] = { 0xE9, 0, 0, 0, 0 };
+    *reinterpret_cast<int32_t*>(jmpCont + 1) =
+        static_cast<int32_t>(cont - (cave + o + 5));
+    if (!emit(jmpCont, sizeof(jmpCont))) return false;
+
+    const size_t skipAt = o;
+    cave[jzSkipAt + 1] = static_cast<uint8_t>(skipAt - (jzSkipAt + 2));
+
+    uint8_t jmpSkip[5] = { 0xE9, 0, 0, 0, 0 };
+    *reinterpret_cast<int32_t*>(jmpSkip + 1) =
+        static_cast<int32_t>(skip - (cave + o + 5));
+    if (!emit(jmpSkip, sizeof(jmpSkip))) return false;
+
+    uint8_t sitePatch[9] = { 0xE9, 0, 0, 0, 0, 0x90, 0x90, 0x90, 0x90 };
+    *reinterpret_cast<int32_t*>(sitePatch + 1) =
+        static_cast<int32_t>(cave - (siteCmp + 5));
+    if (!AddPatch(siteCmp, sitePatch, 9, "char-append-pause")) return false;
+
+    *caveUsed = cave + o;
+    Log("BuildCharAppendCave: site=%p cave=%p cont=%p skip=%p", siteCmp, cave, cont, skip);
     return true;
 }
 
@@ -399,14 +524,14 @@ bool InstallSites()
     Log("InstallSites: game base=%p size=0x%X", base, (unsigned)imageSize);
 
     if (!g_cave) {
-        g_cave = VirtualAlloc(nullptr, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+        g_cave = VirtualAlloc(nullptr, 2048, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
         if (!g_cave) {
             Log("InstallSites: VirtualAlloc cave failed");
             return false;
         }
     }
     auto* caveCursor = reinterpret_cast<uint8_t*>(g_cave);
-    size_t caveLeft = 1024;
+    size_t caveLeft = 2048;
 
     // Draw: cmp [pause],0 / lea / mov / jnz +0x103  — jnz at +13
     static const uint8_t drawPat[] = {
@@ -452,7 +577,11 @@ bool InstallSites()
         }
     }
 
-    // Key handler printable: jz → jmp
+    // Key handler at preferred 4E6FB0:
+    //   cmp [pause],0 / jz unpausedPath
+    //   ; paused fall-through → call 4D45F0 (actual key/char processing)
+    // Do NOT turn jz into jmp: that skips 4D45F0 and breaks typing while Message:
+    // is open with pause still set (MP-safe mode). Enter-open is handled below.
     static const uint8_t keyPat[] = {
         0x80, 0x3D, 0, 0, 0, 0, 0x00, 0x74, 0x7B, 0x56, 0x57, 0xE8
     };
@@ -462,18 +591,36 @@ bool InstallSites()
         Log("InstallSites: key-char pattern miss");
         return false;
     }
-    {
-        const uint8_t jmpRel[] = { 0xEB, 0x7B };
-        if (!AddPatch(keyHit + 7, jmpRel, 2, "key-char-jz")) return false;
-    }
+    Log("InstallSites: keyHit=%p (keeping original pause jz for char path)", keyHit);
 
-    // Optional helpers near key handler (relative to keyHit = cmp at 4E6FB0)
+    // Optional helpers near key handler (keyHit = cmp for printable chars).
     {
-        // jnz at 4E7031 = keyHit + 0x81
-        uint8_t* case3 = keyHit + 0x81;
-        if (IsLikelyCode(case3, 2) && case3[0] == 0x75 && case3[1] == 0x49) {
-            const uint8_t nops[2] = { 0x90, 0x90 };
-            AddPatch(case3, nops, 2, "key-case3-jnz");
+        // Enter / special-key gate: cmp [pause],0 / jz handle — if paused, early-return
+        // blocks opening Message: while paused (common in human MP). Scan nearby
+        // instead of a fixed offset (pattern start can be ±1 from preferred VA).
+        bool enterPatched = false;
+        for (int delta = 0x50; delta <= 0x70 && !enterPatched; ++delta) {
+            uint8_t* enterGate = keyHit + delta;
+            if (!IsLikelyCode(enterGate, 9)) continue;
+            if (enterGate[0] != 0x80 || enterGate[1] != 0x3D || enterGate[7] != 0x74) continue;
+            uint8_t* imm = *reinterpret_cast<uint8_t**>(enterGate + 2);
+            if (imm != g_pauseFlag) continue;
+            const uint8_t jmpRel[] = { 0xEB, enterGate[8] };
+            if (AddPatch(enterGate + 7, jmpRel, 2, "key-enter-pause-jz"))
+                enterPatched = true;
+        }
+        if (!enterPatched)
+            Log("InstallSites: key-enter-pause-jz not found near keyHit=%p", keyHit);
+
+        // Secondary pause jnz near the same handler (preferred +0x81).
+        for (int delta = 0x70; delta <= 0x90; ++delta) {
+            uint8_t* case3 = keyHit + delta;
+            if (!IsLikelyCode(case3, 2)) continue;
+            if (case3[0] == 0x75 && case3[1] == 0x49) {
+                const uint8_t nops[2] = { 0x90, 0x90 };
+                AddPatch(case3, nops, 2, "key-case3-jnz");
+                break;
+            }
         }
     }
 
@@ -486,12 +633,39 @@ bool InstallSites()
         AddPatch(strHit + 12, jmpRel, 2, "str-helper-jz");
     }
 
+    // Text-widget char append: cmp [pause],1 / jz skip — blocks Message: typing
+    // while pause stays set for net sync.
+    {
+        static const uint8_t appendPat[] = {
+            0x80, 0x3D, 0, 0, 0, 0, 0x01, 0x74, 0x3E
+        };
+        static const char appendMask[] = "xx????xxx";
+        uint8_t* appendHit = FindPattern(base, imageSize, appendPat, appendMask);
+        if (appendHit) {
+            uint8_t* imm = *reinterpret_cast<uint8_t**>(appendHit + 2);
+            if (imm == g_pauseFlag) {
+                uint8_t* used = nullptr;
+                if (BuildCharAppendCave(appendHit, caveCursor, caveLeft, &used)) {
+                    caveLeft -= static_cast<size_t>(used - caveCursor);
+                    caveCursor = used;
+                } else {
+                    Log("InstallSites: char-append cave failed at %p", appendHit);
+                }
+            } else {
+                Log("InstallSites: char-append pause imm mismatch %p vs %p", imm, g_pauseFlag);
+            }
+        } else {
+            Log("InstallSites: char-append pattern miss");
+        }
+    }
+
     // Key-callback (+0x29): allow when chatMode OR not paused.
-    // Main-tick (+0x67): freeze when chatMode OR paused (so clearing pause for keys
-    // does not resume simulation).
+    // Main-tick (+0x67): freeze when chatMode OR paused.
+    // IMPORTANT (human MP): do NOT clear the shared pause byte — that desyncs the
+    // host vs guest and can make the other account drop. Input patches above must
+    // allow Message: while pause stays set for net sync.
     int dispatchCount = 0;
     int freezeCount = 0;
-    uint8_t* tickMergeInc = nullptr;
     for (size_t i = 0; i + 9 <= imageSize; ++i) {
         uint8_t* p = base + i;
         if (p[0] != 0x80 || p[1] != 0x3D || p[7] != 0x75) continue;
@@ -500,11 +674,6 @@ bool InstallSites()
 
         const uint8_t rel = p[8];
         if (rel == 0x67) {
-            if (!tickMergeInc) {
-                uint8_t* skip = p + 9 + rel;
-                if (IsLikelyCode(skip, 6) && skip[0] == 0xFF && skip[1] == 0x05)
-                    tickMergeInc = skip;
-            }
             if (freezeCount >= 2) continue;
             uint8_t* used = nullptr;
             if (!BuildTickFreezeCave(p, caveCursor, caveLeft, &used)) {
@@ -528,6 +697,15 @@ bool InstallSites()
         caveCursor = used;
         ++dispatchCount;
         Log("InstallSites: dispatch site=%p rel=%02X", p, rel);
+
+        used = nullptr;
+        if (BuildPauseReportLieCave(p, caveCursor, caveLeft, &used)) {
+            caveLeft -= static_cast<size_t>(used - caveCursor);
+            caveCursor = used;
+            Log("InstallSites: pause-report-lie after dispatch %p", p);
+        } else {
+            Log("InstallSites: pause-report-lie miss after dispatch %p", p);
+        }
     }
     if (dispatchCount < 1) {
         Log("InstallSites: no key-callback dispatch sites");
@@ -538,21 +716,8 @@ bool InstallSites()
         return false;
     }
 
-    if (tickMergeInc) {
-        uint8_t* used = nullptr;
-        if (BuildPauseClearCave(tickMergeInc, caveCursor, caveLeft, &used)) {
-            caveLeft -= static_cast<size_t>(used - caveCursor);
-            caveCursor = used;
-            Log("InstallSites: pause-clear site=%p", tickMergeInc);
-        } else {
-            Log("InstallSites: pause-clear cave failed at %p", tickMergeInc);
-        }
-    } else {
-        Log("InstallSites: tick merge inc site not found");
-    }
-
     InterlockedExchange(&g_ready, 1);
-    Log("InstallSites: ready patches=%u dispatch=%d freeze=%d",
+    Log("InstallSites: ready patches=%u dispatch=%d freeze=%d (no pause-clear; MP-safe)",
         static_cast<unsigned>(g_patchCount), dispatchCount, freezeCount);
     if (g_enabled) ApplyPatches();
     return true;
@@ -588,6 +753,7 @@ static DWORD WINAPI MonitorThread(LPVOID)
             Sleep(200);
             continue;
         }
+        // Do not mutate pause here — clearing it locally desyncs human MP.
         const uint8_t p = *g_pauseFlag;
         const uint8_t c = *g_chatMode;
         if (p != lastPause || c != lastChat) {

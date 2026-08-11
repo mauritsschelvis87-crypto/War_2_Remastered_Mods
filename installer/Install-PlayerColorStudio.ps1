@@ -58,7 +58,6 @@ try {
         $anyExtra = ($extraRaw -match '"AllyLeaveRedNames"\s*:\s*true') -or
             ($extraRaw -match '"ChatDuringPauseScreen"\s*:\s*true') -or
             ($extraRaw -match '"ChatColoredNames"\s*:\s*true') -or
-            ($extraRaw -match '"PauseColoredNames"\s*:\s*true') -or
             ($extraRaw -match '"DragSelectColorEnabled"\s*:\s*true')
         if ($anyExtra) {
             Start-Process -FilePath $watch -ArgumentList '--install-startup' -WorkingDirectory (Split-Path $watch -Parent) -WindowStyle Hidden
