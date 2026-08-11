@@ -660,12 +660,11 @@ bool InstallSites()
     }
 
     // Key-callback (+0x29): allow when chatMode OR not paused.
-    // Main-tick (+0x67): freeze when chatMode OR paused.
-    // IMPORTANT (human MP): do NOT clear the shared pause byte — that desyncs the
-    // host vs guest and can make the other account drop. Input patches above must
-    // allow Message: while pause stays set for net sync.
+    // Main-tick (+0x67): leave the ORIGINAL pause-only freeze alone.
+    // (Older builds froze on chatMode too so sim stayed paused after clearing
+    // the pause byte. We no longer clear pause — freezing on Message: alone
+    // desyncs human MP: Enter → chat open → tick skip → guest drops.)
     int dispatchCount = 0;
-    int freezeCount = 0;
     for (size_t i = 0; i + 9 <= imageSize; ++i) {
         uint8_t* p = base + i;
         if (p[0] != 0x80 || p[1] != 0x3D || p[7] != 0x75) continue;
@@ -674,16 +673,7 @@ bool InstallSites()
 
         const uint8_t rel = p[8];
         if (rel == 0x67) {
-            if (freezeCount >= 2) continue;
-            uint8_t* used = nullptr;
-            if (!BuildTickFreezeCave(p, caveCursor, caveLeft, &used)) {
-                Log("InstallSites: tick-freeze failed at %p", p);
-                continue;
-            }
-            caveLeft -= static_cast<size_t>(used - caveCursor);
-            caveCursor = used;
-            ++freezeCount;
-            Log("InstallSites: tick-freeze site=%p", p);
+            // Keep vanilla: skip tick only while pause flag is set.
             continue;
         }
         if (rel != 0x29 || dispatchCount >= 2) continue;
@@ -711,14 +701,10 @@ bool InstallSites()
         Log("InstallSites: no key-callback dispatch sites");
         return false;
     }
-    if (freezeCount < 1) {
-        Log("InstallSites: no tick-freeze sites");
-        return false;
-    }
 
     InterlockedExchange(&g_ready, 1);
-    Log("InstallSites: ready patches=%u dispatch=%d freeze=%d (no pause-clear; MP-safe)",
-        static_cast<unsigned>(g_patchCount), dispatchCount, freezeCount);
+    Log("InstallSites: ready patches=%u dispatch=%d (no tick-freeze; no pause-clear; MP-safe)",
+        static_cast<unsigned>(g_patchCount), dispatchCount);
     if (g_enabled) ApplyPatches();
     return true;
 }

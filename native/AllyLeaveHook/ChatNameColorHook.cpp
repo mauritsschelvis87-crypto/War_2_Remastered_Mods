@@ -21,6 +21,7 @@ constexpr uint32_t kPreferredImageBase = 0x00400000;
 constexpr uint32_t kPreferredName0 = 0x0091ADA8;
 constexpr uint32_t kPreferredDrawColored = 0x005AEEB0;
 constexpr uint32_t kPreferredDrawImpl = 0x005AED00; // called only by 0x5AEEB0 (not 0x5AEE20)
+constexpr uint32_t kPreferredPushMapMsg = 0x00614A90;
 constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
 
 using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
@@ -36,6 +37,21 @@ void* g_trampoline = nullptr;
 DrawColoredFn g_originalDraw = nullptr;
 char* g_playerName0 = nullptr;
 uint8_t* g_localPlayer = nullptr; // VA 0x918CCD (+ slide)
+
+uint8_t* g_ownerSite = nullptr;
+uint8_t g_ownerOrig[16]{};
+size_t g_ownerOrigLen = 0;
+void* g_ownerCave = nullptr;
+
+constexpr size_t kOwnerRing = 24;
+constexpr size_t kOwnerTextMax = 180;
+struct ChatOwnerEntry {
+    char text[kOwnerTextMax]{};
+    int player = -1;
+    DWORD tick = 0;
+};
+ChatOwnerEntry g_owners[kOwnerRing]{};
+volatile LONG g_ownerWrite = 0;
 
 uint32_t g_colors[8]{};
 char g_logPath[MAX_PATH]{};
@@ -228,6 +244,41 @@ int ReadLocalPlayerIndex()
     }
 }
 
+void RememberChatOwner(const char* text, int player)
+{
+    if (!text || !text[0] || player < 0 || player > 7) return;
+    const LONG idx = InterlockedIncrement(&g_ownerWrite) - 1;
+    ChatOwnerEntry& e = g_owners[static_cast<size_t>(idx) % kOwnerRing];
+    strncpy_s(e.text, text, _TRUNCATE);
+    e.player = player;
+    e.tick = GetTickCount();
+}
+
+// cdecl helper invoked from the compose cave: (text, player)
+extern "C" void __cdecl ChatNameColor_RememberOwner(const char* text, uint32_t player)
+{
+    RememberChatOwner(text, static_cast<int>(player));
+    if (text && text[0])
+        Log("owner-remember p=%u text=%.60s", player, text);
+}
+
+int LookupChatOwner(const char* text)
+{
+    if (!text || !text[0]) return -1;
+    int best = -1;
+    DWORD bestTick = 0;
+    for (size_t i = 0; i < kOwnerRing; ++i) {
+        const ChatOwnerEntry& e = g_owners[i];
+        if (e.player < 0 || e.player > 7 || !e.text[0]) continue;
+        if (strcmp(e.text, text) != 0) continue;
+        if (e.tick >= bestTick) {
+            bestTick = e.tick;
+            best = e.player;
+        }
+    }
+    return best;
+}
+
 int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut)
 {
     if (channelLenOut) *channelLenOut = 0;
@@ -271,35 +322,36 @@ int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut
     if (channelLenOut) *channelLenOut = static_cast<size_t>(nameStart - text);
     if (nameEndOut) *nameEndOut = static_cast<size_t>(colon - text) + 1;
 
-    // Prefer the local player slot when the chat name matches — avoids painting
-    // your own lines with another slot's color if the name table is messy.
-    const int local = ReadLocalPlayerIndex();
-    if (local >= 0) {
-        const char* slot = PlayerName(local);
-        __try {
-            if (slot && slot[0] && NameEquals(nameStart, nameLen, slot))
-                return local;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-        }
-    }
+    // Prefer sender slot remembered at compose (handles duplicate Battle.net names).
+    const int fromMsg = LookupChatOwner(text);
+    if (fromMsg >= 0) return fromMsg;
 
-    int found = -1;
+    int matches[8]{};
+    int matchCount = 0;
     size_t foundLen = 0;
+    int longest = -1;
     for (int i = 0; i < 8; ++i) {
         const char* slot = PlayerName(i);
         if (!slot) continue;
         __try {
             if (!slot[0] || !NameEquals(nameStart, nameLen, slot)) continue;
+            matches[matchCount++] = i;
             size_t slotLen = 0;
             while (slot[slotLen] && slotLen < 64) ++slotLen;
             if (slotLen > foundLen) {
                 foundLen = slotLen;
-                found = i;
+                longest = i;
             }
         } __except (EXCEPTION_EXECUTE_HANDLER) {
         }
     }
-    return found;
+    if (matchCount == 1) return matches[0];
+    if (matchCount == 0) return -1;
+
+    // Duplicate in-game names (e.g. two "Avent"): do NOT prefer local — that
+    // painted every line in your color. Without a map-msg stamp we cannot tell.
+    (void)longest;
+    return -1;
 }
 
 void NotifyAllyLeaveByName(const char* name)
@@ -531,6 +583,90 @@ uint8_t* FindDrawTextColored(uint8_t* base, size_t imageSize)
     return nullptr;
 }
 
+bool InstallChatOwnerHook(uint8_t* base, size_t imageSize)
+{
+    // Chat compose (~4D33B6): push esi; push 0; push eax; call PushMapMsg
+    // Before that push, remember (text=eax, player=[ebp+0x0C]) so draw can
+    // color by slot when two humans share the same display name.
+    const uint8_t* pushTarget = base + (kPreferredPushMapMsg - kPreferredImageBase);
+    uint8_t* site = nullptr;
+    for (size_t i = 0; i + 10 <= imageSize; ++i) {
+        uint8_t* p = base + i;
+        if (!IsLikelyCode(p, 10)) continue;
+        if (p[0] != 0x56 || p[1] != 0x6A || p[2] != 0x00 || p[3] != 0x50 || p[4] != 0xE8)
+            continue;
+        const int32_t rel = *reinterpret_cast<int32_t*>(p + 5);
+        const uint8_t* target = (p + 4) + 5 + rel;
+        if (target == pushTarget) {
+            site = p;
+            break;
+        }
+    }
+    if (!site) {
+        Log("Install: chat-owner site (push→PushMapMsg) not found");
+        return false;
+    }
+
+    void* caveMem = VirtualAlloc(nullptr, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!caveMem) return false;
+    auto* cave = static_cast<uint8_t*>(caveMem);
+    size_t o = 0;
+
+    // Preserve eax (text) and esi (duration); call Remember(text, player).
+    // push eax
+    cave[o++] = 0x50;
+    // movzx ecx, byte [ebp+0x0C]
+    cave[o++] = 0x0F; cave[o++] = 0xB6; cave[o++] = 0x4D; cave[o++] = 0x0C;
+    // push ecx
+    cave[o++] = 0x51;
+    // push eax  (text)
+    cave[o++] = 0x50;
+    // call ChatNameColor_RememberOwner
+    cave[o++] = 0xE8;
+    *reinterpret_cast<int32_t*>(cave + o) =
+        static_cast<int32_t>(reinterpret_cast<uint8_t*>(&ChatNameColor_RememberOwner) - (cave + o + 4));
+    o += 4;
+    // add esp, 8
+    cave[o++] = 0x83; cave[o++] = 0xC4; cave[o++] = 0x08;
+    // pop eax  (restore text)
+    cave[o++] = 0x58;
+
+    // Original: push esi; push 0; push eax; call PushMapMsg
+    cave[o++] = 0x56;
+    cave[o++] = 0x6A; cave[o++] = 0x00;
+    cave[o++] = 0x50;
+    cave[o++] = 0xE8;
+    *reinterpret_cast<int32_t*>(cave + o) =
+        static_cast<int32_t>(pushTarget - (cave + o + 4));
+    o += 4;
+
+    // jmp site+10
+    cave[o++] = 0xE9;
+    *reinterpret_cast<int32_t*>(cave + o) =
+        static_cast<int32_t>((site + 10) - (cave + o + 4));
+    o += 4;
+
+    g_ownerOrigLen = 10;
+    memcpy(g_ownerOrig, site, g_ownerOrigLen);
+
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(site, g_ownerOrigLen, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        VirtualFree(caveMem, 0, MEM_RELEASE);
+        return false;
+    }
+    site[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(site + 1) =
+        static_cast<int32_t>(cave - (site + 5));
+    for (size_t i = 5; i < g_ownerOrigLen; ++i) site[i] = 0x90;
+    VirtualProtect(site, g_ownerOrigLen, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), site, g_ownerOrigLen);
+
+    g_ownerSite = site;
+    g_ownerCave = caveMem;
+    Log("Install: chat-owner site=%p cave=%p", site, caveMem);
+    return true;
+}
+
 bool InstallDrawColoredHook(uint8_t* base, size_t imageSize)
 {
     uint8_t* site = FindDrawTextColored(base, imageSize);
@@ -571,11 +707,28 @@ bool InstallHook()
     auto* base = reinterpret_cast<uint8_t*>(game);
     const size_t imageSize = nt->OptionalHeader.SizeOfImage;
     LoadColorsFromJson();
-    return InstallDrawColoredHook(base, imageSize);
+    if (!InstallDrawColoredHook(base, imageSize)) return false;
+    if (!InstallChatOwnerHook(base, imageSize))
+        Log("InstallHook: continuing without chat-owner hook (duplicate names may share color)");
+    return true;
 }
 
 void RemoveHook()
 {
+    if (g_ownerSite && g_ownerOrigLen) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_ownerSite, g_ownerOrigLen, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_ownerSite, g_ownerOrig, g_ownerOrigLen);
+            VirtualProtect(g_ownerSite, g_ownerOrigLen, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_ownerSite, g_ownerOrigLen);
+        }
+        g_ownerSite = nullptr;
+        g_ownerOrigLen = 0;
+    }
+    if (g_ownerCave) {
+        VirtualFree(g_ownerCave, 0, MEM_RELEASE);
+        g_ownerCave = nullptr;
+    }
     if (g_drawSite && g_originalPrologue[0]) {
         DWORD oldProtect = 0;
         if (VirtualProtect(g_drawSite, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
