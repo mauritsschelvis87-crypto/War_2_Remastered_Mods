@@ -233,6 +233,19 @@ bool StartsWithIgnoreCase(const char* text, const char* prefix)
     return true;
 }
 
+bool EndsWithIgnoreCase(const char* text, size_t textLen, const char* suffix)
+{
+    const size_t sufLen = strlen(suffix);
+    if (!text || textLen < sufLen) return false;
+    const char* p = text + (textLen - sufLen);
+    for (size_t i = 0; i < sufLen; ++i) {
+        const char ca = (p[i] >= 'A' && p[i] <= 'Z') ? static_cast<char>(p[i] - 'A' + 'a') : p[i];
+        const char cb = (suffix[i] >= 'A' && suffix[i] <= 'Z') ? static_cast<char>(suffix[i] - 'A' + 'a') : suffix[i];
+        if (ca != cb) return false;
+    }
+    return true;
+}
+
 int ReadLocalPlayerIndex()
 {
     if (!g_localPlayer) return -1;
@@ -354,23 +367,37 @@ int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut
     return -1;
 }
 
+FARPROC ResolveAllyExport(const char* exportName)
+{
+    HMODULE ally = GetModuleHandleW(L"AllyLeaveHook.dll");
+    if (!ally) {
+        Log("ally-notify: AllyLeaveHook.dll not loaded");
+        return nullptr;
+    }
+    FARPROC fn = GetProcAddress(ally, exportName);
+    if (!fn) {
+        // x86 stdcall exports are decorated: _Name@4
+        char decorated[128]{};
+        sprintf_s(decorated, "_%s@4", exportName);
+        fn = GetProcAddress(ally, decorated);
+    }
+    if (!fn) Log("ally-notify: export %s not found", exportName);
+    return fn;
+}
+
 void NotifyAllyLeaveByName(const char* name)
 {
     if (!name || !name[0]) return;
-    HMODULE ally = GetModuleHandleW(L"AllyLeaveHook.dll");
-    if (!ally) return;
     auto fn = reinterpret_cast<MarkGoneByNameFn>(
-        GetProcAddress(ally, "AllyLeave_MarkGoneByName"));
+        ResolveAllyExport("AllyLeave_MarkGoneByName"));
     if (fn) fn(name);
 }
 
 void NotifyAllyLeaveByIndex(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
-    HMODULE ally = GetModuleHandleW(L"AllyLeaveHook.dll");
-    if (!ally) return;
     auto fn = reinterpret_cast<MarkGoneFn>(
-        GetProcAddress(ally, "AllyLeave_MarkGone"));
+        ResolveAllyExport("AllyLeave_MarkGone"));
     if (fn) fn(playerIndex);
 }
 
@@ -397,6 +424,29 @@ void TryMarkLeaveFromChatText(const char* text)
         }
         if (hit) break;
     }
+
+    // Remastered system lines are short and colon-free: "Avent Left",
+    // "Avent Dropped", "Avent Was Eliminated". Typed chat is always
+    // "Name: msg", so requiring no colon avoids matching player text. The
+    // extracted name must still equal a known player slot before any mark.
+    if (!hit && !strchr(start, ':')) {
+        size_t len = strlen(start);
+        while (len > 0 && (start[len - 1] == ' ' || start[len - 1] == '\t')) --len;
+        static const char* kEndSuffixes[] = {
+            " left",
+            " was dropped",
+            " dropped",
+            " was eliminated",
+            " eliminated",
+            nullptr
+        };
+        for (int s = 0; kEndSuffixes[s]; ++s) {
+            if (EndsWithIgnoreCase(start, len, kEndSuffixes[s])) {
+                hit = start + (len - strlen(kEndSuffixes[s]));
+                break;
+            }
+        }
+    }
     if (!hit) return;
 
     const char* nameStart = start;
@@ -413,14 +463,22 @@ void TryMarkLeaveFromChatText(const char* text)
     while (n > 0 && (name[n - 1] == ' ' || name[n - 1] == '\t')) name[--n] = 0;
     if (n == 0) return;
 
-    Log("leave-chat name='%s' text=%.80s", name, text);
-    NotifyAllyLeaveByName(name);
+    // The system line redraws every frame while visible — notify once per name.
+    static char s_lastName[80]{};
+    static DWORD s_lastTick = 0;
+    const DWORD now = GetTickCount();
+    if (_stricmp(name, s_lastName) == 0 && (now - s_lastTick) < 5000) {
+        s_lastTick = now;
+        return;
+    }
+    strcpy_s(s_lastName, name);
+    s_lastTick = now;
 
-    size_t dummyCh = 0, dummyEnd = 0;
-    char fake[96]{};
-    sprintf_s(fake, "%s: x", name);
-    const int idx = MatchPlayerIndex(fake, &dummyCh, &dummyEnd);
-    if (idx >= 0) NotifyAllyLeaveByIndex(idx);
+    Log("leave-chat name='%s' text=%.80s", name, text);
+    // Name-only notify: the ally hook maps it onto the alliances row (or
+    // queues it until F11 binds the name). The 0x91ADA8 table used by
+    // MatchPlayerIndex is join-ordered and marked the wrong seat.
+    NotifyAllyLeaveByName(name);
 }
 
 void LogPlayerNames()
