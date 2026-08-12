@@ -37,6 +37,7 @@ void* g_trampoline = nullptr;
 DrawColoredFn g_originalDraw = nullptr;
 char* g_playerName0 = nullptr;
 uint8_t* g_localPlayer = nullptr; // VA 0x918CCD (+ slide)
+uint8_t* g_seatColors = nullptr;  // VA 0x919390 (+ slide): seat -> chosen color slot
 
 uint8_t* g_ownerSite = nullptr;
 uint8_t g_ownerOrig[16]{};
@@ -257,6 +258,31 @@ int ReadLocalPlayerIndex()
     }
 }
 
+// Seat -> lobby-chosen color slot. The name table, alliances rows, and owner
+// stamps are all SEAT-indexed, but in multiplayer a player's color is picked
+// in the lobby and can differ from the seat. The game translates through a
+// byte table at 0x919390 before indexing the HD tint table (see the helper
+// at 0x50E180: movzx eax,[eax+0x919390]; shl eax,4; add eax,0x8C9640) —
+// chat must translate the same way or names get the seat's color.
+int SeatToColorSlot(int seat)
+{
+    if (seat < 0 || seat > 7 || !g_seatColors) return seat;
+    __try {
+        // The table lives in BSS: all-zero until a match is set up. An
+        // all-zero read means "no mapping yet" — every seat would turn
+        // color 0 (red) otherwise. Fall back to identity then.
+        bool anySet = false;
+        for (int i = 0; i < 8; ++i) {
+            if (g_seatColors[i] != 0) { anySet = true; break; }
+        }
+        if (!anySet) return seat;
+        const int c = static_cast<int>(g_seatColors[seat]);
+        return (c >= 0 && c <= 7) ? c : seat;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return seat;
+    }
+}
+
 void RememberChatOwner(const char* text, int player)
 {
     if (!text || !text[0] || player < 0 || player > 7) return;
@@ -294,9 +320,10 @@ int LookupChatOwner(const char* text)
 
 FARPROC ResolveAllyExport(const char* exportName);
 
-// Ask AllyLeaveHook for the alliances-row of this name. Those rows are
-// engine player-index ordered — the exact order the game's colors use —
-// unlike the join-ordered 0x91ADA8 table below.
+// Ask AllyLeaveHook for the alliances-row of this name. Rows are SEAT
+// indexed, same as the 0x91ADA8 name table — a secondary name source for
+// when one of the two is not (yet) populated. The seat is translated to
+// the player's chosen color afterwards via SeatToColorSlot.
 int AllyRowByName(const char* name, size_t len)
 {
     if (!name || len == 0 || len >= 80) return -1;
@@ -595,7 +622,8 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     // Always use a neutral body — the game's passed chat color is often wrong
     // for this path (e.g. purple) and made the whole line look off.
     const uint32_t bodyColor = kBodyColor;
-    const uint32_t nameColor = g_colors[player];
+    const int colorSlot = SeatToColorSlot(player);
+    const uint32_t nameColor = g_colors[colorSlot];
 
     // 1) Full line in body color.
     g_originalDraw(ui, text, bodyColor);
@@ -617,8 +645,8 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
 
     InterlockedIncrement(&g_recolors);
     if (hits <= 40 || (hits % 50) == 0) {
-        Log("recolor-name p=%d local=%d ch=%u end=%u name=%08X game=%08X text=%.60s",
-            player, ReadLocalPlayerIndex(), (unsigned)channelLen, (unsigned)nameEnd,
+        Log("recolor-name p=%d c=%d local=%d ch=%u end=%u name=%08X game=%08X text=%.60s",
+            player, colorSlot, ReadLocalPlayerIndex(), (unsigned)channelLen, (unsigned)nameEnd,
             nameColor, color, text);
         static LONG s_nameDump = 0;
         if (InterlockedIncrement(&s_nameDump) <= 3)
@@ -777,8 +805,9 @@ bool InstallDrawColoredHook(uint8_t* base, size_t imageSize)
     g_drawSite = site;
     g_playerName0 = reinterpret_cast<char*>(base + (kPreferredName0 - kPreferredImageBase));
     g_localPlayer = base + (0x00918CCD - kPreferredImageBase);
-    Log("Install: ok drawColored=%p tramp=%p names=%p local=%p (chat path)",
-        site, g_originalDraw, g_playerName0, g_localPlayer);
+    g_seatColors = base + (0x00919390 - kPreferredImageBase);
+    Log("Install: ok drawColored=%p tramp=%p names=%p local=%p seatColors=%p (chat path)",
+        site, g_originalDraw, g_playerName0, g_localPlayer, g_seatColors);
     return true;
 }
 

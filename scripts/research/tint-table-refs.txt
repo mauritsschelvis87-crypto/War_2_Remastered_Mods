@@ -1,0 +1,94 @@
+tint table at VA 0x008C9640 in section .data
+3 immediate refs
+
+--- ref at VA~0x0050E192 (table+0) ---
+  0x0050E162  ret 0x10
+  0x0050E165  call 0x49d820
+  0x0050E16A  call 0x496510
+  0x0050E16F  call 0x7fa651
+  0x0050E174  int3 
+  0x0050E175  int3 
+  0x0050E176  int3 
+  0x0050E177  int3 
+  0x0050E178  int3 
+  0x0050E179  int3 
+  0x0050E17A  int3 
+  0x0050E17B  int3 
+  0x0050E17C  int3 
+  0x0050E17D  int3 
+  0x0050E17E  int3 
+  0x0050E17F  int3 
+  0x0050E180  push ebp
+  0x0050E181  mov ebp, esp
+  0x0050E183  movzx eax, byte ptr [ebp + 0xc]
+  0x0050E187  movzx eax, byte ptr [eax + 0x919390]
+  0x0050E18E  shl eax, 4
+  0x0050E191  add eax, 0x8c9640 <==
+  0x0050E196  movups xmm0, xmmword ptr [eax]
+  0x0050E199  mov eax, dword ptr [ebp + 8]
+  0x0050E19C  movups xmmword ptr [eax], xmm0
+  0x0050E19F  pop ebp
+  0x0050E1A0  ret 
+  0x0050E1A1  int3 
+  0x0050E1A2  int3 
+  0x0050E1A3  int3 
+  0x0050E1A4  int3 
+  0x0050E1A5  int3 
+  0x0050E1A6  int3 
+  0x0050E1A7  int3 
+  0x0050E1A8  int3 
+  0x0050E1A9  int3 
+  0x0050E1AA  int3 
+  0x0050E1AB  int3 
+  0x0050E1AC  int3 
+  0x0050E1AD  int3 
+  0x0050E1AE  int3 
+  0x0050E1AF  int3 
+  0x0050E1B0  push ebp
+  0x0050E1B1  mov ebp, esp
+  0x0050E1B3  sub esp, 0x28
+  0x0050E1B6  mov eax, dword ptr [0x90d6c0]
+  0x0050E1BB  xor eax, ebp
+  0x0050E1BD  mov dword ptr [ebp - 4], eax
+
+--- ref at VA~0x00514539 (table+0) ---
+  0x00514509  mov eax, dword ptr [0x939df0]
+  0x0051450E  mov dword ptr [ebp - 0x31c], eax
+  0x00514514  lea eax, [esi + 0x1c]
+  0x00514517  mov dword ptr [ebp - 0x314], eax
+  0x0051451D  mov eax, dword ptr [eax]
+  0x0051451F  mov dword ptr [ebp - 0x310], eax
+  0x00514525  je 0x514550
+  0x00514527  movzx eax, byte ptr [esi + 0x18]
+  0x0051452B  mov ecx, dword ptr [edi + 0x20]
+  0x0051452E  movzx eax, byte ptr [eax + 0x919390]
+  0x00514535  shl eax, 4
+  0x00514538  add eax, 0x8c9640 <==
+  0x0051453D  mov dword ptr [ebp - 0x2ec], eax
+  0x00514543  call 0x617320
+  0x00514548  mov dword ptr [ebp - 0x2f4], eax
+  0x0051454E  jmp 0x51456a
+  0x00514550  mov dword ptr [ebp - 0x2ec], 0x9b25b4
+  0x0051455A  mov dword ptr [ebp - 0x2f4], 0
+
+--- ref at VA~0x00514E44 (table+0) ---
+  0x00514E14  add byte ptr [eax], al
+  0x00514E16  mov byte ptr [ebp - 0xd0], 0
+  0x00514E1D  mov ecx, dword ptr [ebp - 0x314]
+  0x00514E23  mov eax, dword ptr [0x939df0]
+  0x00514E28  mov dword ptr [ebp - 0x308], eax
+  0x00514E2E  cmp edi, ecx
+  0x00514E30  je 0x514e50
+  0x00514E32  movzx eax, byte ptr [0x8c95c0]
+  0x00514E39  movzx eax, byte ptr [eax + 0x919390]
+  0x00514E40  shl eax, 4
+  0x00514E43  add eax, 0x8c9640 <==
+  0x00514E48  mov dword ptr [ebp - 0x2e0], eax
+  0x00514E4E  jmp 0x514e5a
+  0x00514E50  mov dword ptr [ebp - 0x2e0], 0x9b25b4
+  0x00514E5A  cmp edi, ecx
+  0x00514E5C  je 0x514e6e
+  0x00514E5E  mov ecx, dword ptr [edi + 0x20]
+  0x00514E61  call 0x617320
+  0x00514E66  mov dword ptr [ebp - 0x2ec], eax
+  0x00514E6C  jmp 0x514e78
