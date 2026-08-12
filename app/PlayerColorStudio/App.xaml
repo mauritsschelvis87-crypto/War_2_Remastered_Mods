@@ -353,13 +353,32 @@
                                               VerticalAlignment="Center"
                                               Focusable="False"
                                               IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                              Background="Transparent"
-                                              BorderThickness="0"
                                               Cursor="Hand"
-                                              ToolTip="Show or hide what this color changes">
+                                              ToolTip="Show or hide the extra explanation">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Grid>
+                                                <Ellipse x:Name="Halo"
+                                                         Fill="#FF3A5078"
+                                                         Stroke="#FF4A6388"
+                                                         StrokeThickness="1"/>
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Halo" Property="Fill" Value="#FF46618C"/>
+                                                    <Setter TargetName="Halo" Property="Stroke" Value="#FF4E9DFF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="Halo" Property="Fill" Value="#FF52719F"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
                                     <Path x:Name="Arrow"
                                           Data="M 0,0 L 6,6 L 12,0"
-                                          Stroke="#FFB8C4D8"
+                                          Stroke="{StaticResource AccentBrush}"
                                           StrokeThickness="1.8"
                                           StrokeStartLineCap="Round"
                                           StrokeEndLineCap="Round"

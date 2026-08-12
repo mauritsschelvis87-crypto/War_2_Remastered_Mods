@@ -25,7 +25,9 @@ struct ExtraFlags {
     // Human gone marks need the chat hook injected too: it watches the
     // "<name> Left / Dropped / Eliminated" system lines (recolor stays off).
     bool humanLeave = false;
-    bool Any() const { return allyLeave || pauseChat || dragSelect || chatNameColor; }
+    // Live recolor of HD unit sprites to the Studio player colors.
+    bool unitColor = false;
+    bool Any() const { return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor; }
     bool ChatDllWanted() const { return chatNameColor || humanLeave; }
 };
 
@@ -91,6 +93,7 @@ ExtraFlags ReadExtraFlags()
     flags.pauseChat = ReadJsonBool(buf, "ChatDuringPauseScreen");
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
     flags.chatNameColor = ReadJsonBool(buf, "ChatColoredNames");
+    flags.unitColor = ReadJsonBool(buf, "UnitSpriteColors");
     return flags;
 }
 
@@ -176,6 +179,7 @@ void WatchLoop(HANDLE quitEvent)
     DWORD pauseInjectedPid = 0;
     DWORD dragInjectedPid = 0;
     DWORD chatNameInjectedPid = 0;
+    DWORD unitColorInjectedPid = 0;
     ExtraFlags last = ReadExtraFlags();
     SetStartup(last.Any());
 
@@ -189,7 +193,7 @@ void WatchLoop(HANDLE quitEvent)
 
         if (flags.allyLeave != last.allyLeave || flags.pauseChat != last.pauseChat ||
             flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
-            flags.humanLeave != last.humanLeave) {
+            flags.humanLeave != last.humanLeave || flags.unitColor != last.unitColor) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);
@@ -205,6 +209,10 @@ void WatchLoop(HANDLE quitEvent)
             }
             if (!flags.chatNameColor && pid != 0) {
                 RunInjector(L"InjectChatNameColor.exe", false);
+            }
+            if (!flags.unitColor && pid != 0) {
+                RunInjector(L"InjectUnitColor.exe", false);
+                unitColorInjectedPid = 0;
             }
             // Re-sync the chat DLL enable state on the next tick.
             chatNameInjectedPid = 0;
@@ -226,11 +234,15 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.ChatDllWanted() && pid != 0 && pid != chatNameInjectedPid) {
             if (RunInjector(L"InjectChatNameColor.exe", flags.chatNameColor)) chatNameInjectedPid = pid;
         }
+        if (flags.unitColor && pid != 0 && pid != unitColorInjectedPid) {
+            if (RunInjector(L"InjectUnitColor.exe", true)) unitColorInjectedPid = pid;
+        }
         if (pid == 0) {
             allyInjectedPid = 0;
             pauseInjectedPid = 0;
             dragInjectedPid = 0;
             chatNameInjectedPid = 0;
+            unitColorInjectedPid = 0;
         }
 
         if (quitEvent) {

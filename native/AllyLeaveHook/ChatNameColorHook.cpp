@@ -292,6 +292,34 @@ int LookupChatOwner(const char* text)
     return best;
 }
 
+FARPROC ResolveAllyExport(const char* exportName);
+
+// Ask AllyLeaveHook for the alliances-row of this name. Those rows are
+// engine player-index ordered — the exact order the game's colors use —
+// unlike the join-ordered 0x91ADA8 table below.
+int AllyRowByName(const char* name, size_t len)
+{
+    if (!name || len == 0 || len >= 80) return -1;
+    using FindRowFn = int(__stdcall*)(const char*);
+    static FindRowFn s_fn = nullptr;
+    static DWORD s_nextTry = 0;
+    if (!s_fn) {
+        const DWORD now = GetTickCount();
+        if (now < s_nextTry) return -1;
+        s_nextTry = now + 3000; // ally DLL may not be loaded; don't retry every frame
+        s_fn = reinterpret_cast<FindRowFn>(ResolveAllyExport("AllyLeave_FindRowByName"));
+        if (!s_fn) return -1;
+    }
+    char buf[80]{};
+    memcpy(buf, name, len);
+    buf[len] = 0;
+    __try {
+        return s_fn(buf);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
+
 int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut)
 {
     if (channelLenOut) *channelLenOut = 0;
@@ -335,7 +363,13 @@ int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut
     if (channelLenOut) *channelLenOut = static_cast<size_t>(nameStart - text);
     if (nameEndOut) *nameEndOut = static_cast<size_t>(colon - text) + 1;
 
+    // Color-ordered source first: the alliances rows tracked by AllyLeaveHook.
+    const int fromRows = AllyRowByName(nameStart, nameLen);
+    if (fromRows >= 0) return fromRows;
+
     // Prefer sender slot remembered at compose (handles duplicate Battle.net names).
+    // NOTE: compose slots and the table below are join-ordered — colors can be
+    // wrong in shuffled lobbies until the alliances rows have been painted once.
     const int fromMsg = LookupChatOwner(text);
     if (fromMsg >= 0) return fromMsg;
 

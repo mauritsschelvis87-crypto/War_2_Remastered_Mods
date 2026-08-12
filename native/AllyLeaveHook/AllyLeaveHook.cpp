@@ -1881,6 +1881,19 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGone(int playerInd
     MarkGoneUi(playerIndex, "export");
 }
 
+// Name → alliances-row (= engine player index = color slot). The chat hook
+// uses this to color sender names: the 0x91ADA8 name table is join-ordered
+// and painted the wrong colors in shuffled lobbies.
+extern "C" __declspec(dllexport) int __stdcall AllyLeave_FindRowByName(const char* name)
+{
+    if (!name || !name[0]) return -1;
+    for (int i = 0; i < 8; ++i) {
+        if (!g_lastName[i][0]) continue;
+        if (_stricmp(g_lastName[i], name) == 0) return i;
+    }
+    return -1;
+}
+
 extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const char* name)
 {
     if (!name || !name[0]) return;

@@ -38,6 +38,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedChatDuringPauseScreen;
     private bool _chatColoredNames;
     private bool _appliedChatColoredNames;
+    private bool _unitSpriteColors;
+    private bool _appliedUnitSpriteColors;
     private bool _appliedDragSelectColorEnabled;
     private bool _hookInjectedForRunningGame;
     private bool _pauseChatInjectedForRunningGame;
@@ -121,6 +123,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _isApplying = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsApplyEnabled));
+            OnPropertyChanged(nameof(IsMapsOpenEnabled));
             // Restart indeterminate animation when Apply/Restore begins.
             if (value && ApplyProgressBar is not null)
             {
@@ -145,6 +148,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_gameInstallPath == next) return;
             _gameInstallPath = next;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(GameInstallPathBorderBrush));
             SavePathSettings();
             RefreshTabStatus();
         }
@@ -159,10 +163,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_mapEditorPath == next) return;
             _mapEditorPath = next;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(MapEditorPathBorderBrush));
             SavePathSettings();
             RefreshTabStatus();
         }
     }
+
+    public System.Windows.Media.Brush GameInstallPathBorderBrush =>
+        IsValidGameRoot(NormalizeGameRoot(GameInstallPath)) ? DefaultPathBorderBrush : PendingIconBrush;
+
+    public System.Windows.Media.Brush MapEditorPathBorderBrush =>
+        IsValidMapEditorPath(MapEditorPath) ? DefaultPathBorderBrush : PendingIconBrush;
 
     public string MapsPath
     {
@@ -173,10 +184,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_mapsPath == next) return;
             _mapsPath = next;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsMapsOpenEnabled));
+            OnPropertyChanged(nameof(MapsPathBorderBrush));
             SavePathSettings();
             RefreshTabStatus();
         }
     }
+
+    // Maps folder must actually contain .pud files (nested counts) before the
+    // Open button works; an invalid path also gets the red error border.
+    public bool IsMapsOpenEnabled => IsApplyEnabled && IsValidMapsPath(MapsPath);
+
+    public System.Windows.Media.Brush MapsPathBorderBrush =>
+        IsValidMapsPath(MapsPath) ? DefaultPathBorderBrush : PendingIconBrush;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -343,6 +363,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         || HasManualAppliedUtilColors();
 
     private static readonly System.Windows.Media.Brush PendingIconBrush = CreateBrush(0xE5, 0x3E, 0x3E);
+    // Same border color the app-wide TextBox style uses.
+    private static readonly System.Windows.Media.Brush DefaultPathBorderBrush = CreateBrush(0x5A, 0x73, 0x98);
     private static readonly System.Windows.Media.Brush ReadyIconBrush = CreateBrush(0x2E, 0xC8, 0x5A);
     private static readonly System.Windows.Media.Brush PendingButtonBrush = CreateBrush(0xC4, 0x2B, 0x2B);
     private static readonly System.Windows.Media.Brush PendingButtonBorderBrush = CreateBrush(0xE5, 0x5A, 0x5A);
@@ -379,13 +401,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (HasPendingColorChanges())
         {
             return StatusLine("✕", PendingIconBrush,
-                "For the mod \"player colors\" to take effect, please apply first. Please restart Warcraft II for the mods to take effect");
+                "Changes have been made. Press Apply and restart Warcraft II Remastered for the color changes to take effect.");
         }
 
         return HasManualAppliedColors()
             ? StatusLine("✓", ReadyIconBrush,
                 "Manual colors are being used. Please restart Warcraft II Remastered for the mods to take effect.")
-            : StatusLine("✓", ReadyIconBrush, "Using the original Warcraft II colors");
+            : StatusLine("✓", ReadyIconBrush, "Using the original Warcraft II colors.");
     }
 
     private bool HasPendingChangesForActiveTab() => _activeTab switch
@@ -414,7 +436,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else
             {
                 SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                    "Mods have been installed. Restart Warcraft II Remastered to take effect"));
+                    "Mods have been installed. Restart Warcraft II Remastered to take effect."));
             }
             return;
         }
@@ -429,7 +451,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else
             {
                 SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                    "Mods have been installed. Restart Warcraft II Remastered to take effect"));
+                    "Mods have been installed. Restart Warcraft II Remastered to take effect."));
             }
             return;
         }
@@ -472,6 +494,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _gameInstallPath = NormalizeGameRoot(chosen);
         _appliedGameInstallPath = _gameInstallPath;
         OnPropertyChanged(nameof(GameInstallPath));
+        OnPropertyChanged(nameof(GameInstallPathBorderBrush));
 
         // Saved path wins if it is still the real editor; otherwise pick up the
         // standard location the install wizard uses under the game root.
@@ -481,6 +504,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             : (TryFindInstalledMapEditor(_gameInstallPath) ?? DefaultMapEditorPathFor(_gameInstallPath));
         _appliedMapEditorPath = _mapEditorPath;
         OnPropertyChanged(nameof(MapEditorPath));
+        OnPropertyChanged(nameof(MapEditorPathBorderBrush));
 
         // Saved path wins only if it passes the .pud check; otherwise fall back
         // to a detected maps folder from the install.
@@ -490,6 +514,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             : (TryFindInstalledMapsFolder(_gameInstallPath) ?? DefaultMapsPathFor(_gameInstallPath));
         _appliedMapsPath = _mapsPath;
         OnPropertyChanged(nameof(MapsPath));
+        OnPropertyChanged(nameof(IsMapsOpenEnabled));
+        OnPropertyChanged(nameof(MapsPathBorderBrush));
     }
 
     private StudioSettings? TryReadSavedSettings()
@@ -606,7 +632,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         else
         {
-            lines.Add(StatusLine("✓", ReadyIconBrush, $"Using game install: {path}"));
+            lines.Add(StatusLine("✓", ReadyIconBrush, $"Using game install: {path}."));
         }
 
         lines.Add(IsValidMapEditorPath(MapEditorPath)
@@ -761,11 +787,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void OpenMapsFolder_Click(object sender, RoutedEventArgs e)
     {
         var path = NormalizePathText(MapsPath);
-        // Existence is enough to open in Explorer — the .pud check is status-only.
-        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+        if (!IsValidMapsPath(path))
         {
             StudioDialog.Show(this,
-                "Maps folder not found. Browse to your maps folder first.",
+                "Maps folder not found. The path must point to a folder that contains .pud map files.",
                 "Open maps folder", StudioDialogKind.Warning);
             return;
         }
@@ -830,7 +855,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 : (saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color);
             var description = disabled
                 ? "This player color cannot be changed yet because it is shared with other game elements."
-                : "Changes this player's color on the minimap, units/buildings, and the victory/ally bars.";
+                : "Select your player color with 'Choose color...' or by typing a hex code, " +
+                  "or press 'Reset' to set the color back to the vanilla settings.";
             Cards.Add(new ColorCard(vanilla.Player, current, vanilla.Color, !disabled, description: description));
         }
 
@@ -840,12 +866,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             "selectionHighlight", "Self highlight",
             "Changes the glow around your own units and buildings when they are selected, " +
             "the box you drag to select many units at once, and the matching selected dots on the minimap. " +
-            "These always use the same color.",
+            "Select a color with 'Choose color...' or by typing a hex code, " +
+            "or press 'Reset' to set the color back to the vanilla settings.",
             enabled: true));
         OtherCards.Add(MakeOtherCard(
             defaults.CritterHighlight, saved.CritterHighlight, "#A2A2A6",
             "critterHighlight", "Critter minimap",
-            "Changes the minimap color for critters.",
+            "Changes the minimap color for critters. " +
+            "Select a color with 'Choose color...' or by typing a hex code, " +
+            "or press 'Reset' to set the color back to the vanilla settings.",
             enabled: true));
     }
 
@@ -954,6 +983,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ChatColoredNames = chatColoredNames,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
+            UnitSpriteColors = _unitSpriteColors,
         }, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(_extraConfigPath, extraJson);
 
@@ -1017,6 +1047,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var markHumans = false;
         var chatPause = false;
         var chatColored = false;
+        var unitColors = false;
         const bool dragEnabled = false;
 
         if (File.Exists(_extraConfigPath))
@@ -1030,6 +1061,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 markComputers = true;
             chatPause = extra?.ChatDuringPauseScreen ?? false;
             chatColored = extra?.ChatColoredNames ?? false;
+            unitColors = extra?.UnitSpriteColors ?? false;
         }
 
         _allyLeaveMarkComputers = markComputers;
@@ -1040,6 +1072,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedChatDuringPauseScreen = chatPause;
         _chatColoredNames = chatColored;
         _appliedChatColoredNames = chatColored;
+        _unitSpriteColors = unitColors;
+        _appliedUnitSpriteColors = unitColors;
         _appliedDragSelectColorEnabled = dragEnabled;
         OnPropertyChanged(nameof(AllyLeaveMarkComputers));
         OnPropertyChanged(nameof(AllyLeaveMarkHumans));
@@ -1354,6 +1388,51 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(output) ? "Chat-name-color hook updated." : output;
     }
 
+    private string SyncUnitColorHook(bool throwOnError = true)
+    {
+        var injector = Path.Combine(_nativeDir, "InjectUnitColor.exe");
+        var dll = Path.Combine(_nativeDir, "UnitColorHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var missing = "Unit-color hook files are missing. Rebuild mod/native.";
+            if (throwOnError) throw new InvalidOperationException(missing);
+            return missing;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            return _appliedUnitSpriteColors
+                ? "Unit sprite colors ON — watcher auto-injects when Warcraft II starts."
+                : "Unit sprite colors setting saved.";
+        }
+
+        var args = _appliedUnitSpriteColors ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start)
+            ?? throw new InvalidOperationException("Could not start the unit-color injector.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+        {
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Unit-color hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        return string.IsNullOrWhiteSpace(output) ? "Unit-color hook updated." : output;
+    }
+
     private void UpdateDragSelectHookStatus(bool forceInject)
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
@@ -1485,6 +1564,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var markHumans = _appliedAllyLeaveMarkHumans;
                 var chat = _appliedChatDuringPauseScreen;
                 var chatNames = _appliedChatColoredNames;
+                // Unit sprites always follow the installed player colors.
+                _unitSpriteColors = true;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
                 await Task.Run(() =>
                 {
@@ -1497,6 +1578,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 });
                 CaptureAppliedColors();
                 CaptureAppliedUtilColors();
+                _appliedUnitSpriteColors = true;
                 _appliedDragSelectColorEnabled = false;
                 _dragSelectInjectedForRunningGame = false;
                 if (_appliedChatColoredNames)
@@ -1508,6 +1590,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         catch { /* optional while game closed */ }
                     });
                 }
+                // Unit sprite recolor rides along with every colors install: keep
+                // the watcher and hook in sync for now and the next game launch.
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Updating unit colors…"));
+                await Task.Run(() =>
+                {
+                    SyncAllyLeaveWatch();
+                    try { SyncUnitColorHook(throwOnError: false); }
+                    catch { /* optional while game closed */ }
+                });
             }
             else if (_activeTab == "feature")
             {
@@ -1626,6 +1717,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     ChatColoredNames = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
+                    UnitSpriteColors = false,
                 }, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(_extraConfigPath, extraJson);
             });
@@ -1638,6 +1730,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedChatDuringPauseScreen = false;
             _chatColoredNames = false;
             _appliedChatColoredNames = false;
+            _unitSpriteColors = false;
+            _appliedUnitSpriteColors = false;
             _appliedDragSelectColorEnabled = false;
             OnPropertyChanged(nameof(AllyLeaveMarkComputers));
             OnPropertyChanged(nameof(AllyLeaveMarkHumans));
@@ -1671,6 +1765,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncPauseChatHook(throwOnError: false); } catch { /* off */ }
                 try { SyncChatNameColorHook(throwOnError: false); } catch { /* off */ }
                 try { SyncDragSelectHook(throwOnError: false); } catch { /* off */ }
+                try { SyncUnitColorHook(throwOnError: false); } catch { /* off */ }
             });
 
             StudioDialog.Show(this,
@@ -1781,6 +1876,8 @@ public sealed class ExtraFeaturesConfig
     public bool ChatColoredNames { get; set; }
     public bool DragSelectColorEnabled { get; set; }
     public string? DragSelectColor { get; set; }
+    /// <summary>Live-recolor HD unit sprites to the player colors.</summary>
+    public bool UnitSpriteColors { get; set; }
 }
 
 public sealed class StudioSettings
