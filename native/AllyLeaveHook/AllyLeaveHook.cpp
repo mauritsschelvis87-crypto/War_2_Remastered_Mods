@@ -104,6 +104,13 @@ void* g_unitGainedTramp = nullptr;
 void* g_unitLostTramp = nullptr;
 
 volatile LONG g_leftFlags[8]{};
+// Seat left via an explicit game event (leave/drop/announce). Sticky even if
+// the leaver's units stay alive on the map — HasForces must not clear it.
+volatile LONG g_explicitGone[8]{};
+// Names from "<name> Left/Dropped/Eliminated" chat lines waiting for an
+// alliances row: F11 may not have been opened yet when the line appeared.
+char g_pendingGoneNames[8][80]{};
+DWORD g_pendingGoneTick[8]{};
 volatile LONG g_everHadAssets[8]{};
 // Game HasForces once returned >0 for this seat (army truly online).
 volatile LONG g_everHadForces[8]{};
@@ -222,13 +229,11 @@ void LoadMarkModesFromJson()
     }
 
     const bool markComputers = ReadJsonBoolKey(buf, "AllyLeaveMarkComputers");
-    // Human leave feature is a separate path (not ready). Force off so NPC-only
-    // configs never accidentally mark humans via wipe/elim.
-    const bool markHumans = false;
+    const bool markHumans = ReadJsonBoolKey(buf, "AllyLeaveMarkHumans");
     const bool legacy = ReadJsonBoolKey(buf, "AllyLeaveRedNames");
     LONG computers = markComputers ? 1 : 0;
-    LONG humans = 0;
-    if (!computers && legacy) {
+    LONG humans = markHumans ? 1 : 0;
+    if (!computers && !humans && legacy) {
         // Pre-split configs → NPC focus only (not mark-everyone).
         computers = 1;
     }
@@ -324,17 +329,9 @@ bool SourceLooksLikeHumanLeaveOnly(const char* source)
     return _strnicmp(source, "announce", 8) == 0 ||
            _strnicmp(source, "H1", 2) == 0 ||
            _strnicmp(source, "H2", 2) == 0 ||
-           _strnicmp(source, "chat", 4) == 0;
-}
-
-bool SourceLooksLikeNpcWipe(const char* source)
-{
-    // Army wipe / eliminate — NPC path. Not human leave/disconnect.
-    if (!source || !source[0]) return false;
-    return _strnicmp(source, "wipe", 4) == 0 ||
-           _strnicmp(source, "ui", 2) == 0 ||
-           _strnicmp(source, "hasForces", 9) == 0 ||
-           _strnicmp(source, "elim", 4) == 0;
+           _strnicmp(source, "chat", 4) == 0 ||
+           _strnicmp(source, "status3", 7) == 0 ||
+           _strnicmp(source, "defeat", 6) == 0;
 }
 
 // Remaster/PUD computer labels vs Battle.net account names (e.g. "Avent").
@@ -380,7 +377,11 @@ bool IsComputerSlot(int playerIndex)
     return false;
 }
 
-// NPC feature only: never mark account humans. Human leave is a separate mod.
+// Two independent features that also combine:
+//  - NPC feature (markComputers): computer seats, marked by army-wipe/eliminate.
+//  - Human feature (markHumans): human seats, marked by explicit leave/drop/
+//    announce events plus eliminate and army wipe.
+// A seat is judged by its kind, so each feature only ever touches its own kind.
 bool ShouldMarkSlot(int playerIndex, const char* source)
 {
     if (playerIndex < 0 || playerIndex > 7) return false;
@@ -388,8 +389,11 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
     const bool markComputers = InterlockedCompareExchange(&g_markComputers, 0, 0) != 0;
     const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
     if (!markComputers && !markHumans) return false;
+    if (IsLocalPlayer(playerIndex)) return false;
 
-    if (SourceLooksLikeHumanLeaveOnly(source)) {
+    const bool humanLeave = SourceLooksLikeHumanLeaveOnly(source);
+    if (humanLeave) {
+        // Leave/drop packets and chat announces only fire for real players.
         NoteHumanSlot(playerIndex);
     }
 
@@ -405,20 +409,19 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
 
     RefreshSlotKinds();
     const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
-    const bool humanLeave = SourceLooksLikeHumanLeaveOnly(source);
 
-    if (markComputers && !markHumans) {
-        if (IsLocalPlayer(playerIndex) || kind == 0) return false;
-        if (humanLeave) return false;
-        return IsComputerSlot(playerIndex);
+    if (kind == 1 || IsComputerSlot(playerIndex)) {
+        // Computers never "leave" — only army-wipe / eliminate marks them.
+        return markComputers && !humanLeave;
     }
-    if (markHumans && !markComputers) {
-        if (IsComputerSlot(playerIndex)) return false;
-        return humanLeave ||
-               (source && _strnicmp(source, "status3", 7) == 0) ||
-               (source && _strnicmp(source, "elim", 4) == 0);
+    if (!markHumans) return false;
+    if (kind == 0) {
+        // Known human: leave, drop, disconnect, eliminate and army wipe all count.
+        return true;
     }
-    return true;
+    // Unknown seat: only explicit events are safe evidence. Empty seats read
+    // HasForces==0 for the whole match and must never be wipe-marked.
+    return humanLeave || (source && _strnicmp(source, "elim", 4) == 0);
 }
 
 bool IsLikelyCode(const uint8_t* p, size_t n)
@@ -532,10 +535,30 @@ void NoteHasForcesSample(int playerIndex, int hf)
     }
 }
 
+// A single alliances row got a new occupant (name changed) — new match or
+// reshuffled lobby. The old seat's sticky mark must not paint the newcomer.
+void ResetSeatTracking(int i, const char* reason)
+{
+    if (i < 0 || i > 7) return;
+    InterlockedExchange(&g_leftFlags[i], 0);
+    InterlockedExchange(&g_explicitGone[i], 0);
+    InterlockedExchange(&g_everHadAssets[i], 0);
+    InterlockedExchange(&g_everHadForces[i], 0);
+    InterlockedExchange(&g_aliveConfirmed[i], 0);
+    InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_aliveSince[i]), 0);
+    InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0);
+    InterlockedExchange(&g_slotKind[i], -1);
+    static LONG s_seatResetLog = 0;
+    if (InterlockedIncrement(&s_seatResetLog) <= 24) {
+        Log("seat reset p=%d (%s)", i, reason ? reason : "?");
+    }
+}
+
 void ResetWipeTracking(const char* reason)
 {
     for (int i = 0; i < 8; ++i) {
         InterlockedExchange(&g_leftFlags[i], 0);
+        InterlockedExchange(&g_explicitGone[i], 0);
         InterlockedExchange(&g_everHadAssets[i], 0);
         InterlockedExchange(&g_everHadForces[i], 0);
         InterlockedExchange(&g_aliveConfirmed[i], 0);
@@ -545,6 +568,8 @@ void ResetWipeTracking(const char* reason)
         InterlockedExchange(&g_units[i], 0);
         InterlockedExchange(&g_buildings[i], 0);
         InterlockedExchange(&g_slotKind[i], -1);
+        g_pendingGoneNames[i][0] = 0;
+        g_pendingGoneTick[i] = 0;
     }
     // Re-arm lobby classification: controller-based kind latching is gated on
     // !censusDone, so the next lobby must start from a clean census state.
@@ -805,6 +830,12 @@ void ClearGoneUi(int playerIndex)
     if (playerIndex < 0 || playerIndex > 7) return;
     if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 0, 0) == 0) return;
 
+    // A human who left/dropped may leave a live army behind — the game
+    // announced the leave, so the mark stays no matter what HasForces says.
+    if (InterlockedCompareExchange(&g_explicitGone[playerIndex], 0, 0) != 0) {
+        return;
+    }
+
     // Undo false start/spawn wipes: game still says this seat has forces.
     // Real peon-wipe / elim leaves HasForces at 0 → stay sticky.
     const int hf = CallHasForces(playerIndex);
@@ -862,6 +893,11 @@ void MarkGoneUi(int playerIndex, const char* source)
         }
         return;
     }
+    // Explicit leave/drop/announce is sticky — even if the mark itself was
+    // already placed earlier by the wipe path.
+    if (SourceLooksLikeHumanLeaveOnly(source)) {
+        InterlockedExchange(&g_explicitGone[playerIndex], 1);
+    }
     if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 1, 0) != 0) {
         return;
     }
@@ -882,6 +918,43 @@ void MarkGoneUi(int playerIndex, const char* source)
     const DWORD now = GetTickCount();
     if (g_lastSetTextTick != 0 && (now - g_lastSetTextTick) < 2000) {
         ApplyGoneToUi(playerIndex, g_lastUi[playerIndex], g_lastName[playerIndex]);
+    }
+}
+
+void RememberPendingGoneName(const char* name)
+{
+    if (!name || !name[0]) return;
+    const DWORD now = GetTickCount();
+    int freeSlot = -1;
+    for (int i = 0; i < 8; ++i) {
+        if (g_pendingGoneNames[i][0]) {
+            if (_stricmp(g_pendingGoneNames[i], name) == 0) return; // already queued
+        } else if (freeSlot < 0) {
+            freeSlot = i;
+        }
+    }
+    if (freeSlot < 0) freeSlot = 0;
+    strncpy_s(g_pendingGoneNames[freeSlot], name, _TRUNCATE);
+    g_pendingGoneTick[freeSlot] = now ? now : 1;
+    Log("MarkGoneByName: pending '%s' (no alliances row yet)", name);
+}
+
+// Called from the alliances SetText bind: if this row's name was announced
+// gone before F11 was ever opened, mark it now.
+void CheckPendingGoneName(int playerIndex, const char* rawName)
+{
+    if (playerIndex < 0 || playerIndex > 7 || !rawName || !rawName[0]) return;
+    const DWORD now = GetTickCount();
+    for (int i = 0; i < 8; ++i) {
+        if (!g_pendingGoneNames[i][0]) continue;
+        if ((now - g_pendingGoneTick[i]) > 30u * 60u * 1000u) {
+            g_pendingGoneNames[i][0] = 0; // stale — from a long-gone match
+            continue;
+        }
+        if (_stricmp(g_pendingGoneNames[i], rawName) != 0) continue;
+        g_pendingGoneNames[i][0] = 0;
+        MarkGoneUi(playerIndex, "chat-name");
+        return;
     }
 }
 
@@ -914,28 +987,6 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
 
     // UI flag only — never rewrite status/defeat here (desync risk).
     MarkGoneUi(playerIndex, srcBuf);
-}
-
-void PollStatusGoneMarks()
-{
-    if (!g_enabled || !g_statusBase) return;
-    // NPC feature must not use status==3: unused/lobby seats often sit at 3 and
-    // would sticky-mark computers (and misclassified humans) at match start.
-    const bool markComputers = InterlockedCompareExchange(&g_markComputers, 0, 0) != 0;
-    const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
-    if (markComputers && !markHumans) return;
-
-    for (int i = 0; i < 8; ++i) {
-        uint8_t status = 0;
-        __try {
-            status = g_statusBase[i];
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            continue;
-        }
-        if (status == 3 && (g_everHadAssets[i] || g_lastName[i][0])) {
-            MarkGoneUi(i, "status3");
-        }
-    }
 }
 
 void RefreshWipeFromAssets()
@@ -1108,52 +1159,14 @@ void BindStatusBase(uint8_t* statusBase)
     }
 }
 
-bool DefeatFlagMeansGone(uint8_t flag)
-{
-    // Only explicit leave/elim/defeat codes. Other values are uninitialized garbage.
-    return flag == 1 || flag == 2 || flag == 3;
-}
-
-bool HasVisibleName(const char* name)
-{
-    if (!name || !name[0]) return false;
-    for (const char* p = name; *p; ++p) {
-        if (*p != ' ' && *p != '\t') return true;
-    }
-    return false;
-}
-
 bool PlayerInactive(int playerIndex, const char* name)
 {
-    if (playerIndex < 0 || playerIndex > 7) return false;
-    // Sticky mark already accepted for this seat (set by wipe/elim only for NPCs).
-    if (g_leftFlags[playerIndex]) return true;
-
-    const bool markComputers = InterlockedCompareExchange(&g_markComputers, 0, 0) != 0;
-    const bool markHumans = InterlockedCompareExchange(&g_markHumans, 0, 0) != 0;
-    // NPC-only mode: never auto-paint from status/defeat — those fire at join/start
-    // for seats that are not actually wiped yet (and sticky leftFlags forever).
-    if (markComputers && !markHumans) return false;
-
-    if (!ShouldMarkSlot(playerIndex, "ui")) return false;
-
-    if (g_statusBase) {
-        const uint8_t status = g_statusBase[playerIndex];
-        if (status == 3 && HasVisibleName(name)) return true;
-    }
-
-    if (g_defeatBase) {
-        uint8_t defeat = 0;
-        __try {
-            defeat = g_defeatBase[playerIndex];
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            defeat = 0;
-        }
-        if (DefeatFlagMeansGone(defeat) && HasVisibleName(name)) return true;
-    }
-
     (void)name;
-    return false;
+    if (playerIndex < 0 || playerIndex > 7) return false;
+    // The sticky mark (set via wipe/elim for NPCs, leave/drop/announce for
+    // humans) is the only paint source. Raw status/defeat bytes fire at
+    // join/start for seats that are not gone and must never paint directly.
+    return g_leftFlags[playerIndex] != 0;
 }
 
 void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerIndex)
@@ -1168,7 +1181,6 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         s_lastRefresh = now;
         RefreshSlotKinds();
         RefreshWipeFromAssets();
-        PollStatusGoneMarks();
     }
 
     const uint8_t status =
@@ -1190,9 +1202,25 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         g_lastUi[playerIndex] = ui;
         if (name && name[0]) {
             const char* raw = NameForClassify(name);
+            // Different occupant on this row than last time → new match; the
+            // previous occupant's sticky mark must not carry over (a comp
+            // was shown [X] at match start after a fast rematch).
+            const bool nameChanged = _stricmp(g_lastName[playerIndex], raw) != 0;
+            if (g_lastName[playerIndex][0] && nameChanged) {
+                ResetSeatTracking(playerIndex, "name-change");
+            }
+            if (nameChanged) {
+                static LONG s_bindLog = 0;
+                if (InterlockedIncrement(&s_bindLog) <= 64) {
+                    Log("rowBind p=%d name=%s st=%u df=%u hf=%d",
+                        playerIndex, raw, status, defeat, CallHasForces(playerIndex));
+                }
+            }
             _snprintf_s(g_lastName[playerIndex], _TRUNCATE, "%s", raw);
             if (LooksLikeComputerName(raw)) NoteComputerSlot(playerIndex);
             else NoteHumanSlot(playerIndex);
+            // Leave announced before this row was ever painted? Mark it now.
+            CheckPendingGoneName(playerIndex, raw);
         }
     }
 
@@ -1410,15 +1438,29 @@ bool InstallLeaveWriteHooks(uint8_t* base, size_t imageSize)
     };
     const char* maskH1 = "xxxxxx????x";
 
-    // mov byte [ecx+imm32], 3 ; mov byte [eax+0x916268], 3
+    // mov byte [ecx+imm32], 3 ; mov byte [eax+imm32], 3
+    // The second imm is the slot table (preferred 0x916268). Relocated builds
+    // shift the absolute address, so mask it and match on the low word only.
     const uint8_t patH2[] = {
         0xC6, 0x81, 0x00, 0x00, 0x00, 0x00, 0x03,
-        0xC6, 0x80, 0x68, 0x62, 0x91, 0x00, 0x03
+        0xC6, 0x80, 0x00, 0x00, 0x00, 0x00, 0x03
     };
-    const char* maskH2 = "xx????xxxxxxxx";
+    const char* maskH2 = "xx????xxx????x";
 
     uint8_t* hit1 = FindPattern(base, imageSize, patH1, maskH1);
-    uint8_t* hit2 = FindPattern(base, imageSize, patH2, maskH2);
+
+    uint8_t* hit2 = nullptr;
+    for (uint8_t* cursor = base;;) {
+        const size_t remaining = imageSize - static_cast<size_t>(cursor - base);
+        uint8_t* candidate = FindPattern(cursor, remaining, patH2, maskH2);
+        if (!candidate) break;
+        const uint32_t dispSlot = *reinterpret_cast<const uint32_t*>(candidate + 9);
+        if ((dispSlot & 0xFFFF) == 0x6268) {
+            hit2 = candidate;
+            break;
+        }
+        cursor = candidate + 1;
+    }
 
     bool ok = true;
     if (hit1 && IsLikelyCode(hit1, sizeof(patH1))) {
@@ -1785,6 +1827,7 @@ void RemoveHook()
     InterlockedExchange(&g_censusDone, 0);
     for (int i = 0; i < 8; ++i) {
         InterlockedExchange(&g_leftFlags[i], 0);
+        InterlockedExchange(&g_explicitGone[i], 0);
         InterlockedExchange(&g_everHadAssets[i], 0);
         InterlockedExchange(&g_everHadForces[i], 0);
         InterlockedExchange(&g_aliveConfirmed[i], 0);
@@ -1794,6 +1837,8 @@ void RemoveHook()
         InterlockedExchange(&g_units[i], 0);
         InterlockedExchange(&g_buildings[i], 0);
         InterlockedExchange(&g_slotKind[i], -1);
+        g_pendingGoneNames[i][0] = 0;
+        g_pendingGoneTick[i] = 0;
     }
     InterlockedExchange(&g_ready, 0);
     Log("RemoveHook");
@@ -1840,7 +1885,9 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const c
 {
     if (!name || !name[0]) return;
 
-    // Prefer alliances row names we have already seen.
+    // Alliances row names are the only reliable name→seat mapping. The
+    // 0x91ADA8 name table is ordered differently (join order) and matched
+    // the wrong seat — never mark through it.
     for (int i = 0; i < 8; ++i) {
         if (!g_lastName[i][0]) continue;
         if (_stricmp(g_lastName[i], name) == 0) {
@@ -1849,23 +1896,20 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const c
         }
     }
 
-    // Fallback: in-game name table (same as chat color hook).
-    if (g_statusBase) {
-        const uintptr_t slide =
-            reinterpret_cast<uintptr_t>(g_statusBase) - kPreferredStatus;
-        auto* names = reinterpret_cast<char*>(0x0091ADA8u + slide);
-        for (int i = 0; i < 8; ++i) {
-            const char* slot = names + i * 0x38;
-            __try {
-                if (slot[0] && _stricmp(slot, name) == 0) {
-                    MarkGoneUi(i, "chat-table");
-                    return;
-                }
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
-            }
-        }
-    }
-    Log("MarkGoneByName: no slot for '%s'", name);
+    // No alliances row seen yet (F11 not opened this match). Remember the
+    // name; Hook_SetText marks the row the moment F11 binds it — marks are
+    // only visible on F11, so that is always in time.
+    RememberPendingGoneName(name);
+}
+
+// Snapshot of HasForces for all 8 seats — logged with every poll mark so a
+// wrong-seat mark can be traced to the index that actually went to zero.
+static void FormatHfVector(char* buf, size_t cap)
+{
+    int hf[8];
+    for (int i = 0; i < 8; ++i) hf[i] = CallHasForces(i);
+    _snprintf_s(buf, cap, _TRUNCATE, "%d,%d,%d,%d,%d,%d,%d,%d",
+        hf[0], hf[1], hf[2], hf[3], hf[4], hf[5], hf[6], hf[7]);
 }
 
 // Continuous NPC-wipe detection on the game's own HasForces (0x4F4240).
@@ -1883,18 +1927,16 @@ static void PollWipeMarks()
             local = -1;
         }
     }
-    if (local < 0 || local > 7) return;
-
     // Only while we ourselves are alive in a running match. Outside a match
-    // HasForces reads 0 for everyone → would mark every seat.
+    // HasForces reads 0 for everyone → would mark every seat. An invalid local
+    // index also means "not in a match" — it must still advance the dead-timer,
+    // otherwise the between-match reset never fires (menu leaves the local
+    // player byte out of range) and explicit human marks leak into the rematch.
     static DWORD s_localDeadSince = 0;
     static bool s_matchSeen = false;
-    const int localHf = CallHasForces(local);
+    const int localHf = (local >= 0 && local <= 7) ? CallHasForces(local) : 0;
     const DWORD now = GetTickCount();
-    if (localHf > 0) {
-        s_localDeadSince = 0;
-        s_matchSeen = true;
-    } else {
+    if (localHf <= 0) {
         if (s_localDeadSince == 0) {
             s_localDeadSince = now ? now : 1;
         } else if (s_matchSeen && (now - s_localDeadSince) > 3000) {
@@ -1904,11 +1946,39 @@ static void PollWipeMarks()
         }
         return;
     }
+    s_localDeadSince = 0;
+    s_matchSeen = true;
 
     for (int i = 0; i < 8; ++i) {
         if (i == local) continue;
         const int hf = CallHasForces(i);
         NoteHasForcesSample(i, hf); // maintains aliveSince → aliveConfirmed (8s)
+
+        // Human surrender/leave: the game flips the seat status to 3 (gone) or
+        // writes a defeat code, but not every writer is hookable — the announce
+        // pattern misses on relocated builds and surrender skips the H1 store.
+        // Poll the bytes for seats that are known humans and really played this
+        // match; the leaver's army can stay alive, so this must run before the
+        // hf>0 early-out and the mark must be explicit-sticky.
+        if (InterlockedCompareExchange(&g_leftFlags[i], 0, 0) == 0 &&
+            InterlockedCompareExchange(&g_slotKind[i], 0, 0) == 0 &&
+            InterlockedCompareExchange(&g_everHadForces[i], 0, 0) != 0) {
+            const uint8_t status = ReadLiveController(i);
+            uint8_t defeat = 0;
+            if (g_defeatBase) {
+                __try {
+                    defeat = g_defeatBase[i];
+                } __except (EXCEPTION_EXECUTE_HANDLER) {
+                    defeat = 0;
+                }
+            }
+            if (status == 3) {
+                MarkGoneUi(i, "status3-human");
+            } else if (defeat == 1 || defeat == 2 || defeat == 3) {
+                MarkGoneUi(i, "defeat-human");
+            }
+        }
+
         if (hf > 0) {
             if (g_leftFlags[i]) ClearGoneUi(i);
             continue;
@@ -1926,6 +1996,13 @@ static void PollWipeMarks()
             continue;
         }
         if ((now - since) >= 2000) {
+            static LONG s_hfMarkLog = 0;
+            if (InterlockedIncrement(&s_hfMarkLog) <= 32) {
+                char hfBuf[64];
+                FormatHfVector(hfBuf, sizeof(hfBuf));
+                Log("hfMark p=%d name=%s hf=%s", i,
+                    g_lastName[i][0] ? g_lastName[i] : "?", hfBuf);
+            }
             MarkGoneUi(i, "hf-poll");
         }
     }
@@ -1969,6 +2046,25 @@ static DWORD WINAPI InstallThread(LPVOID)
         RefreshSlotKinds();
         PollWipeMarks();
         if ((i % 150) == 0) { // every ~30s
+            char hfBuf[64];
+            FormatHfVector(hfBuf, sizeof(hfBuf));
+            int localIdx = -1;
+            if (g_localPlayer) {
+                __try {
+                    localIdx = static_cast<int>(*g_localPlayer);
+                } __except (EXCEPTION_EXECUTE_HANDLER) {
+                    localIdx = -1;
+                }
+            }
+            Log("hfPoll local=%d hf=%s left=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld", localIdx, hfBuf,
+                InterlockedCompareExchange(&g_leftFlags[0], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[1], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[2], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[3], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[4], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[5], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[6], 0, 0),
+                InterlockedCompareExchange(&g_leftFlags[7], 0, 0));
             Log("slotPoll[%d] c=%ld,%ld,%ld,%ld,%ld,%ld,%ld,%ld anyComp=%d",
                 i,
                 InterlockedCompareExchange(&g_slotKind[0], 0, 0),

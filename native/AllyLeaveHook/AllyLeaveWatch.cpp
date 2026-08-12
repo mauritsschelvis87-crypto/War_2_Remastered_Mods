@@ -22,7 +22,11 @@ struct ExtraFlags {
     bool pauseChat = false;
     bool dragSelect = false;
     bool chatNameColor = false;
+    // Human gone marks need the chat hook injected too: it watches the
+    // "<name> Left / Dropped / Eliminated" system lines (recolor stays off).
+    bool humanLeave = false;
     bool Any() const { return allyLeave || pauseChat || dragSelect || chatNameColor; }
+    bool ChatDllWanted() const { return chatNameColor || humanLeave; }
 };
 
 std::wstring ModuleDir()
@@ -79,9 +83,10 @@ ExtraFlags ReadExtraFlags()
     CloseHandle(file);
     if (!ok || read == 0) return flags;
 
+    flags.humanLeave = ReadJsonBool(buf, "AllyLeaveMarkHumans");
     flags.allyLeave =
         ReadJsonBool(buf, "AllyLeaveMarkComputers") ||
-        ReadJsonBool(buf, "AllyLeaveMarkHumans") ||
+        flags.humanLeave ||
         ReadJsonBool(buf, "AllyLeaveRedNames");
     flags.pauseChat = ReadJsonBool(buf, "ChatDuringPauseScreen");
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
@@ -183,7 +188,8 @@ void WatchLoop(HANDLE quitEvent)
         const DWORD pid = FindWarcraftPid();
 
         if (flags.allyLeave != last.allyLeave || flags.pauseChat != last.pauseChat ||
-            flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor) {
+            flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
+            flags.humanLeave != last.humanLeave) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);
@@ -199,8 +205,9 @@ void WatchLoop(HANDLE quitEvent)
             }
             if (!flags.chatNameColor && pid != 0) {
                 RunInjector(L"InjectChatNameColor.exe", false);
-                chatNameInjectedPid = 0;
             }
+            // Re-sync the chat DLL enable state on the next tick.
+            chatNameInjectedPid = 0;
             last = flags;
         }
 
@@ -213,8 +220,11 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.dragSelect && pid != 0 && pid != dragInjectedPid) {
             if (RunInjector(L"InjectDragSelect.exe", true)) dragInjectedPid = pid;
         }
-        if (flags.chatNameColor && pid != 0 && pid != chatNameInjectedPid) {
-            if (RunInjector(L"InjectChatNameColor.exe", true)) chatNameInjectedPid = pid;
+        // Inject the chat DLL when colors are on OR human gone marks are on;
+        // recolor is only enabled for the color feature — with humans-only the
+        // DLL just watches leave/drop/eliminated lines.
+        if (flags.ChatDllWanted() && pid != 0 && pid != chatNameInjectedPid) {
+            if (RunInjector(L"InjectChatNameColor.exe", flags.chatNameColor)) chatNameInjectedPid = pid;
         }
         if (pid == 0) {
             allyInjectedPid = 0;
