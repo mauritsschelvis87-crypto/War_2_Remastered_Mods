@@ -260,24 +260,26 @@ int ReadLocalPlayerIndex()
 
 // Seat -> lobby-chosen color slot. The name table, alliances rows, and owner
 // stamps are all SEAT-indexed, but in multiplayer a player's color is picked
-// in the lobby and can differ from the seat. The game translates through a
-// byte table at 0x919390 before indexing the HD tint table (see the helper
-// at 0x50E180: movzx eax,[eax+0x919390]; shl eax,4; add eax,0x8C9640) —
-// chat must translate the same way or names get the seat's color.
+// in the lobby and can differ from the seat. The byte table at 0x919390
+// maps COLOR SLOT -> SEAT ("which seat owns color c"); verified against a
+// live match dump on 12-08 (table[5]==3 while seat 3 played the slot-5
+// color #7F7FF5). Invert it to translate a seat into that player's color.
 int SeatToColorSlot(int seat)
 {
     if (seat < 0 || seat > 7 || !g_seatColors) return seat;
     __try {
         // The table lives in BSS: all-zero until a match is set up. An
-        // all-zero read means "no mapping yet" — every seat would turn
+        // all-zero read means "no mapping yet" — every seat would match
         // color 0 (red) otherwise. Fall back to identity then.
         bool anySet = false;
         for (int i = 0; i < 8; ++i) {
             if (g_seatColors[i] != 0) { anySet = true; break; }
         }
         if (!anySet) return seat;
-        const int c = static_cast<int>(g_seatColors[seat]);
-        return (c >= 0 && c <= 7) ? c : seat;
+        for (int c = 0; c < 8; ++c) {
+            if (static_cast<int>(g_seatColors[c]) == seat) return c;
+        }
+        return seat;
     } __except (EXCEPTION_EXECUTE_HANDLER) {
         return seat;
     }

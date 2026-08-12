@@ -1,6 +1,11 @@
 param(
     [string]$OutDir = '',
-    [string]$DesktopCopyName = 'QoL Modding Setup.zip'
+    [string]$DesktopCopyName = 'QoL Modding Setup.zip',
+    # Reuse the binaries already in mod\native (skip the native rebuild).
+    [switch]$SkipNativeBuild,
+    # Take native dll/exe payload from this folder instead of mod\native
+    # (e.g. the staging folder while the game still locks mod\native).
+    [string]$NativeSource = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,9 +50,13 @@ $desktop = [Environment]::GetFolderPath('Desktop')
 Write-Host "Building share package $packageName ..."
 
 try {
-    Write-Host 'Building native Extra hooks...'
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $nativeBuild | Write-Host
-    if ($LASTEXITCODE -ne 0) { throw 'Native build failed.' }
+    if ($SkipNativeBuild) {
+        Write-Host 'Skipping native build (using existing mod\native binaries).'
+    } else {
+        Write-Host 'Building native Extra hooks...'
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $nativeBuild | Write-Host
+        if ($LASTEXITCODE -ne 0) { throw 'Native build failed.' }
+    }
 
     Write-Host 'Publishing self-contained PlayerColorStudio (win-x64)...'
     New-Item -ItemType Directory -Path $publishTemp -Force | Out-Null
@@ -70,7 +79,12 @@ try {
         Remove-Item -Force
     Copy-Item -LiteralPath (Join-Path $engineSource 'Apply-PlayerColors.ps1') -Destination $payloadMod -Force
 
-    $nativeSource = Join-Path $engineSource 'native'
+    $nativeSource = if ([string]::IsNullOrWhiteSpace($NativeSource)) {
+        Join-Path $engineSource 'native'
+    } else {
+        $NativeSource
+    }
+    Write-Host "Native payload from: $nativeSource"
     Get-ChildItem -LiteralPath $nativeSource -File -ErrorAction Stop |
         Where-Object { $_.Extension -in '.dll', '.exe' } |
         ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $payloadNative -Force }
@@ -83,7 +97,7 @@ try {
     }
 
     $readme = @"
-Warcraft II Remastered — Quality of Life Modding
+Warcraft II Remastered — Quality of Life Mods
 Version $version
 
 Easiest install

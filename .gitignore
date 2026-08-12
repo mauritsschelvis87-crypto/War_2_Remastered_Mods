@@ -38,3 +38,5 @@ mod/native/
 **/war2_color_patch_log.txt
 **/extra-features.json
 **/studio-settings.json
+
+native/AllyLeaveHook/staging/

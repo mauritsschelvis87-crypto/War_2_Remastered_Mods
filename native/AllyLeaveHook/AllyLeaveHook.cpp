@@ -339,7 +339,9 @@ const char* NameForClassify(const char* name)
 {
     if (!name) return "";
     // Strip our own gone prefix so reclassification stays stable.
+    // ("[X] " is the legacy prefix; the alliances label ate the "X]" part.)
     if (_strnicmp(name, "[X] ", 4) == 0) name += 4;
+    else if (_strnicmp(name, "X ", 2) == 0) name += 2;
     while (*name == ' ' || *name == '\t') ++name;
     return name;
 }
@@ -861,10 +863,11 @@ void ApplyGoneToUi(int playerIndex, void* ui, const char* name)
     if (playerIndex < 0 || playerIndex > 7) return;
     const char* baseName = (name && name[0]) ? name : g_lastName[playerIndex];
     // Short prefix — clan names are long and the Alliances label truncates.
+    // No brackets: the label renders "[X] name" as "[ name" (X] swallowed).
     if (baseName && baseName[0]) {
-        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "[X] %s", baseName);
+        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "X %s", baseName);
     } else {
-        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "[X]");
+        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "X");
     }
     if (ui && g_originalSetText) {
         __try {
@@ -1271,11 +1274,11 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         if (playerIndex >= 0 && playerIndex <= 7)
             InterlockedExchange(&g_leftFlags[playerIndex], 1);
         if (name) {
-            _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "[X] %s", name);
+            _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "X %s", name);
             useName = g_nameBuf[playerIndex];
         } else {
             _snprintf_s(g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0],
-                _TRUNCATE, "[X]");
+                _TRUNCATE, "X");
             useName = g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0];
         }
         if (ui) {
