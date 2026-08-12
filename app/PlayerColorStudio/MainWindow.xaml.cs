@@ -14,8 +14,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Forms = System.Windows.Forms;
-using WpfMessageBox = System.Windows.MessageBox;
-
 namespace PlayerColorStudio;
 
 public partial class MainWindow : Window, INotifyPropertyChanged
@@ -261,7 +259,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _extraConfigPath = string.Empty;
             _nativeDir = string.Empty;
             SetStatusLines(StatusLine("✕", PendingIconBrush, ex.Message));
-            WpfMessageBox.Show(ex.Message, "Quality of Life Modding", MessageBoxButton.OK, MessageBoxImage.Error);
+            StudioDialog.Show(this, ex.Message, "Quality of Life Modding", StudioDialogKind.Error);
         }
     }
 
@@ -720,9 +718,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var path = MapEditorPath.Trim();
         if (!IsValidMapEditorPath(path))
         {
-            WpfMessageBox.Show(
+            StudioDialog.Show(this,
                 $"Map editor not found. The path must point to \"{MapEditorExeName}\" inside your install.",
-                "Open map editor", MessageBoxButton.OK, MessageBoxImage.Warning);
+                "Open map editor", StudioDialogKind.Warning);
             return;
         }
         try
@@ -735,7 +733,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            WpfMessageBox.Show(ex.Message, "Open map editor", MessageBoxButton.OK, MessageBoxImage.Error);
+            StudioDialog.Show(this, ex.Message, "Open map editor", StudioDialogKind.Error);
         }
     }
 
@@ -766,9 +764,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         // Existence is enough to open in Explorer — the .pud check is status-only.
         if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
         {
-            WpfMessageBox.Show(
+            StudioDialog.Show(this,
                 "Maps folder not found. Browse to your maps folder first.",
-                "Open maps folder", MessageBoxButton.OK, MessageBoxImage.Warning);
+                "Open maps folder", StudioDialogKind.Warning);
             return;
         }
         try
@@ -780,7 +778,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            WpfMessageBox.Show(ex.Message, "Open maps folder", MessageBoxButton.OK, MessageBoxImage.Error);
+            StudioDialog.Show(this, ex.Message, "Open maps folder", StudioDialogKind.Error);
         }
     }
 
@@ -982,10 +980,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void ChooseColor_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is not ColorCard card) return;
-        using var dialog = new Forms.ColorDialog { FullOpen = true, Color = System.Drawing.ColorTranslator.FromHtml(card.Hex) };
-        if (dialog.ShowDialog() == Forms.DialogResult.OK)
+        var dialog = new ColorPickerDialog(card.Hex, card.Name) { Owner = this };
+        if (dialog.ShowDialog() == true)
         {
-            card.Hex = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
+            card.Hex = dialog.SelectedHex;
             RefreshTabStatus();
         }
     }
@@ -995,8 +993,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if ((sender as FrameworkElement)?.DataContext is not ColorCard card) return;
         if (!ColorCard.IsValidHex(card.Hex))
         {
-            WpfMessageBox.Show($"{card.Name}: use a six-digit hex color, for example #3B82F6.", "Invalid color",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            StudioDialog.Show(this,
+                $"{card.Name}: use a six-digit hex color, for example #3B82F6.",
+                "Invalid color", StudioDialogKind.Warning);
             card.Hex = card.LastValidHex;
             RefreshTabStatus();
             return;
@@ -1025,7 +1024,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var extra = JsonSerializer.Deserialize<ExtraFeaturesConfig>(File.ReadAllText(_extraConfigPath),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             markComputers = extra?.AllyLeaveMarkComputers ?? false;
-            markHumans = false; // Human leave feature not ready — keep off.
+            markHumans = extra?.AllyLeaveMarkHumans ?? false;
             // Migrate legacy single toggle → computers (NPC focus).
             if (!markComputers && (extra?.AllyLeaveRedNames ?? false))
                 markComputers = true;
@@ -1513,7 +1512,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else if (_activeTab == "feature")
             {
                 var markComputers = AllyLeaveMarkComputers;
-                var markHumans = false; // Human leave feature not ready.
+                var markHumans = AllyLeaveMarkHumans;
                 var chatPauseEnabled = _appliedChatDuringPauseScreen;
                 var chatNamesEnabled = ChatColoredNames;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
@@ -1573,7 +1572,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else
             {
-            WpfMessageBox.Show(ex.Message, "Apply failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            StudioDialog.Show(this, ex.Message, "Apply failed", StudioDialogKind.Error);
             }
         }
         finally
@@ -1592,14 +1591,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (_isApplying) return;
 
-        var confirm = WpfMessageBox.Show(
+        var confirm = StudioDialog.Confirm(this,
             "Restore all modded game files to the local vanilla backup and turn Extra features off?\n\n" +
             "This is the fast restore. You can also use Battle.net Scan and Repair (slower).\n\n" +
             "Restart Warcraft II afterwards.",
-            "Restore clean install",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-        if (confirm != MessageBoxResult.Yes) return;
+            "Restore clean install");
+        if (!confirm) return;
 
         try
         {
@@ -1676,15 +1673,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncDragSelectHook(throwOnError: false); } catch { /* off */ }
             });
 
-            WpfMessageBox.Show(
+            StudioDialog.Show(this,
                 "Vanilla files restored and Extra features turned off.\nRestart Warcraft II Remastered to finish.",
-                "Restore complete",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+                "Restore complete");
         }
         catch (Exception ex)
         {
-            WpfMessageBox.Show(ex.Message, "Restore failed", MessageBoxButton.OK, MessageBoxImage.Error);
+            StudioDialog.Show(this, ex.Message, "Restore failed", StudioDialogKind.Error);
         }
         finally
         {

@@ -1,6 +1,6 @@
 # Warcraft II — Quality of Life Modding
 
-**Version 1.0.3**
+**Version 1.0.4**
 
 Windows WPF tool for safely changing confirmed Warcraft II Remastered player colors, plus optional multiplayer QoL.
 
@@ -23,7 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File installer\Build-SharePackage
 
 That creates:
 
-- `dist\QoL-Modding-Setup-1.0.3.zip` — **share this** (~135 MB)
+- `dist\QoL-Modding-Setup-1.0.4.zip` — **share this** (~135 MB)
 - a copy on your Desktop: `QoL Modding Setup.zip`
 
 Recipients extract the zip, run `QoL Modding Setup.exe`, accept Administrator, press Install, then Apply in the app and restart Warcraft II.

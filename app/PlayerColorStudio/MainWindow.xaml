@@ -1,7 +1,7 @@
 <Window x:Class="PlayerColorStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Warcraft II Remastered — Quality of Life Modding"
+        Title="Warcraft II Remastered — Quality of Life Mods"
         Width="1120" Height="1000" MinWidth="960" MinHeight="860"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource WindowBrush}" Foreground="White">
@@ -177,10 +177,10 @@
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel VerticalAlignment="Center">
                                 <CheckBox IsChecked="{Binding AllyLeaveMarkHumans}"
-                                          IsEnabled="False"
+                                          IsEnabled="{Binding IsApplyEnabled}"
                                           Content="Mark gone human players on the alliance screen (F11)."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="Separate feature (not ready yet): humans need leave/disconnect detection, not the NPC wipe logic. Keep this off — only Mark gone computers is active."/>
+                                           Text="When a human player leaves, disconnects, or is eliminated, their name turns red on the alliances screen. Works on its own or together with Mark gone computers."/>
                             </StackPanel>
                         </Border>
                         <Border Padding="14" CornerRadius="8"
@@ -221,7 +221,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{StaticResource PanelBrush}">
                     <StackPanel Background="{StaticResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="White"
-                                   Text="About this Quality of Life Modding tool."/>
+                                   Text="About this Quality of Life Mods tool."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White" Visibility="Hidden"
                                    Text="Player 8 cannot be changed yet, I am working on it."/>
 
@@ -229,7 +229,7 @@
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel>
                                 <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="White"
-                                           Text="Warcraft II Remastered — Quality of Life Modding"/>
+                                           Text="Warcraft II Remastered — Quality of Life Mods"/>
                                 <TextBlock Margin="0,8,0,0" Foreground="#FFB8C4D8" FontSize="14"
                                            Text="{Binding AppVersionText}"/>
                                 <TextBlock Margin="0,12,0,0" TextWrapping="Wrap" Foreground="White"
@@ -270,7 +270,7 @@
                 </ScrollViewer>
             </TabItem>
             <!-- Dock=Right: first Right tab is rightmost (Info), then Path. -->
-            <TabItem Header="Path" Tag="path" DockPanel.Dock="Right">
+            <TabItem Header="Paths" Tag="path" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{StaticResource PanelBrush}">
                     <StackPanel Background="{StaticResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="White"

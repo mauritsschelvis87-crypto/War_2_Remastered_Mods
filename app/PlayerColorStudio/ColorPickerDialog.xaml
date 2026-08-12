@@ -1,0 +1,119 @@
+<Window x:Class="PlayerColorStudio.ColorPickerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False"
+        SizeToContent="WidthAndHeight" WindowStartupLocation="CenterOwner">
+    <Border Background="{StaticResource WindowBrush}" BorderBrush="#FF5A7398" BorderThickness="1"
+            CornerRadius="10" Margin="14" SnapsToDevicePixels="True">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55"/>
+        </Border.Effect>
+        <StackPanel>
+            <Grid Height="46" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TitleText" Text="Pick a color" Margin="20,0,0,0" VerticalAlignment="Center"
+                           FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                <Button Grid.Column="1" Content="✕" Width="34" Height="30" Margin="0,0,10,0"
+                        Padding="0" Background="Transparent" BorderThickness="0"
+                        Click="Cancel_Click"/>
+            </Grid>
+            <Border Height="1" Background="#FF3A5178"/>
+
+            <Grid Margin="20,18,20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="18"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Saturation / brightness surface -->
+                <Border Grid.Column="0" Width="260" Height="240" CornerRadius="6"
+                        BorderBrush="#FF5A7398" BorderThickness="1" ClipToBounds="True">
+                    <Grid x:Name="SvSurface" Background="Transparent" Cursor="Cross"
+                          MouseLeftButtonDown="SvSurface_MouseLeftButtonDown"
+                          MouseMove="SvSurface_MouseMove"
+                          MouseLeftButtonUp="Surface_MouseLeftButtonUp">
+                        <Border>
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="White" Offset="0"/>
+                                    <GradientStop x:Name="HueStop" Color="Red" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <Border>
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#00000000" Offset="0"/>
+                                    <GradientStop Color="#FF000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <Canvas>
+                            <Ellipse x:Name="SvThumb" Width="14" Height="14"
+                                     Stroke="White" StrokeThickness="2" Fill="Transparent">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="4" ShadowDepth="0" Opacity="0.8"/>
+                                </Ellipse.Effect>
+                            </Ellipse>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Hue bar -->
+                <Border Grid.Column="2" Width="22" Height="240" CornerRadius="6"
+                        BorderBrush="#FF5A7398" BorderThickness="1" ClipToBounds="True">
+                    <Grid x:Name="HueSurface" Cursor="Hand"
+                          MouseLeftButtonDown="HueSurface_MouseLeftButtonDown"
+                          MouseMove="HueSurface_MouseMove"
+                          MouseLeftButtonUp="Surface_MouseLeftButtonUp">
+                        <Border>
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#FFFF0000" Offset="0"/>
+                                    <GradientStop Color="#FFFFFF00" Offset="0.167"/>
+                                    <GradientStop Color="#FF00FF00" Offset="0.333"/>
+                                    <GradientStop Color="#FF00FFFF" Offset="0.5"/>
+                                    <GradientStop Color="#FF0000FF" Offset="0.667"/>
+                                    <GradientStop Color="#FFFF00FF" Offset="0.833"/>
+                                    <GradientStop Color="#FFFF0000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+                        <Canvas>
+                            <Border x:Name="HueThumb" Width="20" Height="6" CornerRadius="2"
+                                    Background="Transparent" BorderBrush="White" BorderThickness="2"/>
+                        </Canvas>
+                    </Grid>
+                </Border>
+
+                <!-- Preview + hex -->
+                <StackPanel Grid.Column="4" Width="150" VerticalAlignment="Top">
+                    <TextBlock Text="New" FontSize="12" Foreground="#FFB8C4D8" Margin="0,0,0,4"/>
+                    <Border x:Name="NewSwatch" Height="44" CornerRadius="6"
+                            BorderBrush="#FF5A7398" BorderThickness="1" Background="Red"/>
+                    <TextBlock Text="Current" FontSize="12" Foreground="#FFB8C4D8" Margin="0,12,0,4"/>
+                    <Border x:Name="OldSwatch" Height="44" CornerRadius="6"
+                            BorderBrush="#FF5A7398" BorderThickness="1" Background="Red"/>
+                    <TextBlock Text="Hex color" FontSize="12" Foreground="#FFB8C4D8" Margin="0,16,0,4"/>
+                    <TextBox x:Name="HexBox" CharacterCasing="Upper" MaxLength="7"
+                             LostFocus="HexBox_LostFocus" KeyDown="HexBox_KeyDown"/>
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,18,20,18">
+                <Button Content="Cancel" MinWidth="92" Margin="0,0,10,0" IsCancel="True"
+                        Click="Cancel_Click"/>
+                <Button Content="OK" MinWidth="92"
+                        Background="{StaticResource AccentBrush}" BorderBrush="#FF7FB5FF"
+                        IsDefault="True" Click="Ok_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
