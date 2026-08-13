@@ -1,0 +1,365 @@
+
+===== defeat screen ctor (005479A0..00547C20) =====
+005479A0  push    eax 
+005479A1  sub     esp, 0x1c 
+005479A4  mov     eax, dword ptr [0x90d6c0] 
+005479A9  xor     eax, ebp 
+005479AB  push    eax 
+005479AC  lea     eax, [ebp - 0xc] 
+005479AF  mov     dword ptr fs:[0], eax 
+005479B5  mov     ecx, 0x95ea60 
+005479BA  call    0x627470 
+005479BF  test    al, al 
+005479C1  je      0x547a86 
+005479C7  cmp     byte ptr [0x8c03c8], 0 
+005479CE  lea     ecx, [ebp - 0x18] 
+005479D1  mov     eax, dword ptr [0x95ea5c] 
+005479D6  cmove   eax, dword ptr [0x95e90c] 
+005479DD  push    0x965310 
+005479E2  push    eax 
+005479E3  call    0x5f54f0 
+005479E8  push    ecx 
+005479E9  lea     eax, [ebp - 0x28] 
+005479EC  mov     dword ptr [esp], 0x3f800000 
+005479F3  push    eax 
+005479F4  mov     dword ptr [ebp - 4], 0 
+005479FB  call    0x547320 
+00547A00  add     esp, 8 
+00547A03  movups  xmm0, xmmword ptr [eax] 
+00547A06  push    0x20 
+00547A08  sub     esp, 0x10 
+00547A0B  mov     ecx, esp 
+00547A0D  push    0x848d80 ; 'defeat'
+00547A12  push    dword ptr [0x965170] 
+00547A18  movups  xmmword ptr [ecx], xmm0 
+00547A1B  call    0x5a9bf0 
+00547A20  add     esp, 0x1c 
+00547A23  test    eax, eax 
+00547A25  je      0x547a7e 
+00547A27  push    0x3e8 
+00547A2C  push    ecx 
+00547A2D  mov     dword ptr [esp], 0 
+00547A34  push    1 
+00547A36  push    dword ptr [0x965170] 
+00547A3C  call    0x5ac490 
+00547A41  add     esp, 0x10 
+00547A44  mov     ecx, 0x95ea60 
+00547A49  call    0x626560 
+00547A4E  cmp     byte ptr [0x922f5b], 0 
+00547A55  jne     0x547a65 
+00547A57  cmp     byte ptr [0x91c596], 0 
+00547A5E  jne     0x547a65 
+00547A60  call    0x4f2740 
+00547A65  push    dword ptr [0x965170] 
+00547A6B  call    0x5ac5c0 
+00547A70  push    dword ptr [0x965170] 
+00547A76  call    0x5aa7e0 
+00547A7B  add     esp, 8 
+00547A7E  lea     ecx, [ebp - 0x18] 
+00547A81  call    0x5f5530 
+00547A86  mov     ecx, dword ptr [ebp - 0xc] 
+00547A89  mov     dword ptr fs:[0], ecx 
+00547A90  pop     ecx 
+00547A91  mov     esp, ebp 
+00547A93  pop     ebp 
+00547A94  ret      
+00547A95  int3     
+00547A96  int3     
+00547A97  int3     
+00547A98  int3     
+00547A99  int3     
+00547A9A  int3     
+00547A9B  int3     
+00547A9C  int3     
+00547A9D  int3     
+00547A9E  int3     
+00547A9F  int3     
+00547AA0  push    ebp 
+00547AA1  mov     ebp, esp 
+00547AA3  push    -1 
+00547AA5  push    0x829008 
+00547AAA  mov     eax, dword ptr fs:[0] 
+00547AB0  push    eax 
+00547AB1  sub     esp, 0x64 
+00547AB4  mov     eax, dword ptr [0x90d6c0] 
+00547AB9  xor     eax, ebp 
+00547ABB  mov     dword ptr [ebp - 0x10], eax 
+00547ABE  push    eax 
+00547ABF  lea     eax, [ebp - 0xc] 
+00547AC2  mov     dword ptr fs:[0], eax 
+00547AC8  push    0x848d80 ; 'defeat'
+00547ACD  call    0x58ab00 
+00547AD2  add     esp, 4 
+00547AD5  lea     ecx, [ebp - 0x28] 
+00547AD8  push    eax 
+00547AD9  call    0x49ed60 
+00547ADE  lea     eax, [ebp - 0x28] 
+00547AE1  mov     dword ptr [ebp - 4], 0 
+00547AE8  push    eax 
+00547AE9  mov     ecx, 0x95ea60 
+00547AEE  call    0x627390 
+00547AF3  mov     ecx, dword ptr [ebp - 0x14] 
+00547AF6  mov     dword ptr [ebp - 4], 0xffffffff 
+00547AFD  cmp     ecx, 0xf 
+00547B00  jbe     0x547b2e 
+00547B02  mov     edx, dword ptr [ebp - 0x28] 
+00547B05  inc     ecx 
+00547B06  mov     eax, edx 
+00547B08  cmp     ecx, 0x1000 
+00547B0E  jb      0x547b24 
+00547B10  mov     edx, dword ptr [eax - 4] 
+00547B13  add     ecx, 0x23 
+00547B16  sub     eax, edx 
+00547B18  add     eax, -4 
+00547B1B  cmp     eax, 0x1f 
+00547B1E  ja      0x547c0a 
+00547B24  push    ecx 
+00547B25  push    edx 
+00547B26  call    0x7e91f3 
+00547B2B  add     esp, 8 
+00547B2E  cmp     byte ptr [0x922f5b], 0 
+00547B35  mov     ecx, 0x848d88 ; 'defeat_btn'
+00547B3A  mov     eax, 0x846598 ; 'exit_game'
+00547B3F  cmove   eax, ecx 
+00547B42  push    eax 
+00547B43  call    0x58ab00 
+00547B48  mov     dword ptr [ebp - 0x4c], eax 
+00547B4B  add     esp, 4 
+00547B4E  lea     eax, [ebp - 0x50] 
+00547B51  mov     dword ptr [ebp - 0x50], 0x848db4 
+00547B58  mov     dword ptr [ebp - 0x2c], eax 
+00547B5B  mov     edx, eax 
+00547B5D  mov     dword ptr [ebp - 4], 1 
+00547B64  lea     eax, [ebp - 0x51] 
+00547B67  push    eax 
+00547B68  lea     ecx, [ebp - 0x28] 
+00547B6B  push    ecx 
+00547B6C  push    edx 
+00547B6D  lea     ecx, [ebp - 0x1c] 
+00547B70  call    0x530320 
+00547B75  lea     eax, [ebp - 0x1c] 
+00547B78  mov     byte ptr [ebp - 4], 2 
+00547B7C  push    eax 
+00547B7D  mov     ecx, 0x95ea60 
+00547B82  call    0x6273b0 
+00547B87  lea     ecx, [ebp - 0x1c] 
+00547B8A  call    0x525090 
+00547B8F  push    0x4c5c30 
+00547B94  push    1 
+00547B96  push    0x28 
+00547B98  lea     eax, [ebp - 0x50] 
+00547B9B  mov     dword ptr [ebp - 4], 0xffffffff 
+00547BA2  push    eax 
+00547BA3  call    0x7e9672 
+00547BA8  lea     eax, [ebp - 0x70] 
+00547BAB  push    0 
+00547BAD  push    eax 
+00547BAE  call    0x547600 
+00547BB3  sub     esp, 0x14 
+00547BB6  mov     ecx, 0x95ea60 
+00547BBB  mov     edx, esp 
+00547BBD  movups  xmm0, xmmword ptr [eax] 
+00547BC0  movups  xmmword ptr [edx], xmm0 
+00547BC3  movq    xmm0, qword ptr [eax + 0x10] 
+00547BC8  mov     eax, dword ptr [eax + 0x18] 
+00547BCB  movq    qword ptr [edx + 0x10], xmm0 
+00547BD0  mov     dword ptr [edx + 0x18], eax 
+00547BD3  call    0x6273d0 
+00547BD8  mov     ecx, 0x95ea60 
+00547BDD  call    0x627430 
+00547BE2  call    0x543850 
+00547BE7  push    0 
+00547BE9  call    0x5a1780 
+00547BEE  add     esp, 4 
+00547BF1  mov     ecx, dword ptr [ebp - 0xc] 
+00547BF4  mov     dword ptr fs:[0], ecx 
+00547BFB  pop     ecx 
+00547BFC  mov     ecx, dword ptr [ebp - 0x10] 
+00547BFF  xor     ecx, ebp 
+00547C01  call    0x7e91e5 
+00547C06  mov     esp, ebp 
+00547C08  pop     ebp 
+00547C09  ret      
+00547C0A  call    0x7fa651 
+00547C0F  int3     
+00547C10  push    ebp 
+00547C11  mov     ebp, esp 
+00547C13  push    -1 
+00547C15  push    0x829008 
+00547C1A  mov     eax, dword ptr fs:[0] 
+
+===== victory screen ctor (00547C20..00547E80) =====
+00547C20  push    eax 
+00547C21  sub     esp, 0x64 
+00547C24  mov     eax, dword ptr [0x90d6c0] 
+00547C29  xor     eax, ebp 
+00547C2B  mov     dword ptr [ebp - 0x10], eax 
+00547C2E  push    eax 
+00547C2F  lea     eax, [ebp - 0xc] 
+00547C32  mov     dword ptr fs:[0], eax 
+00547C38  push    0x848d6c ; 'victory'
+00547C3D  call    0x58ab00 
+00547C42  add     esp, 4 
+00547C45  lea     ecx, [ebp - 0x28] 
+00547C48  push    eax 
+00547C49  call    0x49ed60 
+00547C4E  lea     eax, [ebp - 0x28] 
+00547C51  mov     dword ptr [ebp - 4], 0 
+00547C58  push    eax 
+00547C59  mov     ecx, 0x95ea18 
+00547C5E  call    0x627390 
+00547C63  mov     ecx, dword ptr [ebp - 0x14] 
+00547C66  mov     dword ptr [ebp - 4], 0xffffffff 
+00547C6D  cmp     ecx, 0xf 
+00547C70  jbe     0x547c9e 
+00547C72  mov     edx, dword ptr [ebp - 0x28] 
+00547C75  inc     ecx 
+00547C76  mov     eax, edx 
+00547C78  cmp     ecx, 0x1000 
+00547C7E  jb      0x547c94 
+00547C80  mov     edx, dword ptr [eax - 4] 
+00547C83  add     ecx, 0x23 
+00547C86  sub     eax, edx 
+00547C88  add     eax, -4 
+00547C8B  cmp     eax, 0x1f 
+00547C8E  ja      0x547d6a 
+00547C94  push    ecx 
+00547C95  push    edx 
+00547C96  call    0x7e91f3 
+00547C9B  add     esp, 8 
+00547C9E  push    0x848d74 ; 'victory_btn'
+00547CA3  call    0x58ab00 
+00547CA8  mov     dword ptr [ebp - 0x4c], eax 
+00547CAB  add     esp, 4 
+00547CAE  lea     eax, [ebp - 0x50] 
+00547CB1  mov     dword ptr [ebp - 0x50], 0x848d98 
+00547CB8  mov     dword ptr [ebp - 0x2c], eax 
+00547CBB  mov     edx, eax 
+00547CBD  mov     dword ptr [ebp - 4], 1 
+00547CC4  lea     eax, [ebp - 0x51] 
+00547CC7  push    eax 
+00547CC8  lea     ecx, [ebp - 0x28] 
+00547CCB  push    ecx 
+00547CCC  push    edx 
+00547CCD  lea     ecx, [ebp - 0x1c] 
+00547CD0  call    0x530320 
+00547CD5  lea     eax, [ebp - 0x1c] 
+00547CD8  mov     byte ptr [ebp - 4], 2 
+00547CDC  push    eax 
+00547CDD  mov     ecx, 0x95ea18 
+00547CE2  call    0x6273b0 
+00547CE7  lea     ecx, [ebp - 0x1c] 
+00547CEA  call    0x525090 
+00547CEF  push    0x4c5c30 
+00547CF4  push    1 
+00547CF6  push    0x28 
+00547CF8  lea     eax, [ebp - 0x50] 
+00547CFB  mov     dword ptr [ebp - 4], 0xffffffff 
+00547D02  push    eax 
+00547D03  call    0x7e9672 
+00547D08  lea     eax, [ebp - 0x70] 
+00547D0B  push    1 
+00547D0D  push    eax 
+00547D0E  call    0x547600 
+00547D13  sub     esp, 0x14 
+00547D16  mov     ecx, 0x95ea18 
+00547D1B  mov     edx, esp 
+00547D1D  movups  xmm0, xmmword ptr [eax] 
+00547D20  movups  xmmword ptr [edx], xmm0 
+00547D23  movq    xmm0, qword ptr [eax + 0x10] 
+00547D28  mov     eax, dword ptr [eax + 0x18] 
+00547D2B  movq    qword ptr [edx + 0x10], xmm0 
+00547D30  mov     dword ptr [edx + 0x18], eax 
+00547D33  call    0x6273d0 
+00547D38  mov     ecx, 0x95ea18 
+00547D3D  call    0x627430 
+00547D42  call    0x543850 
+00547D47  push    0 
+00547D49  call    0x5a1780 
+00547D4E  add     esp, 4 
+00547D51  mov     ecx, dword ptr [ebp - 0xc] 
+00547D54  mov     dword ptr fs:[0], ecx 
+00547D5B  pop     ecx 
+00547D5C  mov     ecx, dword ptr [ebp - 0x10] 
+00547D5F  xor     ecx, ebp 
+00547D61  call    0x7e91e5 
+00547D66  mov     esp, ebp 
+00547D68  pop     ebp 
+00547D69  ret      
+00547D6A  call    0x7fa651 
+00547D6F  int3     
+00547D70  push    ebp 
+00547D71  mov     ebp, esp 
+00547D73  push    -1 
+00547D75  push    0x828fbd 
+00547D7A  mov     eax, dword ptr fs:[0] 
+00547D80  push    eax 
+00547D81  sub     esp, 0x1c 
+00547D84  mov     eax, dword ptr [0x90d6c0] 
+00547D89  xor     eax, ebp 
+00547D8B  push    eax 
+00547D8C  lea     eax, [ebp - 0xc] 
+00547D8F  mov     dword ptr fs:[0], eax 
+00547D95  mov     ecx, 0x95ea18 
+00547D9A  call    0x627470 
+00547D9F  test    al, al 
+00547DA1  je      0x547e5d 
+00547DA7  cmp     byte ptr [0x8c03c8], 0 
+00547DAE  lea     ecx, [ebp - 0x18] 
+00547DB1  mov     eax, dword ptr [0x95ea5c] 
+00547DB6  cmove   eax, dword ptr [0x95e90c] 
+00547DBD  push    0x965310 
+00547DC2  push    eax 
+00547DC3  call    0x5f54f0 
+00547DC8  push    ecx 
+00547DC9  lea     eax, [ebp - 0x28] 
+00547DCC  mov     dword ptr [esp], 0x3f800000 
+00547DD3  push    eax 
+00547DD4  mov     dword ptr [ebp - 4], 0 
+00547DDB  call    0x547320 
+00547DE0  add     esp, 8 
+00547DE3  movups  xmm0, xmmword ptr [eax] 
+00547DE6  push    0x20 
+00547DE8  sub     esp, 0x10 
+00547DEB  mov     ecx, esp 
+00547DED  push    0x848d6c ; 'victory'
+00547DF2  push    dword ptr [0x965170] 
+00547DF8  movups  xmmword ptr [ecx], xmm0 
+00547DFB  call    0x5a9bf0 
+00547E00  add     esp, 0x1c 
+00547E03  test    eax, eax 
+00547E05  je      0x547e55 
+00547E07  push    0x3e8 
+00547E0C  push    ecx 
+00547E0D  mov     dword ptr [esp], 0 
+00547E14  push    1 
+00547E16  push    dword ptr [0x965170] 
+00547E1C  call    0x5ac490 
+00547E21  add     esp, 0x10 
+00547E24  mov     ecx, 0x95ea18 
+00547E29  call    0x626560 
+00547E2E  cmp     byte ptr [0x91c596], 0 
+00547E35  jne     0x547e3c 
+00547E37  call    0x4f2740 
+00547E3C  push    dword ptr [0x965170] 
+00547E42  call    0x5ac5c0 
+00547E47  push    dword ptr [0x965170] 
+00547E4D  call    0x5aa7e0 
+00547E52  add     esp, 8 
+00547E55  lea     ecx, [ebp - 0x18] 
+00547E58  call    0x5f5530 
+00547E5D  mov     ecx, dword ptr [ebp - 0xc] 
+00547E60  mov     dword ptr fs:[0], ecx 
+00547E67  pop     ecx 
+00547E68  mov     esp, ebp 
+00547E6A  pop     ebp 
+00547E6B  ret      
+00547E6C  int3     
+00547E6D  int3     
+00547E6E  int3     
+00547E6F  int3     
+00547E70  push    ebp 
+00547E71  mov     ebp, esp 
+00547E73  push    -1 
+00547E75  push    0x823967 
+00547E7A  mov     eax, dword ptr fs:[0] 
