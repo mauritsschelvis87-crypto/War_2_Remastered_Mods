@@ -94,3 +94,25 @@ Pack as little-endian UI color: `0xAABBGGRR` with `A=0xFF` (same as AllyLeave `0
 v3 hooks `0x5AEEB0`: draw full line in body color, then redraw `"Name:"` on top in Studio color.
 
 **ASLR:** name table = `moduleBase + (0x91ADA8 - 0x400000)`.
+
+## Chat history recall (PageUp/PageDown mod)
+
+Map-message ring: **15 slots × `0xD0`** at `0x9B17A0` (BSS). Slot layout:
+
+| Offset | Type | Meaning |
+|--------|------|---------|
+| `+0x00` | `char[0xC8]` | line text |
+| `+0xC8` | `DWORD` | expiry = `TimeNow() + duration` (set by store fn `0x614D50`) |
+| `+0xCC` | `BYTE` | color slot (chat uses 0) |
+
+- `PushMapMsg 0x614A90(text, colorByte, duration)`: shifts slots 1..14 down
+  (oldest = slot 0), stores the new line in slot 14.
+- Per-frame update (`0x614C59` loop) calls `0x614DA0(entry, now)`; expired
+  entries are WIPED via `0x614D20` (text[0]=0, expiry=0, color=0) — the ring
+  does not preserve old lines, so the hook keeps its own 64-entry history
+  captured by a prologue hook on `0x614A90` (prologue `55 8B EC 83 EC 0C 56`,
+  7 clean bytes).
+- `TimeNow 0x625940` → `0x67FDF0` → `0x671BD0`: pure QPC-based ms-since-start
+  getter — safe to call from any thread.
+- Replay = rewriting ring slots directly (expiry zeroed first, written last),
+  no game calls besides `TimeNow`.

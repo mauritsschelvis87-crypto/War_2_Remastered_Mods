@@ -22,11 +22,17 @@ constexpr uint32_t kPreferredName0 = 0x0091ADA8;
 constexpr uint32_t kPreferredDrawColored = 0x005AEEB0;
 constexpr uint32_t kPreferredDrawImpl = 0x005AED00; // called only by 0x5AEEB0 (not 0x5AEE20)
 constexpr uint32_t kPreferredPushMapMsg = 0x00614A90;
+constexpr uint32_t kPreferredMsgRing = 0x009B17A0;  // 15 × 0xD0 map-message slots
+constexpr uint32_t kPreferredTimeNow = 0x00625940;  // ms since app start (QPC-based)
 constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
 
 using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
+using PushMapMsgFn = void(__cdecl*)(const char* text, uint32_t color, uint32_t duration);
+using TimeNowFn = uint32_t(__cdecl*)();
 
 volatile LONG g_enabled = 0;       // chat "Name:" lines
+volatile LONG g_timestamps = 0;    // "[HH:MM] " prefix on chat lines (own mod)
+volatile LONG g_historyOn = 0;     // PageUp/PageDown chat history recall (own mod)
 volatile LONG g_ready = 0;
 volatile LONG g_hits = 0;
 volatile LONG g_recolors = 0;
@@ -53,6 +59,55 @@ struct ChatOwnerEntry {
 };
 ChatOwnerEntry g_owners[kOwnerRing]{};
 volatile LONG g_ownerWrite = 0;
+
+// Per-message arrival time for the timestamp mod. Lines redraw every frame
+// while visible; the stamp must show when the message APPEARED, so remember
+// the wall time on first sight and reuse it while the line stays on screen.
+constexpr size_t kStampRing = 24;
+constexpr size_t kStampTextMax = 180;
+constexpr DWORD kStampNewAfterMs = 8000; // same text later = new message
+struct StampEntry {
+    char text[kStampTextMax]{};
+    char stamp[16]{}; // "[21:08] "
+    DWORD lastSeen = 0;
+};
+StampEntry g_stamps[kStampRing]{};
+
+// Chat history recall: the game's map-message ring at 0x9B17A0 keeps only
+// 15 slots and WIPES a slot when its line expires (text[0]=0, expiry=0,
+// color=0), so we keep our own copy of every pushed line. PageUp/PageDown
+// rewrite the ring slots with a window of that history — plain memory
+// writes into a static buffer, no game calls except the pure time getter.
+constexpr size_t kRingSlots = 15;
+constexpr size_t kRingStride = 0xD0;
+constexpr size_t kRingTextMax = 0xC8;   // entry text capacity
+constexpr uint32_t kEntryExpiry = 0xC8; // DWORD: TimeNow()+duration at push
+constexpr uint32_t kEntryColor = 0xCC;  // BYTE: color slot (chat uses 0)
+constexpr size_t kHistRing = 64;
+constexpr LONG kPageStep = 10;
+constexpr uint32_t kViewHoldMs = 3000;   // refreshed while browsing
+constexpr uint32_t kExitHoldMs = 4000;   // fade-out after leaving the view
+constexpr DWORD kViewIdleExitMs = 20000; // auto-return to live chat
+
+struct HistEntry {
+    char text[kRingTextMax]{};
+    char stamp[16]{}; // wall time at push, so replays show the ORIGINAL time
+    uint8_t color = 0;
+};
+HistEntry g_hist[kHistRing]{};
+volatile LONG g_histCount = 0;  // total lines ever pushed (monotonic)
+volatile LONG g_viewing = 0;    // 1 while PageUp view is active
+volatile LONG g_viewBack = 0;   // lines back from newest (0 = last 15)
+
+uint8_t* g_msgRing = nullptr;
+uint8_t* g_msgInitFlag = nullptr; // VA 0x9B1798: 1 during a match, 0 in menus
+TimeNowFn g_timeNow = nullptr;
+uint8_t* g_pushSite = nullptr;
+uint8_t g_pushPrologue[8]{};
+void* g_pushTrampoline = nullptr;
+PushMapMsgFn g_originalPush = nullptr;
+HANDLE g_keyThread = nullptr;
+volatile LONG g_keyStop = 0;
 
 uint32_t g_colors[8]{};
 char g_logPath[MAX_PATH]{};
@@ -260,26 +315,26 @@ int ReadLocalPlayerIndex()
 
 // Seat -> lobby-chosen color slot. The name table, alliances rows, and owner
 // stamps are all SEAT-indexed, but in multiplayer a player's color is picked
-// in the lobby and can differ from the seat. The byte table at 0x919390
-// maps COLOR SLOT -> SEAT ("which seat owns color c"); verified against a
-// live match dump on 12-08 (table[5]==3 while seat 3 played the slot-5
-// color #7F7FF5). Invert it to translate a seat into that player's color.
+// in the lobby and can differ from the seat. The byte table at 0x919390 maps
+// SEAT -> COLOR SLOT — a DIRECT lookup, proven by the game's own helper at
+// 0x50E180: `movzx eax,[seat + 0x919390]; shl eax,4; add eax,0x8C9640`
+// (color table is indexed by the RESULT). An earlier inverted reading fit a
+// 12-08 dump only because those two seats had swapped colors symmetrically;
+// a 13-08 match (table [0,4,7,3,2,6,1,5], seat-1 player was not white)
+// refuted the inversion.
 int SeatToColorSlot(int seat)
 {
     if (seat < 0 || seat > 7 || !g_seatColors) return seat;
     __try {
         // The table lives in BSS: all-zero until a match is set up. An
-        // all-zero read means "no mapping yet" — every seat would match
-        // color 0 (red) otherwise. Fall back to identity then.
+        // all-zero read means "no mapping yet" — fall back to identity.
         bool anySet = false;
         for (int i = 0; i < 8; ++i) {
             if (g_seatColors[i] != 0) { anySet = true; break; }
         }
         if (!anySet) return seat;
-        for (int c = 0; c < 8; ++c) {
-            if (static_cast<int>(g_seatColors[c]) == seat) return c;
-        }
-        return seat;
+        const int c = static_cast<int>(g_seatColors[seat]);
+        return (c >= 0 && c <= 7) ? c : seat;
     } __except (EXCEPTION_EXECUTE_HANDLER) {
         return seat;
     }
@@ -301,6 +356,240 @@ extern "C" void __cdecl ChatNameColor_RememberOwner(const char* text, uint32_t p
     RememberChatOwner(text, static_cast<int>(player));
     if (text && text[0])
         Log("owner-remember p=%u text=%.60s", player, text);
+}
+
+// Only called from the game's render thread (the draw hook) — no locking.
+const char* StampFor(const char* text)
+{
+    const DWORD now = GetTickCount();
+    int freeSlot = -1;
+    int oldest = 0;
+    DWORD oldestSeen = 0xFFFFFFFF;
+    for (size_t i = 0; i < kStampRing; ++i) {
+        StampEntry& e = g_stamps[i];
+        if (!e.text[0]) {
+            if (freeSlot < 0) freeSlot = static_cast<int>(i);
+            continue;
+        }
+        if (strcmp(e.text, text) == 0) {
+            if ((now - e.lastSeen) > kStampNewAfterMs) {
+                SYSTEMTIME st{};
+                GetLocalTime(&st);
+                sprintf_s(e.stamp, "[%02u:%02u] ", st.wHour, st.wMinute);
+            }
+            e.lastSeen = now;
+            return e.stamp;
+        }
+        if (e.lastSeen < oldestSeen) {
+            oldestSeen = e.lastSeen;
+            oldest = static_cast<int>(i);
+        }
+    }
+    StampEntry& e = g_stamps[freeSlot >= 0 ? freeSlot : oldest];
+    strncpy_s(e.text, text, _TRUNCATE);
+    SYSTEMTIME st{};
+    GetLocalTime(&st);
+    sprintf_s(e.stamp, "[%02u:%02u] ", st.wHour, st.wMinute);
+    e.lastSeen = now;
+    return e.stamp;
+}
+
+// Pre-fill the stamp ring so a replayed line keeps its original arrival
+// time — StampFor would otherwise assign "now" to a re-shown old line.
+void SeedStamp(const char* text, const char* stamp)
+{
+    if (!text || !text[0] || !stamp || !stamp[0]) return;
+    const DWORD now = GetTickCount();
+    int freeSlot = -1;
+    int oldest = 0;
+    DWORD oldestSeen = 0xFFFFFFFF;
+    for (size_t i = 0; i < kStampRing; ++i) {
+        StampEntry& e = g_stamps[i];
+        if (!e.text[0]) {
+            if (freeSlot < 0) freeSlot = static_cast<int>(i);
+            continue;
+        }
+        if (strcmp(e.text, text) == 0) {
+            strcpy_s(e.stamp, stamp);
+            e.lastSeen = now;
+            return;
+        }
+        if (e.lastSeen < oldestSeen) {
+            oldestSeen = e.lastSeen;
+            oldest = static_cast<int>(i);
+        }
+    }
+    StampEntry& e = g_stamps[freeSlot >= 0 ? freeSlot : oldest];
+    strncpy_s(e.text, text, _TRUNCATE);
+    strcpy_s(e.stamp, stamp);
+    e.lastSeen = now;
+}
+
+uint32_t SafeTimeNow()
+{
+    if (!g_timeNow) return 0;
+    __try {
+        return g_timeNow();
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return 0;
+    }
+}
+
+void RecordHistory(const char* text, uint8_t color)
+{
+    __try {
+        if (!text || !text[0]) return;
+        const LONG idx = InterlockedIncrement(&g_histCount) - 1;
+        HistEntry& e = g_hist[static_cast<size_t>(idx) % kHistRing];
+        strncpy_s(e.text, text, _TRUNCATE);
+        e.color = color;
+        SYSTEMTIME st{};
+        GetLocalTime(&st);
+        sprintf_s(e.stamp, "[%02u:%02u] ", st.wHour, st.wMinute);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+}
+
+// Rewrite the game's 15 ring slots with a window of our history ending
+// g_viewBack lines before the newest. Expiry is zeroed first and written
+// last so the game never draws a half-written line.
+void RenderHistoryView(uint32_t holdMs)
+{
+    if (!g_msgRing) return;
+    const LONG total = InterlockedCompareExchange(&g_histCount, 0, 0);
+    if (total <= 0) return;
+    const uint32_t now = SafeTimeNow();
+    if (!now) return;
+    LONG newestIdx = total - 1 - InterlockedCompareExchange(&g_viewBack, 0, 0);
+    if (newestIdx < 0) newestIdx = 0;
+    __try {
+        for (int slot = static_cast<int>(kRingSlots) - 1; slot >= 0; --slot) {
+            uint8_t* e = g_msgRing + static_cast<size_t>(slot) * kRingStride;
+            const LONG idx = newestIdx - (static_cast<LONG>(kRingSlots) - 1 - slot);
+            *reinterpret_cast<uint32_t*>(e + kEntryExpiry) = 0;
+            if (idx < 0 || idx < total - static_cast<LONG>(kHistRing)) {
+                e[0] = 0;
+                e[kEntryColor] = 0;
+                continue;
+            }
+            const HistEntry& h = g_hist[static_cast<size_t>(idx) % kHistRing];
+            strncpy_s(reinterpret_cast<char*>(e), kRingTextMax, h.text, _TRUNCATE);
+            e[kEntryColor] = h.color;
+            SeedStamp(h.text, h.stamp);
+            *reinterpret_cast<uint32_t*>(e + kEntryExpiry) = now + holdMs;
+        }
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+}
+
+bool GameWindowFocused()
+{
+    const HWND fg = GetForegroundWindow();
+    if (!fg) return false;
+    DWORD pid = 0;
+    GetWindowThreadProcessId(fg, &pid);
+    return pid == GetCurrentProcessId();
+}
+
+// The game's map-message "initialized" byte: set to 1 when a match sets up
+// its message ring (0x614A4F), cleared to 0 on teardown (0x614A84).
+int ReadMsgInitFlag()
+{
+    if (!g_msgInitFlag) return -1;
+    __try {
+        return *g_msgInitFlag ? 1 : 0;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
+
+void ExitHistoryView()
+{
+    InterlockedExchange(&g_viewBack, 0);
+    if (InterlockedExchange(&g_viewing, 0) != 0) RenderHistoryView(kExitHoldMs);
+}
+
+DWORD WINAPI HistoryKeyThread(LPVOID)
+{
+    bool upHeld = false;
+    bool dnHeld = false;
+    DWORD lastAction = 0;
+    DWORD lastRefresh = 0;
+    int lastInitFlag = -1;
+    while (!InterlockedCompareExchange(&g_keyStop, 0, 0)) {
+        Sleep(60);
+
+        // Every game starts fresh: drop the history when the game sets up a
+        // new match (init flag 0 -> 1), and leave the view on teardown.
+        const int initFlag = ReadMsgInitFlag();
+        if (initFlag >= 0) {
+            if (initFlag == 1 && lastInitFlag == 0) {
+                InterlockedExchange(&g_viewing, 0);
+                InterlockedExchange(&g_viewBack, 0);
+                InterlockedExchange(&g_histCount, 0);
+                Log("history: reset for new game");
+            } else if (initFlag == 0 && lastInitFlag == 1) {
+                InterlockedExchange(&g_viewing, 0);
+                InterlockedExchange(&g_viewBack, 0);
+            }
+            lastInitFlag = initFlag;
+        }
+
+        if (!InterlockedCompareExchange(&g_historyOn, 0, 0)) {
+            ExitHistoryView();
+            upHeld = dnHeld = false;
+            continue;
+        }
+        const bool focused = GameWindowFocused();
+        const bool up = focused && (GetAsyncKeyState(VK_PRIOR) & 0x8000) != 0;
+        const bool dn = focused && (GetAsyncKeyState(VK_NEXT) & 0x8000) != 0;
+        const DWORD now = GetTickCount();
+        const bool viewing = InterlockedCompareExchange(&g_viewing, 0, 0) != 0;
+
+        if (up && (!upHeld || (now - lastAction) > 300)) {
+            const LONG total = InterlockedCompareExchange(&g_histCount, 0, 0);
+            if (total > 0) {
+                if (!viewing) {
+                    // First press: re-show the newest 15 lines as-is.
+                    InterlockedExchange(&g_viewBack, 0);
+                    InterlockedExchange(&g_viewing, 1);
+                } else {
+                    LONG maxBack = total - 1;
+                    if (maxBack > static_cast<LONG>(kHistRing) - 1)
+                        maxBack = static_cast<LONG>(kHistRing) - 1;
+                    LONG next = InterlockedCompareExchange(&g_viewBack, 0, 0) + kPageStep;
+                    if (next > maxBack) next = maxBack;
+                    if (next < 0) next = 0;
+                    InterlockedExchange(&g_viewBack, next);
+                }
+                RenderHistoryView(kViewHoldMs);
+                lastAction = now;
+                lastRefresh = now;
+            }
+        } else if (dn && (!dnHeld || (now - lastAction) > 300) && viewing) {
+            const LONG back = InterlockedCompareExchange(&g_viewBack, 0, 0);
+            if (back <= 0) {
+                ExitHistoryView();
+            } else {
+                LONG next = back - kPageStep;
+                if (next < 0) next = 0;
+                InterlockedExchange(&g_viewBack, next);
+                RenderHistoryView(kViewHoldMs);
+            }
+            lastAction = now;
+            lastRefresh = now;
+        } else if (viewing) {
+            if ((now - lastAction) > kViewIdleExitMs) {
+                ExitHistoryView();
+            } else if ((now - lastRefresh) > 1000) {
+                RenderHistoryView(kViewHoldMs); // keep the page on screen
+                lastRefresh = now;
+            }
+        }
+        upHeld = up;
+        dnHeld = dn;
+    }
+    return 0;
 }
 
 int LookupChatOwner(const char* text)
@@ -464,10 +753,11 @@ void NotifyAllyLeaveByIndex(int playerIndex)
     if (fn) fn(playerIndex);
 }
 
-// Detect "Player X left/dropped/eliminated" chat lines and mark ally-screen gone.
-void TryMarkLeaveFromChatText(const char* text)
+// Locate the player name inside a system leave/drop/elim line. Returns true
+// with the name span (offset into text + length) when matched.
+bool ParseLeaveLine(const char* text, size_t* nameOffOut, size_t* nameLenOut)
 {
-    if (!text || !text[0]) return;
+    if (!text || !text[0]) return false;
     const char* start = text;
     while (*start && (static_cast<unsigned char>(*start) < 0x20 || *start == ' ')) ++start;
 
@@ -510,21 +800,56 @@ void TryMarkLeaveFromChatText(const char* text)
             }
         }
     }
-    if (!hit) return;
+    if (!hit) return false;
 
     const char* nameStart = start;
     if (StartsWithIgnoreCase(nameStart, "Player "))
         nameStart += 7;
     while (*nameStart == ' ' || *nameStart == '\t') ++nameStart;
-    if (nameStart >= hit || nameStart[0] == 0) return;
+    if (nameStart >= hit || nameStart[0] == 0) return false;
+
+    size_t n = static_cast<size_t>(hit - nameStart);
+    while (n > 0 && (nameStart[n - 1] == ' ' || nameStart[n - 1] == '\t')) --n;
+    if (n == 0 || n >= 80) return false;
+
+    if (nameOffOut) *nameOffOut = static_cast<size_t>(nameStart - text);
+    if (nameLenOut) *nameLenOut = n;
+    return true;
+}
+
+// Seat for a bare player name: alliances rows first (stable in shuffled
+// lobbies), then a unique match in the join-ordered 0x91ADA8 name table.
+int SeatForName(const char* name, size_t len)
+{
+    const int fromRows = AllyRowByName(name, len);
+    if (fromRows >= 0) return fromRows;
+
+    int match = -1;
+    int count = 0;
+    for (int i = 0; i < 8; ++i) {
+        const char* slot = PlayerName(i);
+        if (!slot) continue;
+        __try {
+            if (slot[0] && NameEquals(name, len, slot)) {
+                match = i;
+                ++count;
+            }
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+    return (count == 1) ? match : -1;
+}
+
+// Detect "Player X left/dropped/eliminated" chat lines and mark ally-screen gone.
+void TryMarkLeaveFromChatText(const char* text)
+{
+    size_t nameOff = 0;
+    size_t nameLen = 0;
+    if (!ParseLeaveLine(text, &nameOff, &nameLen)) return;
 
     char name[80]{};
-    size_t n = static_cast<size_t>(hit - nameStart);
-    if (n == 0 || n >= sizeof(name)) return;
-    memcpy(name, nameStart, n);
-    name[n] = 0;
-    while (n > 0 && (name[n - 1] == ' ' || name[n - 1] == '\t')) name[--n] = 0;
-    if (n == 0) return;
+    memcpy(name, text + nameOff, nameLen);
+    name[nameLen] = 0;
 
     // The system line redraws every frame while visible — notify once per name.
     static char s_lastName[80]{};
@@ -601,12 +926,29 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
         return;
     }
 
-    // Always watch for leave/drop/elim lines (does not require chat-color feature).
-    TryMarkLeaveFromChatText(text);
+    // Always watch for leave/drop/elim lines (does not require chat-color
+    // feature). Skipped while the history view replays old lines — a
+    // re-shown "X Left" from an earlier game must not mark anyone again.
+    if (!InterlockedCompareExchange(&g_viewing, 0, 0))
+        TryMarkLeaveFromChatText(text);
+
+    // Timestamp mod: prefix "[HH:MM] " (arrival time). Independent of the
+    // name-color feature; all draw layers below shift by stampLen. Matching
+    // (names, owners, stamps) always keys on the ORIGINAL text.
+    const bool stampsOn = InterlockedCompareExchange(&g_timestamps, 0, 0) != 0;
+    char stamped[224]{};
+    size_t stampLen = 0;
+    const char* base = text;
+    if (stampsOn) {
+        const char* stamp = StampFor(text);
+        stampLen = strlen(stamp);
+        _snprintf_s(stamped, _TRUNCATE, "%s%s", stamp, text);
+        base = stamped;
+    }
 
     const bool chatOn = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
     if (!chatOn) {
-        g_originalDraw(ui, text, color);
+        g_originalDraw(ui, base, color);
         return;
     }
 
@@ -616,8 +958,38 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     const int player = MatchPlayerIndex(text, &channelLen, &nameEnd);
 
     if (player < 0 || nameEnd == 0 || nameEnd >= 160) {
+        // System leave/drop/elim lines ("Avent Left"): paint the leaver's name
+        // in their player color, rest of the line in the normal body color.
+        // Part of the same chat-color mod (g_enabled gates this path too).
+        size_t leaveOff = 0;
+        size_t leaveLen = 0;
+        if (ParseLeaveLine(text, &leaveOff, &leaveLen) && stampLen + leaveOff + leaveLen < 200) {
+            const int seat = SeatForName(text + leaveOff, leaveLen);
+            if (seat >= 0) {
+                const uint32_t nameColor = g_colors[SeatToColorSlot(seat)];
+                g_originalDraw(ui, base, kBodyColor);
+                const size_t nameEndAbs = stampLen + leaveOff + leaveLen;
+                char throughName[224]{};
+                memcpy(throughName, base, nameEndAbs);
+                throughName[nameEndAbs] = 0;
+                g_originalDraw(ui, throughName, nameColor);
+                const size_t prefixLen = stampLen + leaveOff;
+                if (prefixLen > 0 && prefixLen < sizeof(throughName)) {
+                    char prefixOnly[224]{};
+                    memcpy(prefixOnly, base, prefixLen);
+                    prefixOnly[prefixLen] = 0;
+                    g_originalDraw(ui, prefixOnly, kBodyColor);
+                }
+                InterlockedIncrement(&g_recolors);
+                if (hits <= 40 || (hits % 50) == 0) {
+                    Log("recolor-leave seat=%d slot=%d off=%u len=%u text=%.60s",
+                        seat, SeatToColorSlot(seat), (unsigned)leaveOff, (unsigned)leaveLen, text);
+                }
+                return;
+            }
+        }
         if (hits <= 30) Log("hit#%ld pass text=%.80s gameColor=%08X", hits, text, color);
-        g_originalDraw(ui, text, color);
+        g_originalDraw(ui, base, color);
         return;
     }
 
@@ -628,20 +1000,25 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     const uint32_t nameColor = g_colors[colorSlot];
 
     // 1) Full line in body color.
-    g_originalDraw(ui, text, bodyColor);
+    g_originalDraw(ui, base, bodyColor);
 
     // 2) Draw through end of "Name:" in player color.
-    char throughName[160]{};
-    memcpy(throughName, text, nameEnd);
-    throughName[nameEnd] = 0;
+    const size_t nameEndAbs = stampLen + nameEnd;
+    if (nameEndAbs >= 200) {
+        return;
+    }
+    char throughName[224]{};
+    memcpy(throughName, base, nameEndAbs);
+    throughName[nameEndAbs] = 0;
     g_originalDraw(ui, throughName, nameColor);
 
-    // 3) If there was a channel prefix, redraw it in body color so only the
-    //    name stays player-colored: "(To All) " body + "Name:" player + " msg" body.
-    if (channelLen > 0 && channelLen < nameEnd && channelLen < sizeof(throughName)) {
-        char channelOnly[96]{};
-        memcpy(channelOnly, text, channelLen);
-        channelOnly[channelLen] = 0;
+    // 3) Redraw the stamp + channel prefix in body color so only the name
+    //    stays player-colored: "[21:08] (To All) " body + "Name:" player.
+    const size_t prefixLen = stampLen + channelLen;
+    if (prefixLen > 0 && prefixLen < nameEndAbs && prefixLen < sizeof(throughName)) {
+        char channelOnly[224]{};
+        memcpy(channelOnly, base, prefixLen);
+        channelOnly[prefixLen] = 0;
         g_originalDraw(ui, channelOnly, bodyColor);
     }
 
@@ -662,6 +1039,30 @@ static void __declspec(naked) Hook_DrawColored()
         // Site prologue was: push ebp; mov ebp,esp; mov eax,[ebp+0x10]; push eax
         // We replace it entirely and forward to our cdecl handler.
         jmp ChatNameColor_OnDrawColored
+    }
+}
+
+// Runs on the game thread inside PushMapMsg: record every pushed line into
+// our history, forward to the original, then keep an active PageUp view
+// anchored (the push just shifted the ring under it).
+extern "C" void __cdecl ChatHistory_OnPushMapMsg(const char* text, uint32_t color, uint32_t duration)
+{
+    RecordHistory(text, static_cast<uint8_t>(color));
+    if (g_originalPush) g_originalPush(text, color, duration);
+    if (InterlockedCompareExchange(&g_viewing, 0, 0)) {
+        LONG back = InterlockedCompareExchange(&g_viewBack, 0, 0) + 1;
+        if (back > static_cast<LONG>(kHistRing) - 1) back = static_cast<LONG>(kHistRing) - 1;
+        InterlockedExchange(&g_viewBack, back);
+        RenderHistoryView(kViewHoldMs);
+    }
+}
+
+static void __declspec(naked) Hook_PushMapMsg()
+{
+    __asm {
+        // Function prologue (7 bytes, whole instructions) lives in the
+        // trampoline; forward the original stack args to our cdecl handler.
+        jmp ChatHistory_OnPushMapMsg
     }
 }
 
@@ -789,6 +1190,39 @@ bool InstallChatOwnerHook(uint8_t* base, size_t imageSize)
     return true;
 }
 
+// Prologue-hook PushMapMsg itself so every line (typed, received, system)
+// lands in our history exactly once. Verified prologue for this build:
+//   push ebp; mov ebp,esp; sub esp,0Ch; push esi   (7 bytes, whole instrs)
+bool InstallPushHistoryHook(uint8_t* base)
+{
+    uint8_t* fn = base + (kPreferredPushMapMsg - kPreferredImageBase);
+    static const uint8_t kPrologue[7] = { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x0C, 0x56 };
+    if (!IsLikelyCode(fn, sizeof(kPrologue)) || memcmp(fn, kPrologue, sizeof(kPrologue)) != 0) {
+        Log("Install: PushMapMsg prologue mismatch — history capture off");
+        return false;
+    }
+    if (!PatchPrologue7(fn, reinterpret_cast<void*>(&Hook_PushMapMsg),
+                        g_pushPrologue, &g_pushTrampoline,
+                        reinterpret_cast<void**>(&g_originalPush))) {
+        Log("Install: PatchPrologue7(PushMapMsg) failed");
+        return false;
+    }
+    g_pushSite = fn;
+    g_msgRing = base + (kPreferredMsgRing - kPreferredImageBase);
+    g_msgInitFlag = base + (0x009B1798 - kPreferredImageBase);
+
+    uint8_t* timeFn = base + (kPreferredTimeNow - kPreferredImageBase);
+    // Expected: push ebp; mov ebp,esp; call rel32 — a pure ms-since-start getter.
+    if (IsLikelyCode(timeFn, 4) &&
+        timeFn[0] == 0x55 && timeFn[1] == 0x8B && timeFn[2] == 0xEC && timeFn[3] == 0xE8) {
+        g_timeNow = reinterpret_cast<TimeNowFn>(timeFn);
+    } else {
+        Log("Install: TimeNow prologue mismatch — history render off");
+    }
+    Log("Install: history push=%p ring=%p timeNow=%p", fn, g_msgRing, g_timeNow);
+    return true;
+}
+
 bool InstallDrawColoredHook(uint8_t* base, size_t imageSize)
 {
     uint8_t* site = FindDrawTextColored(base, imageSize);
@@ -833,11 +1267,38 @@ bool InstallHook()
     if (!InstallDrawColoredHook(base, imageSize)) return false;
     if (!InstallChatOwnerHook(base, imageSize))
         Log("InstallHook: continuing without chat-owner hook (duplicate names may share color)");
+    if (InstallPushHistoryHook(base)) {
+        g_keyThread = CreateThread(nullptr, 0, HistoryKeyThread, nullptr, 0, nullptr);
+        if (!g_keyThread) Log("InstallHook: history key thread failed (%lu)", GetLastError());
+    } else {
+        Log("InstallHook: continuing without chat history (PageUp/PageDown off)");
+    }
     return true;
 }
 
 void RemoveHook()
 {
+    // Detach runs at process exit (the DLL is never freed at runtime); other
+    // threads are already gone, so signal the key thread without waiting.
+    InterlockedExchange(&g_keyStop, 1);
+    if (g_keyThread) {
+        CloseHandle(g_keyThread);
+        g_keyThread = nullptr;
+    }
+    if (g_pushSite && g_pushPrologue[0]) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_pushSite, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_pushSite, g_pushPrologue, 7);
+            VirtualProtect(g_pushSite, 7, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_pushSite, 7);
+        }
+        g_pushSite = nullptr;
+    }
+    if (g_pushTrampoline) {
+        VirtualFree(g_pushTrampoline, 0, MEM_RELEASE);
+        g_pushTrampoline = nullptr;
+        g_originalPush = nullptr;
+    }
     if (g_ownerSite && g_ownerOrigLen) {
         DWORD oldProtect = 0;
         if (VirtualProtect(g_ownerSite, g_ownerOrigLen, PAGE_EXECUTE_READWRITE, &oldProtect)) {
@@ -905,5 +1366,24 @@ extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetEnabled(LPVOID
         InterlockedCompareExchange(&g_ready, 0, 0),
         InterlockedCompareExchange(&g_hits, 0, 0),
         InterlockedCompareExchange(&g_recolors, 0, 0));
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+// Timestamp mod ("[HH:MM] " before chat lines). Separate feature flag —
+// works with or without the name-color mod.
+extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetTimestamps(LPVOID enabled)
+{
+    InterlockedExchange(&g_timestamps, enabled ? 1 : 0);
+    Log("Chat SetTimestamps=%d", enabled ? 1 : 0);
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+// Chat history recall mod (PageUp/PageDown re-show earlier lines).
+// Separate feature flag — works with or without the other chat mods.
+extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetHistory(LPVOID enabled)
+{
+    InterlockedExchange(&g_historyOn, enabled ? 1 : 0);
+    Log("Chat SetHistory=%d count=%ld", enabled ? 1 : 0,
+        InterlockedCompareExchange(&g_histCount, 0, 0));
     return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
 }

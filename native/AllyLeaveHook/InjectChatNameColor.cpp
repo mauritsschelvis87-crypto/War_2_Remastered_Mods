@@ -84,7 +84,7 @@ FARPROC RemoteGetProc(HANDLE process, DWORD pid, const wchar_t* moduleName, cons
     return reinterpret_cast<FARPROC>(reinterpret_cast<uintptr_t>(remoteBase) + offset);
 }
 
-int InjectAndSet(const std::wstring& dllPath, bool enable)
+int InjectAndSet(const std::wstring& dllPath, bool enable, int timestamps, int history)
 {
     const DWORD pid = FindPidByName(L"Warcraft II.exe");
     if (!pid) {
@@ -173,6 +173,36 @@ int InjectAndSet(const std::wstring& dllPath, bool enable)
     }
     WaitForSingleObject(setThread, 5000);
     CloseHandle(setThread);
+
+    // Timestamp mod flag (separate feature). -1 = leave as-is.
+    if (timestamps >= 0) {
+        FARPROC setStamps = RemoteGetProc(process, pid, L"ChatNameColorHook.dll",
+                                          "ChatNameColor_SetTimestamps");
+        if (setStamps) {
+            HANDLE stampThread = CreateRemoteThread(
+                process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setStamps),
+                reinterpret_cast<LPVOID>(static_cast<uintptr_t>(timestamps ? 1 : 0)), 0, nullptr);
+            if (stampThread) {
+                WaitForSingleObject(stampThread, 5000);
+                CloseHandle(stampThread);
+            }
+        }
+    }
+
+    // Chat history recall flag (PageUp/PageDown). -1 = leave as-is.
+    if (history >= 0) {
+        FARPROC setHistory = RemoteGetProc(process, pid, L"ChatNameColorHook.dll",
+                                           "ChatNameColor_SetHistory");
+        if (setHistory) {
+            HANDLE historyThread = CreateRemoteThread(
+                process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setHistory),
+                reinterpret_cast<LPVOID>(static_cast<uintptr_t>(history ? 1 : 0)), 0, nullptr);
+            if (historyThread) {
+                WaitForSingleObject(historyThread, 5000);
+                CloseHandle(historyThread);
+            }
+        }
+    }
     CloseHandle(process);
 
     std::fwprintf(stdout,
@@ -197,9 +227,19 @@ std::wstring SiblingPath(const wchar_t* fileName)
 int wmain(int argc, wchar_t** argv)
 {
     bool enable = true;
+    int timestamps = -1; // -1 = don't touch
+    int history = -1;    // -1 = don't touch
     for (int i = 1; i < argc; ++i) {
         if (_wcsicmp(argv[i], L"--disable") == 0 || _wcsicmp(argv[i], L"0") == 0) enable = false;
         if (_wcsicmp(argv[i], L"--enable") == 0 || _wcsicmp(argv[i], L"1") == 0) enable = true;
+        if (_wcsicmp(argv[i], L"--timestamps") == 0 && i + 1 < argc) {
+            timestamps = (_wcsicmp(argv[i + 1], L"1") == 0) ? 1 : 0;
+            ++i;
+        }
+        if (_wcsicmp(argv[i], L"--history") == 0 && i + 1 < argc) {
+            history = (_wcsicmp(argv[i + 1], L"1") == 0) ? 1 : 0;
+            ++i;
+        }
     }
 
     const std::wstring dllPath = SiblingPath(L"ChatNameColorHook.dll");
@@ -207,5 +247,5 @@ int wmain(int argc, wchar_t** argv)
         std::fwprintf(stderr, L"Missing DLL: %s\n", dllPath.c_str());
         return 1;
     }
-    return InjectAndSet(dllPath, enable);
+    return InjectAndSet(dllPath, enable, timestamps, history);
 }

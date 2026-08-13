@@ -27,8 +27,17 @@ struct ExtraFlags {
     bool humanLeave = false;
     // Live recolor of HD unit sprites to the Studio player colors.
     bool unitColor = false;
-    bool Any() const { return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor; }
-    bool ChatDllWanted() const { return chatNameColor || humanLeave; }
+    // "[HH:MM] " prefix on chat lines (lives in the chat DLL, own flag).
+    bool chatTimestamps = false;
+    // PageUp/PageDown chat history recall (lives in the chat DLL, own flag).
+    bool chatHistory = false;
+    bool Any() const {
+        return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
+               chatTimestamps || chatHistory;
+    }
+    bool ChatDllWanted() const {
+        return chatNameColor || humanLeave || chatTimestamps || chatHistory;
+    }
 };
 
 std::wstring ModuleDir()
@@ -94,6 +103,8 @@ ExtraFlags ReadExtraFlags()
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
     flags.chatNameColor = ReadJsonBool(buf, "ChatColoredNames");
     flags.unitColor = ReadJsonBool(buf, "UnitSpriteColors");
+    flags.chatTimestamps = ReadJsonBool(buf, "ChatTimestamps");
+    flags.chatHistory = ReadJsonBool(buf, "ChatHistory");
     return flags;
 }
 
@@ -116,12 +127,16 @@ DWORD FindWarcraftPid()
     return pid;
 }
 
-bool RunInjector(const wchar_t* exeName, bool enable)
+bool RunInjector(const wchar_t* exeName, bool enable, const wchar_t* extraArgs = nullptr)
 {
     const std::wstring injector = ModuleDir() + exeName;
     if (GetFileAttributesW(injector.c_str()) == INVALID_FILE_ATTRIBUTES) return false;
 
     std::wstring cmd = L"\"" + injector + L"\" " + (enable ? L"--enable" : L"--disable");
+    if (extraArgs && extraArgs[0]) {
+        cmd += L" ";
+        cmd += extraArgs;
+    }
     std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end());
     cmdBuf.push_back(L'\0');
     STARTUPINFOW si{};
@@ -193,7 +208,8 @@ void WatchLoop(HANDLE quitEvent)
 
         if (flags.allyLeave != last.allyLeave || flags.pauseChat != last.pauseChat ||
             flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
-            flags.humanLeave != last.humanLeave || flags.unitColor != last.unitColor) {
+            flags.humanLeave != last.humanLeave || flags.unitColor != last.unitColor ||
+            flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);
@@ -207,8 +223,8 @@ void WatchLoop(HANDLE quitEvent)
                 RunInjector(L"InjectDragSelect.exe", false);
                 dragInjectedPid = 0;
             }
-            if (!flags.chatNameColor && pid != 0) {
-                RunInjector(L"InjectChatNameColor.exe", false);
+            if (!flags.ChatDllWanted() && pid != 0) {
+                RunInjector(L"InjectChatNameColor.exe", false, L"--timestamps 0 --history 0");
             }
             if (!flags.unitColor && pid != 0) {
                 RunInjector(L"InjectUnitColor.exe", false);
@@ -232,7 +248,11 @@ void WatchLoop(HANDLE quitEvent)
         // recolor is only enabled for the color feature — with humans-only the
         // DLL just watches leave/drop/eliminated lines.
         if (flags.ChatDllWanted() && pid != 0 && pid != chatNameInjectedPid) {
-            if (RunInjector(L"InjectChatNameColor.exe", flags.chatNameColor)) chatNameInjectedPid = pid;
+            std::wstring chatArgs = flags.chatTimestamps ? L"--timestamps 1" : L"--timestamps 0";
+            chatArgs += flags.chatHistory ? L" --history 1" : L" --history 0";
+            if (RunInjector(L"InjectChatNameColor.exe", flags.chatNameColor, chatArgs.c_str())) {
+                chatNameInjectedPid = pid;
+            }
         }
         if (flags.unitColor && pid != 0 && pid != unitColorInjectedPid) {
             if (RunInjector(L"InjectUnitColor.exe", true)) unitColorInjectedPid = pid;

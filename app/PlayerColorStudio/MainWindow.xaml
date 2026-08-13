@@ -198,14 +198,24 @@
                                            Text="When a human player leaves, disconnects, or is eliminated, their name turns red on the alliances screen. Works on its own or together with Mark gone computers."/>
                             </StackPanel>
                         </Border>
-                        <Border Padding="14" CornerRadius="8"
+                        <Border Padding="14" CornerRadius="8" Margin="0,0,0,12"
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel VerticalAlignment="Center">
                                 <CheckBox IsChecked="{Binding ChatColoredNames}"
                                           IsEnabled="{Binding IsApplyEnabled}"
                                           Content="Show chat names in player color."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
-                                           Text="Multiplayer chat lines from a player use that player's current color from Player colors. The message text remains white and clearly visible."/>
+                                           Text="Multiplayer chat lines from a player use that player's current color from Player colors. The message text remains white and clearly visible. Leave and drop messages also show the leaving player's name in their color."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Padding="14" CornerRadius="8"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding ChatTimestamps}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          Content="Show timestamps in chat."/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="Every chat line starts with the clock time it appeared, like [21:08]. Works on its own — no other mod required."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -219,7 +229,7 @@
                         <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="White" Visibility="Hidden"
                                    Text="Player 8 cannot be changed yet, I am working on it."/>
-                        <Border Padding="14" CornerRadius="8"
+                        <Border Padding="14" CornerRadius="8" Margin="0,0,0,12"
                                 Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
                             <StackPanel VerticalAlignment="Center">
                                 <CheckBox IsChecked="{Binding ChatDuringPauseScreen}"
@@ -227,6 +237,16 @@
                                           Content="Chat during pause screen."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
                                            Text="Lets you read, type, and send chat while the multiplayer game is paused. Both players need this bug fix installed — if only one side has it, that player can send, but the other only sees the message after unpause if the chat is within its timeframe."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Padding="14" CornerRadius="8"
+                                Background="{StaticResource CardBrush}" BorderBrush="#FF4A6388" BorderThickness="1">
+                            <StackPanel VerticalAlignment="Center">
+                                <CheckBox IsChecked="{Binding ChatHistory}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          Content="Show chat history with Page Up / Page Down."/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="#FFB8C4D8" FontSize="12"
+                                           Text="Press Page Up in a match to bring back earlier chat messages, page by page. Page Down moves forward again and returns to live chat. The last 64 messages of the current game are kept — every new game starts fresh."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

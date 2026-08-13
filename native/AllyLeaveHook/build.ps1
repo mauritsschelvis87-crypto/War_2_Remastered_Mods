@@ -26,7 +26,7 @@ cl /nologo /O2 /W3 /EHsc /LD "$here\PauseChatHook.cpp" /Fe:"$OutDir\PauseChatHoo
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc /LD "$here\DragSelectHook.cpp" /Fe:"$OutDir\DragSelectHook.dll" /link /nologo /DLL /OUT:"$OutDir\DragSelectHook.dll"
 if errorlevel 1 exit /b 1
-cl /nologo /O2 /W3 /EHsc /LD "$here\ChatNameColorHook.cpp" /Fe:"$OutDir\ChatNameColorHook.dll" /link /nologo /DLL /OUT:"$OutDir\ChatNameColorHook.dll"
+cl /nologo /O2 /W3 /EHsc /LD "$here\ChatNameColorHook.cpp" /Fe:"$OutDir\ChatNameColorHook.dll" /link /nologo /DLL /OUT:"$OutDir\ChatNameColorHook.dll" User32.lib
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc /LD "$here\UnitColorHook.cpp" /Fe:"$OutDir\UnitColorHook.dll" /link /nologo /DLL /OUT:"$OutDir\UnitColorHook.dll"
 if errorlevel 1 exit /b 1
