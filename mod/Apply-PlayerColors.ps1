@@ -378,18 +378,6 @@ function Restore-PreservedPaletteSlots($targetBytes, $vanillaBytes, [int[]]$indi
     }
 }
 
-# True when a palette index plays the same role in both files: identical
-# vanilla bytes. mapColors.bin has a different layout for the highlight
-# slots (236-238 is the local player's white HD-minimap dot, 246/247/250
-# hold tileset-specific data), so only matching slots may be mirrored.
-function Test-SamePaletteRole($aBytes, $bBytes, [int]$idx) {
-    $o = $idx * 3
-    if (($o + 2) -ge $aBytes.Length -or ($o + 2) -ge $bBytes.Length) { return $false }
-    return ($aBytes[$o] -eq $bBytes[$o] -and
-            $aBytes[$o + 1] -eq $bBytes[$o + 1] -and
-            $aBytes[$o + 2] -eq $bBytes[$o + 2])
-}
-
 function Set-PlayerColorsOnBytes($bytes, $colors, [switch]$IncludePplOnlyMinimap) {
     foreach ($playerIndex in $PlayerColorIndices.Keys) {
         if ($DisabledPlayerIndices -contains $playerIndex) { continue }
@@ -639,15 +627,16 @@ function Apply-MinimapAndAllyColors {
         foreach ($idx in $playerIndices) {
             Copy-PaletteIndexBytes $pplBytes $binBytes $idx
         }
-        # Highlight slots: only mirror into the bin when the index has the same
-        # role there (identical vanilla bytes). Blind copies painted the local
-        # player's white minimap dots gold (bin 236-238 got the ppl gold band).
-        # Non-matching slots are reset to vanilla to heal earlier corruption.
+        # Highlight slots (self/enemy/ally/critter/oil) have the same blink-dot
+        # role in the bin — mirror them so minimap selection dots follow the
+        # custom colors. EXCEPT the gold-mine band 236-238: in the bin those
+        # bytes are the local player's white minimap dots, and the ppl gold
+        # there painted the player's own dots gold. Keep those vanilla.
         foreach ($idx in $selectionPatchIndices) {
-            if (Test-SamePaletteRole $vanillaPpl $vanillaBin $idx) {
-                Copy-PaletteIndexBytes $pplBytes $binBytes $idx
-            } else {
+            if ($GoldMineHighlightPaletteIndices -contains $idx) {
                 Copy-PaletteIndexBytes $vanillaBin $binBytes $idx
+            } else {
+                Copy-PaletteIndexBytes $pplBytes $binBytes $idx
             }
         }
         Restore-PreservedPaletteSlots $binBytes $vanillaBin $PreservePaletteIndicesBin
@@ -688,12 +677,14 @@ function Apply-MinimapAndAllyColors {
     if ($ppl[$oFriendly] -ne $expectedFriendly[0] -or $ppl[$oFriendly + 1] -ne $expectedFriendly[1] -or $ppl[$oFriendly + 2] -ne $expectedFriendly[2]) {
         throw "Patch mislukt op forest.ppl (idx $SelectionHighlightPaletteIndex, friendly highlight)."
     }
-    if (Test-SamePaletteRole $vanillaPpl $vanillaBin $SelectionHighlightPaletteIndex) {
-        if ($bin[$oFriendly] -ne $expectedFriendly[0] -or $bin[$oFriendly + 1] -ne $expectedFriendly[1] -or $bin[$oFriendly + 2] -ne $expectedFriendly[2]) {
-            throw "Patch mislukt op forest_mapColors.bin (idx $SelectionHighlightPaletteIndex, friendly highlight)."
+    if ($bin[$oFriendly] -ne $expectedFriendly[0] -or $bin[$oFriendly + 1] -ne $expectedFriendly[1] -or $bin[$oFriendly + 2] -ne $expectedFriendly[2]) {
+        throw "Patch mislukt op forest_mapColors.bin (idx $SelectionHighlightPaletteIndex, friendly highlight)."
+    }
+    foreach ($idx in $GoldMineHighlightPaletteIndices) {
+        $o = $idx * 3
+        if ($bin[$o] -ne $vanillaBin[$o] -or $bin[$o + 1] -ne $vanillaBin[$o + 1] -or $bin[$o + 2] -ne $vanillaBin[$o + 2]) {
+            throw "forest_mapColors.bin (idx $idx, gold-mine band) is niet vanilla gebleven."
         }
-    } elseif ($bin[$oFriendly] -ne $vanillaBin[$oFriendly] -or $bin[$oFriendly + 1] -ne $vanillaBin[$oFriendly + 1] -or $bin[$oFriendly + 2] -ne $vanillaBin[$oFriendly + 2]) {
-        throw "forest_mapColors.bin (idx $SelectionHighlightPaletteIndex) is niet vanilla gebleven."
     }
 
     $oEnemy = $EnemySelectionHighlightPaletteIndex * 3

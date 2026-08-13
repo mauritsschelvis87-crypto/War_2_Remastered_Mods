@@ -75,6 +75,14 @@ void BuildVanillaFloats(float* out)
 // Find the table by its vanilla contents. Skip P1: a research probe (or an
 // earlier enable) may already have recolored it; P2..P8 (112 bytes) is still
 // unique across the process.
+//
+// Only MEM_PRIVATE regions are scanned: that excludes every module image in
+// one go — the game exe's read-only master copy of these floats (which the
+// renderer does not read) AND this DLL's own .data (g_original/g_colors hold
+// the same bytes after a first find). The scanning thread's own stack is
+// skipped too: the needle is built as a local array, and matching it there
+// made WriteTable overwrite this thread's stack with color floats — the game
+// then crashed at boot trying to execute 0x3F77F7F8 (= 247/255).
 float* FindTable()
 {
     float vanilla[kPlayers * 4];
@@ -82,24 +90,36 @@ float* FindTable()
     const uint8_t* needle = reinterpret_cast<const uint8_t*>(vanilla + 4); // from P2
     const size_t needleLen = (kPlayers - 1) * kEntryBytes;
 
+    const NT_TIB* tib = reinterpret_cast<const NT_TIB*>(NtCurrentTeb());
+    const uintptr_t stackLow = reinterpret_cast<uintptr_t>(tib->StackLimit);
+    const uintptr_t stackHigh = reinterpret_cast<uintptr_t>(tib->StackBase);
+
     MEMORY_BASIC_INFORMATION mbi{};
     uintptr_t addr = 0x10000;
     while (VirtualQuery(reinterpret_cast<LPCVOID>(addr), &mbi, sizeof(mbi)) == sizeof(mbi)) {
         const uintptr_t base = reinterpret_cast<uintptr_t>(mbi.BaseAddress);
         const uintptr_t next = base + mbi.RegionSize;
-        const bool writableData =
+        const bool ownStack = base < stackHigh && next > stackLow;
+        const bool privateData =
+            !ownStack &&
             mbi.State == MEM_COMMIT &&
-            mbi.Protect == PAGE_READWRITE &&
-            !(mbi.Protect & PAGE_GUARD);
-        if (writableData) {
+            mbi.Type == MEM_PRIVATE &&
+            mbi.Protect == PAGE_READWRITE;
+        if (privateData) {
             __try {
                 const uint8_t* p = reinterpret_cast<const uint8_t*>(base);
-                for (size_t i = 0; i + needleLen <= mbi.RegionSize; i += 4) {
+                // Start at kEntryBytes so the step back to P1 stays inside the region.
+                for (size_t i = kEntryBytes; i + needleLen <= mbi.RegionSize; i += 4) {
                     if (p[i] != needle[0]) continue;
-                    if (memcmp(p + i, needle, needleLen) == 0) {
-                        return reinterpret_cast<float*>(
-                            const_cast<uint8_t*>(p + i - kEntryBytes)); // back to P1
+                    if (memcmp(p + i, needle, needleLen) != 0) continue;
+                    float* table = reinterpret_cast<float*>(
+                        const_cast<uint8_t*>(p + i - kEntryBytes)); // back to P1
+                    // P1 must look like an RGBA color with alpha 1 (recolored or not).
+                    bool sane = table[3] == 1.0f;
+                    for (int c = 0; c < 3 && sane; ++c) {
+                        sane = table[c] >= 0.0f && table[c] <= 1.0f;
                     }
+                    if (sane) return table;
                 }
             } __except (EXCEPTION_EXECUTE_HANDLER) {
                 // region vanished mid-scan — skip it
@@ -223,23 +243,29 @@ void WriteTable(const float* values)
 
 DWORD WINAPI WorkThread(LPVOID)
 {
-    // The table is static data — present from boot — but be patient anyway.
-    for (int i = 0; i < 120 && !g_stop; ++i) {
-        g_table = FindTable();
-        if (g_table) break;
-        Sleep(500);
-    }
-    if (!g_table) {
-        Log("table not found (game build changed?)");
-        return 0;
-    }
-    memcpy(g_original, g_table, kTableBytes);
-    InterlockedExchange(&g_ready, 1);
-    Log("table found @ %p", g_table);
-
     LoadColors(true);
     bool wasEnabled = false;
+    bool loggedMissing = false;
     while (!g_stop) {
+        // The working table lives on the heap and may only appear once the
+        // renderer spins up (or reappear after a map load) — keep scanning.
+        if (!g_table) {
+            g_table = FindTable();
+            if (g_table) {
+                memcpy(g_original, g_table, kTableBytes);
+                InterlockedExchange(&g_ready, 1);
+                Log("table found @ %p (exe base %p)", g_table, GetModuleHandleW(nullptr));
+                loggedMissing = false;
+                wasEnabled = false;
+            } else {
+                if (!loggedMissing) {
+                    Log("table not present yet — keep scanning");
+                    loggedMissing = true;
+                }
+                for (int i = 0; i < 30 && !g_stop; ++i) Sleep(100);
+                continue;
+            }
+        }
         const bool enabled = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
         if (enabled) {
             LoadColors(false);
