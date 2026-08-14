@@ -14,8 +14,41 @@ namespace {
 
 constexpr uint32_t kRedTextColor = 0xFF0000FF; // pure red RGB(255,0,0) + A — same gone mark for every seat
 constexpr size_t kUiColorOffset = 0x20C;
+constexpr uintptr_t kPreferredImageBase = 0x00400000;
+constexpr uintptr_t kPreferredContentManager = 0x00966160;
+constexpr uintptr_t kPreferredLayoutWidget = 0x005D1AE0;
+constexpr uintptr_t kPreferredRenderLabel = 0x005AEBB0;
+constexpr uintptr_t kPreferredDrawImage = 0x005C4B60;
+constexpr uintptr_t kPreferredFindAtlas = 0x005F6340;
+constexpr uintptr_t kPreferredFindAtlasImage = 0x00617450;
+constexpr uint32_t kGoneAtlasFnv = 0x52A8BD96u;   // "qol_ally_leave"
+constexpr uint32_t kGoneFrameFnv = 0x6F4E1B19u;   // "skeleton_head"
+constexpr float kGoneIconDrawSize = 14.0f;
+constexpr uint32_t kGoneIconTint = 0xFFFFFFFFu;   // preserve atlas alpha
+constexpr char kGoneNamePrefix[] = "   ";         // gap before red name text
+
+struct NkRect {
+    float x;
+    float y;
+    float w;
+    float h;
+};
+
+#pragma pack(push, 1)
+struct NkImage {
+    uint32_t handle;
+    uint16_t w;
+    uint16_t h;
+    uint16_t region[4]; // atlas u,v,w,h
+};
+#pragma pack(pop)
 
 using SetTextFn = void(__cdecl*)(void* ui, const char* name, int prop);
+using RenderLabelFn = void(__cdecl*)(void* ui, void* styleCtx, const char* text, void* colorPtr, int prop);
+using DrawImageFn = void(__cdecl*)(void* cmdBuf, float x, float y, float w, float h,
+                                   const NkImage* image, uint32_t color);
+using FindAtlasFn = void*(__thiscall*)(void* contentMgr, uint32_t atlasFnv);
+using FindAtlasImageFn = bool(__thiscall*)(void* atlas, NkImage* out, uint32_t frameFnv);
 
 volatile LONG g_enabled = 0;
 volatile LONG g_ready = 0;
@@ -79,6 +112,18 @@ uint8_t g_origAnnounceGone[7]{};
 void* g_announceGoneTramp = nullptr;
 
 SetTextFn g_originalSetText = nullptr;
+RenderLabelFn g_originalRenderLabel = nullptr;
+DrawImageFn g_drawImage = nullptr;
+FindAtlasFn g_findAtlas = nullptr;
+FindAtlasImageFn g_findAtlasImage = nullptr;
+uint8_t* g_renderLabelSite = nullptr;
+uint8_t g_origRenderLabel[7]{};
+void* g_renderLabelTramp = nullptr;
+NkImage g_goneSkullImage{};
+volatile LONG g_goneSkullResolved = 0;
+thread_local bool g_skullDrawPending = false;
+thread_local void* g_skullDrawUi = nullptr;
+thread_local int g_skullDrawPlayer = -1;
 uint8_t* g_patchSite = nullptr;
 uint8_t g_originalCall[5]{};
 void* g_trampoline = nullptr;
@@ -170,6 +215,192 @@ void LogHot(const char* fmt, ...)
     va_end(ap);
     fputc('\n', f);
     fclose(f);
+}
+
+uintptr_t GameSlide()
+{
+    if (g_statusBase) {
+        return reinterpret_cast<uintptr_t>(g_statusBase) - kPreferredStatus;
+    }
+    HMODULE game = GetModuleHandleW(L"Warcraft II.exe");
+    if (!game) return 0;
+    auto* dos = reinterpret_cast<IMAGE_DOS_HEADER*>(game);
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE) return 0;
+    auto* nt = reinterpret_cast<IMAGE_NT_HEADERS*>(reinterpret_cast<uint8_t*>(game) + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE) return 0;
+    return reinterpret_cast<uintptr_t>(game) + nt->OptionalHeader.ImageBase - kPreferredImageBase;
+}
+
+void BindUiDrawApis(uint8_t* base, uintptr_t imageBase)
+{
+    if (!base || imageBase == 0) return;
+    const uintptr_t slide = reinterpret_cast<uintptr_t>(base) + imageBase - kPreferredImageBase;
+    (void)slide;
+    g_drawImage = reinterpret_cast<DrawImageFn>(base + (kPreferredDrawImage - imageBase));
+    g_findAtlas = reinterpret_cast<FindAtlasFn>(base + (kPreferredFindAtlas - imageBase));
+    g_findAtlasImage = reinterpret_cast<FindAtlasImageFn>(base + (kPreferredFindAtlasImage - imageBase));
+}
+
+void* GetContentManager()
+{
+    const uintptr_t slide = GameSlide();
+    // Game passes the global NUIContent object by address (mov ecx, imm32),
+    // not via [imm32] — see call site @ 0x0053B964.
+    return reinterpret_cast<void*>(kPreferredContentManager + slide);
+}
+
+bool ResolveGoneSkullImage()
+{
+    if (InterlockedCompareExchange(&g_goneSkullResolved, 0, 0) != 0) {
+        return g_goneSkullImage.handle != 0;
+    }
+    if (!g_findAtlas || !g_findAtlasImage) return false;
+
+    void* contentMgr = GetContentManager();
+    if (!contentMgr) {
+        static LONG s_log = 0;
+        if (InterlockedIncrement(&s_log) <= 4) {
+            Log("ResolveGoneSkull: no content manager");
+        }
+        return false;
+    }
+
+    void* atlas = nullptr;
+    NkImage image{};
+    __try {
+        atlas = g_findAtlas(contentMgr, kGoneAtlasFnv);
+        if (!atlas) {
+            static LONG s_log = 0;
+            if (InterlockedIncrement(&s_log) <= 4) {
+                Log("ResolveGoneSkull: atlas qol_ally_leave not loaded");
+            }
+            return false;
+        }
+        if (!g_findAtlasImage(atlas, &image, kGoneFrameFnv)) {
+            static LONG s_log = 0;
+            if (InterlockedIncrement(&s_log) <= 4) {
+                Log("ResolveGoneSkull: frame skeleton_head missing");
+            }
+            return false;
+        }
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        Log("ResolveGoneSkull: exception");
+        return false;
+    }
+
+    g_goneSkullImage = image;
+    InterlockedExchange(&g_goneSkullResolved, 1);
+    Log("ResolveGoneSkull: ok handle=%u size=%ux%u",
+        g_goneSkullImage.handle, g_goneSkullImage.w, g_goneSkullImage.h);
+    return g_goneSkullImage.handle != 0;
+}
+
+bool ReadLabelBounds(void* ui, NkRect* out)
+{
+    if (!ui || !out) return false;
+    __try {
+        // Alliances SetText uses 0x005AEBB0; layout floats live at widget+0x1E0.
+        const uint8_t* layout = static_cast<const uint8_t*>(ui) + 0x1E0;
+        out->x = *reinterpret_cast<const float*>(layout + 0x34);
+        out->y = *reinterpret_cast<const float*>(layout + 0x38);
+        out->w = *reinterpret_cast<const float*>(layout + 0x3C);
+        out->h = *reinterpret_cast<const float*>(layout + 0x40);
+        return out->w > 1.0f && out->h > 1.0f;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+
+void ArmSkullDraw(void* ui, int playerIndex)
+{
+    g_skullDrawPending = true;
+    g_skullDrawUi = ui;
+    g_skullDrawPlayer = playerIndex;
+}
+
+void DisarmSkullDraw()
+{
+    g_skullDrawPending = false;
+    g_skullDrawUi = nullptr;
+    g_skullDrawPlayer = -1;
+}
+
+void DrawGoneSkullIcon(void* ui, const NkRect& textRect, int playerIndex)
+{
+    if (!ui || textRect.w <= 0.0f || textRect.h <= 0.0f) {
+        static LONG s_badRect = 0;
+        if (InterlockedIncrement(&s_badRect) <= 8) {
+            Log("gone icon: bad rect p=%d w=%.1f h=%.1f", playerIndex, textRect.w, textRect.h);
+        }
+        return;
+    }
+    if (!ResolveGoneSkullImage() || !g_drawImage) return;
+
+    void* renderer = nullptr;
+    void* cmdBuf = nullptr;
+    __try {
+        renderer = *reinterpret_cast<void* const*>(static_cast<uint8_t*>(ui) + 0x3D28);
+        if (!renderer) {
+            static LONG s_noRen = 0;
+            if (InterlockedIncrement(&s_noRen) <= 8) {
+                Log("gone icon: no renderer p=%d ui=%p", playerIndex, ui);
+            }
+            return;
+        }
+        cmdBuf = *reinterpret_cast<void* const*>(static_cast<uint8_t*>(renderer) + 0x64);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return;
+    }
+    if (!cmdBuf) {
+        static LONG s_noCmd = 0;
+        if (InterlockedIncrement(&s_noCmd) <= 8) {
+            Log("gone icon: no cmdBuf p=%d", playerIndex);
+        }
+        return;
+    }
+
+    const float icon = kGoneIconDrawSize;
+    const float y = textRect.y + (textRect.h - icon) * 0.5f;
+    const float x = textRect.x + 1.0f;
+    __try {
+        g_drawImage(cmdBuf, x, y, icon, icon, &g_goneSkullImage, kGoneIconTint);
+        static LONG s_drawOk = 0;
+        if (InterlockedIncrement(&s_drawOk) <= 8) {
+            Log("gone icon: drew p=%d at %.0f,%.0f handle=%u", playerIndex, x, y, g_goneSkullImage.handle);
+        }
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        Log("gone icon: DrawImage exception p=%d", playerIndex);
+    }
+}
+
+void __cdecl Hook_RenderLabel(void* ui, void* styleCtx, const char* text, void* colorPtr, int prop)
+{
+    if (g_originalRenderLabel) {
+        g_originalRenderLabel(ui, styleCtx, text, colorPtr, prop);
+    }
+    if (!g_skullDrawPending || !ui || ui != g_skullDrawUi) {
+        return;
+    }
+
+    NkRect bounds{};
+    if (ReadLabelBounds(ui, &bounds)) {
+        DrawGoneSkullIcon(ui, bounds, g_skullDrawPlayer);
+    } else {
+        static LONG s_fail = 0;
+        if (InterlockedIncrement(&s_fail) <= 12) {
+            Log("gone icon: label bounds failed p=%d ui=%p", g_skullDrawPlayer, ui);
+        }
+    }
+    DisarmSkullDraw();
+}
+
+bool SeatEligibleForHfWipe(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return false;
+    // Computers / unclassified: first hf>0 sample is enough (blue AI often
+    // dies before the 8s human aliveConfirmed streak).
+    // Known humans: same — 0 units after ever having forces is a wipe.
+    return InterlockedCompareExchange(&g_everHadForces[playerIndex], 0, 0) != 0;
 }
 
 bool ReadJsonBoolKey(const char* buf, const char* key)
@@ -326,12 +557,13 @@ void RefreshSlotKinds()
 bool SourceLooksLikeHumanLeaveOnly(const char* source)
 {
     if (!source || !source[0]) return false;
+    // Explicit leave/drop only — not elimination or army-wipe paths.
     return _strnicmp(source, "announce", 8) == 0 ||
            _strnicmp(source, "H1", 2) == 0 ||
            _strnicmp(source, "H2", 2) == 0 ||
            _strnicmp(source, "chat", 4) == 0 ||
-           _strnicmp(source, "status3", 7) == 0 ||
-           _strnicmp(source, "defeat", 6) == 0;
+           _stricmp(source, "status3-human") == 0 ||
+           _stricmp(source, "defeat-left") == 0;
 }
 
 // Remaster/PUD computer labels vs Battle.net account names (e.g. "Avent").
@@ -339,9 +571,11 @@ const char* NameForClassify(const char* name)
 {
     if (!name) return "";
     // Strip our own gone prefix so reclassification stays stable.
-    // ("[X] " is the legacy prefix; the alliances label ate the "X]" part.)
     if (_strnicmp(name, "[X] ", 4) == 0) name += 4;
     else if (_strnicmp(name, "X ", 2) == 0) name += 2;
+    else if (_strnicmp(name, kGoneNamePrefix, sizeof(kGoneNamePrefix) - 1) == 0) {
+        name += sizeof(kGoneNamePrefix) - 1;
+    }
     while (*name == ' ' || *name == '\t') ++name;
     return name;
 }
@@ -355,6 +589,14 @@ bool LooksLikeComputerName(const char* name)
     if (_stricmp(name, "Alliance Traitors") == 0) return true;
     const size_t n = strlen(name);
     if (n >= 5 && _stricmp(name + (n - 5), " Clan") == 0) return true;
+    // Remaster F11 often drops the " Clan" suffix (blue = "Stormreaver").
+    static const char* kHordeClans[] = {
+        "Stormreaver", "Black Tooth", "Black Tooth Grin", "Twilight's Hammer",
+        "Bleeding Hollow", "Dragonmaw", "Blackrock", "Burning Blade",
+    };
+    for (const char* clan : kHordeClans) {
+        if (_stricmp(name, clan) == 0) return true;
+    }
     return false;
 }
 
@@ -421,9 +663,22 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
         // Known human: leave, drop, disconnect, eliminate and army wipe all count.
         return true;
     }
-    // Unknown seat: only explicit events are safe evidence. Empty seats read
-    // HasForces==0 for the whole match and must never be wipe-marked.
-    return humanLeave || (source && _strnicmp(source, "elim", 4) == 0);
+    // Unknown seat: explicit leave, or wipe/elim after this seat actually had forces.
+    if (humanLeave) return true;
+    if (!source) return false;
+    const bool wipeOrElim =
+        _strnicmp(source, "elim", 4) == 0 ||
+        _strnicmp(source, "human-elim", 10) == 0 ||
+        _strnicmp(source, "hf-poll", 7) == 0 ||
+        _strnicmp(source, "status-elim", 11) == 0 ||
+        _strnicmp(source, "status-paint", 12) == 0 ||
+        _strnicmp(source, "defeat-elim", 11) == 0 ||
+        _strnicmp(source, "defeat-poll", 11) == 0 ||
+        _strnicmp(source, "defeat-human", 12) == 0 ||
+        _strnicmp(source, "wipe-paint", 10) == 0 ||
+        _strnicmp(source, "comp-wipe", 9) == 0;
+    return wipeOrElim &&
+           InterlockedCompareExchange(&g_everHadForces[playerIndex], 0, 0) != 0;
 }
 
 bool IsLikelyCode(const uint8_t* p, size_t n)
@@ -827,6 +1082,29 @@ int CallHasForces(int playerIndex)
     }
 }
 
+bool ShouldKeepGoneDespiteForces(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return false;
+    if (InterlockedCompareExchange(&g_explicitGone[playerIndex], 0, 0) != 0) return true;
+    // Live computers keep HasForces until wipe; never sticky-keep them on
+    // status==2 (that byte is also the computer-controller id).
+    if (IsComputerSlot(playerIndex)) return false;
+    if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) != 0) return false;
+    const uint8_t status = ReadLiveController(playerIndex);
+    uint8_t defeat = 0;
+    if (g_defeatBase) {
+        __try {
+            defeat = g_defeatBase[playerIndex];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            defeat = 0;
+        }
+    }
+    // Humans can read HasForces>0 after elim/surrender until they exit the match.
+    if (status >= 2 && status != 0xFF) return true;
+    if (defeat == 1 || defeat == 2 || defeat == 3) return true;
+    return false;
+}
+
 void ClearGoneUi(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
@@ -835,6 +1113,9 @@ void ClearGoneUi(int playerIndex)
     // A human who left/dropped may leave a live army behind — the game
     // announced the leave, so the mark stays no matter what HasForces says.
     if (InterlockedCompareExchange(&g_explicitGone[playerIndex], 0, 0) != 0) {
+        return;
+    }
+    if (ShouldKeepGoneDespiteForces(playerIndex)) {
         return;
     }
 
@@ -862,16 +1143,19 @@ void ApplyGoneToUi(int playerIndex, void* ui, const char* name)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
     const char* baseName = (name && name[0]) ? name : g_lastName[playerIndex];
-    // Short prefix — clan names are long and the Alliances label truncates.
-    // No brackets: the label renders "[X] name" as "[ name" (X] swallowed).
+    // Space prefix reserves room for the skull icon drawn after SetText.
     if (baseName && baseName[0]) {
-        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "X %s", baseName);
+        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "%s%s", kGoneNamePrefix, baseName);
     } else {
-        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "X");
+        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "%s", kGoneNamePrefix);
     }
     if (ui && g_originalSetText) {
         __try {
+            ArmSkullDraw(ui, playerIndex);
             g_originalSetText(ui, g_nameBuf[playerIndex], 0x11);
+            if (g_skullDrawPending) {
+                DisarmSkullDraw();
+            }
             auto* colorPtr =
                 reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(ui) + kUiColorOffset);
             *colorPtr = kRedTextColor;
@@ -1122,6 +1406,8 @@ void __cdecl Hook_AnnounceGone(int playerIndex)
 void __cdecl Hook_Eliminate(int playerIndex)
 {
     if (playerIndex >= 0 && playerIndex <= 7 && !IsLocalPlayer(playerIndex)) {
+        Log("elim call p=%d name=%s", playerIndex,
+            g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
         NoteAssets(playerIndex, 1);
         InterlockedExchange(&g_everHadForces[playerIndex], 1);
         InterlockedExchange(&g_aliveConfirmed[playerIndex], 1);
@@ -1166,10 +1452,68 @@ bool PlayerInactive(int playerIndex, const char* name)
 {
     (void)name;
     if (playerIndex < 0 || playerIndex > 7) return false;
-    // The sticky mark (set via wipe/elim for NPCs, leave/drop/announce for
-    // humans) is the only paint source. Raw status/defeat bytes fire at
-    // join/start for seats that are not gone and must never paint directly.
-    return g_leftFlags[playerIndex] != 0;
+    if (IsLocalPlayer(playerIndex)) return false;
+    if (g_leftFlags[playerIndex] != 0) return true;
+    if (!g_enabled) return false;
+
+    uint8_t status = 0xFF;
+    uint8_t defeat = 0;
+    if (g_statusBase) {
+        __try {
+            status = g_statusBase[playerIndex];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            status = 0xFF;
+        }
+    }
+    if (g_defeatBase) {
+        __try {
+            defeat = g_defeatBase[playerIndex];
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            defeat = 0;
+        }
+    }
+    const int hf = CallHasForces(playerIndex);
+
+    // Seat participated this match — skip empty lobby slots / join garbage.
+    const bool played = InterlockedCompareExchange(&g_everHadForces[playerIndex], 0, 0) != 0 ||
+                        InterlockedCompareExchange(&g_aliveConfirmed[playerIndex], 0, 0) != 0 ||
+                        InterlockedCompareExchange(&g_everHadAssets[playerIndex], 0, 0) != 0 ||
+                        IsComputerSlot(playerIndex) ||
+                        g_lastName[playerIndex][0] != 0;
+
+    if (!played) return false;
+
+    const bool computer = IsComputerSlot(playerIndex);
+    if (computer) {
+        // Live AI can read status==2 (computer controller). Only mark after hf==0.
+        if (hf > 0) return false;
+        if (status >= 2 && status != 0xFF) {
+            return ShouldMarkSlot(playerIndex, "status-paint");
+        }
+        if (defeat == 2 || defeat == 3) {
+            return ShouldMarkSlot(playerIndex, "defeat-paint");
+        }
+        if (InterlockedCompareExchange(&g_everHadForces[playerIndex], 0, 0) != 0) {
+            return ShouldMarkSlot(playerIndex, "comp-wipe-paint");
+        }
+        return false;
+    }
+
+    // Humans: defeat/status even while HasForces still reads live (until Exit Game).
+    if (status >= 2 && status != 0xFF) {
+        return ShouldMarkSlot(playerIndex, "status-paint");
+    }
+    if (defeat == 2 || defeat == 3) {
+        return ShouldMarkSlot(playerIndex, "defeat-paint");
+    }
+    if (defeat == 1) {
+        return ShouldMarkSlot(playerIndex, "defeat-left");
+    }
+    if (hf > 0) return false;
+    if (InterlockedCompareExchange(&g_everHadForces[playerIndex], 0, 0) != 0) {
+        return ShouldMarkSlot(playerIndex, "wipe-paint");
+    }
+    return false;
 }
 
 void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerIndex)
@@ -1274,11 +1618,12 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         if (playerIndex >= 0 && playerIndex <= 7)
             InterlockedExchange(&g_leftFlags[playerIndex], 1);
         if (name) {
-            _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "X %s", name);
+            const char* base = NameForClassify(name);
+            _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "%s%s", kGoneNamePrefix, base);
             useName = g_nameBuf[playerIndex];
         } else {
             _snprintf_s(g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0],
-                _TRUNCATE, "X");
+                _TRUNCATE, "%s", kGoneNamePrefix);
             useName = g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0];
         }
         if (ui) {
@@ -1287,7 +1632,17 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         }
     }
 
+    if (inactive && ui) {
+        ArmSkullDraw(ui, playerIndex);
+    }
     g_originalSetText(ui, useName, prop);
+    if (g_skullDrawPending) {
+        static LONG s_miss = 0;
+        if (InterlockedIncrement(&s_miss) <= 12) {
+            Log("gone icon: RenderLabel missed p=%d name=%s", playerIndex, name ? name : "?");
+        }
+        DisarmSkullDraw();
+    }
 
     if (inactive && colorPtr) {
         *colorPtr = kRedTextColor;
@@ -1414,6 +1769,25 @@ bool PatchFuncPrologue(uint8_t* site, void* hook, uint8_t* savedOrig, void** tra
     FlushInstructionCache(GetCurrentProcess(), site, 7);
     *trampOut = tramp;
     *originalOut = tramp;
+    return true;
+}
+
+bool InstallRenderLabelHook(uint8_t* base, size_t imageSize, uintptr_t imageBase)
+{
+    (void)imageSize;
+    uint8_t* site = base + (kPreferredRenderLabel - imageBase);
+    if (!IsLikelyCode(site, 7)) {
+        Log("InstallRenderLabel: site unreadable");
+        return false;
+    }
+    void* original = nullptr;
+    if (!PatchFuncPrologue(site, &Hook_RenderLabel, g_origRenderLabel, &g_renderLabelTramp, &original)) {
+        Log("InstallRenderLabel: patch failed (%lu)", GetLastError());
+        return false;
+    }
+    g_renderLabelSite = site;
+    g_originalRenderLabel = reinterpret_cast<RenderLabelFn>(original);
+    Log("InstallRenderLabel: ok site=%p", site);
     return true;
 }
 
@@ -1749,6 +2123,7 @@ bool InstallHook()
 
     BindTypeCountTable(base, imageBase);
     BindLocalPlayer(base, imageBase);
+    BindUiDrawApis(base, imageBase);
 
     // Leave-write hooks first so g_statusBase may already be known; set-text is required.
     const bool leaveOk = InstallLeaveWriteHooks(base, imageSize);
@@ -1756,6 +2131,7 @@ bool InstallHook()
     const bool forcesOk = InstallHasForces(base, imageSize);
     const bool wipeOk = InstallUnitCountHooks(base, imageSize);
     const bool elimOk = InstallEliminateHook(base, imageSize);
+    const bool labelOk = InstallRenderLabelHook(base, imageSize, imageBase);
     if (!InstallSetTextHook(base, imageSize)) {
         return false;
     }
@@ -1781,8 +2157,9 @@ bool InstallHook()
     InterlockedExchange(&g_enabled, 1);
     // Quiet hot-path file I/O in MP (unitGain/lost/census/row). Gone/install still Log().
     InterlockedExchange(&g_logQuiet, 1);
-    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d local=%p heads=%p rows=%p slot=%p markC=%ld markH=%ld quiet=1",
+    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d label=%d local=%p heads=%p rows=%p slot=%p markC=%ld markH=%ld quiet=1",
         leaveOk ? 1 : 0, announceOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
+        labelOk ? 1 : 0,
         g_localPlayer, g_unitTypeHeads, g_typeCountRows, g_slotBase,
         InterlockedCompareExchange(&g_markComputers, 0, 0),
         InterlockedCompareExchange(&g_markHumans, 0, 0));
@@ -1807,6 +2184,11 @@ void RemoveHook()
     Unpatch7(g_announceGoneSite, g_origAnnounceGone, &g_announceGoneTramp);
     g_announceGoneSite = nullptr;
     g_originalAnnounceGone = nullptr;
+    Unpatch7(g_renderLabelSite, g_origRenderLabel, &g_renderLabelTramp);
+    g_renderLabelSite = nullptr;
+    g_originalRenderLabel = nullptr;
+    InterlockedExchange(&g_goneSkullResolved, 0);
+    g_goneSkullImage = NkImage{};
 
     if (g_patchSite) {
         DWORD oldProtect = 0;
@@ -1970,39 +2352,58 @@ static void PollWipeMarks()
         const int hf = CallHasForces(i);
         NoteHasForcesSample(i, hf); // maintains aliveSince → aliveConfirmed (8s)
 
-        // Human surrender/leave: the game flips the seat status to 3 (gone) or
-        // writes a defeat code, but not every writer is hookable — the announce
-        // pattern misses on relocated builds and surrender skips the H1 store.
-        // Poll the bytes for seats that are known humans and really played this
-        // match; the leaver's army can stay alive, so this must run before the
-        // hf>0 early-out and the mark must be explicit-sticky.
-        if (InterlockedCompareExchange(&g_leftFlags[i], 0, 0) == 0 &&
-            InterlockedCompareExchange(&g_slotKind[i], 0, 0) == 0 &&
-            InterlockedCompareExchange(&g_everHadForces[i], 0, 0) != 0) {
-            const uint8_t status = ReadLiveController(i);
-            uint8_t defeat = 0;
-            if (g_defeatBase) {
-                __try {
-                    defeat = g_defeatBase[i];
-                } __except (EXCEPTION_EXECUTE_HANDLER) {
-                    defeat = 0;
-                }
+        uint8_t status = ReadLiveController(i);
+        uint8_t defeat = 0;
+        if (g_defeatBase) {
+            __try {
+                defeat = g_defeatBase[i];
+            } __except (EXCEPTION_EXECUTE_HANDLER) {
+                defeat = 0;
             }
+        }
+        const bool played =
+            InterlockedCompareExchange(&g_everHadForces[i], 0, 0) != 0 ||
+            InterlockedCompareExchange(&g_aliveConfirmed[i], 0, 0) != 0 ||
+            InterlockedCompareExchange(&g_everHadAssets[i], 0, 0) != 0 ||
+            IsComputerSlot(i) ||
+            g_lastName[i][0] != 0;
+        const bool computer = IsComputerSlot(i);
+
+        // Computer / unknown wipe: status/defeat only after HasForces hits 0.
+        // This is the path that marks blue AI (Stormreaver) on peon-wipe.
+        if (InterlockedCompareExchange(&g_leftFlags[i], 0, 0) == 0 && hf <= 0 && played) {
+            if (status == 3) {
+                MarkGoneUi(i, computer ? "status3" : "status3-human");
+            } else if (status >= 2 && status != 0xFF) {
+                MarkGoneUi(i, "status-elim");
+            } else if (defeat == 2 || defeat == 3) {
+                MarkGoneUi(i, defeat == 2 ? "defeat-elim" : "defeat-poll");
+            } else if (defeat == 1 && !computer) {
+                MarkGoneUi(i, "defeat-left");
+            }
+        }
+
+        // Humans: elim/surrender even when HasForces still reads >0 (no Exit Game).
+        if (InterlockedCompareExchange(&g_leftFlags[i], 0, 0) == 0 &&
+            !computer && played) {
             if (status == 3) {
                 MarkGoneUi(i, "status3-human");
+            } else if (status >= 2 && status != 0xFF) {
+                MarkGoneUi(i, "human-elim");
             } else if (defeat == 1 || defeat == 2 || defeat == 3) {
                 MarkGoneUi(i, "defeat-human");
             }
         }
 
         if (hf > 0) {
-            if (g_leftFlags[i]) ClearGoneUi(i);
+            if (g_leftFlags[i] && !ShouldKeepGoneDespiteForces(i)) {
+                ClearGoneUi(i);
+            }
             continue;
         }
         if (hf != 0) continue;      // helper unavailable — no census fallback
         if (g_leftFlags[i]) continue;
-        // Never-alive seats (empty slots, not-yet-spawned) are not "gone".
-        if (!g_aliveConfirmed[i]) continue;
+        if (!SeatEligibleForHfWipe(i)) continue;
 
         DWORD since = static_cast<DWORD>(InterlockedCompareExchange(
             reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0, 0));

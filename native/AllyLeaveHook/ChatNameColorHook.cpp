@@ -967,7 +967,11 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
             const int seat = SeatForName(text + leaveOff, leaveLen);
             if (seat >= 0) {
                 const uint32_t nameColor = g_colors[SeatToColorSlot(seat)];
-                g_originalDraw(ui, base, kBodyColor);
+                // System leave lines use the game's passed color (gold) for the
+                // suffix (" left") — not player color — so they read as system
+                // messages, not typed chat.
+                const uint32_t systemColor = color;
+                g_originalDraw(ui, base, systemColor);
                 const size_t nameEndAbs = stampLen + leaveOff + leaveLen;
                 char throughName[224]{};
                 memcpy(throughName, base, nameEndAbs);
@@ -978,7 +982,14 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
                     char prefixOnly[224]{};
                     memcpy(prefixOnly, base, prefixLen);
                     prefixOnly[prefixLen] = 0;
-                    g_originalDraw(ui, prefixOnly, kBodyColor);
+                    g_originalDraw(ui, prefixOnly, systemColor);
+                }
+                const size_t suffixOff = nameEndAbs;
+                if (base[suffixOff] != 0 && suffixOff < sizeof(throughName) - 1) {
+                    char suffixOnly[224]{};
+                    memcpy(suffixOnly, base + suffixOff, sizeof(suffixOnly) - 1);
+                    suffixOnly[sizeof(suffixOnly) - 1] = 0;
+                    g_originalDraw(ui, suffixOnly, systemColor);
                 }
                 InterlockedIncrement(&g_recolors);
                 if (hits <= 40 || (hits % 50) == 0) {

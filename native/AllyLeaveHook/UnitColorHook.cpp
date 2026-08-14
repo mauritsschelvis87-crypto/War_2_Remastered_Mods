@@ -22,6 +22,7 @@ namespace {
 constexpr int kPlayers = 8;
 constexpr size_t kEntryBytes = 16;                    // RGBA floats
 constexpr size_t kTableBytes = kPlayers * kEntryBytes;
+constexpr uintptr_t kMatchInitFlagRva = 0x5B1798;
 
 // Vanilla table contents (original DOS team colors, RGBA float, alpha 1).
 const uint8_t kVanillaRgb[kPlayers][3] = {
@@ -72,24 +73,32 @@ void BuildVanillaFloats(float* out)
     }
 }
 
-// Find the table by its vanilla contents. Skip P1: a research probe (or an
-// earlier enable) may already have recolored it; P2..P8 (112 bytes) is still
-// unique across the process.
-//
-// Only MEM_PRIVATE regions are scanned: that excludes every module image in
-// one go — the game exe's read-only master copy of these floats (which the
-// renderer does not read) AND this DLL's own .data (g_original/g_colors hold
-// the same bytes after a first find). The scanning thread's own stack is
-// skipped too: the needle is built as a local array, and matching it there
-// made WriteTable overwrite this thread's stack with color floats — the game
-// then crashed at boot trying to execute 0x3F77F7F8 (= 247/255).
-float* FindTable()
+int ReadMatchActive()
 {
-    float vanilla[kPlayers * 4];
-    BuildVanillaFloats(vanilla);
-    const uint8_t* needle = reinterpret_cast<const uint8_t*>(vanilla + 4); // from P2
-    const size_t needleLen = (kPlayers - 1) * kEntryBytes;
+    HMODULE game = GetModuleHandleW(nullptr);
+    if (!game) return -1;
+    auto* base = reinterpret_cast<uint8_t*>(game);
+    __try {
+        const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+        if (dos->e_magic != IMAGE_DOS_SIGNATURE) return -1;
+        const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
+        if (nt->Signature != IMAGE_NT_SIGNATURE ||
+            nt->OptionalHeader.SizeOfImage <= kMatchInitFlagRva) return -1;
+        return base[kMatchInitFlagRva] ? 1 : 0;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
 
+// The renderer clones its image master into a private working table per match.
+// Scan private writable memory only, excluding this scanning thread's stack.
+// P2..P8 is an exact 112-byte signature; P1 may already have been probed.
+float* FindWorkingTable()
+{
+    float vanilla[kPlayers * 4]{};
+    BuildVanillaFloats(vanilla);
+    const uint8_t* needle = reinterpret_cast<const uint8_t*>(vanilla + 4);
+    const size_t needleLen = (kPlayers - 1) * kEntryBytes;
     const NT_TIB* tib = reinterpret_cast<const NT_TIB*>(NtCurrentTeb());
     const uintptr_t stackLow = reinterpret_cast<uintptr_t>(tib->StackLimit);
     const uintptr_t stackHigh = reinterpret_cast<uintptr_t>(tib->StackBase);
@@ -100,21 +109,16 @@ float* FindTable()
         const uintptr_t base = reinterpret_cast<uintptr_t>(mbi.BaseAddress);
         const uintptr_t next = base + mbi.RegionSize;
         const bool ownStack = base < stackHigh && next > stackLow;
-        const bool privateData =
-            !ownStack &&
-            mbi.State == MEM_COMMIT &&
-            mbi.Type == MEM_PRIVATE &&
+        const bool candidateRegion =
+            !ownStack && mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE &&
             mbi.Protect == PAGE_READWRITE;
-        if (privateData) {
+        if (candidateRegion) {
             __try {
                 const uint8_t* p = reinterpret_cast<const uint8_t*>(base);
-                // Start at kEntryBytes so the step back to P1 stays inside the region.
                 for (size_t i = kEntryBytes; i + needleLen <= mbi.RegionSize; i += 4) {
-                    if (p[i] != needle[0]) continue;
-                    if (memcmp(p + i, needle, needleLen) != 0) continue;
+                    if (p[i] != needle[0] || memcmp(p + i, needle, needleLen) != 0) continue;
                     float* table = reinterpret_cast<float*>(
-                        const_cast<uint8_t*>(p + i - kEntryBytes)); // back to P1
-                    // P1 must look like an RGBA color with alpha 1 (recolored or not).
+                        const_cast<uint8_t*>(p + i - kEntryBytes));
                     bool sane = table[3] == 1.0f;
                     for (int c = 0; c < 3 && sane; ++c) {
                         sane = table[c] >= 0.0f && table[c] <= 1.0f;
@@ -122,7 +126,7 @@ float* FindTable()
                     if (sane) return table;
                 }
             } __except (EXCEPTION_EXECUTE_HANDLER) {
-                // region vanished mid-scan — skip it
+                // A private region can disappear while the game changes state.
             }
         }
         if (next <= addr) break;
@@ -246,25 +250,47 @@ DWORD WINAPI WorkThread(LPVOID)
     LoadColors(true);
     bool wasEnabled = false;
     bool loggedMissing = false;
+    int lastMatch = -1;
     while (!g_stop) {
-        // The working table lives on the heap and may only appear once the
-        // renderer spins up (or reappear after a map load) — keep scanning.
-        if (!g_table) {
-            g_table = FindTable();
+        const int match = ReadMatchActive();
+        if (match != lastMatch) {
+            if (match == 1) {
+                // Every match gets a newly cloned tint table. Never carry the
+                // previous match's heap pointer into the next one.
+                g_table = nullptr;
+                InterlockedExchange(&g_ready, 0);
+                wasEnabled = false;
+                loggedMissing = false;
+                Log("new match — locating fresh working table");
+            } else if (match == 0 && lastMatch == 1) {
+                g_table = nullptr;
+                InterlockedExchange(&g_ready, 0);
+                wasEnabled = false;
+                Log("match ended — discarded working table");
+            }
+            lastMatch = match;
+        }
+
+        if (!g_table && match != 0) {
+            g_table = FindWorkingTable();
             if (g_table) {
                 memcpy(g_original, g_table, kTableBytes);
                 InterlockedExchange(&g_ready, 1);
-                Log("table found @ %p (exe base %p)", g_table, GetModuleHandleW(nullptr));
+                Log("working table found @ %p (exe base %p)", g_table, GetModuleHandleW(nullptr));
                 loggedMissing = false;
                 wasEnabled = false;
             } else {
                 if (!loggedMissing) {
-                    Log("table not present yet — keep scanning");
+                    Log("working table not ready — keep checking during match");
                     loggedMissing = true;
                 }
-                for (int i = 0; i < 30 && !g_stop; ++i) Sleep(100);
+                for (int i = 0; i < 5 && !g_stop; ++i) Sleep(100);
                 continue;
             }
+        }
+        if (!g_table) {
+            for (int i = 0; i < 5 && !g_stop; ++i) Sleep(100);
+            continue;
         }
         const bool enabled = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
         if (enabled) {

@@ -3,6 +3,7 @@ param(
     [string]$GameRootPath = 'C:\Program Files (x86)\Warcraft II Remastered',
     [switch]$ApplySavedConfigOnly,
     [switch]$ApplyDragSelectFromExtra,
+    [switch]$ApplyAllyGoneIconFromExtra,
     [switch]$RestoreOnly,
     [switch]$SyncVanillaBackup,
     [switch]$GetDefaultConfig
@@ -80,6 +81,9 @@ $MapColorFiles = @(
 # Ally screen (F5) reads hardcoded RGBA from these skins, not palette files.
 $AllyScreenSkinsJson = 'x86\Data\skins\skins.json'
 $AllyScreenSkinPrefix = 'fe_endgame_stats_bar_'
+$AllyGoneAtlasPng = 'x86\Data\skins\qol_ally_leave.png'
+$AllyGoneAtlasJson = 'x86\Data\skins\qol_ally_leave.json'
+$AllyGoneAtlasId = 'qol_ally_leave'
 
 function Get-DisabledPlayerDisplayColor([int]$playerIndex) {
     # Prefer live/vanilla palette sample at the documented minimap source index.
@@ -286,9 +290,76 @@ function Get-DefaultPlayerColors {
     return @(Get-DefaultPlayerHexColors | ForEach-Object { Convert-HexToColor $_ })
 }
 
+function Remove-AllyGoneSkullAtlasFiles([string]$Root) {
+    foreach ($rel in @($AllyGoneAtlasPng, $AllyGoneAtlasJson)) {
+        $path = Get-GameFilePath $rel $Root
+        if (Test-Path -LiteralPath $path) {
+            Remove-Item -LiteralPath $path -Force
+            Write-Host "Removed $path"
+        }
+    }
+}
+
+function Ensure-AllyGoneAtlasInSkinsJson([string]$Root, [bool]$enabled) {
+    $path = Get-GameFilePath $AllyScreenSkinsJson $Root
+    if (!(Test-Path -LiteralPath $path)) {
+        throw "skins.json niet gevonden: $path"
+    }
+    Ensure-BackupOfFile $path $Root | Out-Null
+    $content = [IO.File]::ReadAllText($path)
+    $entryPattern = '(?s)\s*\{\s*"id"\s*:\s*"qol_ally_leave"[^}]+\},?\s*'
+    if ($enabled) {
+        if ($content -match '"id"\s*:\s*"qol_ally_leave"') {
+            Write-Host "  skins.json already lists qol_ally_leave atlas"
+            return
+        }
+        $entry = @'
+    {
+      "id": "qol_ally_leave",
+      "image": "skins/qol_ally_leave.png",
+      "json": "skins/qol_ally_leave.json",
+      "blend_mode": "linear"
+    },
+'@
+        $content = [regex]::Replace($content, '("atlases"\s*:\s*\[)', "`$1`n$entry", 1)
+    } else {
+        $content = [regex]::Replace($content, $entryPattern, '')
+    }
+    [IO.File]::WriteAllText($path, $content, [Text.UTF8Encoding]::new($false))
+}
+
+function Set-AllyGoneSkullAtlas([bool]$enabled) {
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    $srcPng = Join-Path $scriptDir 'assets\qol_ally_leave.png'
+    $srcJson = Join-Path $scriptDir 'assets\qol_ally_leave.json'
+    if ($enabled -and (!(Test-Path -LiteralPath $srcPng) -or !(Test-Path -LiteralPath $srcJson))) {
+        throw "Ally gone atlas assets ontbreken in mod\assets (qol_ally_leave.png/.json)."
+    }
+    foreach ($root in (Get-GameRootPaths)) {
+        $pngDest = Get-GameFilePath $AllyGoneAtlasPng $root
+        $jsonDest = Get-GameFilePath $AllyGoneAtlasJson $root
+        if ($enabled) {
+            $destDir = Split-Path -Parent $pngDest
+            if (!(Test-Path $destDir)) {
+                New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+            }
+            Copy-Item -LiteralPath $srcPng -Destination $pngDest -Force
+            Copy-Item -LiteralPath $srcJson -Destination $jsonDest -Force
+            Ensure-AllyGoneAtlasInSkinsJson $root $true
+            Write-Host "  Installed ally gone skull atlas -> $pngDest"
+        } else {
+            Remove-AllyGoneSkullAtlasFiles $root
+            Ensure-AllyGoneAtlasInSkinsJson $root $false
+        }
+    }
+}
+
 function Restore-OriginalPaletteFiles {
     foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson))) {
         Restore-FromBackup $rel
+    }
+    foreach ($root in (Get-GameRootPaths)) {
+        Remove-AllyGoneSkullAtlasFiles $root
     }
     Save-ColorsToJson @(Get-DefaultPlayerColors) `
         (Get-DefaultSelectionHighlightHex) `
@@ -376,6 +447,19 @@ function Restore-PreservedPaletteSlots($targetBytes, $vanillaBytes, [int[]]$indi
     foreach ($idx in $indices) {
         Copy-PaletteIndexBytes $vanillaBytes $targetBytes $idx
     }
+}
+
+# An index may have a different role in the classic .ppl and HD
+# mapColors.bin even though both files start with palette-like bytes.
+# Only mirror highlight slots when their authentic vanilla bytes agree.
+function Test-SamePaletteRole($pplBytes, $binBytes, [int]$idx) {
+    $off = $idx * 3
+    if (($off + 2) -ge $pplBytes.Length -or ($off + 2) -ge $binBytes.Length) {
+        return $false
+    }
+    return ($pplBytes[$off] -eq $binBytes[$off] -and
+            $pplBytes[$off + 1] -eq $binBytes[$off + 1] -and
+            $pplBytes[$off + 2] -eq $binBytes[$off + 2])
 }
 
 function Set-PlayerColorsOnBytes($bytes, $colors, [switch]$IncludePplOnlyMinimap) {
@@ -627,16 +711,17 @@ function Apply-MinimapAndAllyColors {
         foreach ($idx in $playerIndices) {
             Copy-PaletteIndexBytes $pplBytes $binBytes $idx
         }
-        # Highlight slots (self/enemy/ally/critter/oil) have the same blink-dot
-        # role in the bin — mirror them so minimap selection dots follow the
-        # custom colors. EXCEPT the gold-mine band 236-238: in the bin those
-        # bytes are the local player's white minimap dots, and the ppl gold
-        # there painted the player's own dots gold. Keep those vanilla.
+        # Highlight slots do not consistently share roles between these files.
+        # For example, ppl 236-238 is the gold-mine band while the same bin
+        # offsets are local minimap dots; 246-251 are also HD-specific data.
+        # Mirror only proven-identical roles and heal every other slot from
+        # the authentic vanilla bin. Self highlight remains bright green in
+        # ppl index 250, which is the game's local selection path.
         foreach ($idx in $selectionPatchIndices) {
-            if ($GoldMineHighlightPaletteIndices -contains $idx) {
-                Copy-PaletteIndexBytes $vanillaBin $binBytes $idx
-            } else {
+            if (Test-SamePaletteRole $vanillaPpl $vanillaBin $idx) {
                 Copy-PaletteIndexBytes $pplBytes $binBytes $idx
+            } else {
+                Copy-PaletteIndexBytes $vanillaBin $binBytes $idx
             }
         }
         Restore-PreservedPaletteSlots $binBytes $vanillaBin $PreservePaletteIndicesBin
@@ -677,13 +762,14 @@ function Apply-MinimapAndAllyColors {
     if ($ppl[$oFriendly] -ne $expectedFriendly[0] -or $ppl[$oFriendly + 1] -ne $expectedFriendly[1] -or $ppl[$oFriendly + 2] -ne $expectedFriendly[2]) {
         throw "Patch mislukt op forest.ppl (idx $SelectionHighlightPaletteIndex, friendly highlight)."
     }
-    if ($bin[$oFriendly] -ne $expectedFriendly[0] -or $bin[$oFriendly + 1] -ne $expectedFriendly[1] -or $bin[$oFriendly + 2] -ne $expectedFriendly[2]) {
-        throw "Patch mislukt op forest_mapColors.bin (idx $SelectionHighlightPaletteIndex, friendly highlight)."
-    }
-    foreach ($idx in $GoldMineHighlightPaletteIndices) {
+    foreach ($idx in $selectionPatchIndices) {
         $o = $idx * 3
-        if ($bin[$o] -ne $vanillaBin[$o] -or $bin[$o + 1] -ne $vanillaBin[$o + 1] -or $bin[$o + 2] -ne $vanillaBin[$o + 2]) {
-            throw "forest_mapColors.bin (idx $idx, gold-mine band) is niet vanilla gebleven."
+        if (Test-SamePaletteRole $vanillaPpl $vanillaBin $idx) {
+            if ($bin[$o] -ne $ppl[$o] -or $bin[$o + 1] -ne $ppl[$o + 1] -or $bin[$o + 2] -ne $ppl[$o + 2]) {
+                throw "forest_mapColors.bin (idx $idx) komt niet overeen met dezelfde ppl-rol."
+            }
+        } elseif ($bin[$o] -ne $vanillaBin[$o] -or $bin[$o + 1] -ne $vanillaBin[$o + 1] -or $bin[$o + 2] -ne $vanillaBin[$o + 2]) {
+            throw "forest_mapColors.bin (idx $idx) is niet vanilla gebleven."
         }
     }
 
@@ -1011,6 +1097,21 @@ if ($ApplyDragSelectFromExtra) {
     exit 0
 }
 
+if ($ApplyAllyGoneIconFromExtra) {
+    Ensure-VanillaBackupReady
+    $extraPath = Join-Path (Split-Path -Parent $PSCommandPath) 'extra-features.json'
+    $enabled = $false
+    if (Test-Path -LiteralPath $extraPath) {
+        $raw = Get-Content -LiteralPath $extraPath -Raw
+        $enabled = ($raw -match '"AllyLeaveMarkComputers"\s*:\s*true') -or
+                   ($raw -match '"AllyLeaveMarkHumans"\s*:\s*true') -or
+                   ($raw -match '"AllyLeaveRedNames"\s*:\s*true')
+    }
+    Set-AllyGoneSkullAtlas $enabled
+    Write-ApplyLog "ApplyAllyGoneIconFromExtra: enabled=$enabled"
+    exit 0
+}
+
 if ($ApplySavedConfigOnly) {
     Ensure-VanillaBackupReady
     $loaded = Load-ColorsFromJsonOrDefault
@@ -1030,6 +1131,6 @@ if ($ApplySavedConfigOnly) {
     exit 0
 }
 
-Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
 exit 1
 

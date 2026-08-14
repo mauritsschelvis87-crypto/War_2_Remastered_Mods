@@ -997,6 +997,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void ApplyAllyGoneSkullAtlas()
+    {
+        var result = RunEngine("-ApplyAllyGoneIconFromExtra");
+        if (result.ExitCode != 0)
+        {
+            var details = string.Join(Environment.NewLine,
+                new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
+                ? "Ally gone skull atlas install failed."
+                : details);
+        }
+    }
+
     private void WriteExtraFeaturesFile(
         bool markComputers,
         bool markHumans,
@@ -1627,6 +1640,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
+                    if (markComputers || markHumans)
+                        ApplyAllyGoneSkullAtlas();
                 });
                 CaptureAppliedColors();
                 CaptureAppliedUtilColors();
@@ -1661,11 +1676,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatStampsEnabled = ChatTimestamps;
                 var chatHistoryEnabled = _appliedChatHistory; // owned by the Bug fixes tab
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
-                await Task.Run(() => WriteExtraFeaturesFile(
-                    markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
-                    chatHistoryEnabled,
-                    dragEnabled: false,
-                    dragHex: "#00FF00"));
+                await Task.Run(() =>
+                {
+                    WriteExtraFeaturesFile(
+                        markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
+                        chatHistoryEnabled,
+                        dragEnabled: false,
+                        dragHex: "#00FF00");
+                    ApplyAllyGoneSkullAtlas();
+                });
 
                 _appliedAllyLeaveMarkComputers = markComputers;
                 _appliedAllyLeaveMarkHumans = markHumans;
