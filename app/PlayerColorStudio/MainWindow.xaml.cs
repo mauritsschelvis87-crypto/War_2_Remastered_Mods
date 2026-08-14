@@ -42,6 +42,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedChatTimestamps;
     private bool _chatHistory;
     private bool _appliedChatHistory;
+    private bool _endGameObserve;
+    private bool _appliedEndGameObserve;
+    private bool _colorBlindMode;
+    private string _selectedColorBlindPreset = string.Empty;
+    private string _appliedColorBlindPreset = string.Empty;
+    private string _colorBlindPresetHintText = ColorBlindPresets.DefaultHint;
     private bool _unitSpriteColors;
     private bool _appliedUnitSpriteColors;
     private bool _appliedDragSelectColorEnabled;
@@ -49,6 +55,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _pauseChatInjectedForRunningGame;
     private bool _chatNameColorInjectedForRunningGame;
     private bool _dragSelectInjectedForRunningGame;
+    private bool _observeInjectedForRunningGame;
     private bool _isApplying;
     private bool _skipNextStatusRefresh;
     private string _activeTab = "colors";
@@ -142,6 +149,45 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    public bool EndGameObserve
+    {
+        get => _endGameObserve;
+        set
+        {
+            if (_endGameObserve == value) return;
+            _endGameObserve = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    public bool ColorBlindMode
+    {
+        get => _colorBlindMode;
+        set
+        {
+            if (_colorBlindMode == value) return;
+            _colorBlindMode = value;
+            OnPropertyChanged();
+            AppTheme.ApplyColorBlindMode(value);
+            RefreshCheckBoxVisuals();
+            RefreshColorBlindModeButtons();
+            RefreshColorBlindPresetButtons();
+            SavePathSettings();
+        }
+    }
+
+    public string ColorBlindPresetHintText
+    {
+        get => _colorBlindPresetHintText;
+        private set
+        {
+            if (_colorBlindPresetHintText == value) return;
+            _colorBlindPresetHintText = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool IsApplying
     {
         get => _isApplying;
@@ -165,7 +211,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes";
 
-    public bool IsRestoreVisible => _activeTab == "info";
+    public bool IsColorsStatusSingleLine => _activeTab == "colors";
 
     public string GameInstallPath
     {
@@ -295,10 +341,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             WireOtherCards();
             LoadExtraFeatures();
+            AppTheme.ApplyColorBlindMode(_colorBlindMode);
+            RefreshCheckBoxVisuals();
+            RefreshColorBlindModeButtons();
+            RefreshColorBlindPresetButtons();
             _hookWatchTimer.Start();
             UpdateExtraHookStatus(forceInject: AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedDragSelectColorEnabled);
+                _appliedEndGameObserve || _appliedDragSelectColorEnabled);
             RefreshTabStatus();
         }
         catch (Exception ex)
@@ -319,7 +369,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (MainTabs.SelectedItem is not TabItem tab) return;
         _activeTab = tab.Tag as string ?? "colors";
         OnPropertyChanged(nameof(IsApplyVisible));
-        OnPropertyChanged(nameof(IsRestoreVisible));
+        OnPropertyChanged(nameof(IsColorsStatusSingleLine));
         RefreshTabStatus();
     }
 
@@ -399,6 +449,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private static readonly System.Windows.Media.Brush PendingButtonBorderBrush = CreateBrush(0xE5, 0x5A, 0x5A);
     private static readonly System.Windows.Media.Brush ReadyButtonBrush = CreateBrush(0x2E, 0xA8, 0x5C);
     private static readonly System.Windows.Media.Brush ReadyButtonBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
+    private static readonly System.Windows.Media.Brush SegmentSelectedBrush = CreateBrush(0x2E, 0xA8, 0x5C);
+    private static readonly System.Windows.Media.Brush SegmentSelectedBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
+    private static readonly System.Windows.Media.Brush SegmentUnselectedBrush = CreateBrush(0x33, 0x48, 0x68);
+    private static readonly System.Windows.Media.Brush SegmentUnselectedBorderBrush = CreateBrush(0x5A, 0x73, 0x98);
 
     private static System.Windows.Media.Brush CreateBrush(byte r, byte g, byte b)
     {
@@ -414,8 +468,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool HasPendingChatColoredNames() => _chatColoredNames != _appliedChatColoredNames;
     private bool HasPendingChatTimestamps() => _chatTimestamps != _appliedChatTimestamps;
     private bool HasPendingChatHistory() => _chatHistory != _appliedChatHistory;
+    private bool HasPendingEndGameObserve() => _endGameObserve != _appliedEndGameObserve;
     private bool HasPendingFeatureChanges() =>
-        HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps();
+        HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps() ||
+        HasPendingEndGameObserve();
     private bool HasPendingBugFixChanges() => HasPendingChatPause() || HasPendingChatHistory();
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
@@ -434,6 +490,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             return StatusLine("✕", PendingIconBrush,
                 "Changes have been made. Press Apply and restart Warcraft II Remastered for the color changes to take effect.");
+        }
+
+        if (!string.IsNullOrEmpty(_appliedColorBlindPreset))
+        {
+            var label = ColorBlindPresets.LabelFor(_appliedColorBlindPreset);
+            return StatusLine("✓", ReadyIconBrush,
+                $"{label} has been used. Please restart Warcraft II Remastered for the color changes to take effect.");
         }
 
         return HasManualAppliedColors()
@@ -483,7 +546,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             else
             {
                 SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                    "Mods have been installed. Restart Warcraft II Remastered to take effect."));
+                    "Bug fixes have been installed. Restart Warcraft II Remastered to take effect."));
             }
             return;
         }
@@ -494,7 +557,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        if (_activeTab == "info")
+        if (_activeTab is "info" or "settings")
         {
             SetStatusLines(StatusLine("✓", ReadyIconBrush, AppVersionText));
             return;
@@ -548,6 +611,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(MapsPath));
         OnPropertyChanged(nameof(IsMapsOpenEnabled));
         OnPropertyChanged(nameof(MapsPathBorderBrush));
+
+        _colorBlindMode = settings?.ColorBlindMode == true;
+        OnPropertyChanged(nameof(ColorBlindMode));
     }
 
     private StudioSettings? TryReadSavedSettings()
@@ -720,6 +786,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 GameRootPath = NormalizeGameRoot(_appliedGameInstallPath),
                 MapEditorPath = _appliedMapEditorPath,
                 MapsPath = _appliedMapsPath,
+                ColorBlindMode = _colorBlindMode,
             };
             File.WriteAllText(_settingsPath, JsonSerializer.Serialize(settings, JsonOpts));
         }
@@ -1017,6 +1084,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         bool chatColoredNames,
         bool chatTimestamps,
         bool chatHistory,
+        bool endGameObserve,
         bool dragEnabled,
         string dragHex)
     {
@@ -1030,6 +1098,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ChatColoredNames = chatColoredNames,
             ChatTimestamps = chatTimestamps,
             ChatHistory = chatHistory,
+            EndGameObserve = endGameObserve,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
             UnitSpriteColors = _unitSpriteColors,
@@ -1098,6 +1167,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var chatColored = false;
         var chatStamps = false;
         var chatHist = false;
+        var endGameObserve = false;
         var unitColors = false;
         const bool dragEnabled = false;
 
@@ -1114,6 +1184,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             chatColored = extra?.ChatColoredNames ?? false;
             chatStamps = extra?.ChatTimestamps ?? false;
             chatHist = extra?.ChatHistory ?? false;
+            endGameObserve = extra?.EndGameObserve ?? false;
             unitColors = extra?.UnitSpriteColors ?? false;
         }
 
@@ -1129,6 +1200,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedChatTimestamps = chatStamps;
         _chatHistory = chatHist;
         _appliedChatHistory = chatHist;
+        _endGameObserve = endGameObserve;
+        _appliedEndGameObserve = endGameObserve;
         _unitSpriteColors = unitColors;
         _appliedUnitSpriteColors = unitColors;
         _appliedDragSelectColorEnabled = dragEnabled;
@@ -1138,11 +1211,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(ChatColoredNames));
         OnPropertyChanged(nameof(ChatTimestamps));
         OnPropertyChanged(nameof(ChatHistory));
+        OnPropertyChanged(nameof(EndGameObserve));
 
         try
         {
             WriteExtraFeaturesFile(markComputers, markHumans, chatPause, chatColored, chatStamps,
-                chatHist, dragEnabled: false, dragHex: "#00FF00");
+                chatHist, endGameObserve, dragEnabled: false, dragHex: "#00FF00");
         }
         catch { /* best-effort persist normalized flags */ }
     }
@@ -1156,6 +1230,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UpdatePauseChatHookStatus(forceInject);
         UpdateChatNameColorHookStatus(forceInject);
         UpdateDragSelectHookStatus(forceInject);
+        UpdateObserveHookStatus(forceInject);
     }
 
     private void UpdateAllyLeaveHookStatus(bool forceInject)
@@ -1242,7 +1317,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             var anyExtra = AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedDragSelectColorEnabled;
+                _appliedEndGameObserve || _appliedDragSelectColorEnabled;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
@@ -1365,11 +1440,94 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(output) ? "Pause-chat hook updated." : output;
     }
 
+    private void UpdateObserveHookStatus(bool forceInject)
+    {
+        if (string.IsNullOrEmpty(_nativeDir)) return;
+
+        if (!_appliedEndGameObserve)
+        {
+            if (IsWarcraftIiRunning() && forceInject)
+            {
+                try { SyncObserveHook(throwOnError: false); }
+                catch { /* keep tab status friendly */ }
+            }
+            return;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _observeInjectedForRunningGame = false;
+            return;
+        }
+
+        if (_observeInjectedForRunningGame && !forceInject) return;
+
+        try
+        {
+            var message = SyncObserveHook(throwOnError: false);
+            _observeInjectedForRunningGame =
+                !string.IsNullOrWhiteSpace(message) &&
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _observeInjectedForRunningGame = false;
+        }
+    }
+
+    private string SyncObserveHook(bool throwOnError = true)
+    {
+        var injector = Path.Combine(_nativeDir, "InjectObserve.exe");
+        var dll = Path.Combine(_nativeDir, "ObserveHook.dll");
+        if (!File.Exists(injector) || !File.Exists(dll))
+        {
+            var missing = "Observe hook files are missing. Rebuild mod/native.";
+            if (throwOnError) throw new InvalidOperationException(missing);
+            return missing;
+        }
+
+        if (!IsWarcraftIiRunning())
+        {
+            _observeInjectedForRunningGame = false;
+            return _appliedEndGameObserve
+                ? "End-game Observe ON — watcher auto-injects when Warcraft II starts."
+                : "End-game Observe setting saved.";
+        }
+
+        var args = _appliedEndGameObserve ? "--enable" : "--disable";
+        var start = new ProcessStartInfo(injector, args)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = _nativeDir
+        };
+        using var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start the Observe hook injector.");
+        var output = process.StandardOutput.ReadToEnd().Trim();
+        var error = process.StandardError.ReadToEnd().Trim();
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+        {
+            _observeInjectedForRunningGame = false;
+            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            var message = string.IsNullOrWhiteSpace(details)
+                ? $"Observe hook sync failed (exit {process.ExitCode})."
+                : details;
+            if (throwOnError) throw new InvalidOperationException(message);
+            return message;
+        }
+
+        _observeInjectedForRunningGame = _appliedEndGameObserve;
+        return string.IsNullOrWhiteSpace(output) ? "Observe hook updated." : output;
+    }
+
     private void UpdateChatNameColorHookStatus(bool forceInject)
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
 
-        if (!_appliedChatColoredNames && !_appliedChatTimestamps && !_appliedChatHistory)
+        if (!_appliedChatColoredNames && !_appliedChatTimestamps && !_appliedChatHistory &&
+            !_appliedAllyLeaveMarkHumans)
         {
             if (IsWarcraftIiRunning() && forceInject)
             {
@@ -1392,7 +1550,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var message = SyncChatNameColorHook(throwOnError: false);
             _chatNameColorInjectedForRunningGame =
                 !string.IsNullOrWhiteSpace(message) &&
-                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
+                message.Contains("enabled", StringComparison.OrdinalIgnoreCase) &&
+                !message.Contains("disabled", StringComparison.OrdinalIgnoreCase);
         }
         catch
         {
@@ -1414,7 +1573,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (!IsWarcraftIiRunning())
         {
             _chatNameColorInjectedForRunningGame = false;
-            return _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory
+            return _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
+                _appliedAllyLeaveMarkHumans
                 ? "Chat mods ON — watcher auto-injects when Warcraft II starts."
                 : "Chat name colors setting saved.";
         }
@@ -1447,7 +1607,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         _chatNameColorInjectedForRunningGame =
-            _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory;
+            _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
+            _appliedAllyLeaveMarkHumans;
         return string.IsNullOrWhiteSpace(output) ? "Chat-name-color hook updated." : output;
     }
 
@@ -1596,7 +1757,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 focused.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
 
             IsApplying = true;
-            SetStatusLines(StatusLine("", ReadyIconBrush, "Installing mod…"));
+            SetStatusLines(StatusLine("", ReadyIconBrush,
+                _activeTab == "bugfixes" ? "Installing bug fixes…" : "Installing mod…"));
             ApplyButtonBrush = ReadyButtonBrush;
             ApplyButtonBorderBrush = ReadyButtonBorderBrush;
             // Let the progress bar paint/animate before blocking work starts.
@@ -1617,10 +1779,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     throw new InvalidOperationException($"{card.Name} has an invalid color.");
             }
                 foreach (var card in OtherCards)
-                {
-                    if (!ColorCard.IsValidHex(card.Hex))
-                        throw new InvalidOperationException($"{card.Name} has an invalid color.");
-                }
+            {
+                if (!ColorCard.IsValidHex(card.Hex))
+                    throw new InvalidOperationException($"{card.Name} has an invalid color.");
+            }
 
                 var config = BuildColorConfigForColorsApply();
                 var markComputers = _appliedAllyLeaveMarkComputers;
@@ -1629,6 +1791,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatNames = _appliedChatColoredNames;
                 var chatStamps = _appliedChatTimestamps;
                 var chatHist = _appliedChatHistory;
+                var endGameObserve = _appliedEndGameObserve;
                 // Unit sprites always follow the installed player colors.
                 _unitSpriteColors = true;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
@@ -1637,6 +1800,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     // Keep drag-select hook off — Self highlight owns shared palette index 250.
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chat, chatNames, chatStamps, chatHist,
+                        endGameObserve,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
@@ -1645,6 +1809,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 });
                 CaptureAppliedColors();
                 CaptureAppliedUtilColors();
+                _appliedColorBlindPreset = _selectedColorBlindPreset;
                 _appliedUnitSpriteColors = true;
                 _appliedDragSelectColorEnabled = false;
                 _dragSelectInjectedForRunningGame = false;
@@ -1675,12 +1840,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatNamesEnabled = ChatColoredNames;
                 var chatStampsEnabled = ChatTimestamps;
                 var chatHistoryEnabled = _appliedChatHistory; // owned by the Bug fixes tab
+                var endGameObserveEnabled = EndGameObserve;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
                 await Task.Run(() =>
                 {
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
-                        chatHistoryEnabled,
+                        chatHistoryEnabled, endGameObserveEnabled,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     ApplyAllyGoneSkullAtlas();
@@ -1690,8 +1856,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _appliedAllyLeaveMarkHumans = markHumans;
                 _appliedChatColoredNames = chatNamesEnabled;
                 _appliedChatTimestamps = chatStampsEnabled;
+                _appliedEndGameObserve = endGameObserveEnabled;
                 _hookInjectedForRunningGame = false;
                 _chatNameColorInjectedForRunningGame = false;
+                _observeInjectedForRunningGame = false;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
                 await Task.Run(() =>
                 {
@@ -1702,6 +1870,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* optional while Feature is off / game closed */ }
                     try { SyncDragSelectHook(throwOnError: false); }
                     catch { /* keep drag hook disabled */ }
+                    try { SyncObserveHook(throwOnError: false); }
+                    catch { /* optional while game closed */ }
                 });
             }
             else if (_activeTab == "bugfixes")
@@ -1712,10 +1882,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatNamesEnabled = _appliedChatColoredNames;
                 var chatStampsEnabled = _appliedChatTimestamps;
                 var chatHistoryEnabled = ChatHistory; // owned by the Bug fixes tab
-                SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Bug fix settings…"));
+                var endGameObserveEnabled = _appliedEndGameObserve;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Installing bug fixes…"));
                 await Task.Run(() => WriteExtraFeaturesFile(
                     markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
-                    chatHistoryEnabled,
+                    chatHistoryEnabled, endGameObserveEnabled,
                     dragEnabled: false,
                     dragHex: "#00FF00"));
 
@@ -1760,6 +1931,131 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
+    private void ColorBlindOn_Click(object sender, RoutedEventArgs e)
+    {
+        if (_colorBlindMode) return;
+        ColorBlindMode = true;
+    }
+
+    private void ColorBlindOff_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_colorBlindMode) return;
+        ColorBlindMode = false;
+    }
+
+    private void RefreshCheckBoxVisuals()
+    {
+        CheckBoxTheme.SetIsColorBlindMode(this, _colorBlindMode);
+        Dispatcher.BeginInvoke(() =>
+        {
+            foreach (var checkBox in FindVisualChildren<System.Windows.Controls.CheckBox>(this))
+            {
+                CheckBoxTheme.SetIsColorBlindMode(checkBox, _colorBlindMode);
+                checkBox.InvalidateProperty(CheckBoxTheme.IsColorBlindModeProperty);
+            }
+        }, DispatcherPriority.Loaded);
+    }
+
+    private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
+    {
+        var count = VisualTreeHelper.GetChildrenCount(parent);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T match)
+                yield return match;
+
+            foreach (var descendant in FindVisualChildren<T>(child))
+                yield return descendant;
+        }
+    }
+
+    private void ColorBlindPreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: string presetKey }) return;
+        ApplyColorBlindPreset(presetKey);
+    }
+
+    private void ApplyColorBlindPreset(string presetKey)
+    {
+        if (string.Equals(presetKey, "original", StringComparison.OrdinalIgnoreCase))
+        {
+            _selectedColorBlindPreset = presetKey;
+            foreach (var card in Cards.Where(c => c.IsEnabled))
+                card.Reset();
+            ColorBlindPresetHintText = ColorBlindPresets.OriginalHint;
+            RefreshColorBlindPresetButtons();
+            RefreshTabStatus();
+            return;
+        }
+
+        if (!ColorBlindPresets.TryGet(presetKey, out var hexes, out var hint))
+            return;
+
+        _selectedColorBlindPreset = presetKey;
+        for (var i = 0; i < hexes.Length; i++)
+        {
+            var card = Cards.FirstOrDefault(c => c.Player == i + 1 && c.IsEnabled);
+            if (card is not null)
+                card.Hex = hexes[i];
+        }
+
+        ColorBlindPresetHintText = hint;
+        RefreshColorBlindPresetButtons();
+        RefreshTabStatus();
+    }
+
+    private static System.Windows.Media.Brush SegmentButtonForeground(bool selected, bool colorBlindMode, System.Windows.Media.Brush textBrush) =>
+        selected || !colorBlindMode
+            ? System.Windows.Media.Brushes.White
+            : textBrush;
+
+    private void RefreshColorBlindPresetButtons()
+    {
+        if (ColorBlindPresetPanel is null) return;
+        var borderThickness = AppTheme.ControlBorderThickness;
+        var unselectedBackground = _colorBlindMode
+            ? (System.Windows.Media.Brush)FindResource("ButtonBackgroundBrush")
+            : SegmentUnselectedBrush;
+        var unselectedBorder = _colorBlindMode
+            ? (System.Windows.Media.Brush)FindResource("ControlBorderBrush")
+            : SegmentUnselectedBorderBrush;
+        var textBrush = (System.Windows.Media.Brush)FindResource("TextBrush");
+        foreach (var child in ColorBlindPresetPanel.Children)
+        {
+            if (child is not System.Windows.Controls.Button button) continue;
+            var selected = string.Equals(button.Tag as string, _selectedColorBlindPreset, StringComparison.OrdinalIgnoreCase);
+            button.BorderThickness = borderThickness;
+            button.Background = selected ? SegmentSelectedBrush : unselectedBackground;
+            button.BorderBrush = selected ? SegmentSelectedBorderBrush : unselectedBorder;
+            button.Foreground = SegmentButtonForeground(selected, _colorBlindMode, textBrush);
+        }
+    }
+
+    private void RefreshColorBlindModeButtons()
+    {
+        if (ColorBlindOnButton is null || ColorBlindOffButton is null) return;
+        var borderThickness = AppTheme.ControlBorderThickness;
+        var unselectedBackground = _colorBlindMode
+            ? (System.Windows.Media.Brush)FindResource("ButtonBackgroundBrush")
+            : SegmentUnselectedBrush;
+        var unselectedBorder = _colorBlindMode
+            ? (System.Windows.Media.Brush)FindResource("ControlBorderBrush")
+            : SegmentUnselectedBorderBrush;
+        var textBrush = (System.Windows.Media.Brush)FindResource("TextBrush");
+        var onSelected = _colorBlindMode;
+        var offSelected = !_colorBlindMode;
+
+        ColorBlindOnButton.BorderThickness = borderThickness;
+        ColorBlindOffButton.BorderThickness = borderThickness;
+        ColorBlindOnButton.Background = onSelected ? SegmentSelectedBrush : unselectedBackground;
+        ColorBlindOnButton.BorderBrush = onSelected ? SegmentSelectedBorderBrush : unselectedBorder;
+        ColorBlindOffButton.Background = offSelected ? SegmentSelectedBrush : unselectedBackground;
+        ColorBlindOffButton.BorderBrush = offSelected ? SegmentSelectedBorderBrush : unselectedBorder;
+        ColorBlindOnButton.Foreground = SegmentButtonForeground(onSelected, _colorBlindMode, textBrush);
+        ColorBlindOffButton.Foreground = SegmentButtonForeground(offSelected, _colorBlindMode, textBrush);
+    }
+
     private async void Restore_Click(object sender, RoutedEventArgs e)
     {
         if (_isApplying) return;
@@ -1799,6 +2095,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     ChatColoredNames = false,
                     ChatTimestamps = false,
                     ChatHistory = false,
+                    EndGameObserve = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
                     UnitSpriteColors = false,
@@ -1818,6 +2115,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedChatTimestamps = false;
             _chatHistory = false;
             _appliedChatHistory = false;
+            _endGameObserve = false;
+            _appliedEndGameObserve = false;
             _unitSpriteColors = false;
             _appliedUnitSpriteColors = false;
             _appliedDragSelectColorEnabled = false;
@@ -1827,6 +2126,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(ChatColoredNames));
             OnPropertyChanged(nameof(ChatTimestamps));
             OnPropertyChanged(nameof(ChatHistory));
+            OnPropertyChanged(nameof(EndGameObserve));
 
             Cards.Clear();
             LoadCards();
@@ -1843,10 +2143,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             WireOtherCards();
 
+            _selectedColorBlindPreset = "original";
+            _appliedColorBlindPreset = "original";
+            ColorBlindPresetHintText = ColorBlindPresets.OriginalHint;
+            RefreshColorBlindPresetButtons();
+
             _hookInjectedForRunningGame = false;
             _pauseChatInjectedForRunningGame = false;
             _chatNameColorInjectedForRunningGame = false;
             _dragSelectInjectedForRunningGame = false;
+            _observeInjectedForRunningGame = false;
             SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
             await Task.Run(() =>
             {
@@ -1856,6 +2162,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncChatNameColorHook(throwOnError: false); } catch { /* off */ }
                 try { SyncDragSelectHook(throwOnError: false); } catch { /* off */ }
                 try { SyncUnitColorHook(throwOnError: false); } catch { /* off */ }
+                try { SyncObserveHook(throwOnError: false); } catch { /* off */ }
             });
 
             StudioDialog.Show(this,
@@ -1967,6 +2274,8 @@ public sealed class ExtraFeaturesConfig
     public bool ChatTimestamps { get; set; }
     /// <summary>PageUp/PageDown re-show earlier chat lines in a match.</summary>
     public bool ChatHistory { get; set; }
+    /// <summary>Observe button on the defeat popup (close screen, keep watching).</summary>
+    public bool EndGameObserve { get; set; }
     public bool DragSelectColorEnabled { get; set; }
     public string? DragSelectColor { get; set; }
     /// <summary>Live-recolor HD unit sprites to the player colors.</summary>
@@ -1978,6 +2287,7 @@ public sealed class StudioSettings
     public string? GameRootPath { get; set; }
     public string? MapEditorPath { get; set; }
     public string? MapsPath { get; set; }
+    public bool ColorBlindMode { get; set; }
 }
 
 public sealed class StatusLineItem

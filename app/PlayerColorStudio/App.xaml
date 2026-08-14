@@ -1,34 +1,51 @@
 <Application x:Class="PlayerColorStudio.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:local="clr-namespace:PlayerColorStudio"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <SolidColorBrush x:Key="WindowBrush" Color="#FF1A2740"/>
         <SolidColorBrush x:Key="PanelBrush" Color="#FF223352"/>
         <SolidColorBrush x:Key="CardBrush" Color="#FF2C3D5C"/>
+        <SolidColorBrush x:Key="TextBrush" Color="White"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#FFB8C4D8"/>
+        <SolidColorBrush x:Key="CardBorderBrush" Color="#FF4A6388"/>
+        <SolidColorBrush x:Key="SwatchBorderBrush" Color="#FF7A8EAD"/>
+        <SolidColorBrush x:Key="ControlBorderBrush" Color="#FF5A7398"/>
+        <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FF162338"/>
+        <SolidColorBrush x:Key="TabIdleBackgroundBrush" Color="#FF334868"/>
+        <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FF334868"/>
+        <Thickness x:Key="CardBorderThickness">2</Thickness>
+        <Thickness x:Key="SwatchBorderThickness">2</Thickness>
+        <Thickness x:Key="ControlBorderThickness">2</Thickness>
+        <sys:Double x:Key="TabCardMinHeight">132</sys:Double>
         <SolidColorBrush x:Key="AccentBrush" Color="#FF4E9DFF"/>
         <SolidColorBrush x:Key="MutedBrush" Color="White"/>
+        <SolidColorBrush x:Key="CheckBoxCheckedFillBrush" Color="Transparent"/>
 
         <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         </Style>
         <Style TargetType="TabControl">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
-            <Setter Property="BorderBrush" Value="#FF5A7398"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="{DynamicResource ControlBorderThickness}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabControl">
-                        <Grid Background="{StaticResource WindowBrush}">
+                        <Grid Background="{DynamicResource WindowBrush}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <DockPanel Grid.Row="0" IsItemsHost="True" LastChildFill="False"
-                                       Background="{StaticResource WindowBrush}"/>
-                            <Border Grid.Row="1" Background="{StaticResource PanelBrush}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                       Background="{DynamicResource WindowBrush}"/>
+                            <Border Grid.Row="1" Background="{DynamicResource PanelBrush}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
                                 <ContentPresenter ContentSource="SelectedContent" Margin="{TemplateBinding Padding}"/>
                             </Border>
                         </Grid>
@@ -37,25 +54,27 @@
             </Setter>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#FF334868"/>
-            <Setter Property="BorderBrush" Value="#FF5A7398"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource TabIdleBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="{DynamicResource ControlBorderThickness}"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
                         <Border x:Name="TabBorder" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1,1,1,0"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 Margin="0,0,4,0" Padding="{TemplateBinding Padding}" CornerRadius="4,4,0,0">
                             <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              TextElement.Foreground="White"/>
+                                              TextElement.Foreground="{DynamicResource TextBrush}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource PanelBrush}"/>
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource PanelBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="False">
-                                <Setter TargetName="TabBorder" Property="Background" Value="#FF334868"/>
+                                <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource TabIdleBackgroundBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -63,7 +82,7 @@
             </Setter>
         </Style>
         <Style TargetType="ScrollViewer">
-            <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollViewer">
@@ -196,10 +215,10 @@
         <Style TargetType="Button">
             <Setter Property="Padding" Value="14,7"/>
             <Setter Property="Margin" Value="0"/>
-            <Setter Property="Background" Value="#FF334868"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#FF5A7398"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="{DynamicResource ControlBorderThickness}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -212,7 +231,8 @@
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              RecognizesAccessKey="True"/>
+                                              RecognizesAccessKey="True"
+                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -281,62 +301,119 @@
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="8,6"/>
-            <Setter Property="Background" Value="#FF162338"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="CaretBrush" Value="White"/>
-            <Setter Property="BorderBrush" Value="#FF5A7398"/>
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="{DynamicResource ControlBorderThickness}"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
+        <ControlTemplate x:Key="StandardCheckBoxTemplate" TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Border x:Name="CheckBorder"
+                        Width="20" Height="20"
+                        Background="{DynamicResource InputBackgroundBrush}"
+                        BorderBrush="{DynamicResource SwatchBorderBrush}"
+                        BorderThickness="{DynamicResource SwatchBorderThickness}"
+                        CornerRadius="3"
+                        VerticalAlignment="Top"
+                        Margin="0,1,0,0"
+                        SnapsToDevicePixels="True">
+                    <Path x:Name="CheckMark"
+                          Data="M 2.5,10 L 7.5,15 L 17,4"
+                          Stroke="#FF2EC85A"
+                          StrokeThickness="2.2"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          StrokeLineJoin="Round"
+                          Stretch="None"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Visibility="Collapsed"/>
+                </Border>
+                <ContentPresenter Margin="10,0,0,0"
+                                  VerticalAlignment="Top"
+                                  RecognizesAccessKey="True"
+                                  TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FF4CC37A"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FFA8C0E0"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.55"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <ControlTemplate x:Key="ColorBlindCheckBoxTemplate" TargetType="CheckBox">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+                <Border x:Name="CheckBorder"
+                        Width="20" Height="20"
+                        Background="{DynamicResource InputBackgroundBrush}"
+                        BorderBrush="{DynamicResource SwatchBorderBrush}"
+                        BorderThickness="{DynamicResource SwatchBorderThickness}"
+                        CornerRadius="3"
+                        VerticalAlignment="Top"
+                        Margin="0,1,0,0"
+                        SnapsToDevicePixels="True">
+                    <Path x:Name="ColorBlindMark"
+                          Data="M 4,4 L 16,16 M 16,4 L 4,16"
+                          Stroke="#FF1A1A1A"
+                          StrokeThickness="2.5"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Stretch="None"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Visibility="Collapsed"/>
+                </Border>
+                <ContentPresenter Margin="10,0,0,0"
+                                  VerticalAlignment="Top"
+                                  RecognizesAccessKey="True"
+                                  TextElement.Foreground="{TemplateBinding Foreground}"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="CheckBorder" Property="Background" Value="{DynamicResource CheckBoxCheckedFillBrush}"/>
+                    <Setter TargetName="CheckBorder" Property="BorderBrush" Value="{DynamicResource CheckBoxCheckedFillBrush}"/>
+                    <Setter TargetName="ColorBlindMark" Property="Visibility" Value="Visible"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsChecked" Value="True"/>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FF3AAE66"/>
+                </MultiTrigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsChecked" Value="False"/>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FFA8C0E0"/>
+                </MultiTrigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.55"/>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
         <Style TargetType="CheckBox">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="CheckBox">
-                        <StackPanel Orientation="Horizontal">
-                            <Border x:Name="CheckBorder"
-                                    Width="20" Height="20"
-                                    Background="#FF162338"
-                                    BorderBrush="#FF7A8EAD"
-                                    BorderThickness="1"
-                                    CornerRadius="3"
-                                    VerticalAlignment="Center"
-                                    SnapsToDevicePixels="True">
-                                <Path x:Name="CheckMark"
-                                      Data="M 2.5,10 L 7.5,15 L 17,4"
-                                      Stroke="#FF2EC85A"
-                                      StrokeThickness="2.2"
-                                      StrokeStartLineCap="Round"
-                                      StrokeEndLineCap="Round"
-                                      StrokeLineJoin="Round"
-                                      Stretch="None"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"
-                                      Visibility="Collapsed"/>
-                            </Border>
-                            <ContentPresenter Margin="10,0,0,0"
-                                              VerticalAlignment="Center"
-                                              RecognizesAccessKey="True"/>
-                        </StackPanel>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FF4CC37A"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FFA8C0E0"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.55"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="VerticalContentAlignment" Value="Top"/>
+            <Setter Property="Template" Value="{StaticResource StandardCheckBoxTemplate}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding (local:CheckBoxTheme.IsColorBlindMode), RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Template" Value="{StaticResource ColorBlindCheckBoxTemplate}"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <Style x:Key="HelpExpanderStyle" TargetType="Expander">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
@@ -349,8 +426,8 @@
                                 <ToggleButton x:Name="HeaderToggle"
                                               DockPanel.Dock="Right"
                                               Width="28" Height="28"
-                                              Margin="8,0,0,0"
-                                              VerticalAlignment="Center"
+                                              Margin="8,10,0,0"
+                                              VerticalAlignment="Top"
                                               Focusable="False"
                                               IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                               Cursor="Hand"

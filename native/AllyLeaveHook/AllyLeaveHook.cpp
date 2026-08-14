@@ -60,18 +60,21 @@ volatile LONG g_markComputers = 1;
 volatile LONG g_markHumans = 0;
 
 uint8_t* g_statusBase = nullptr;
+uint8_t* g_msgInitFlag = nullptr;
 // Per-player defeat/result flag at statusBase+0x21D8 (VA 0x91AA84).
 // Values: 0=ok, 1=left, 2=eliminated, 3=defeat; other bytes are garbage/unused.
 uint8_t* g_defeatBase = nullptr;
 constexpr ptrdiff_t kDefeatFromStatus = 0x21D8;
 // Preferred VAs in Warcraft II.exe (ImageBase 0x400000).
 constexpr uintptr_t kPreferredStatus = 0x00918CAC;
+constexpr uintptr_t kPreferredAnnounceGone = 0x004F4F30;
 // Lobby/slot table: stride 0x26. Byte0 mirrors controller/status
 // (1=human, 2/4/6/7=computer variants, 3=gone, 5=empty). Byte2=race.
 // At match start computers are often remapped 4→1, so cache kind early.
 constexpr uintptr_t kPreferredSlotBase = 0x00916268;
 constexpr size_t kSlotStride = 0x26;
 constexpr uintptr_t kPreferredPlayerName0 = 0x0091ADA8;
+constexpr uintptr_t kPreferredMsgInitFlag = 0x009B1798; // 1 in-match, 0 in menus
 constexpr size_t kPlayerNameStride = 0x38;
 uint8_t* g_slotBase = nullptr;
 char* g_playerName0 = nullptr;
@@ -159,6 +162,11 @@ volatile LONG g_explicitGone[8]{};
 // alliances row: F11 may not have been opened yet when the line appeared.
 char g_pendingGoneNames[8][80]{};
 DWORD g_pendingGoneTick[8]{};
+// Recent explicit leave/drop events — used to color "Name left" chat before
+// g_leftFlags propagate and when the live name table is already cleared.
+char g_recentLeaveNames[8][80]{};
+volatile LONG g_recentLeaveSeat[8]{ -1, -1, -1, -1, -1, -1, -1, -1 };
+DWORD g_recentLeaveTick[8]{};
 volatile LONG g_everHadAssets[8]{};
 // Game HasForces once returned >0 for this seat (army truly online).
 volatile LONG g_everHadForces[8]{};
@@ -534,8 +542,32 @@ void CacheSlotKindFromController(int playerIndex, uint8_t controller)
 void NoteHumanSlot(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
-    if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) == 1) return;
+    // Explicit human evidence (leave chat, local seat, alliances row) must win
+    // over a stale lobby computer classification.
     InterlockedExchange(&g_slotKind[playerIndex], 0);
+}
+
+void RememberRecentLeave(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    const DWORD now = GetTickCount();
+    g_recentLeaveTick[playerIndex] = now ? now : 1;
+    InterlockedExchange(&g_recentLeaveSeat[playerIndex], playerIndex);
+
+    const char* name = nullptr;
+    if (g_lastName[playerIndex][0]) {
+        name = g_lastName[playerIndex];
+    } else if (g_playerName0) {
+        __try {
+            const char* slot = g_playerName0 + static_cast<size_t>(playerIndex) * kPlayerNameStride;
+            if (slot[0]) name = slot;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+    if (name && name[0]) {
+        strncpy_s(g_recentLeaveNames[playerIndex], name, _TRUNCATE);
+        Log("recentLeave p=%d name=%s", playerIndex, name);
+    }
 }
 
 void RefreshSlotKinds()
@@ -567,6 +599,19 @@ bool SourceLooksLikeHumanLeaveOnly(const char* source)
            _strnicmp(source, "chat", 4) == 0 ||
            _stricmp(source, "status3-human") == 0 ||
            _stricmp(source, "defeat-left") == 0;
+}
+
+// Sticky human-gone: network leave/elim/surrender — survives HasForces>0 until match end.
+bool SourceShouldStickExplicitGone(const char* source)
+{
+    if (SourceLooksLikeHumanLeaveOnly(source)) return true;
+    if (!source || !source[0]) return false;
+    return _strnicmp(source, "defeat-human", 12) == 0 ||
+           _strnicmp(source, "human-elim", 10) == 0 ||
+           _strnicmp(source, "status-elim", 11) == 0 ||
+           _strnicmp(source, "defeat-elim", 11) == 0 ||
+           _strnicmp(source, "defeat-poll", 11) == 0 ||
+           _strnicmp(source, "elim", 4) == 0;
 }
 
 // Remaster/PUD computer labels vs Battle.net account names (e.g. "Avent").
@@ -642,6 +687,7 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
     if (humanLeave) {
         // Leave/drop packets and chat announces only fire for real players.
         NoteHumanSlot(playerIndex);
+        return markHumans;
     }
 
     // Classify from alliances name: "Nation of… / … Clan" = NPC, account name = human.
@@ -659,15 +705,14 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
 
     if (kind == 1 || IsComputerSlot(playerIndex)) {
         // Computers never "leave" — only army-wipe / eliminate marks them.
-        return markComputers && !humanLeave;
+        return markComputers;
     }
     if (!markHumans) return false;
     if (kind == 0) {
         // Known human: leave, drop, disconnect, eliminate and army wipe all count.
         return true;
     }
-    // Unknown seat: explicit leave, or wipe/elim after this seat actually had forces.
-    if (humanLeave) return true;
+    // Unknown seat: wipe/elim after this seat actually had forces.
     if (!source) return false;
     const bool wipeOrElim =
         _strnicmp(source, "elim", 4) == 0 ||
@@ -830,6 +875,10 @@ void ResetWipeTracking(const char* reason)
         InterlockedExchange(&g_slotKind[i], -1);
         g_pendingGoneNames[i][0] = 0;
         g_pendingGoneTick[i] = 0;
+        g_lastName[i][0] = 0;
+        g_recentLeaveNames[i][0] = 0;
+        g_recentLeaveTick[i] = 0;
+        InterlockedExchange(&g_recentLeaveSeat[i], -1);
     }
     // Re-arm lobby classification: controller-based kind latching is gated on
     // !censusDone, so the next lobby must start from a clean census state.
@@ -837,6 +886,32 @@ void ResetWipeTracking(const char* reason)
     static LONG s_resetLog = 0;
     if (InterlockedIncrement(&s_resetLog) <= 12) {
         Log("wipeTracking reset (%s)", reason ? reason : "?");
+    }
+}
+
+static void NotifyChatNewMatch()
+{
+    using ChatResetFn = void(__stdcall*)();
+    static ChatResetFn s_fn = nullptr;
+    if (!s_fn) {
+        HMODULE chat = GetModuleHandleW(L"ChatNameColorHook.dll");
+        if (chat) {
+            s_fn = reinterpret_cast<ChatResetFn>(
+                GetProcAddress(chat, "ChatNameColor_OnNewMatch"));
+        }
+    }
+    if (s_fn) {
+        __try { s_fn(); } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    }
+}
+
+void ResetMatchState(const char* reason)
+{
+    ResetWipeTracking(reason);
+    NotifyChatNewMatch();
+    static LONG s_matchResetLog = 0;
+    if (InterlockedIncrement(&s_matchResetLog) <= 24) {
+        Log("matchState reset (%s)", reason ? reason : "?");
     }
 }
 
@@ -1092,7 +1167,7 @@ bool ShouldKeepGoneDespiteForces(int playerIndex)
     // Live computers keep HasForces until wipe; never sticky-keep them on
     // status==2 (that byte is also the computer-controller id).
     if (IsComputerSlot(playerIndex)) return false;
-    if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) != 0) return false;
+
     const uint8_t status = ReadLiveController(playerIndex);
     uint8_t defeat = 0;
     if (g_defeatBase) {
@@ -1103,8 +1178,10 @@ bool ShouldKeepGoneDespiteForces(int playerIndex)
         }
     }
     // Humans can read HasForces>0 after elim/surrender until they exit the match.
+    // Check defeat/status before slot kind — unknown seats (kind=-1) still count.
     if (status >= 2 && status != 0xFF) return true;
     if (defeat == 1 || defeat == 2 || defeat == 3) return true;
+    if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) != 0) return false;
     return false;
 }
 
@@ -1183,15 +1260,19 @@ void MarkGoneUi(int playerIndex, const char* source)
         }
         return;
     }
-    // Explicit leave/drop/announce is sticky — even if the mark itself was
-    // already placed earlier by the wipe path.
-    if (SourceLooksLikeHumanLeaveOnly(source)) {
+    // Explicit leave/drop/elim/surrender is sticky — even if the mark itself was
+    // already placed earlier by a false hf-poll wipe.
+    if (SourceShouldStickExplicitGone(source)) {
         InterlockedExchange(&g_explicitGone[playerIndex], 1);
     }
-    if (InterlockedCompareExchange(&g_leftFlags[playerIndex], 1, 0) != 0) {
+    const bool alreadyMarked =
+        InterlockedCompareExchange(&g_leftFlags[playerIndex], 0, 0) != 0;
+    InterlockedExchange(&g_leftFlags[playerIndex], 1);
+    if (!alreadyMarked) {
+        InterlockedIncrement(&g_leaveEventCount);
+    } else if (!SourceShouldStickExplicitGone(source)) {
         return;
     }
-    InterlockedIncrement(&g_leaveEventCount);
 
     // UI flag only for local wipe — do not invent defeat/status (false positives
     // were sticky when our unit counter drifted below the real army size).
@@ -1276,6 +1357,7 @@ void MarkGoneAndWrite(int playerIndex, const uint8_t* packet, const char* source
     }
 
     // UI flag only — never rewrite status/defeat here (desync risk).
+    RememberRecentLeave(playerIndex);
     MarkGoneUi(playerIndex, srcBuf);
 }
 
@@ -1299,6 +1381,10 @@ void RefreshWipeFromAssets()
 // cdecl wrappers for naked gates (right-to-left push order).
 void __cdecl MarkGoneFromH1(int playerIndex, const uint8_t* packet)
 {
+    static LONG s_h1Log = 0;
+    if (InterlockedIncrement(&s_h1Log) <= 32) {
+        Log("H1 notify p=%d", playerIndex);
+    }
     MarkGoneAndWrite(playerIndex, packet, "H1");
 }
 
@@ -1447,6 +1533,7 @@ void BindStatusBase(uint8_t* statusBase)
             reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
         g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
         g_playerName0 = reinterpret_cast<char*>(kPreferredPlayerName0 + slide);
+        g_msgInitFlag = reinterpret_cast<uint8_t*>(kPreferredMsgInitFlag + slide);
         Log("BindUnitLists(via status): heads=%p rows=%p slot=%p names=%p status=%p slide=0x%08X",
             g_unitTypeHeads, g_typeCountRows, g_slotBase, g_playerName0, statusBase, (unsigned)slide);
     }
@@ -1828,7 +1915,20 @@ bool InstallLeaveWriteHooks(uint8_t* base, size_t imageSize)
     };
     const char* maskH2 = "xx????xxx????x";
 
-    uint8_t* hit1 = FindPattern(base, imageSize, patH1, maskH1);
+    // Multiple movzx+status=3 sites exist — pick the one that writes the live
+    // status table (preferred VA 0x918CAC), not a stale duplicate pattern.
+    uint8_t* hit1 = nullptr;
+    for (uint8_t* cursor = base;;) {
+        const size_t remaining = imageSize - static_cast<size_t>(cursor - base);
+        uint8_t* candidate = FindPattern(cursor, remaining, patH1, maskH1);
+        if (!candidate || !IsLikelyCode(candidate, sizeof(patH1))) break;
+        const uint32_t statusImm = *reinterpret_cast<uint32_t*>(candidate + 6);
+        if ((statusImm & 0xFFFF) == 0x8CAC || statusImm == kPreferredStatus) {
+            hit1 = candidate;
+            break;
+        }
+        cursor = candidate + 1;
+    }
 
     uint8_t* hit2 = nullptr;
     for (uint8_t* cursor = base;;) {
@@ -1899,15 +1999,38 @@ bool InstallAnnounceGoneHook(uint8_t* base, size_t imageSize)
     const char* mask = "xxxxxxxxx????xxx????x";
 
     uint8_t* hit = FindPattern(base, imageSize, pat, mask);
-    if (!hit || !IsLikelyCode(hit, sizeof(pat))) {
-        Log("InstallAnnounceGone: pattern not found (safe skip — chat leave still works)");
-        return false;
+    if (hit && IsLikelyCode(hit, sizeof(pat))) {
+        const uint32_t dispCmp = *reinterpret_cast<uint32_t*>(hit + 9);
+        const uint32_t dispMov = *reinterpret_cast<uint32_t*>(hit + 18);
+        // Defeat offset slid with the binary — only reject the defeat=1 twin.
+        if (dispCmp != dispMov || hit[22] != 0x02) {
+            Log("InstallAnnounceGone: reject twin cmp=0x%08X mov=0x%08X imm=%u at %p",
+                dispCmp, dispMov, hit[22], hit);
+            hit = nullptr;
+        }
+    } else {
+        hit = nullptr;
     }
-    const uint32_t dispCmp = *reinterpret_cast<uint32_t*>(hit + 9);
-    const uint32_t dispMov = *reinterpret_cast<uint32_t*>(hit + 18);
-    if ((dispCmp & 0xFFFF) != 0xAA84 || dispCmp != dispMov) {
-        Log("InstallAnnounceGone: unexpected defeat disp cmp=0x%08X mov=0x%08X at %p",
-            dispCmp, dispMov, hit);
+
+    if (!hit && g_statusBase) {
+        const uintptr_t slide =
+            reinterpret_cast<uintptr_t>(g_statusBase) - kPreferredStatus;
+        const uintptr_t va = kPreferredAnnounceGone + slide;
+        if (va >= reinterpret_cast<uintptr_t>(base) &&
+            va < reinterpret_cast<uintptr_t>(base) + imageSize) {
+            uint8_t* candidate = reinterpret_cast<uint8_t*>(va);
+            if (candidate[0] == 0x55 && candidate[1] == 0x8B && candidate[2] == 0xEC &&
+                candidate[3] == 0x56 && IsLikelyCode(candidate, 24) &&
+                candidate[22] == 0x02) {
+                hit = candidate;
+                Log("InstallAnnounceGone: using slid VA %p (slide=0x%08X)",
+                    hit, (unsigned)slide);
+            }
+        }
+    }
+
+    if (!hit) {
+        Log("InstallAnnounceGone: pattern not found (safe skip — chat leave still works)");
         return false;
     }
     void* original = nullptr;
@@ -2152,6 +2275,7 @@ bool InstallHook()
             reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
         g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
         g_playerName0 = reinterpret_cast<char*>(kPreferredPlayerName0 + slide);
+        g_msgInitFlag = reinterpret_cast<uint8_t*>(kPreferredMsgInitFlag + slide);
     }
 
     LoadMarkModesFromJson();
@@ -2276,6 +2400,7 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneFromChat(int p
 {
     if (playerIndex < 0 || playerIndex > 7) return;
     NoteHumanSlot(playerIndex);
+    RememberRecentLeave(playerIndex);
     MarkGoneUi(playerIndex, "chat-name");
 }
 
@@ -2315,12 +2440,64 @@ extern "C" __declspec(dllexport) int __stdcall AllyLeave_FindRowByName(const cha
     return (count == 1) ? match : -1;
 }
 
+// Seat for a leave chat line. Prefer recent leave events and unique name
+// matches — g_leftFlags alone is too late for first-draw coloring.
+extern "C" __declspec(dllexport) int __stdcall AllyLeave_SeatForLeavingName(const char* name)
+{
+    if (!name || !name[0]) return -1;
+    const DWORD now = GetTickCount();
+    int match = -1;
+    int count = 0;
+
+    for (int i = 0; i < 8; ++i) {
+        if (InterlockedCompareExchange(&g_recentLeaveSeat[i], -1, -1) != i) continue;
+        if (!g_recentLeaveNames[i][0]) continue;
+        if ((now - g_recentLeaveTick[i]) > 60u * 1000u) continue;
+        if (_stricmp(g_recentLeaveNames[i], name) != 0) continue;
+        match = i;
+        ++count;
+    }
+    if (count == 1) return match;
+
+    match = -1;
+    count = 0;
+    for (int i = 0; i < 8; ++i) {
+        if (InterlockedCompareExchange(&g_leftFlags[i], 0, 0) == 0) continue;
+        bool nameOk = false;
+        if (g_lastName[i][0] && _stricmp(g_lastName[i], name) == 0) {
+            nameOk = true;
+        } else if (g_playerName0) {
+            __try {
+                const char* slot = g_playerName0 + static_cast<size_t>(i) * kPlayerNameStride;
+                if (slot[0] && _stricmp(slot, name) == 0) nameOk = true;
+            } __except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+        }
+        if (!nameOk) continue;
+        match = i;
+        ++count;
+    }
+    if (count == 1) return match;
+
+    const int row = AllyLeave_FindRowByName(name);
+    if (row >= 0) return row;
+    return SeatFromUniquePlayerName(name);
+}
+
+// Called when a new match starts — drop stale F11 names so leave coloring
+// cannot reuse a previous game's seat for the same display name.
+extern "C" __declspec(dllexport) void __stdcall AllyLeave_OnNewMatch()
+{
+    ResetMatchState("export-new-match");
+}
+
 extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const char* name)
 {
     if (!name || !name[0]) return;
 
     const int row = AllyLeave_FindRowByName(name);
     if (row >= 0) {
+        RememberRecentLeave(row);
         MarkGoneUi(row, "chat-name");
         return;
     }
@@ -2328,6 +2505,7 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const c
     const int seat = SeatFromUniquePlayerName(name);
     if (seat >= 0) {
         NoteHumanSlot(seat);
+        RememberRecentLeave(seat);
         MarkGoneUi(seat, "chat-name");
         return;
     }
@@ -2347,11 +2525,77 @@ static void FormatHfVector(char* buf, size_t cap)
 }
 
 // Continuous NPC-wipe detection on the game's own HasForces (0x4F4240).
+static void PollMatchReset()
+{
+    if (!g_hasForces) return;
+
+    int flag = -1;
+    if (g_msgInitFlag) {
+        __try {
+            flag = *g_msgInitFlag ? 1 : 0;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            flag = -1;
+        }
+    }
+
+    static int s_lastFlag = -1;
+    if (flag >= 0) {
+        if (s_lastFlag >= 0 && flag != s_lastFlag) {
+            ResetMatchState(flag == 1 ? "msg-init-start" : "msg-init-end");
+            s_lastFlag = flag;
+            return;
+        }
+        if (s_lastFlag < 0) s_lastFlag = flag;
+    }
+
+    // Quick MP rematch: initFlag can stay 1 while every seat goes hf==0, then
+    // armies respawn — without this, game-2 leave marks/colors leak into game 3+.
+    if (flag != 1) return;
+
+    static bool s_inMatch = false;
+    static bool s_sawAllZero = false;
+    static DWORD s_allZeroSince = 0;
+
+    int local = -1;
+    if (g_localPlayer) {
+        __try {
+            local = static_cast<int>(*g_localPlayer);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            local = -1;
+        }
+    }
+    const int localHf = (local >= 0 && local <= 7) ? CallHasForces(local) : 0;
+    if (localHf > 0) s_inMatch = true;
+
+    bool allZero = true;
+    for (int i = 0; i < 8; ++i) {
+        if (CallHasForces(i) > 0) {
+            allZero = false;
+            break;
+        }
+    }
+
+    const DWORD now = GetTickCount();
+    if (allZero && s_inMatch) {
+        if (s_allZeroSince == 0) s_allZeroSince = now ? now : 1;
+        else if ((now - s_allZeroSince) > 1500) s_sawAllZero = true;
+    } else if (s_sawAllZero && !allZero) {
+        ResetMatchState("rematch-hf");
+        s_sawAllZero = false;
+        s_allZeroSince = 0;
+        s_inMatch = false;
+    } else if (!allZero) {
+        s_allZeroSince = 0;
+    }
+}
+
 // Runs in the poll thread — independent of F11 paints and of our census,
 // which both proved unreliable (census misses seats on 8p maps).
 static void PollWipeMarks()
 {
     if (!g_enabled || !g_ready || !g_hasForces) return;
+
+    PollMatchReset();
 
     int local = -1;
     if (g_localPlayer) {
@@ -2375,7 +2619,7 @@ static void PollWipeMarks()
             s_localDeadSince = now ? now : 1;
         } else if (s_matchSeen && (now - s_localDeadSince) > 3000) {
             // Match over / back to menu: drop all sticky state for the next game.
-            ResetWipeTracking("local-gone");
+            ResetMatchState("local-gone");
             s_matchSeen = false;
         }
         return;

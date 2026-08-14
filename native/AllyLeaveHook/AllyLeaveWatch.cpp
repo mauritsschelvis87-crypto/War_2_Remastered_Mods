@@ -31,9 +31,11 @@ struct ExtraFlags {
     bool chatTimestamps = false;
     // PageUp/PageDown chat history recall (lives in the chat DLL, own flag).
     bool chatHistory = false;
+    // Observe button on defeat popup (close screen, keep watching).
+    bool endGameObserve = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
-               chatTimestamps || chatHistory;
+               chatTimestamps || chatHistory || endGameObserve;
     }
     bool ChatDllWanted() const {
         return chatNameColor || humanLeave || chatTimestamps || chatHistory;
@@ -105,6 +107,7 @@ ExtraFlags ReadExtraFlags()
     flags.unitColor = ReadJsonBool(buf, "UnitSpriteColors");
     flags.chatTimestamps = ReadJsonBool(buf, "ChatTimestamps");
     flags.chatHistory = ReadJsonBool(buf, "ChatHistory");
+    flags.endGameObserve = ReadJsonBool(buf, "EndGameObserve");
     return flags;
 }
 
@@ -195,6 +198,7 @@ void WatchLoop(HANDLE quitEvent)
     DWORD dragInjectedPid = 0;
     DWORD chatNameInjectedPid = 0;
     DWORD unitColorInjectedPid = 0;
+    DWORD observeInjectedPid = 0;
     ExtraFlags last = ReadExtraFlags();
     SetStartup(last.Any());
 
@@ -209,7 +213,8 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.allyLeave != last.allyLeave || flags.pauseChat != last.pauseChat ||
             flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
             flags.humanLeave != last.humanLeave || flags.unitColor != last.unitColor ||
-            flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory) {
+            flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory ||
+            flags.endGameObserve != last.endGameObserve) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);
@@ -229,6 +234,10 @@ void WatchLoop(HANDLE quitEvent)
             if (!flags.unitColor && pid != 0) {
                 RunInjector(L"InjectUnitColor.exe", false);
                 unitColorInjectedPid = 0;
+            }
+            if (!flags.endGameObserve && pid != 0) {
+                RunInjector(L"InjectObserve.exe", false);
+                observeInjectedPid = 0;
             }
             // Re-sync the chat DLL enable state on the next tick.
             chatNameInjectedPid = 0;
@@ -257,12 +266,16 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.unitColor && pid != 0 && pid != unitColorInjectedPid) {
             if (RunInjector(L"InjectUnitColor.exe", true)) unitColorInjectedPid = pid;
         }
+        if (flags.endGameObserve && pid != 0 && pid != observeInjectedPid) {
+            if (RunInjector(L"InjectObserve.exe", true)) observeInjectedPid = pid;
+        }
         if (pid == 0) {
             allyInjectedPid = 0;
             pauseInjectedPid = 0;
             dragInjectedPid = 0;
             chatNameInjectedPid = 0;
             unitColorInjectedPid = 0;
+            observeInjectedPid = 0;
         }
 
         if (quitEvent) {

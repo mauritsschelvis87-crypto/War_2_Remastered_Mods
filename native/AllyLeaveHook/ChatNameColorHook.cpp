@@ -57,9 +57,14 @@ struct ChatOwnerEntry {
     char text[kOwnerTextMax]{};
     int player = -1;
     DWORD tick = 0;
+    LONG epoch = 0;
 };
 ChatOwnerEntry g_owners[kOwnerRing]{};
 volatile LONG g_ownerWrite = 0;
+volatile LONG g_matchEpoch = 0;
+// Last-known display name per seat for this match. The live 0x91ADA8 table
+// is cleared as soon as someone drops — this snapshot survives until reset.
+char g_seatNames[8][80]{};
 
 // Per-message arrival time for the timestamp mod. Lines redraw every frame
 // while visible; the stamp must show when the message APPEARED, so remember
@@ -108,6 +113,7 @@ uint8_t g_pushPrologue[8]{};
 void* g_pushTrampoline = nullptr;
 PushMapMsgFn g_originalPush = nullptr;
 HANDLE g_keyThread = nullptr;
+HANDLE g_matchThread = nullptr;
 volatile LONG g_keyStop = 0;
 
 uint32_t g_colors[8]{};
@@ -349,12 +355,59 @@ void RememberChatOwner(const char* text, int player)
     strncpy_s(e.text, text, _TRUNCATE);
     e.player = player;
     e.tick = GetTickCount();
+    e.epoch = InterlockedCompareExchange(&g_matchEpoch, 0, 0);
 }
+
+void RefreshSeatNameSnapshot()
+{
+    if (!g_playerName0) return;
+    for (int i = 0; i < 8; ++i) {
+        const char* slot = PlayerName(i);
+        if (!slot) continue;
+        __try {
+            if (slot[0]) {
+                strncpy_s(g_seatNames[i], slot, _TRUNCATE);
+            }
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+}
+
+void RememberSeatName(int seat, const char* name, size_t len)
+{
+    if (seat < 0 || seat > 7 || !name || len == 0 || len >= 80) return;
+    char buf[80]{};
+    memcpy(buf, name, len);
+    buf[len] = 0;
+    strncpy_s(g_seatNames[seat], buf, _TRUNCATE);
+}
+
+char g_lastLeaveMarkName[80]{};
+DWORD g_lastLeaveMarkTick = 0;
+LONG g_lastLeaveMarkEpoch = -1;
+
+void ResetLeaveOwnerCache()
+{
+    InterlockedIncrement(&g_matchEpoch);
+    for (size_t i = 0; i < kOwnerRing; ++i) {
+        g_owners[i].text[0] = 0;
+        g_owners[i].player = -1;
+        g_owners[i].tick = 0;
+        g_owners[i].epoch = 0;
+    }
+    for (int i = 0; i < 8; ++i) g_seatNames[i][0] = 0;
+    g_lastLeaveMarkName[0] = 0;
+    g_lastLeaveMarkTick = 0;
+    g_lastLeaveMarkEpoch = -1;
+}
+
+void AllyLeaveOnNewMatch();
 
 // cdecl helper invoked from the compose cave: (text, player)
 extern "C" void __cdecl ChatNameColor_RememberOwner(const char* text, uint32_t player)
 {
     RememberChatOwner(text, static_cast<int>(player));
+    RefreshSeatNameSnapshot();
     if (text && text[0])
         Log("owner-remember p=%u text=%.60s", player, text);
 }
@@ -510,31 +563,44 @@ void ExitHistoryView()
     if (InterlockedExchange(&g_viewing, 0) != 0) RenderHistoryView(kExitHoldMs);
 }
 
+DWORD WINAPI MatchWatchThread(LPVOID)
+{
+    int lastInitFlag = -1;
+    while (!InterlockedCompareExchange(&g_keyStop, 0, 0)) {
+        Sleep(100);
+        const int initFlag = ReadMsgInitFlag();
+        if (initFlag < 0) continue;
+        if (lastInitFlag >= 0 && initFlag != lastInitFlag) {
+            if (initFlag == 1) {
+                // New match — drop stale leave/name caches before lines arrive.
+                ResetLeaveOwnerCache();
+                AllyLeaveOnNewMatch();
+                InterlockedExchange(&g_histCount, 0);
+                RefreshSeatNameSnapshot();
+            } else {
+                // Match ending — exit history view only. AllyLeaveHook's own
+                // msg-init poll calls ChatNameColor_OnNewMatch; clearing seat
+                // snapshots here races with leave lines still on screen.
+                InterlockedExchange(&g_viewing, 0);
+                InterlockedExchange(&g_viewBack, 0);
+            }
+            Log("matchWatch: reset init %d->%d", lastInitFlag, initFlag);
+        } else if (initFlag == 1) {
+            RefreshSeatNameSnapshot();
+        }
+        lastInitFlag = initFlag;
+    }
+    return 0;
+}
+
 DWORD WINAPI HistoryKeyThread(LPVOID)
 {
     bool upHeld = false;
     bool dnHeld = false;
     DWORD lastAction = 0;
     DWORD lastRefresh = 0;
-    int lastInitFlag = -1;
     while (!InterlockedCompareExchange(&g_keyStop, 0, 0)) {
         Sleep(60);
-
-        // Every game starts fresh: drop the history when the game sets up a
-        // new match (init flag 0 -> 1), and leave the view on teardown.
-        const int initFlag = ReadMsgInitFlag();
-        if (initFlag >= 0) {
-            if (initFlag == 1 && lastInitFlag == 0) {
-                InterlockedExchange(&g_viewing, 0);
-                InterlockedExchange(&g_viewBack, 0);
-                InterlockedExchange(&g_histCount, 0);
-                Log("history: reset for new game");
-            } else if (initFlag == 0 && lastInitFlag == 1) {
-                InterlockedExchange(&g_viewing, 0);
-                InterlockedExchange(&g_viewBack, 0);
-            }
-            lastInitFlag = initFlag;
-        }
 
         if (!InterlockedCompareExchange(&g_historyOn, 0, 0)) {
             ExitHistoryView();
@@ -596,11 +662,13 @@ DWORD WINAPI HistoryKeyThread(LPVOID)
 int LookupChatOwner(const char* text)
 {
     if (!text || !text[0]) return -1;
+    const LONG epoch = InterlockedCompareExchange(&g_matchEpoch, 0, 0);
     int best = -1;
     DWORD bestTick = 0;
     for (size_t i = 0; i < kOwnerRing; ++i) {
         const ChatOwnerEntry& e = g_owners[i];
         if (e.player < 0 || e.player > 7 || !e.text[0]) continue;
+        if (e.epoch != epoch) continue;
         if (strcmp(e.text, text) != 0) continue;
         if (e.tick >= bestTick) {
             bestTick = e.tick;
@@ -709,7 +777,10 @@ int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut
         } __except (EXCEPTION_EXECUTE_HANDLER) {
         }
     }
-    if (matchCount == 1) return matches[0];
+    if (matchCount == 1) {
+        RememberSeatName(matches[0], nameStart, nameLen);
+        return matches[0];
+    }
     if (matchCount == 0) return -1;
 
     // Duplicate in-game names (e.g. two "Avent"): do NOT prefer local — that
@@ -726,14 +797,17 @@ FARPROC ResolveAllyExport(const char* exportName)
         return nullptr;
     }
     FARPROC fn = GetProcAddress(ally, exportName);
-    if (!fn) {
-        // x86 stdcall exports are decorated: _Name@4
-        char decorated[128]{};
-        sprintf_s(decorated, "_%s@4", exportName);
+    if (fn) return fn;
+    // x86 stdcall decorations vary by arg count: void=@0, one arg=@4, etc.
+    static const char kSuffixes[] = { '0', '4', '8', '1', '2' };
+    char decorated[128]{};
+    for (char suffix : kSuffixes) {
+        sprintf_s(decorated, "_%s@%c", exportName, suffix);
         fn = GetProcAddress(ally, decorated);
+        if (fn) return fn;
     }
-    if (!fn) Log("ally-notify: export %s not found", exportName);
-    return fn;
+    Log("ally-notify: export %s not found", exportName);
+    return nullptr;
 }
 
 void NotifyAllyLeaveByName(const char* name)
@@ -865,14 +939,74 @@ int SeatForName(const char* name, size_t len)
     return (count == 1) ? match : -1;
 }
 
-// Resolve seat for a leave line. Cached owner first — the name table often
-// clears as soon as the player drops, but we remember the seat at push time.
+static int AllyLeaveSeatForLeavingName(const char* name)
+{
+    if (!name || !name[0]) return -1;
+    using SeatFn = int(__stdcall*)(const char*);
+    static SeatFn s_fn = nullptr;
+    static DWORD s_nextTry = 0;
+    if (!s_fn) {
+        const DWORD now = GetTickCount();
+        if (now < s_nextTry) return -1;
+        s_nextTry = now + 1000;
+        s_fn = reinterpret_cast<SeatFn>(
+            ResolveAllyExport("AllyLeave_SeatForLeavingName"));
+    }
+    if (!s_fn) return -1;
+    __try {
+        return s_fn(name);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
+
+void AllyLeaveOnNewMatch()
+{
+    using NewMatchFn = void(__stdcall*)();
+    static NewMatchFn s_fn = nullptr;
+    static DWORD s_nextTry = 0;
+    if (!s_fn) {
+        const DWORD now = GetTickCount();
+        if (now < s_nextTry) return;
+        s_nextTry = now + 1000;
+        s_fn = reinterpret_cast<NewMatchFn>(ResolveAllyExport("AllyLeave_OnNewMatch"));
+    }
+    if (s_fn) {
+        __try { s_fn(); } __except (EXCEPTION_EXECUTE_HANDLER) {}
+    }
+}
+
+// Resolve seat for a leave line. Prefer current-match leave state and our
+// seat-name snapshot — the live name table is often empty once they drop.
 int SeatForLeaveLine(const char* text, size_t nameOff, size_t nameLen)
 {
+    if (!text || nameLen == 0 || nameLen >= 80) return -1;
+
+    char name[80]{};
+    memcpy(name, text + nameOff, nameLen);
+    name[nameLen] = 0;
+
+    int fromLeave = AllyLeaveSeatForLeavingName(name);
+    if (fromLeave >= 0) return fromLeave;
+
+    int fromName = SeatForName(name, nameLen);
+    if (fromName >= 0) return fromName;
+
+    int match = -1;
+    int count = 0;
+    for (int i = 0; i < 8; ++i) {
+        if (!g_seatNames[i][0]) continue;
+        if (NameEquals(name, nameLen, g_seatNames[i])) {
+            match = i;
+            ++count;
+        }
+    }
+    if (count == 1) return match;
+
     const int fromOwner = LookupChatOwner(text);
     if (fromOwner >= 0) return fromOwner;
-    if (!text || nameLen == 0 || nameLen >= 80) return -1;
-    return SeatForName(text + nameOff, nameLen);
+
+    return -1;
 }
 
 // Detect "Player X left/dropped/eliminated" chat lines and mark ally-screen gone.
@@ -886,21 +1020,25 @@ void TryMarkLeaveFromChatText(const char* text)
     memcpy(name, text + nameOff, nameLen);
     name[nameLen] = 0;
 
-    // The system line redraws every frame while visible — notify once per name.
-    static char s_lastName[80]{};
-    static DWORD s_lastTick = 0;
+    // The system line redraws every frame while visible — notify once per name
+    // per match epoch (dedup must not block the same name in a later game).
     const DWORD now = GetTickCount();
-    if (_stricmp(name, s_lastName) == 0 && (now - s_lastTick) < 5000) {
-        s_lastTick = now;
+    const LONG epoch = InterlockedCompareExchange(&g_matchEpoch, 0, 0);
+    if (_stricmp(name, g_lastLeaveMarkName) == 0 &&
+        epoch == g_lastLeaveMarkEpoch &&
+        (now - g_lastLeaveMarkTick) < 5000) {
+        g_lastLeaveMarkTick = now;
         return;
     }
-    strcpy_s(s_lastName, name);
-    s_lastTick = now;
+    strcpy_s(g_lastLeaveMarkName, name);
+    g_lastLeaveMarkTick = now;
+    g_lastLeaveMarkEpoch = epoch;
 
     const int seat = SeatForLeaveLine(text, nameOff, nameLen);
     Log("leave-chat name='%s' seat=%d text=%.80s", name, seat, text);
     // Elim/surrender/drop all post "Name left" — mark by seat when unique.
     if (seat >= 0) {
+        RememberSeatName(seat, name, nameLen);
         RememberChatOwner(text, seat);
         NotifyAllyLeaveFromChat(seat);
     } else {
@@ -1108,13 +1246,20 @@ static void __declspec(naked) Hook_DrawColored()
 // anchored (the push just shifted the ring under it).
 extern "C" void __cdecl ChatHistory_OnPushMapMsg(const char* text, uint32_t color, uint32_t duration)
 {
+    RefreshSeatNameSnapshot();
     RecordHistory(text, static_cast<uint8_t>(color));
     if (text && text[0]) {
         size_t nameOff = 0;
         size_t nameLen = 0;
         if (ParseLeaveLine(text, &nameOff, &nameLen)) {
+            // Mark and cache seat as early as possible — draw may happen before
+            // packet hooks on some clients (non-host peers).
+            TryMarkLeaveFromChatText(text);
             const int seat = SeatForLeaveLine(text, nameOff, nameLen);
-            if (seat >= 0) RememberChatOwner(text, seat);
+            if (seat >= 0) {
+                RememberSeatName(seat, text + nameOff, nameLen);
+                RememberChatOwner(text, seat);
+            }
         }
     }
     if (g_originalPush) g_originalPush(text, color, duration);
@@ -1336,6 +1481,8 @@ bool InstallHook()
     if (!InstallDrawColoredHook(base, imageSize)) return false;
     if (!InstallChatOwnerHook(base, imageSize))
         Log("InstallHook: continuing without chat-owner hook (duplicate names may share color)");
+    g_matchThread = CreateThread(nullptr, 0, MatchWatchThread, nullptr, 0, nullptr);
+    if (!g_matchThread) Log("InstallHook: match watch thread failed (%lu)", GetLastError());
     if (InstallPushHistoryHook(base)) {
         g_keyThread = CreateThread(nullptr, 0, HistoryKeyThread, nullptr, 0, nullptr);
         if (!g_keyThread) Log("InstallHook: history key thread failed (%lu)", GetLastError());
@@ -1350,7 +1497,13 @@ void RemoveHook()
     // Detach runs at process exit (the DLL is never freed at runtime); other
     // threads are already gone, so signal the key thread without waiting.
     InterlockedExchange(&g_keyStop, 1);
+    if (g_matchThread) {
+        WaitForSingleObject(g_matchThread, 500);
+        CloseHandle(g_matchThread);
+        g_matchThread = nullptr;
+    }
     if (g_keyThread) {
+        WaitForSingleObject(g_keyThread, 500);
         CloseHandle(g_keyThread);
         g_keyThread = nullptr;
     }
@@ -1423,6 +1576,12 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
 extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_IsReady(LPVOID)
 {
     return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+extern "C" __declspec(dllexport) void __stdcall ChatNameColor_OnNewMatch()
+{
+    ResetLeaveOwnerCache();
+    Log("ChatNameColor_OnNewMatch epoch=%ld", InterlockedCompareExchange(&g_matchEpoch, 0, 0));
 }
 
 extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetEnabled(LPVOID enabled)

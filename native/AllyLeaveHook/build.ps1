@@ -30,6 +30,8 @@ cl /nologo /O2 /W3 /EHsc /LD "$here\ChatNameColorHook.cpp" /Fe:"$OutDir\ChatName
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc /LD "$here\UnitColorHook.cpp" /Fe:"$OutDir\UnitColorHook.dll" /link /nologo /DLL /OUT:"$OutDir\UnitColorHook.dll"
 if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc /LD "$here\ObserveHook.cpp" /Fe:"$OutDir\ObserveHook.dll" /link /nologo /DLL /OUT:"$OutDir\ObserveHook.dll"
+if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectAllyLeave.cpp" /Fe:"$OutDir\InjectAllyLeave.exe" /link /nologo
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectPauseChat.cpp" /Fe:"$OutDir\InjectPauseChat.exe" /link /nologo
@@ -39,6 +41,8 @@ if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectChatNameColor.cpp" /Fe:"$OutDir\InjectChatNameColor.exe" /link /nologo
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectUnitColor.cpp" /Fe:"$OutDir\InjectUnitColor.exe" /link /nologo
+if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc "$here\InjectObserve.cpp" /Fe:"$OutDir\InjectObserve.exe" /link /nologo
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\AllyLeaveWatch.cpp" /Fe:"$OutDir\AllyLeaveWatch.exe" /link /nologo /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup Advapi32.lib
 if errorlevel 1 exit /b 1
@@ -64,9 +68,11 @@ Write-Host "Built: $OutDir\PauseChatHook.dll"
 Write-Host "Built: $OutDir\DragSelectHook.dll"
 Write-Host "Built: $OutDir\ChatNameColorHook.dll"
 Write-Host "Built: $OutDir\UnitColorHook.dll"
+Write-Host "Built: $OutDir\ObserveHook.dll"
 Write-Host "Built: $OutDir\InjectAllyLeave.exe"
 Write-Host "Built: $OutDir\InjectPauseChat.exe"
 Write-Host "Built: $OutDir\InjectDragSelect.exe"
 Write-Host "Built: $OutDir\InjectChatNameColor.exe"
 Write-Host "Built: $OutDir\InjectUnitColor.exe"
+Write-Host "Built: $OutDir\InjectObserve.exe"
 Write-Host "Built: $OutDir\AllyLeaveWatch.exe"

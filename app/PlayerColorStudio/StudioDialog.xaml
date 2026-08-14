@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="NoResize" ShowInTaskbar="False"
-        SizeToContent="WidthAndHeight" WindowStartupLocation="CenterOwner">
-    <Border Background="{StaticResource WindowBrush}" BorderBrush="#FF5A7398" BorderThickness="1"
+        SizeToContent="WidthAndHeight" WindowStartupLocation="CenterOwner"
+        Foreground="{DynamicResource TextBrush}">
+    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource ControlBorderBrush}" BorderThickness="1"
             CornerRadius="10" Margin="14" SnapsToDevicePixels="True">
         <Border.Effect>
             <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.55"/>
@@ -16,12 +17,13 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock x:Name="TitleText" Margin="20,0,0,0" VerticalAlignment="Center"
-                           FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+                           FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"/>
                 <Button Grid.Column="1" Content="✕" Width="34" Height="30" Margin="0,0,10,0"
                         Padding="0" Background="Transparent" BorderThickness="0"
+                        Foreground="{DynamicResource TextBrush}"
                         Click="No_Click"/>
             </Grid>
-            <Border Height="1" Background="#FF3A5178"/>
+            <Border Height="1" Background="{DynamicResource ControlBorderBrush}"/>
             <Grid Margin="20,18,20,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -35,13 +37,14 @@
                 </Border>
                 <TextBlock x:Name="MessageText" Grid.Column="1" Margin="14,6,0,0"
                            TextWrapping="Wrap" MaxWidth="430" MinWidth="240"
-                           Foreground="White" FontSize="13" LineHeight="20"/>
+                           Foreground="{DynamicResource TextBrush}" FontSize="13" LineHeight="20"/>
             </Grid>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,14,20,18">
                 <Button x:Name="NoButton" Content="No" MinWidth="92" Margin="0,0,10,0"
                         Visibility="Collapsed" IsCancel="True" Click="No_Click"/>
                 <Button x:Name="OkButton" Content="OK" MinWidth="92"
-                        Background="{StaticResource AccentBrush}" BorderBrush="#FF7FB5FF"
+                        Background="{DynamicResource AccentBrush}" BorderBrush="#FF7FB5FF"
+                        Foreground="White"
                         IsDefault="True" Click="Ok_Click"/>
             </StackPanel>
         </StackPanel>
