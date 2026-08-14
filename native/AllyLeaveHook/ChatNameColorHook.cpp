@@ -25,6 +25,7 @@ constexpr uint32_t kPreferredPushMapMsg = 0x00614A90;
 constexpr uint32_t kPreferredMsgRing = 0x009B17A0;  // 15 × 0xD0 map-message slots
 constexpr uint32_t kPreferredTimeNow = 0x00625940;  // ms since app start (QPC-based)
 constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
+constexpr uint32_t kSystemMessageColor = 0xFF4BF0FF; // widget_text_yellow RGB(255,240,75)
 
 using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
 using PushMapMsgFn = void(__cdecl*)(const char* text, uint32_t color, uint32_t duration);
@@ -745,6 +746,14 @@ void NotifyAllyLeaveByName(const char* name)
     if (fn) fn(name);
 }
 
+void NotifyAllyLeaveFromChat(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    auto fn = reinterpret_cast<MarkGoneFn>(
+        ResolveAllyExport("AllyLeave_MarkGoneFromChat"));
+    if (fn) fn(playerIndex);
+}
+
 void NotifyAllyLeaveByIndex(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
@@ -862,11 +871,14 @@ void TryMarkLeaveFromChatText(const char* text)
     strcpy_s(s_lastName, name);
     s_lastTick = now;
 
-    Log("leave-chat name='%s' text=%.80s", name, text);
-    // Name-only notify: the ally hook maps it onto the alliances row (or
-    // queues it until F11 binds the name). The 0x91ADA8 table used by
-    // MatchPlayerIndex is join-ordered and marked the wrong seat.
-    NotifyAllyLeaveByName(name);
+    const int seat = SeatForName(name, nameLen);
+    Log("leave-chat name='%s' seat=%d text=%.80s", name, seat, text);
+    // Elim/surrender/drop all post "Name left" — mark by seat when unique.
+    if (seat >= 0) {
+        NotifyAllyLeaveFromChat(seat);
+    } else {
+        NotifyAllyLeaveByName(name);
+    }
 }
 
 void LogPlayerNames()
@@ -883,6 +895,37 @@ void LogPlayerNames()
             Log("name[%d]=<fault>", i);
         }
     }
+}
+
+// Leave line: timestamp + " left" in gold, player name in seat color.
+// DrawTextColored always starts at the line origin — never pass suffix-only text.
+static bool DrawLeaveLineColored(void* ui, const char* base, size_t leaveOff, size_t leaveLen,
+                                 size_t stampLen, int seat)
+{
+    if (!ui || !base || !g_originalDraw) return false;
+    if (seat < 0 || seat > 7) return false;
+    if (stampLen + leaveOff + leaveLen >= 200) return false;
+
+    const uint32_t gold = kSystemMessageColor;
+    const uint32_t nameColor = g_colors[SeatToColorSlot(seat)];
+    const size_t nameEndAbs = stampLen + leaveOff + leaveLen;
+
+    char throughName[224]{};
+    memcpy(throughName, base, nameEndAbs);
+    throughName[nameEndAbs] = 0;
+
+    // 1) Full line gold (timestamp + suffix stay gold after step 3).
+    g_originalDraw(ui, base, gold);
+    // 2) Through player name in seat color.
+    g_originalDraw(ui, throughName, nameColor);
+    // 3) Restore "[HH:MM] " in gold (step 2 may have tinted it with name color).
+    if (stampLen > 0 && stampLen < sizeof(throughName)) {
+        char stampOnly[224]{};
+        memcpy(stampOnly, base, stampLen);
+        stampOnly[stampLen] = 0;
+        g_originalDraw(ui, stampOnly, gold);
+    }
+    return true;
 }
 
 bool PatchPrologue7(uint8_t* site, void* hook, uint8_t* savedOrig, void** trampOut, void** originalOut)
@@ -958,39 +1001,13 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     const int player = MatchPlayerIndex(text, &channelLen, &nameEnd);
 
     if (player < 0 || nameEnd == 0 || nameEnd >= 160) {
-        // System leave/drop/elim lines ("Avent Left"): paint the leaver's name
-        // in their player color, rest of the line in the normal body color.
-        // Part of the same chat-color mod (g_enabled gates this path too).
         size_t leaveOff = 0;
         size_t leaveLen = 0;
-        if (ParseLeaveLine(text, &leaveOff, &leaveLen) && stampLen + leaveOff + leaveLen < 200) {
+        if (ParseLeaveLine(text, &leaveOff, &leaveLen) &&
+            stampLen + leaveOff + leaveLen < 200) {
             const int seat = SeatForName(text + leaveOff, leaveLen);
-            if (seat >= 0) {
-                const uint32_t nameColor = g_colors[SeatToColorSlot(seat)];
-                // System leave lines use the game's passed color (gold) for the
-                // suffix (" left") — not player color — so they read as system
-                // messages, not typed chat.
-                const uint32_t systemColor = color;
-                g_originalDraw(ui, base, systemColor);
-                const size_t nameEndAbs = stampLen + leaveOff + leaveLen;
-                char throughName[224]{};
-                memcpy(throughName, base, nameEndAbs);
-                throughName[nameEndAbs] = 0;
-                g_originalDraw(ui, throughName, nameColor);
-                const size_t prefixLen = stampLen + leaveOff;
-                if (prefixLen > 0 && prefixLen < sizeof(throughName)) {
-                    char prefixOnly[224]{};
-                    memcpy(prefixOnly, base, prefixLen);
-                    prefixOnly[prefixLen] = 0;
-                    g_originalDraw(ui, prefixOnly, systemColor);
-                }
-                const size_t suffixOff = nameEndAbs;
-                if (base[suffixOff] != 0 && suffixOff < sizeof(throughName) - 1) {
-                    char suffixOnly[224]{};
-                    memcpy(suffixOnly, base + suffixOff, sizeof(suffixOnly) - 1);
-                    suffixOnly[sizeof(suffixOnly) - 1] = 0;
-                    g_originalDraw(ui, suffixOnly, systemColor);
-                }
+            if (seat >= 0 &&
+                DrawLeaveLineColored(ui, base, leaveOff, leaveLen, stampLen, seat)) {
                 InterlockedIncrement(&g_recolors);
                 if (hits <= 40 || (hits % 50) == 0) {
                     Log("recolor-leave seat=%d slot=%d off=%u len=%u text=%.60s",

@@ -71,7 +71,10 @@ constexpr uintptr_t kPreferredStatus = 0x00918CAC;
 // At match start computers are often remapped 4→1, so cache kind early.
 constexpr uintptr_t kPreferredSlotBase = 0x00916268;
 constexpr size_t kSlotStride = 0x26;
+constexpr uintptr_t kPreferredPlayerName0 = 0x0091ADA8;
+constexpr size_t kPlayerNameStride = 0x38;
 uint8_t* g_slotBase = nullptr;
+char* g_playerName0 = nullptr;
 // -1 unknown, 0 human, 1 computer
 volatile LONG g_slotKind[8]{ -1, -1, -1, -1, -1, -1, -1, -1 };
 // Per-unit-type linked-list heads (dword[type] → unit*, next at unit+0x68).
@@ -1443,8 +1446,9 @@ void BindStatusBase(uint8_t* statusBase)
         g_typeCountRows =
             reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
         g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
-        Log("BindUnitLists(via status): heads=%p rows=%p slot=%p status=%p slide=0x%08X",
-            g_unitTypeHeads, g_typeCountRows, g_slotBase, statusBase, (unsigned)slide);
+        g_playerName0 = reinterpret_cast<char*>(kPreferredPlayerName0 + slide);
+        Log("BindUnitLists(via status): heads=%p rows=%p slot=%p names=%p status=%p slide=0x%08X",
+            g_unitTypeHeads, g_typeCountRows, g_slotBase, g_playerName0, statusBase, (unsigned)slide);
     }
 }
 
@@ -1953,7 +1957,8 @@ void BindLocalPlayer(uint8_t* moduleBase, uintptr_t imageBase)
     if (!moduleBase || imageBase == 0) return;
     constexpr uintptr_t kPreferredLocal = 0x00918CCD;
     g_localPlayer = moduleBase + (kPreferredLocal - imageBase);
-    Log("BindLocalPlayer: %p", g_localPlayer);
+    g_playerName0 = reinterpret_cast<char*>(moduleBase + (kPreferredPlayerName0 - imageBase));
+    Log("BindLocalPlayer: local=%p names=%p", g_localPlayer, g_playerName0);
 }
 
 bool InstallUnitCountHooks(uint8_t* base, size_t imageSize)
@@ -2146,6 +2151,7 @@ bool InstallHook()
         g_typeCountRows =
             reinterpret_cast<uint16_t**>(kPreferredTypeCountRows + slide);
         g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
+        g_playerName0 = reinterpret_cast<char*>(kPreferredPlayerName0 + slide);
     }
 
     LoadMarkModesFromJson();
@@ -2266,6 +2272,31 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGone(int playerInd
     MarkGoneUi(playerIndex, "export");
 }
 
+extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneFromChat(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    NoteHumanSlot(playerIndex);
+    MarkGoneUi(playerIndex, "chat-name");
+}
+
+static int SeatFromUniquePlayerName(const char* name)
+{
+    if (!g_playerName0 || !name || !name[0]) return -1;
+    int match = -1;
+    int count = 0;
+    for (int i = 0; i < 8; ++i) {
+        const char* slot = g_playerName0 + static_cast<size_t>(i) * kPlayerNameStride;
+        __try {
+            if (slot[0] && _stricmp(slot, name) == 0) {
+                match = i;
+                ++count;
+            }
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+    return (count == 1) ? match : -1;
+}
+
 // Name → alliances-row (= engine player index = color slot). The chat hook
 // uses this to color sender names: the 0x91ADA8 name table is join-ordered
 // and painted the wrong colors in shuffled lobbies.
@@ -2283,9 +2314,6 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const c
 {
     if (!name || !name[0]) return;
 
-    // Alliances row names are the only reliable name→seat mapping. The
-    // 0x91ADA8 name table is ordered differently (join order) and matched
-    // the wrong seat — never mark through it.
     for (int i = 0; i < 8; ++i) {
         if (!g_lastName[i][0]) continue;
         if (_stricmp(g_lastName[i], name) == 0) {
@@ -2294,9 +2322,14 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const c
         }
     }
 
-    // No alliances row seen yet (F11 not opened this match). Remember the
-    // name; Hook_SetText marks the row the moment F11 binds it — marks are
-    // only visible on F11, so that is always in time.
+    const int seat = SeatFromUniquePlayerName(name);
+    if (seat >= 0) {
+        NoteHumanSlot(seat);
+        MarkGoneUi(seat, "chat-name");
+        return;
+    }
+
+    // No row/name table match yet — queue until F11 binds the alliances row.
     RememberPendingGoneName(name);
 }
 
