@@ -760,6 +760,23 @@ void NotifyAllyLeaveByIndex(int playerIndex)
     if (fn) fn(playerIndex);
 }
 
+// Optional "[21:08] " prefix (our timestamp mod or an embedded game stamp).
+const char* SkipOptionalTimestamp(const char* text)
+{
+    if (!text || text[0] != '[') return text;
+    const char* p = text + 1;
+    int digits = 0;
+    while (*p >= '0' && *p <= '9') { ++p; ++digits; }
+    if (digits == 0 || *p != ':') return text;
+    ++p;
+    digits = 0;
+    while (*p >= '0' && *p <= '9') { ++p; ++digits; }
+    if (digits < 1 || *p != ']') return text;
+    ++p;
+    if (*p == ' ') ++p;
+    return p;
+}
+
 // Locate the player name inside a system leave/drop/elim line. Returns true
 // with the name span (offset into text + length) when matched.
 bool ParseLeaveLine(const char* text, size_t* nameOffOut, size_t* nameLenOut)
@@ -767,6 +784,7 @@ bool ParseLeaveLine(const char* text, size_t* nameOffOut, size_t* nameLenOut)
     if (!text || !text[0]) return false;
     const char* start = text;
     while (*start && (static_cast<unsigned char>(*start) < 0x20 || *start == ' ')) ++start;
+    start = SkipOptionalTimestamp(start);
 
     static const char* kSuffixes[] = {
         " left the game",
@@ -847,6 +865,16 @@ int SeatForName(const char* name, size_t len)
     return (count == 1) ? match : -1;
 }
 
+// Resolve seat for a leave line. Cached owner first — the name table often
+// clears as soon as the player drops, but we remember the seat at push time.
+int SeatForLeaveLine(const char* text, size_t nameOff, size_t nameLen)
+{
+    const int fromOwner = LookupChatOwner(text);
+    if (fromOwner >= 0) return fromOwner;
+    if (!text || nameLen == 0 || nameLen >= 80) return -1;
+    return SeatForName(text + nameOff, nameLen);
+}
+
 // Detect "Player X left/dropped/eliminated" chat lines and mark ally-screen gone.
 void TryMarkLeaveFromChatText(const char* text)
 {
@@ -869,10 +897,11 @@ void TryMarkLeaveFromChatText(const char* text)
     strcpy_s(s_lastName, name);
     s_lastTick = now;
 
-    const int seat = SeatForName(name, nameLen);
+    const int seat = SeatForLeaveLine(text, nameOff, nameLen);
     Log("leave-chat name='%s' seat=%d text=%.80s", name, seat, text);
     // Elim/surrender/drop all post "Name left" — mark by seat when unique.
     if (seat >= 0) {
+        RememberChatOwner(text, seat);
         NotifyAllyLeaveFromChat(seat);
     } else {
         NotifyAllyLeaveByName(name);
@@ -987,6 +1016,27 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
         base = stamped;
     }
 
+    // Leave lines: gamertag in seat color, " left"/suffix in gold. Runs even
+    // when "Name:" chat recolor is off — system lines are never typed chat.
+    {
+        size_t leaveOff = 0;
+        size_t leaveLen = 0;
+        if (ParseLeaveLine(text, &leaveOff, &leaveLen) &&
+            stampLen + leaveOff + leaveLen < 200) {
+            const int seat = SeatForLeaveLine(text, leaveOff, leaveLen);
+            if (seat >= 0 &&
+                DrawLeaveLineColored(ui, base, leaveOff, leaveLen, stampLen, seat)) {
+                InterlockedIncrement(&g_recolors);
+                const LONG hits = InterlockedCompareExchange(&g_hits, 0, 0);
+                if (hits <= 40 || (hits % 50) == 0) {
+                    Log("recolor-leave seat=%d slot=%d off=%u len=%u text=%.60s",
+                        seat, SeatToColorSlot(seat), (unsigned)leaveOff, (unsigned)leaveLen, text);
+                }
+                return;
+            }
+        }
+    }
+
     const bool chatOn = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
     if (!chatOn) {
         g_originalDraw(ui, base, color);
@@ -999,21 +1049,6 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     const int player = MatchPlayerIndex(text, &channelLen, &nameEnd);
 
     if (player < 0 || nameEnd == 0 || nameEnd >= 160) {
-        size_t leaveOff = 0;
-        size_t leaveLen = 0;
-        if (ParseLeaveLine(text, &leaveOff, &leaveLen) &&
-            stampLen + leaveOff + leaveLen < 200) {
-            const int seat = SeatForName(text + leaveOff, leaveLen);
-            if (seat >= 0 &&
-                DrawLeaveLineColored(ui, base, leaveOff, leaveLen, stampLen, seat)) {
-                InterlockedIncrement(&g_recolors);
-                if (hits <= 40 || (hits % 50) == 0) {
-                    Log("recolor-leave seat=%d slot=%d off=%u len=%u text=%.60s",
-                        seat, SeatToColorSlot(seat), (unsigned)leaveOff, (unsigned)leaveLen, text);
-                }
-                return;
-            }
-        }
         if (hits <= 30) Log("hit#%ld pass text=%.80s gameColor=%08X", hits, text, color);
         g_originalDraw(ui, base, color);
         return;
@@ -1074,6 +1109,14 @@ static void __declspec(naked) Hook_DrawColored()
 extern "C" void __cdecl ChatHistory_OnPushMapMsg(const char* text, uint32_t color, uint32_t duration)
 {
     RecordHistory(text, static_cast<uint8_t>(color));
+    if (text && text[0]) {
+        size_t nameOff = 0;
+        size_t nameLen = 0;
+        if (ParseLeaveLine(text, &nameOff, &nameLen)) {
+            const int seat = SeatForLeaveLine(text, nameOff, nameLen);
+            if (seat >= 0) RememberChatOwner(text, seat);
+        }
+    }
     if (g_originalPush) g_originalPush(text, color, duration);
     if (InterlockedCompareExchange(&g_viewing, 0, 0)) {
         LONG back = InterlockedCompareExchange(&g_viewBack, 0, 0) + 1;
