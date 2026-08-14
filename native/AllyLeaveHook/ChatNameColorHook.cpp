@@ -682,15 +682,13 @@ int MatchPlayerIndex(const char* text, size_t* channelLenOut, size_t* nameEndOut
     if (channelLenOut) *channelLenOut = static_cast<size_t>(nameStart - text);
     if (nameEndOut) *nameEndOut = static_cast<size_t>(colon - text) + 1;
 
-    // Color-ordered source first: the alliances rows tracked by AllyLeaveHook.
-    const int fromRows = AllyRowByName(nameStart, nameLen);
-    if (fromRows >= 0) return fromRows;
-
-    // Prefer sender slot remembered at compose (handles duplicate Battle.net names).
-    // NOTE: compose slots and the table below are join-ordered — colors can be
-    // wrong in shuffled lobbies until the alliances rows have been painted once.
+    // Compose-time owner first — required when two seats share a display name.
     const int fromMsg = LookupChatOwner(text);
     if (fromMsg >= 0) return fromMsg;
+
+    // Alliances row when the name is unique on F11 (wrong if duplicated).
+    const int fromRows = AllyRowByName(nameStart, nameLen);
+    if (fromRows >= 0) return fromRows;
 
     int matches[8]{};
     int matchCount = 0;

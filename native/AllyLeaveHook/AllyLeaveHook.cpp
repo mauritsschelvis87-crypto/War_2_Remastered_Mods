@@ -2303,23 +2303,26 @@ static int SeatFromUniquePlayerName(const char* name)
 extern "C" __declspec(dllexport) int __stdcall AllyLeave_FindRowByName(const char* name)
 {
     if (!name || !name[0]) return -1;
+    int match = -1;
+    int count = 0;
     for (int i = 0; i < 8; ++i) {
         if (!g_lastName[i][0]) continue;
-        if (_stricmp(g_lastName[i], name) == 0) return i;
+        if (_stricmp(g_lastName[i], name) == 0) {
+            match = i;
+            ++count;
+        }
     }
-    return -1;
+    return (count == 1) ? match : -1;
 }
 
 extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneByName(const char* name)
 {
     if (!name || !name[0]) return;
 
-    for (int i = 0; i < 8; ++i) {
-        if (!g_lastName[i][0]) continue;
-        if (_stricmp(g_lastName[i], name) == 0) {
-            MarkGoneUi(i, "chat-name");
-            return;
-        }
+    const int row = AllyLeave_FindRowByName(name);
+    if (row >= 0) {
+        MarkGoneUi(row, "chat-name");
+        return;
     }
 
     const int seat = SeatFromUniquePlayerName(name);
