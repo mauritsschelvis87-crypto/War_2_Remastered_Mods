@@ -244,14 +244,25 @@
                                            Text="Every chat line starts with the clock time it appeared, like [21:08]. Works on its own — no other mod required."/>
                             </StackPanel>
                         </Border>
+                        <Border Padding="14" CornerRadius="8" Margin="0,0,0,12" MinHeight="{StaticResource TabCardMinHeight}"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
+                                Opacity="0.55">
+                            <StackPanel VerticalAlignment="Top">
+                                <CheckBox IsChecked="{Binding EndGameObserve}"
+                                          IsEnabled="False"
+                                          Content="Observe after surrender or elimination."/>
+                                <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="12"
+                                           Text="Temporarily unavailable while this feature is being reworked."/>
+                            </StackPanel>
+                        </Border>
                         <Border Padding="14" CornerRadius="8" MinHeight="{StaticResource TabCardMinHeight}"
                                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
                             <StackPanel VerticalAlignment="Top">
-                                <CheckBox IsChecked="{Binding EndGameObserve}"
+                                <CheckBox IsChecked="{Binding AllianceTeamNumbers}"
                                           IsEnabled="{Binding IsApplyEnabled}"
-                                          Content="Observe after surrender or elimination."/>
+                                          Content="Show lobby team number in front of alliances names (F11)."/>
                                 <TextBlock Margin="24,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="12"
-                                           Text="Adds an Observe button to the defeat popup. It closes the screen so you can keep watching the match without leaving the game."/>
+                                           Text="Puts the multiplayer lobby team in front of each player name on the alliances screen, for example 2 Name. The number is taken from the lobby team at match start. Gone players stay red with no X prefix."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

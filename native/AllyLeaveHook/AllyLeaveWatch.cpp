@@ -33,9 +33,11 @@ struct ExtraFlags {
     bool chatHistory = false;
     // Observe button on defeat popup (close screen, keep watching).
     bool endGameObserve = false;
+    // Feature 6: gold lobby team digit on F11 alliances names.
+    bool allianceTeamNumbers = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
-               chatTimestamps || chatHistory || endGameObserve;
+               chatTimestamps || chatHistory || endGameObserve || allianceTeamNumbers;
     }
     bool ChatDllWanted() const {
         return chatNameColor || humanLeave || chatTimestamps || chatHistory;
@@ -97,10 +99,12 @@ ExtraFlags ReadExtraFlags()
     if (!ok || read == 0) return flags;
 
     flags.humanLeave = ReadJsonBool(buf, "AllyLeaveMarkHumans");
+    flags.allianceTeamNumbers = ReadJsonBool(buf, "AllianceTeamNumbers");
     flags.allyLeave =
         ReadJsonBool(buf, "AllyLeaveMarkComputers") ||
         flags.humanLeave ||
-        ReadJsonBool(buf, "AllyLeaveRedNames");
+        ReadJsonBool(buf, "AllyLeaveRedNames") ||
+        flags.allianceTeamNumbers;
     flags.pauseChat = ReadJsonBool(buf, "ChatDuringPauseScreen");
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
     flags.chatNameColor = ReadJsonBool(buf, "ChatColoredNames");
@@ -214,7 +218,8 @@ void WatchLoop(HANDLE quitEvent)
             flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
             flags.humanLeave != last.humanLeave || flags.unitColor != last.unitColor ||
             flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory ||
-            flags.endGameObserve != last.endGameObserve) {
+            flags.endGameObserve != last.endGameObserve ||
+            flags.allianceTeamNumbers != last.allianceTeamNumbers) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);

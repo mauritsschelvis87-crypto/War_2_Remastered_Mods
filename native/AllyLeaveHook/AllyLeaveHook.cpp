@@ -25,7 +25,8 @@ constexpr uint32_t kGoneAtlasFnv = 0x52A8BD96u;   // "qol_ally_leave"
 constexpr uint32_t kGoneFrameFnv = 0x6F4E1B19u;   // "skeleton_head"
 constexpr float kGoneIconDrawSize = 14.0f;
 constexpr uint32_t kGoneIconTint = 0xFFFFFFFFu;   // preserve atlas alpha
-constexpr char kGoneNamePrefix[] = "   ";         // gap before red name text
+// Legacy gone text prefix (stripped only; display is red name, no "X").
+constexpr char kGoneNamePrefix[] = "X ";
 
 struct NkRect {
     float x;
@@ -58,6 +59,10 @@ volatile LONG g_leaveEventCount = 0;
 // Feature split: mark computer (NPC) and/or human slots independently.
 volatile LONG g_markComputers = 1;
 volatile LONG g_markHumans = 0;
+// Feature 6: lobby team digit in front of F11 alliances names ("2 Name").
+volatile LONG g_showTeamNumbers = 0;
+// Launch-time team snapshot (-1 = not captured yet).
+volatile LONG g_launchTeam[8]{ -1, -1, -1, -1, -1, -1, -1, -1 };
 
 uint8_t* g_statusBase = nullptr;
 uint8_t* g_msgInitFlag = nullptr;
@@ -68,11 +73,13 @@ constexpr ptrdiff_t kDefeatFromStatus = 0x21D8;
 // Preferred VAs in Warcraft II.exe (ImageBase 0x400000).
 constexpr uintptr_t kPreferredStatus = 0x00918CAC;
 constexpr uintptr_t kPreferredAnnounceGone = 0x004F4F30;
-// Lobby/slot table: stride 0x26. Byte0 mirrors controller/status
-// (1=human, 2/4/6/7=computer variants, 3=gone, 5=empty). Byte2=race.
+// Lobby/slot table: stride 0x26.
+// Byte0 = controller/status (1=human, 2/4/6/7=computer, 3=gone, 5=empty).
+// Byte1 = race. Byte2 = MP lobby team (1..8; used by mp_lobby_team_*).
 // At match start computers are often remapped 4→1, so cache kind early.
 constexpr uintptr_t kPreferredSlotBase = 0x00916268;
 constexpr size_t kSlotStride = 0x26;
+constexpr size_t kSlotTeamOffset = 2;
 constexpr uintptr_t kPreferredPlayerName0 = 0x0091ADA8;
 constexpr uintptr_t kPreferredMsgInitFlag = 0x009B1798; // 1 in-match, 0 in menus
 constexpr size_t kPlayerNameStride = 0x38;
@@ -389,6 +396,7 @@ void __cdecl Hook_RenderLabel(void* ui, void* styleCtx, const char* text, void* 
     if (g_originalRenderLabel) {
         g_originalRenderLabel(ui, styleCtx, text, colorPtr, prop);
     }
+
     if (!g_skullDrawPending || !ui || ui != g_skullDrawUi) {
         return;
     }
@@ -455,9 +463,10 @@ void LoadMarkModesFromJson()
     HANDLE file = CreateFileW(full, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                               nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
-        Log("LoadMarkModes: missing %ls — default computers=1 humans=0", full);
+        Log("LoadMarkModes: missing %ls — default computers=1 humans=0 teams=0", full);
         InterlockedExchange(&g_markComputers, 1);
         InterlockedExchange(&g_markHumans, 0);
+        InterlockedExchange(&g_showTeamNumbers, 0);
         return;
     }
 
@@ -473,6 +482,7 @@ void LoadMarkModesFromJson()
     const bool markComputers = ReadJsonBoolKey(buf, "AllyLeaveMarkComputers");
     const bool markHumans = ReadJsonBoolKey(buf, "AllyLeaveMarkHumans");
     const bool legacy = ReadJsonBoolKey(buf, "AllyLeaveRedNames");
+    const bool teamNumbers = ReadJsonBoolKey(buf, "AllianceTeamNumbers");
     LONG computers = markComputers ? 1 : 0;
     LONG humans = markHumans ? 1 : 0;
     if (!computers && !humans && legacy) {
@@ -481,8 +491,9 @@ void LoadMarkModesFromJson()
     }
     InterlockedExchange(&g_markComputers, computers);
     InterlockedExchange(&g_markHumans, humans);
-    Log("LoadMarkModes: computers=%ld humans=%ld legacy=%d from %ls",
-        computers, humans, legacy ? 1 : 0, full);
+    InterlockedExchange(&g_showTeamNumbers, teamNumbers ? 1 : 0);
+    Log("LoadMarkModes: computers=%ld humans=%ld teams=%ld legacy=%d from %ls",
+        computers, humans, g_showTeamNumbers, legacy ? 1 : 0, full);
 }
 
 bool IsComputerController(uint8_t controller)
@@ -615,9 +626,16 @@ bool SourceShouldStickExplicitGone(const char* source)
 }
 
 // Remaster/PUD computer labels vs Battle.net account names (e.g. "Avent").
+// Scratch used when stripping a Feature 6 prefix/suffix for stable matching.
+char g_classifyScratch[160]{};
+
 const char* NameForClassify(const char* name)
 {
     if (!name) return "";
+    // Strip Feature 6 gold team prefix ("2 Name" / "2 X Name").
+    if (name[0] >= '1' && name[0] <= '8' && name[1] == ' ') {
+        name += 2;
+    }
     // Strip our own gone prefix so reclassification stays stable.
     if (_strnicmp(name, "[X] ", 4) == 0) name += 4;
     else if (_strnicmp(name, "X ", 2) == 0) name += 2;
@@ -625,7 +643,70 @@ const char* NameForClassify(const char* name)
         name += sizeof(kGoneNamePrefix) - 1;
     }
     while (*name == ' ' || *name == '\t') ++name;
+
+    // Strip legacy trailing " (N)" from earlier Feature 6 builds.
+    const size_t n = strlen(name);
+    if (n >= 4 && name[n - 1] == ')' && name[n - 3] == '(' && name[n - 4] == ' ' &&
+        name[n - 2] >= '1' && name[n - 2] <= '8') {
+        _snprintf_s(g_classifyScratch, _TRUNCATE, "%.*s", static_cast<int>(n - 4), name);
+        return g_classifyScratch;
+    }
     return name;
+}
+
+uint8_t ReadLiveTeamByte(int playerIndex)
+{
+    if (!g_slotBase || playerIndex < 0 || playerIndex > 7) return 0;
+    uint8_t team = 0;
+    __try {
+        team = g_slotBase[playerIndex * kSlotStride + kSlotTeamOffset];
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        team = 0;
+    }
+    return team;
+}
+
+void CaptureLaunchTeam(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (InterlockedCompareExchange(&g_launchTeam[playerIndex], 0, 0) >= 0) return;
+    const uint8_t team = ReadLiveTeamByte(playerIndex);
+    if (team < 1 || team > 8) return;
+    InterlockedCompareExchange(&g_launchTeam[playerIndex], static_cast<LONG>(team), -1);
+}
+
+int LaunchTeamFor(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return -1;
+    CaptureLaunchTeam(playerIndex);
+    return static_cast<int>(InterlockedCompareExchange(&g_launchTeam[playerIndex], 0, 0));
+}
+
+// Build alliances display name into out (never alias out with rawName).
+// Gone seats keep the plain name (red via color); optional "2 Name" team prefix.
+void FormatAllianceName(int playerIndex, const char* rawName, bool /*inactive*/,
+                        char* out, size_t outChars)
+{
+    if (!out || outChars == 0) return;
+    out[0] = 0;
+
+    char baseCopy[120]{};
+    const char* base = NameForClassify(rawName);
+    _snprintf_s(baseCopy, _TRUNCATE, "%s", base ? base : "");
+
+    const int team =
+        (InterlockedCompareExchange(&g_showTeamNumbers, 0, 0) != 0)
+            ? LaunchTeamFor(playerIndex)
+            : -1;
+    const bool haveTeam = team >= 1 && team <= 8;
+
+    if (haveTeam && baseCopy[0]) {
+        _snprintf_s(out, outChars, _TRUNCATE, "%d %s", team, baseCopy);
+    } else if (haveTeam) {
+        _snprintf_s(out, outChars, _TRUNCATE, "%d", team);
+    } else if (baseCopy[0]) {
+        _snprintf_s(out, outChars, _TRUNCATE, "%s", baseCopy);
+    }
 }
 
 bool LooksLikeComputerName(const char* name)
@@ -853,6 +934,7 @@ void ResetSeatTracking(int i, const char* reason)
     InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_aliveSince[i]), 0);
     InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0);
     InterlockedExchange(&g_slotKind[i], -1);
+    InterlockedExchange(&g_launchTeam[i], -1);
     static LONG s_seatResetLog = 0;
     if (InterlockedIncrement(&s_seatResetLog) <= 24) {
         Log("seat reset p=%d (%s)", i, reason ? reason : "?");
@@ -873,6 +955,7 @@ void ResetWipeTracking(const char* reason)
         InterlockedExchange(&g_units[i], 0);
         InterlockedExchange(&g_buildings[i], 0);
         InterlockedExchange(&g_slotKind[i], -1);
+        InterlockedExchange(&g_launchTeam[i], -1);
         g_pendingGoneNames[i][0] = 0;
         g_pendingGoneTick[i] = 0;
         g_lastName[i][0] = 0;
@@ -1222,13 +1305,12 @@ void ClearGoneUi(int playerIndex)
 void ApplyGoneToUi(int playerIndex, void* ui, const char* name)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
-    const char* baseName = (name && name[0]) ? name : g_lastName[playerIndex];
-    // Space prefix reserves room for the skull icon drawn after SetText.
-    if (baseName && baseName[0]) {
-        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "%s%s", kGoneNamePrefix, baseName);
-    } else {
-        _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "%s", kGoneNamePrefix);
-    }
+    FormatAllianceName(
+        playerIndex,
+        (name && name[0]) ? name : g_lastName[playerIndex],
+        true,
+        g_nameBuf[playerIndex],
+        sizeof(g_nameBuf[playerIndex]));
     if (ui && g_originalSetText) {
         __try {
             ArmSkullDraw(ui, playerIndex);
@@ -1708,18 +1790,19 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
         InterlockedIncrement(&g_recolorCount);
         if (playerIndex >= 0 && playerIndex <= 7)
             InterlockedExchange(&g_leftFlags[playerIndex], 1);
-        if (name) {
-            const char* base = NameForClassify(name);
-            _snprintf_s(g_nameBuf[playerIndex], _TRUNCATE, "%s%s", kGoneNamePrefix, base);
-            useName = g_nameBuf[playerIndex];
-        } else {
-            _snprintf_s(g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0],
-                _TRUNCATE, "%s", kGoneNamePrefix);
-            useName = g_nameBuf[playerIndex >= 0 && playerIndex <= 7 ? playerIndex : 0];
-        }
         if (ui) {
             colorPtr = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(ui) + kUiColorOffset);
             *colorPtr = kRedTextColor;
+        }
+    }
+
+    // Feature 6 + gone mark: one format pass (avoids g_nameBuf alias / double "X").
+    const bool wantTeam = InterlockedCompareExchange(&g_showTeamNumbers, 0, 0) != 0;
+    if ((inactive || wantTeam) && playerIndex >= 0 && playerIndex <= 7) {
+        FormatAllianceName(playerIndex, name, inactive,
+            g_nameBuf[playerIndex], sizeof(g_nameBuf[playerIndex]));
+        if (g_nameBuf[playerIndex][0]) {
+            useName = g_nameBuf[playerIndex];
         }
     }
 
@@ -2366,10 +2449,11 @@ extern "C" __declspec(dllexport) DWORD __stdcall AllyLeave_SetEnabled(LPVOID ena
     const LONG on = enabled ? 1 : 0;
     if (on) LoadMarkModesFromJson();
     InterlockedExchange(&g_enabled, on);
-    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld markC=%ld markH=%ld",
+    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld markC=%ld markH=%ld teams=%ld",
         on, g_ready, g_hitCount, g_recolorCount, g_leaveEventCount,
         InterlockedCompareExchange(&g_markComputers, 0, 0),
-        InterlockedCompareExchange(&g_markHumans, 0, 0));
+        InterlockedCompareExchange(&g_markHumans, 0, 0),
+        InterlockedCompareExchange(&g_showTeamNumbers, 0, 0));
     return 1;
 }
 
