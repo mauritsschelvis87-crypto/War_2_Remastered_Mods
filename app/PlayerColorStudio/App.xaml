@@ -20,6 +20,11 @@
         <Thickness x:Key="SwatchBorderThickness">2</Thickness>
         <Thickness x:Key="ControlBorderThickness">2</Thickness>
         <sys:Double x:Key="TabCardMinHeight">132</sys:Double>
+        <!-- Player color + color-blindness cards: header = swatch stack; help = ~2 lines. -->
+        <sys:Double x:Key="ColorCardHeaderMinHeight">47</sys:Double>
+        <sys:Double x:Key="ColorCardHelpMinHeight">40</sys:Double>
+        <!-- Padding 12+12 + header 47 + expand gap 10 + help 40 + border 2+2 (= expanded player color card). -->
+        <sys:Double x:Key="ExpandedColorCardMinHeight">125</sys:Double>
         <SolidColorBrush x:Key="AccentBrush" Color="#FF4E9DFF"/>
         <SolidColorBrush x:Key="MutedBrush" Color="White"/>
         <SolidColorBrush x:Key="CheckBoxCheckedFillBrush" Color="Transparent"/>
@@ -426,7 +431,7 @@
                                 <ToggleButton x:Name="HeaderToggle"
                                               DockPanel.Dock="Right"
                                               Width="28" Height="28"
-                                              Margin="8,10,0,0"
+                                              Margin="8,10,16,0"
                                               VerticalAlignment="Top"
                                               Focusable="False"
                                               IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"

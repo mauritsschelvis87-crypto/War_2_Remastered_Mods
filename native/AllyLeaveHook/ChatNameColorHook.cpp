@@ -864,6 +864,7 @@ bool ParseLeaveLine(const char* text, size_t* nameOffOut, size_t* nameLenOut)
         " left the game",
         " was dropped",
         " was eliminated",
+        " annihilated",
         nullptr
     };
 
@@ -890,6 +891,7 @@ bool ParseLeaveLine(const char* text, size_t* nameOffOut, size_t* nameLenOut)
             " dropped",
             " was eliminated",
             " eliminated",
+            " annihilated",
             nullptr
         };
         for (int s = 0; kEndSuffixes[s]; ++s) {
@@ -1012,6 +1014,10 @@ int SeatForLeaveLine(const char* text, size_t nameOff, size_t nameLen)
 // Detect "Player X left/dropped/eliminated" chat lines and mark ally-screen gone.
 void TryMarkLeaveFromChatText(const char* text)
 {
+    if (!text || !text[0]) return;
+    // Our own computer-wipe line — color it, but never treat as a human leave.
+    if (strstr(text, " annihilated") != nullptr) return;
+
     size_t nameOff = 0;
     size_t nameLen = 0;
     if (!ParseLeaveLine(text, &nameOff, &nameLen)) return;

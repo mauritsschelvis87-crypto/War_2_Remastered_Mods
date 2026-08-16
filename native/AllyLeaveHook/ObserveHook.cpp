@@ -1,7 +1,7 @@
-// Warcraft II Remastered — "Observe" button on the defeat / eliminated popup.
-// Hooks the defeat popup constructor; after the vanilla Exit Game button is
-// built, adds an Observe button whose callback only closes the popup (no leave
-// game event).
+// Warcraft II Remastered — "Observe" on the defeat popup.
+// Defeat ctor pushes Exit Game, then Show. We intercept Show on that popup
+// so Observe is already in the button vector before widgets are built.
+// Observe OnClick only closes the popup (no leave event).
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -16,26 +16,29 @@ namespace {
 volatile LONG g_enabled = 0;
 volatile LONG g_ready = 0;
 volatile LONG g_hooked = 0;
+volatile LONG g_addCount = 0;
+volatile LONG g_inAdd = 0;
 
 constexpr uintptr_t kPreferredImageBase = 0x00400000;
-constexpr uintptr_t kPreferredDefeatCtor = 0x00547AA0;
 constexpr uintptr_t kPreferredDefeatPopup = 0x0095EA60;
+constexpr uintptr_t kPreferredPopupShow = 0x00627430;
 constexpr uintptr_t kPreferredStringCtor = 0x0049ED60;
 constexpr uintptr_t kPreferredButtonSpecCtor = 0x00530320;
 constexpr uintptr_t kPreferredPopupAddButton = 0x006273B0;
 constexpr uintptr_t kPreferredButtonSpecDtor = 0x00525090;
 constexpr uintptr_t kPreferredPopupClose = 0x00627450;
-constexpr uintptr_t kPreferredPopupRebuild = 0x00626560;
 constexpr uintptr_t kPreferredBtnGetId = 0x00547970;
 constexpr uintptr_t kPreferredBtnDtor1 = 0x004C5D50;
 constexpr uintptr_t kPreferredBtnDtor2 = 0x004C5D80;
+constexpr size_t kShowPatchLen = 7; // push ebp; mov ebp,esp; push ecx; mov [ebp-4],ecx
+constexpr size_t kButtonSpecSize = 0x28;
 
 uint8_t* g_gameBase = nullptr;
 size_t g_gameSize = 0;
 
-uint8_t* g_defeatCtorSite = nullptr;
-uint8_t g_origDefeatPrologue[7]{};
-void* g_defeatTrampoline = nullptr;
+uint8_t* g_showSite = nullptr;
+uint8_t g_savedShow[16]{};
+void* g_showTrampoline = nullptr;
 
 void* g_defeatPopup = nullptr;
 
@@ -44,8 +47,6 @@ using ButtonSpecCtorFn = void(__thiscall*)(void* spec, void* cbObj, void* labelS
 using PopupAddButtonFn = void(__thiscall*)(void* popup, void* spec);
 using ButtonSpecDtorFn = void(__thiscall*)(void* spec);
 using PopupCloseFn = void(__thiscall*)(void* popup);
-using PopupRebuildFn = void(__thiscall*)(void* popup);
-using DefeatCtorFn = void(__stdcall*)();
 using BtnGetIdFn = void*(__thiscall*)(void* self);
 using BtnDtorFn = void(__thiscall*)(void* self);
 
@@ -54,17 +55,16 @@ ButtonSpecCtorFn g_buttonSpecCtor = nullptr;
 PopupAddButtonFn g_popupAddButton = nullptr;
 ButtonSpecDtorFn g_buttonSpecDtor = nullptr;
 PopupCloseFn g_popupClose = nullptr;
-PopupRebuildFn g_popupRebuild = nullptr;
 BtnGetIdFn g_btnGetId = nullptr;
 BtnDtorFn g_btnDtor1 = nullptr;
 BtnDtorFn g_btnDtor2 = nullptr;
-
-DefeatCtorFn g_origDefeatCtor = nullptr;
 
 void* g_observeVtable[6]{};
 
 void ObserveOnClickImpl(void* self);
 void ObserveCloneImpl(void* dst, void* src);
+void MaybeAddObserveForShow(void* popup);
+void Hook_PopupShow();
 
 #if defined(_M_IX86)
 __declspec(naked) void ObserveOnClickThunk()
@@ -87,6 +87,18 @@ __declspec(naked) void ObserveCloneThunk()
         call ObserveCloneImpl
         add esp, 8
         ret 4
+    }
+}
+
+__declspec(naked) void Hook_PopupShow()
+{
+    __asm {
+        push ecx
+        push ecx
+        call MaybeAddObserveForShow
+        add esp, 4
+        pop ecx
+        jmp dword ptr [g_showTrampoline]
     }
 }
 #else
@@ -127,26 +139,6 @@ bool IsLikelyCode(const uint8_t* p, size_t n)
     }
 }
 
-bool Match(const uint8_t* p, const uint8_t* pat, const char* mask)
-{
-    for (size_t i = 0; mask[i]; ++i) {
-        if (mask[i] == 'x' && p[i] != pat[i]) return false;
-    }
-    return true;
-}
-
-uint8_t* FindPattern(uint8_t* base, size_t imageSize, const uint8_t* pat, const char* mask)
-{
-    const size_t len = strlen(mask);
-    if (imageSize < len) return nullptr;
-    for (size_t i = 0; i + len <= imageSize; ++i) {
-        uint8_t* p = base + i;
-        if (!IsLikelyCode(p, len)) continue;
-        if (Match(p, pat, mask)) return p;
-    }
-    return nullptr;
-}
-
 template<typename Fn>
 Fn ResolveFn(uintptr_t preferredVa)
 {
@@ -176,20 +168,22 @@ HMODULE FindGameModule(uint8_t** outBase, size_t* outSize)
     return found;
 }
 
-bool PatchFuncPrologue(uint8_t* site, void* hook, uint8_t* savedOrig, void** trampOut)
+bool PatchFuncPrologueLen(uint8_t* site, size_t patchLen, void* hook,
+                          uint8_t* savedOrig, void** trampOut)
 {
-    memcpy(savedOrig, site, 7);
-    void* tramp = VirtualAlloc(nullptr, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (patchLen < 5 || patchLen > 16) return false;
+    memcpy(savedOrig, site, patchLen);
+    void* tramp = VirtualAlloc(nullptr, 64, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!tramp) return false;
 
     auto* t = static_cast<uint8_t*>(tramp);
-    memcpy(t, site, 7);
-    t[7] = 0xE9;
-    *reinterpret_cast<int32_t*>(t + 8) =
-        static_cast<int32_t>((site + 7) - (t + 12));
+    memcpy(t, site, patchLen);
+    t[patchLen] = 0xE9;
+    *reinterpret_cast<int32_t*>(t + patchLen + 1) =
+        static_cast<int32_t>((site + patchLen) - (t + patchLen + 5));
 
     DWORD oldProtect = 0;
-    if (!VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+    if (!VirtualProtect(site, patchLen, PAGE_EXECUTE_READWRITE, &oldProtect)) {
         VirtualFree(tramp, 0, MEM_RELEASE);
         return false;
     }
@@ -197,23 +191,22 @@ bool PatchFuncPrologue(uint8_t* site, void* hook, uint8_t* savedOrig, void** tra
     site[0] = 0xE9;
     *reinterpret_cast<int32_t*>(site + 1) =
         static_cast<int32_t>(static_cast<uint8_t*>(hook) - (site + 5));
-    site[5] = 0x90;
-    site[6] = 0x90;
+    for (size_t i = 5; i < patchLen; ++i) site[i] = 0x90;
 
-    VirtualProtect(site, 7, oldProtect, &oldProtect);
-    FlushInstructionCache(GetCurrentProcess(), site, 7);
+    VirtualProtect(site, patchLen, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), site, patchLen);
     *trampOut = tramp;
     return true;
 }
 
-void UnpatchFuncPrologue(uint8_t* site, const uint8_t* savedOrig, void** tramp)
+void UnpatchSite(uint8_t* site, size_t origLen, const uint8_t* savedOrig, void** tramp)
 {
     if (!site) return;
     DWORD oldProtect = 0;
-    if (VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-        memcpy(site, savedOrig, 7);
-        VirtualProtect(site, 7, oldProtect, &oldProtect);
-        FlushInstructionCache(GetCurrentProcess(), site, 7);
+    if (VirtualProtect(site, origLen, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+        memcpy(site, savedOrig, origLen);
+        VirtualProtect(site, origLen, oldProtect, &oldProtect);
+        FlushInstructionCache(GetCurrentProcess(), site, origLen);
     }
     if (tramp && *tramp) {
         VirtualFree(*tramp, 0, MEM_RELEASE);
@@ -246,69 +239,67 @@ void InitObserveVtable()
     g_observeVtable[5] = reinterpret_cast<void*>(g_btnDtor2);
 }
 
+int ButtonCount(void* popup)
+{
+    if (!popup) return 0;
+    uint8_t* vec = static_cast<uint8_t*>(popup) + 0x1C;
+    uint8_t* begin = nullptr;
+    uint8_t* finish = nullptr;
+    __try {
+        begin = *reinterpret_cast<uint8_t**>(vec);
+        finish = *reinterpret_cast<uint8_t**>(vec + 4);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+    if (!begin || finish < begin) return 0;
+    return static_cast<int>((finish - begin) / kButtonSpecSize);
+}
+
 void AddObserveButton()
 {
     if (!g_stringCtor || !g_buttonSpecCtor || !g_popupAddButton || !g_buttonSpecDtor ||
         !g_defeatPopup) {
+        Log("AddObserveButton: skip (missing apis)");
         return;
     }
 
-    alignas(8) uint8_t labelStr[32]{};
-    alignas(8) uint8_t spec[48]{};
+    alignas(8) uint8_t labelStr[0x28]{};
+    alignas(8) uint8_t spec[0x30]{};
     alignas(8) uint8_t cbObj[8]{};
     uint8_t outByte = 0;
 
     g_stringCtor(labelStr, "Observe");
-
     *reinterpret_cast<void**>(cbObj) = g_observeVtable;
     *reinterpret_cast<int32_t*>(cbObj + 4) = 0;
-
     g_buttonSpecCtor(spec, cbObj, labelStr, &outByte);
     g_popupAddButton(g_defeatPopup, spec);
     g_buttonSpecDtor(spec);
 
-    if (g_popupRebuild) g_popupRebuild(g_defeatPopup);
-
-    Log("AddObserveButton: ok outByte=%u", static_cast<unsigned>(outByte));
+    const LONG n = InterlockedIncrement(&g_addCount);
+    if (n <= 5 || (n % 120) == 0) {
+        Log("AddObserveButton: ok n=%ld outByte=%u count=%d",
+            n, static_cast<unsigned>(outByte), ButtonCount(g_defeatPopup));
+    }
 }
 
-void __stdcall Hook_DefeatCtor()
+void __cdecl MaybeAddObserveForShow(void* popup)
 {
-    if (g_origDefeatCtor) g_origDefeatCtor();
-    if (g_enabled && g_ready) {
-        __try {
+    if (!g_enabled || !g_ready) return;
+    if (popup != g_defeatPopup) return;
+    if (InterlockedCompareExchange(&g_inAdd, 1, 0) != 0) return;
+
+    __try {
+        const int count = ButtonCount(popup);
+        if (count == 1) {
             AddObserveButton();
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            Log("AddObserveButton: exception");
+        } else if (g_addCount < 5) {
+            Log("MaybeAddObserveForShow: skip count=%d popup=%p", count, popup);
         }
-    }
-}
-
-bool LocateDefeatCtor(uint8_t* base, size_t imageSize, uint8_t** outSite)
-{
-    uint8_t* site = base + (kPreferredDefeatCtor - kPreferredImageBase);
-    if (site + 16 <= base + imageSize && IsLikelyCode(site, 16) &&
-        site[0] == 0x55 && site[1] == 0x8B && site[2] == 0xEC && site[3] == 0x6A) {
-        *outSite = site;
-        return true;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        Log("MaybeAddObserveForShow: exception code=0x%08X", GetExceptionCode());
     }
 
-    static const uint8_t pat[] = {
-        0x55, 0x8B, 0xEC, 0x6A, 0xFF, 0x00, 0x00, 0x00, 0x00,
-        0x64, 0xA1, 0x00, 0x00, 0x00, 0x00, 0x50, 0x81, 0xEC, 0x64, 0x00, 0x00, 0x00
-    };
-    static const char mask[] = "xxxxx????xxxxxxxxxxxxxx";
-    site = FindPattern(base, imageSize, pat, mask);
-    if (!site) return false;
-
-    // Confirm this is the defeat ctor (push 'defeat' before localize call).
-    static const uint8_t tailPat[] = { 0x68, 0x00, 0x00, 0x00, 0x00, 0xE8 };
-    static const char tailMask[] = "x????x";
-    uint8_t* tail = FindPattern(site, 0x40, tailPat, tailMask);
-    if (!tail) return false;
-
-    *outSite = site;
-    return true;
+    InterlockedExchange(&g_inAdd, 0);
 }
 
 bool InstallHook()
@@ -328,7 +319,6 @@ bool InstallHook()
     g_popupAddButton = ResolveFn<PopupAddButtonFn>(kPreferredPopupAddButton);
     g_buttonSpecDtor = ResolveFn<ButtonSpecDtorFn>(kPreferredButtonSpecDtor);
     g_popupClose = ResolveFn<PopupCloseFn>(kPreferredPopupClose);
-    g_popupRebuild = ResolveFn<PopupRebuildFn>(kPreferredPopupRebuild);
     g_btnGetId = ResolveFn<BtnGetIdFn>(kPreferredBtnGetId);
     g_btnDtor1 = ResolveFn<BtnDtorFn>(kPreferredBtnDtor1);
     g_btnDtor2 = ResolveFn<BtnDtorFn>(kPreferredBtnDtor2);
@@ -341,34 +331,33 @@ bool InstallHook()
 
     InitObserveVtable();
 
-    uint8_t* site = nullptr;
-    if (!LocateDefeatCtor(g_gameBase, g_gameSize, &site) || !site) {
-        Log("InstallHook: defeat ctor not found");
+    uint8_t* site = g_gameBase + (kPreferredPopupShow - kPreferredImageBase);
+    if (site + kShowPatchLen > g_gameBase + g_gameSize || !IsLikelyCode(site, kShowPatchLen) ||
+        site[0] != 0x55 || site[1] != 0x8B || site[2] != 0xEC || site[3] != 0x51) {
+        Log("InstallHook: Show site mismatch");
         return false;
     }
 
     void* tramp = nullptr;
-    if (!PatchFuncPrologue(site, reinterpret_cast<void*>(&Hook_DefeatCtor),
-                           g_origDefeatPrologue, &tramp)) {
-        Log("InstallHook: patch failed (%lu)", GetLastError());
+    if (!PatchFuncPrologueLen(site, kShowPatchLen, reinterpret_cast<void*>(&Hook_PopupShow),
+                              g_savedShow, &tramp)) {
+        Log("InstallHook: Show patch failed (%lu)", GetLastError());
         return false;
     }
 
-    g_defeatCtorSite = site;
-    g_defeatTrampoline = tramp;
-    g_origDefeatCtor = reinterpret_cast<DefeatCtorFn>(tramp);
+    g_showSite = site;
+    g_showTrampoline = tramp;
     InterlockedExchange(&g_hooked, 1);
     InterlockedExchange(&g_ready, 1);
-    Log("InstallHook: ok site=%p popup=%p", site, g_defeatPopup);
+    Log("InstallHook: ok show=%p tramp=%p popup=%p", site, tramp, g_defeatPopup);
     return true;
 }
 
 void RemoveHook()
 {
     if (!g_hooked) return;
-    UnpatchFuncPrologue(g_defeatCtorSite, g_origDefeatPrologue, &g_defeatTrampoline);
-    g_defeatCtorSite = nullptr;
-    g_origDefeatCtor = nullptr;
+    UnpatchSite(g_showSite, kShowPatchLen, g_savedShow, &g_showTrampoline);
+    g_showSite = nullptr;
     InterlockedExchange(&g_hooked, 0);
     Log("RemoveHook");
 }

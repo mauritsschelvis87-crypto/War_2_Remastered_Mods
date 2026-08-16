@@ -46,6 +46,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedEndGameObserve;
     private bool _allianceTeamNumbers;
     private bool _appliedAllianceTeamNumbers;
+    private bool _computerAnnihilatedChat;
+    private bool _appliedComputerAnnihilatedChat;
     private bool _colorBlindMode;
     private string _selectedColorBlindPreset = string.Empty;
     private string _appliedColorBlindPreset = string.Empty;
@@ -101,7 +103,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private bool AnyAllyLeaveApplied =>
-        _appliedAllyLeaveMarkComputers || _appliedAllyLeaveMarkHumans || _appliedAllianceTeamNumbers;
+        _appliedAllyLeaveMarkComputers || _appliedAllyLeaveMarkHumans ||
+        _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat;
 
     public bool ChatDuringPauseScreen
     {
@@ -172,6 +175,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             if (_allianceTeamNumbers == value) return;
             _allianceTeamNumbers = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    public bool ComputerAnnihilatedChat
+    {
+        get => _computerAnnihilatedChat;
+        set
+        {
+            if (_computerAnnihilatedChat == value) return;
+            _computerAnnihilatedChat = value;
             OnPropertyChanged();
             RefreshTabStatus();
         }
@@ -364,7 +379,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _hookWatchTimer.Start();
             UpdateExtraHookStatus(forceInject: AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedAllianceTeamNumbers || _appliedDragSelectColorEnabled);
+                _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
+                _appliedDragSelectColorEnabled);
             RefreshTabStatus();
         }
         catch (Exception ex)
@@ -487,9 +503,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool HasPendingEndGameObserve() => false; // Feature 5 disabled
     private bool HasPendingAllianceTeamNumbers() =>
         _allianceTeamNumbers != _appliedAllianceTeamNumbers;
+    private bool HasPendingComputerAnnihilatedChat() =>
+        _computerAnnihilatedChat != _appliedComputerAnnihilatedChat;
     private bool HasPendingFeatureChanges() =>
         HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps() ||
-        HasPendingAllianceTeamNumbers();
+        HasPendingAllianceTeamNumbers() || HasPendingComputerAnnihilatedChat();
     private bool HasPendingBugFixChanges() => HasPendingChatPause() || HasPendingChatHistory();
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
@@ -1104,6 +1122,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         bool chatHistory,
         bool endGameObserve,
         bool allianceTeamNumbers,
+        bool computerAnnihilatedChat,
         bool dragEnabled,
         string dragHex)
     {
@@ -1121,6 +1140,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ChatHistory = chatHistory,
             EndGameObserve = endGameObserve,
             AllianceTeamNumbers = allianceTeamNumbers,
+            ComputerAnnihilatedChat = computerAnnihilatedChat,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
             UnitSpriteColors = _unitSpriteColors,
@@ -1191,6 +1211,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var chatHist = false;
         var endGameObserve = false;
         var allianceTeamNumbers = false;
+        var computerAnnihilatedChat = false;
         var unitColors = false;
         const bool dragEnabled = false;
 
@@ -1210,6 +1231,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Feature 5 disabled — ignore persisted Observe flag.
             endGameObserve = false;
             allianceTeamNumbers = extra?.AllianceTeamNumbers ?? false;
+            computerAnnihilatedChat = extra?.ComputerAnnihilatedChat ?? false;
             unitColors = extra?.UnitSpriteColors ?? false;
         }
 
@@ -1229,6 +1251,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedEndGameObserve = endGameObserve;
         _allianceTeamNumbers = allianceTeamNumbers;
         _appliedAllianceTeamNumbers = allianceTeamNumbers;
+        _computerAnnihilatedChat = computerAnnihilatedChat;
+        _appliedComputerAnnihilatedChat = computerAnnihilatedChat;
         _unitSpriteColors = unitColors;
         _appliedUnitSpriteColors = unitColors;
         _appliedDragSelectColorEnabled = dragEnabled;
@@ -1240,11 +1264,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(ChatHistory));
         OnPropertyChanged(nameof(EndGameObserve));
         OnPropertyChanged(nameof(AllianceTeamNumbers));
+        OnPropertyChanged(nameof(ComputerAnnihilatedChat));
 
         try
         {
             WriteExtraFeaturesFile(markComputers, markHumans, chatPause, chatColored, chatStamps,
-                chatHist, endGameObserve, allianceTeamNumbers, dragEnabled: false, dragHex: "#00FF00");
+                chatHist, endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
+                dragEnabled: false, dragHex: "#00FF00");
         }
         catch { /* best-effort persist normalized flags */ }
     }
@@ -1345,7 +1371,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             var anyExtra = AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedAllianceTeamNumbers || _appliedDragSelectColorEnabled;
+                _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
+                _appliedDragSelectColorEnabled;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
@@ -1555,7 +1582,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (string.IsNullOrEmpty(_nativeDir)) return;
 
         if (!_appliedChatColoredNames && !_appliedChatTimestamps && !_appliedChatHistory &&
-            !_appliedAllyLeaveMarkHumans)
+            !_appliedAllyLeaveMarkHumans && !_appliedComputerAnnihilatedChat)
         {
             if (IsWarcraftIiRunning() && forceInject)
             {
@@ -1602,7 +1629,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             _chatNameColorInjectedForRunningGame = false;
             return _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedAllyLeaveMarkHumans
+                _appliedAllyLeaveMarkHumans || _appliedComputerAnnihilatedChat
                 ? "Chat mods ON — watcher auto-injects when Warcraft II starts."
                 : "Chat name colors setting saved.";
         }
@@ -1636,7 +1663,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _chatNameColorInjectedForRunningGame =
             _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-            _appliedAllyLeaveMarkHumans;
+            _appliedAllyLeaveMarkHumans || _appliedComputerAnnihilatedChat;
         return string.IsNullOrWhiteSpace(output) ? "Chat-name-color hook updated." : output;
     }
 
@@ -1821,6 +1848,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatHist = _appliedChatHistory;
                 var endGameObserve = _appliedEndGameObserve;
                 var allianceTeamNumbers = _appliedAllianceTeamNumbers;
+                var computerAnnihilatedChat = _appliedComputerAnnihilatedChat;
                 // Unit sprites always follow the installed player colors.
                 _unitSpriteColors = true;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
@@ -1829,7 +1857,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     // Keep drag-select hook off — Self highlight owns shared palette index 250.
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chat, chatNames, chatStamps, chatHist,
-                        endGameObserve, allianceTeamNumbers,
+                        endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
@@ -1871,12 +1899,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatHistoryEnabled = _appliedChatHistory; // owned by the Bug fixes tab
                 var endGameObserveEnabled = false; // Feature 5 greyed out
                 var allianceTeamNumbersEnabled = AllianceTeamNumbers;
+                var computerAnnihilatedChatEnabled = ComputerAnnihilatedChat;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
                 await Task.Run(() =>
                 {
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                         chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
+                        computerAnnihilatedChatEnabled,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     ApplyAllyGoneSkullAtlas();
@@ -1888,6 +1918,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _appliedChatTimestamps = chatStampsEnabled;
                 _appliedEndGameObserve = false;
                 _appliedAllianceTeamNumbers = allianceTeamNumbersEnabled;
+                _appliedComputerAnnihilatedChat = computerAnnihilatedChatEnabled;
                 _hookInjectedForRunningGame = false;
                 _chatNameColorInjectedForRunningGame = false;
                 _observeInjectedForRunningGame = false;
@@ -1915,10 +1946,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var chatHistoryEnabled = ChatHistory; // owned by the Bug fixes tab
                 var endGameObserveEnabled = false; // Feature 5 greyed out
                 var allianceTeamNumbersEnabled = _appliedAllianceTeamNumbers;
+                var computerAnnihilatedChatEnabled = _appliedComputerAnnihilatedChat;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Installing bug fixes…"));
                 await Task.Run(() => WriteExtraFeaturesFile(
                     markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                     chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
+                    computerAnnihilatedChatEnabled,
                     dragEnabled: false,
                     dragHex: "#00FF00"));
 
@@ -2129,6 +2162,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     ChatHistory = false,
                     EndGameObserve = false,
                     AllianceTeamNumbers = false,
+                    ComputerAnnihilatedChat = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
                     UnitSpriteColors = false,
@@ -2152,6 +2186,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedEndGameObserve = false;
             _allianceTeamNumbers = false;
             _appliedAllianceTeamNumbers = false;
+            _computerAnnihilatedChat = false;
+            _appliedComputerAnnihilatedChat = false;
             _unitSpriteColors = false;
             _appliedUnitSpriteColors = false;
             _appliedDragSelectColorEnabled = false;
@@ -2163,6 +2199,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(ChatHistory));
             OnPropertyChanged(nameof(EndGameObserve));
             OnPropertyChanged(nameof(AllianceTeamNumbers));
+            OnPropertyChanged(nameof(ComputerAnnihilatedChat));
 
             Cards.Clear();
             LoadCards();
@@ -2314,6 +2351,8 @@ public sealed class ExtraFeaturesConfig
     public bool EndGameObserve { get; set; }
     /// <summary>Gold lobby team digit in front of alliances (F11) player names.</summary>
     public bool AllianceTeamNumbers { get; set; }
+    /// <summary>Chat line "Name annihilated" when a computer AI is wiped.</summary>
+    public bool ComputerAnnihilatedChat { get; set; }
     public bool DragSelectColorEnabled { get; set; }
     public string? DragSelectColor { get; set; }
     /// <summary>Live-recolor HD unit sprites to the player colors.</summary>

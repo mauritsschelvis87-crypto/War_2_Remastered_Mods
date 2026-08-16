@@ -61,8 +61,14 @@ volatile LONG g_markComputers = 1;
 volatile LONG g_markHumans = 0;
 // Feature 6: lobby team digit in front of F11 alliances names ("2 Name").
 volatile LONG g_showTeamNumbers = 0;
+// Chat line "Name annihilated" when a computer seat is first wipe-marked.
+volatile LONG g_announceComputerWipe = 0;
 // Launch-time team snapshot (-1 = not captured yet).
 volatile LONG g_launchTeam[8]{ -1, -1, -1, -1, -1, -1, -1, -1 };
+// Queued annihilate chat (set on any thread; flushed on game thread only).
+volatile LONG g_pendingAnnihilate[8]{};
+// Already posted annihilate chat this match (once per seat).
+volatile LONG g_announcedAnnihilate[8]{};
 
 uint8_t* g_statusBase = nullptr;
 uint8_t* g_msgInitFlag = nullptr;
@@ -73,6 +79,9 @@ constexpr ptrdiff_t kDefeatFromStatus = 0x21D8;
 // Preferred VAs in Warcraft II.exe (ImageBase 0x400000).
 constexpr uintptr_t kPreferredStatus = 0x00918CAC;
 constexpr uintptr_t kPreferredAnnounceGone = 0x004F4F30;
+constexpr uintptr_t kPreferredPushMapMsg = 0x00614A90;
+constexpr uint32_t kAnnihilateChatDuration = 5000; // 5s — PushMapMsg expiry uses TimeNow (ms)
+constexpr uint32_t kAnnihilateChatColor = 0;        // draw hook recolors name + gold suffix
 // Lobby/slot table: stride 0x26.
 // Byte0 = controller/status (1=human, 2/4/6/7=computer, 3=gone, 5=empty).
 // Byte1 = race. Byte2 = MP lobby team (1..8; used by mp_lobby_team_*).
@@ -123,6 +132,9 @@ AnnounceGoneFn g_originalAnnounceGone = nullptr;
 uint8_t* g_announceGoneSite = nullptr;
 uint8_t g_origAnnounceGone[7]{};
 void* g_announceGoneTramp = nullptr;
+
+using PushMapMsgFn = void(__cdecl*)(const char* text, uint32_t color, uint32_t duration);
+PushMapMsgFn g_pushMapMsg = nullptr;
 
 SetTextFn g_originalSetText = nullptr;
 RenderLabelFn g_originalRenderLabel = nullptr;
@@ -463,10 +475,11 @@ void LoadMarkModesFromJson()
     HANDLE file = CreateFileW(full, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                               nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
-        Log("LoadMarkModes: missing %ls — default computers=1 humans=0 teams=0", full);
+        Log("LoadMarkModes: missing %ls — default computers=1 humans=0 teams=0 annihilate=0", full);
         InterlockedExchange(&g_markComputers, 1);
         InterlockedExchange(&g_markHumans, 0);
         InterlockedExchange(&g_showTeamNumbers, 0);
+        InterlockedExchange(&g_announceComputerWipe, 0);
         return;
     }
 
@@ -483,6 +496,7 @@ void LoadMarkModesFromJson()
     const bool markHumans = ReadJsonBoolKey(buf, "AllyLeaveMarkHumans");
     const bool legacy = ReadJsonBoolKey(buf, "AllyLeaveRedNames");
     const bool teamNumbers = ReadJsonBoolKey(buf, "AllianceTeamNumbers");
+    const bool annihilateChat = ReadJsonBoolKey(buf, "ComputerAnnihilatedChat");
     LONG computers = markComputers ? 1 : 0;
     LONG humans = markHumans ? 1 : 0;
     if (!computers && !humans && legacy) {
@@ -492,8 +506,9 @@ void LoadMarkModesFromJson()
     InterlockedExchange(&g_markComputers, computers);
     InterlockedExchange(&g_markHumans, humans);
     InterlockedExchange(&g_showTeamNumbers, teamNumbers ? 1 : 0);
-    Log("LoadMarkModes: computers=%ld humans=%ld teams=%ld legacy=%d from %ls",
-        computers, humans, g_showTeamNumbers, legacy ? 1 : 0, full);
+    InterlockedExchange(&g_announceComputerWipe, annihilateChat ? 1 : 0);
+    Log("LoadMarkModes: computers=%ld humans=%ld teams=%ld annihilate=%ld legacy=%d from %ls",
+        computers, humans, g_showTeamNumbers, g_announceComputerWipe, legacy ? 1 : 0, full);
 }
 
 bool IsComputerController(uint8_t controller)
@@ -654,6 +669,67 @@ const char* NameForClassify(const char* name)
     return name;
 }
 
+bool LooksLikeComputerName(const char* name)
+{
+    name = NameForClassify(name);
+    if (!name[0]) return false;
+    if (_strnicmp(name, "Computer", 8) == 0) return true;
+    if (_strnicmp(name, "Nation of ", 10) == 0) return true;
+    if (_stricmp(name, "Alliance Traitors") == 0) return true;
+    const size_t n = strlen(name);
+    if (n >= 5 && _stricmp(name + (n - 5), " Clan") == 0) return true;
+    // Remaster F11 often drops the " Clan" suffix (blue = "Stormreaver").
+    static const char* kHordeClans[] = {
+        "Stormreaver", "Black Tooth", "Black Tooth Grin", "Twilight's Hammer",
+        "Bleeding Hollow", "Dragonmaw", "Blackrock", "Burning Blade",
+    };
+    for (const char* clan : kHordeClans) {
+        if (_stricmp(name, clan) == 0) return true;
+    }
+    if (_stricmp(name, "Horde Traitors") == 0) return true;
+    return false;
+}
+
+void NoteComputerSlot(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    InterlockedExchange(&g_slotKind[playerIndex], 1);
+}
+
+// Shared seat classification for mark-computers + annihilate announce.
+// Runs even when both mark flags are off so announce-only still sees NPCs.
+void ClassifySeatForWipe(int playerIndex, const char* source)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (SourceLooksLikeHumanLeaveOnly(source)) {
+        NoteHumanSlot(playerIndex);
+        return;
+    }
+    if (g_lastName[playerIndex][0]) {
+        if (LooksLikeComputerName(g_lastName[playerIndex])) {
+            NoteComputerSlot(playerIndex);
+        } else if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) != 1) {
+            NoteHumanSlot(playerIndex);
+        }
+    }
+    RefreshSlotKinds();
+}
+
+// Same wipe/elim sources that drive F11 mark-computers for NPC seats.
+bool SourceLooksLikeComputerWipe(const char* source)
+{
+    if (!source || !source[0]) return false;
+    return _stricmp(source, "status3") == 0 ||
+           _stricmp(source, "status-elim") == 0 ||
+           _stricmp(source, "defeat-elim") == 0 ||
+           _stricmp(source, "defeat-poll") == 0 ||
+           _stricmp(source, "hf-poll") == 0 ||
+           _stricmp(source, "elim") == 0 ||
+           _stricmp(source, "comp-wipe-lost") == 0 ||
+           _strnicmp(source, "wipe-paint", 10) == 0 ||
+           _strnicmp(source, "comp-wipe", 9) == 0;
+}
+
 uint8_t ReadLiveTeamByte(int playerIndex)
 {
     if (!g_slotBase || playerIndex < 0 || playerIndex > 7) return 0;
@@ -709,33 +785,25 @@ void FormatAllianceName(int playerIndex, const char* rawName, bool /*inactive*/,
     }
 }
 
-bool LooksLikeComputerName(const char* name)
-{
-    name = NameForClassify(name);
-    if (!name[0]) return false;
-    if (_strnicmp(name, "Computer", 8) == 0) return true;
-    if (_strnicmp(name, "Nation of ", 10) == 0) return true;
-    if (_stricmp(name, "Alliance Traitors") == 0) return true;
-    const size_t n = strlen(name);
-    if (n >= 5 && _stricmp(name + (n - 5), " Clan") == 0) return true;
-    // Remaster F11 often drops the " Clan" suffix (blue = "Stormreaver").
-    static const char* kHordeClans[] = {
-        "Stormreaver", "Black Tooth", "Black Tooth Grin", "Twilight's Hammer",
-        "Bleeding Hollow", "Dragonmaw", "Blackrock", "Burning Blade",
-    };
-    for (const char* clan : kHordeClans) {
-        if (_stricmp(name, clan) == 0) return true;
-    }
-    return false;
-}
-
-void NoteComputerSlot(int playerIndex)
-{
-    if (playerIndex < 0 || playerIndex > 7) return;
-    InterlockedExchange(&g_slotKind[playerIndex], 1);
-}
-
 bool IsLocalPlayer(int playerIndex); // defined with wipe helpers below
+
+// Fill empty alliances-name cache from the live name table (no F11 needed).
+void CacheNamesFromTable()
+{
+    if (!g_playerName0) return;
+    for (int i = 0; i < 8; ++i) {
+        if (g_lastName[i][0]) continue;
+        __try {
+            const char* slot = g_playerName0 + static_cast<size_t>(i) * kPlayerNameStride;
+            if (!slot || !slot[0]) continue;
+            const char* raw = NameForClassify(slot);
+            if (!raw || !raw[0]) continue;
+            _snprintf_s(g_lastName[i], _TRUNCATE, "%s", raw);
+            if (LooksLikeComputerName(raw)) NoteComputerSlot(i);
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
+}
 
 bool IsComputerSlot(int playerIndex)
 {
@@ -747,6 +815,16 @@ bool IsComputerSlot(int playerIndex)
     // Unknown seat: only the name is safe evidence in-match. The controller
     // byte doubles as status (2 = eliminated) and must not be used here.
     if (LooksLikeComputerName(g_lastName[playerIndex])) return true;
+    if (g_playerName0) {
+        __try {
+            const char* slot =
+                g_playerName0 + static_cast<size_t>(playerIndex) * kPlayerNameStride;
+            if (slot && slot[0] && LooksLikeComputerName(NameForClassify(slot))) {
+                return true;
+            }
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+    }
     return false;
 }
 
@@ -771,17 +849,8 @@ bool ShouldMarkSlot(int playerIndex, const char* source)
         return markHumans;
     }
 
-    // Classify from alliances name: "Nation of… / … Clan" = NPC, account name = human.
-    // Controller bytes are remapped to 1 in-match so they alone are not enough.
-    if (g_lastName[playerIndex][0]) {
-        if (LooksLikeComputerName(g_lastName[playerIndex])) {
-            NoteComputerSlot(playerIndex);
-        } else if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) != 1) {
-            NoteHumanSlot(playerIndex);
-        }
-    }
-
-    RefreshSlotKinds();
+    // Classification shared with annihilate announce (ClassifySeatForWipe).
+    ClassifySeatForWipe(playerIndex, source);
     const LONG kind = InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0);
 
     if (kind == 1 || IsComputerSlot(playerIndex)) {
@@ -935,6 +1004,8 @@ void ResetSeatTracking(int i, const char* reason)
     InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[i]), 0);
     InterlockedExchange(&g_slotKind[i], -1);
     InterlockedExchange(&g_launchTeam[i], -1);
+    InterlockedExchange(&g_pendingAnnihilate[i], 0);
+    InterlockedExchange(&g_announcedAnnihilate[i], 0);
     static LONG s_seatResetLog = 0;
     if (InterlockedIncrement(&s_seatResetLog) <= 24) {
         Log("seat reset p=%d (%s)", i, reason ? reason : "?");
@@ -956,6 +1027,8 @@ void ResetWipeTracking(const char* reason)
         InterlockedExchange(&g_buildings[i], 0);
         InterlockedExchange(&g_slotKind[i], -1);
         InterlockedExchange(&g_launchTeam[i], -1);
+        InterlockedExchange(&g_pendingAnnihilate[i], 0);
+        InterlockedExchange(&g_announcedAnnihilate[i], 0);
         g_pendingGoneNames[i][0] = 0;
         g_pendingGoneTick[i] = 0;
         g_lastName[i][0] = 0;
@@ -1288,6 +1361,7 @@ void ClearGoneUi(int playerIndex)
     NoteHasForcesSample(playerIndex, hf);
     if (hf > 0) {
         InterlockedExchange(&g_leftFlags[playerIndex], 0);
+        InterlockedExchange(&g_pendingAnnihilate[playerIndex], 0);
         InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_zeroArmySince[playerIndex]), 0);
         static LONG s_clearOk = 0;
         if (InterlockedIncrement(&s_clearOk) <= 16) {
@@ -1326,19 +1400,46 @@ void ApplyGoneToUi(int playerIndex, void* ui, const char* name)
     }
 }
 
+void QueueComputerAnnihilateChat(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return;
+    if (InterlockedCompareExchange(&g_announceComputerWipe, 0, 0) == 0) return;
+    if (!IsComputerSlot(playerIndex)) return;
+    // Once per seat per match (cleared again if PushMapMsg fails).
+    if (InterlockedCompareExchange(&g_announcedAnnihilate[playerIndex], 1, 0) != 0) return;
+    InterlockedExchange(&g_pendingAnnihilate[playerIndex], 1);
+    static LONG s_q = 0;
+    if (InterlockedIncrement(&s_q) <= 24) {
+        Log("annihilate queue p=%d name=%s push=%p",
+            playerIndex,
+            g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?",
+            g_pushMapMsg);
+    }
+}
+
 void MarkGoneUi(int playerIndex, const char* source)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
+
+    // Classify first so announce-only (mark-computers off) still sees NPC seats.
+    ClassifySeatForWipe(playerIndex, source);
+    const bool computer = IsComputerSlot(playerIndex);
+
     if (!ShouldMarkSlot(playerIndex, source)) {
+        // Announce alone: same wipe sources as mark-computers, no F11 red flags.
+        if (computer && SourceLooksLikeComputerWipe(source)) {
+            QueueComputerAnnihilateChat(playerIndex);
+        }
         static LONG s_skip = 0;
         if (InterlockedIncrement(&s_skip) <= 32) {
-            Log("gone skip p=%d src=%s computer=%d kind=%ld ctrl=%u markC=%ld markH=%ld",
+            Log("gone skip p=%d src=%s computer=%d kind=%ld ctrl=%u markC=%ld markH=%ld ann=%ld",
                 playerIndex, source ? source : "?",
-                IsComputerSlot(playerIndex) ? 1 : 0,
+                computer ? 1 : 0,
                 InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0),
                 ReadLiveController(playerIndex),
                 InterlockedCompareExchange(&g_markComputers, 0, 0),
-                InterlockedCompareExchange(&g_markHumans, 0, 0));
+                InterlockedCompareExchange(&g_markHumans, 0, 0),
+                InterlockedCompareExchange(&g_announceComputerWipe, 0, 0));
         }
         return;
     }
@@ -1352,6 +1453,10 @@ void MarkGoneUi(int playerIndex, const char* source)
     InterlockedExchange(&g_leftFlags[playerIndex], 1);
     if (!alreadyMarked) {
         InterlockedIncrement(&g_leaveEventCount);
+        // Same moment mark-computers first paints F11 red → annihilate chat.
+        if (computer && SourceLooksLikeComputerWipe(source)) {
+            QueueComputerAnnihilateChat(playerIndex);
+        }
     } else if (!SourceShouldStickExplicitGone(source)) {
         return;
     }
@@ -1363,7 +1468,7 @@ void MarkGoneUi(int playerIndex, const char* source)
 
     Log("gone p=%d src=%s computer=%d kind=%ld flags=1 liveUi=%d name=%s",
         playerIndex, source ? source : "?",
-        IsComputerSlot(playerIndex) ? 1 : 0,
+        computer ? 1 : 0,
         InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0),
         (g_lastSetTextTick != 0 && (GetTickCount() - g_lastSetTextTick) < 1000) ? 1 : 0,
         g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
@@ -1371,6 +1476,61 @@ void MarkGoneUi(int playerIndex, const char* source)
     const DWORD now = GetTickCount();
     if (g_lastSetTextTick != 0 && (now - g_lastSetTextTick) < 2000) {
         ApplyGoneToUi(playerIndex, g_lastUi[playerIndex], g_lastName[playerIndex]);
+    }
+}
+
+// Resolve player display name for annihilate chat (alliances cache, then name table).
+const char* AnnihilateNameFor(int playerIndex)
+{
+    if (playerIndex < 0 || playerIndex > 7) return nullptr;
+    if (g_lastName[playerIndex][0]) return g_lastName[playerIndex];
+    if (!g_playerName0) return nullptr;
+    const char* slot = nullptr;
+    __try {
+        slot = g_playerName0 + static_cast<size_t>(playerIndex) * kPlayerNameStride;
+        if (!slot || !slot[0]) return nullptr;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return nullptr;
+    }
+    return slot;
+}
+
+// Prefer game-thread hooks; also tried from the wipe poll (SEH-guarded) so
+// end-of-match wipes still post when no UnitLost/SetText fires.
+void FlushPendingAnnihilateChat()
+{
+    if (!g_pushMapMsg) return;
+    if (InterlockedCompareExchange(&g_announceComputerWipe, 0, 0) == 0) return;
+
+    CacheNamesFromTable();
+
+    for (int i = 0; i < 8; ++i) {
+        if (InterlockedCompareExchange(&g_pendingAnnihilate[i], 0, 0) == 0) continue;
+        const char* name = AnnihilateNameFor(i);
+        if (!name || !name[0]) {
+            // Keep pending until a name is known (F11 row bind / name table).
+            continue;
+        }
+
+        char line[160]{};
+        _snprintf_s(line, _TRUNCATE, "%s annihilated", name);
+        bool ok = false;
+        __try {
+            g_pushMapMsg(line, kAnnihilateChatColor, kAnnihilateChatDuration);
+            ok = true;
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+            Log("annihilate chat: PushMapMsg exception p=%d push=%p", i, g_pushMapMsg);
+        }
+        if (ok) {
+            InterlockedExchange(&g_pendingAnnihilate[i], 0);
+            static LONG s_annLog = 0;
+            if (InterlockedIncrement(&s_annLog) <= 24) {
+                Log("annihilate chat p=%d name=%s", i, name);
+            }
+        } else {
+            // Keep pending for a later game-thread / poll retry.
+            InterlockedExchange(&g_announcedAnnihilate[i], 0);
+        }
     }
 }
 
@@ -1521,6 +1681,7 @@ void __cdecl Hook_UnitGained(void* unit)
             playerIndex, type, g_units[playerIndex], g_buildings[playerIndex],
             g_liveAssets[playerIndex], IsExcludedWipeType(type) ? 1 : 0);
     }
+    FlushPendingAnnihilateChat();
 }
 
 void __cdecl Hook_UnitLost(void* unit)
@@ -1558,7 +1719,23 @@ void __cdecl Hook_UnitLost(void* unit)
             g_everHadAssets[playerIndex],
             g_lastName[playerIndex][0] ? g_lastName[playerIndex] : "?");
     }
-    // Marking happens in PollWipeMarks (HasForces poll) — not from census here.
+
+    // Game-thread wipe: do not wait for InstallThread hf-poll (that only queues
+    // pending chat; PushMapMsg must run here or the line never appears in-match).
+    if (SeatEligibleForHfWipe(playerIndex) &&
+        InterlockedCompareExchange(&g_leftFlags[playerIndex], 0, 0) == 0) {
+        const int hf = CallHasForces(playerIndex);
+        NoteHasForcesSample(playerIndex, hf);
+        if (hf == 0) {
+            CacheNamesFromTable();
+            if (IsComputerSlot(playerIndex) ||
+                LooksLikeComputerName(AnnihilateNameFor(playerIndex))) {
+                NoteComputerSlot(playerIndex);
+                MarkGoneUi(playerIndex, "comp-wipe-lost");
+            }
+        }
+    }
+    FlushPendingAnnihilateChat();
 }
 
 void __cdecl Hook_AnnounceGone(int playerIndex)
@@ -1572,6 +1749,7 @@ void __cdecl Hook_AnnounceGone(int playerIndex)
     if (g_originalAnnounceGone) {
         g_originalAnnounceGone(playerIndex);
     }
+    FlushPendingAnnihilateChat();
 }
 
 void __cdecl Hook_Eliminate(int playerIndex)
@@ -1587,6 +1765,7 @@ void __cdecl Hook_Eliminate(int playerIndex)
     if (g_originalEliminate) {
         g_originalEliminate(playerIndex);
     }
+    FlushPendingAnnihilateChat();
 }
 
 void BindTypeCountTable(uint8_t* moduleBase, uintptr_t imageBase)
@@ -1821,6 +2000,7 @@ void __cdecl Hook_SetText_Impl(void* ui, const char* name, int prop, int playerI
     if (inactive && colorPtr) {
         *colorPtr = kRedTextColor;
     }
+    FlushPendingAnnihilateChat();
 }
 
 // At the patched call site, EDI is the alliances row player index (0..7).
@@ -2335,6 +2515,10 @@ bool InstallHook()
     BindTypeCountTable(base, imageBase);
     BindLocalPlayer(base, imageBase);
     BindUiDrawApis(base, imageBase);
+    // Always slide from preferred ImageBase 0x400000 (PE ImageBase can match the
+    // load address and would leave PushMapMsg at the unslid preferred VA).
+    g_pushMapMsg = reinterpret_cast<PushMapMsgFn>(
+        base + (kPreferredPushMapMsg - kPreferredImageBase));
 
     // Leave-write hooks first so g_statusBase may already be known; set-text is required.
     const bool leaveOk = InstallLeaveWriteHooks(base, imageSize);
@@ -2359,6 +2543,7 @@ bool InstallHook()
         g_slotBase = reinterpret_cast<uint8_t*>(kPreferredSlotBase + slide);
         g_playerName0 = reinterpret_cast<char*>(kPreferredPlayerName0 + slide);
         g_msgInitFlag = reinterpret_cast<uint8_t*>(kPreferredMsgInitFlag + slide);
+        g_pushMapMsg = reinterpret_cast<PushMapMsgFn>(kPreferredPushMapMsg + slide);
     }
 
     LoadMarkModesFromJson();
@@ -2370,12 +2555,13 @@ bool InstallHook()
     InterlockedExchange(&g_enabled, 1);
     // Quiet hot-path file I/O in MP (unitGain/lost/census/row). Gone/install still Log().
     InterlockedExchange(&g_logQuiet, 1);
-    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d label=%d local=%p heads=%p rows=%p slot=%p markC=%ld markH=%ld quiet=1",
+    Log("InstallHook: ready enabled=1 leaveHooks=%d announce=%d wipeHook=%d elim=%d hasForces=%d label=%d push=%p local=%p heads=%p rows=%p slot=%p markC=%ld markH=%ld annihilate=%ld quiet=1",
         leaveOk ? 1 : 0, announceOk ? 1 : 0, wipeOk ? 1 : 0, elimOk ? 1 : 0, forcesOk ? 1 : 0,
-        labelOk ? 1 : 0,
+        labelOk ? 1 : 0, g_pushMapMsg,
         g_localPlayer, g_unitTypeHeads, g_typeCountRows, g_slotBase,
         InterlockedCompareExchange(&g_markComputers, 0, 0),
-        InterlockedCompareExchange(&g_markHumans, 0, 0));
+        InterlockedCompareExchange(&g_markHumans, 0, 0),
+        InterlockedCompareExchange(&g_announceComputerWipe, 0, 0));
     return true;
 }
 
@@ -2449,11 +2635,12 @@ extern "C" __declspec(dllexport) DWORD __stdcall AllyLeave_SetEnabled(LPVOID ena
     const LONG on = enabled ? 1 : 0;
     if (on) LoadMarkModesFromJson();
     InterlockedExchange(&g_enabled, on);
-    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld markC=%ld markH=%ld teams=%ld",
+    Log("SetEnabled=%ld ready=%ld hits=%ld recolors=%ld leaves=%ld markC=%ld markH=%ld teams=%ld annihilate=%ld",
         on, g_ready, g_hitCount, g_recolorCount, g_leaveEventCount,
         InterlockedCompareExchange(&g_markComputers, 0, 0),
         InterlockedCompareExchange(&g_markHumans, 0, 0),
-        InterlockedCompareExchange(&g_showTeamNumbers, 0, 0));
+        InterlockedCompareExchange(&g_showTeamNumbers, 0, 0),
+        InterlockedCompareExchange(&g_announceComputerWipe, 0, 0));
     return 1;
 }
 
@@ -2483,6 +2670,9 @@ extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGone(int playerInd
 extern "C" __declspec(dllexport) void __stdcall AllyLeave_MarkGoneFromChat(int playerIndex)
 {
     if (playerIndex < 0 || playerIndex > 7) return;
+    // Chat leave-lines are human-only. Never reclassify a known/computer-named seat.
+    if (InterlockedCompareExchange(&g_slotKind[playerIndex], 0, 0) == 1) return;
+    if (g_lastName[playerIndex][0] && LooksLikeComputerName(g_lastName[playerIndex])) return;
     NoteHumanSlot(playerIndex);
     RememberRecentLeave(playerIndex);
     MarkGoneUi(playerIndex, "chat-name");
@@ -2625,6 +2815,8 @@ static void PollMatchReset()
     static int s_lastFlag = -1;
     if (flag >= 0) {
         if (s_lastFlag >= 0 && flag != s_lastFlag) {
+            // Last chance to post queued annihilate lines before wipe state clears.
+            if (flag == 0) FlushPendingAnnihilateChat();
             ResetMatchState(flag == 1 ? "msg-init-start" : "msg-init-end");
             s_lastFlag = flag;
             return;
@@ -2680,6 +2872,7 @@ static void PollWipeMarks()
     if (!g_enabled || !g_ready || !g_hasForces) return;
 
     PollMatchReset();
+    CacheNamesFromTable();
 
     int local = -1;
     if (g_localPlayer) {
@@ -2776,7 +2969,8 @@ static void PollWipeMarks()
                 static_cast<LONG>(now ? now : 1));
             continue;
         }
-        if ((now - since) >= 2000) {
+        // Shorter than before: queue while UnitLost/gain still flush chat.
+        if ((now - since) >= 800) {
             static LONG s_hfMarkLog = 0;
             if (InterlockedIncrement(&s_hfMarkLog) <= 32) {
                 char hfBuf[64];
@@ -2787,6 +2981,9 @@ static void PollWipeMarks()
             MarkGoneUi(i, "hf-poll");
         }
     }
+
+    // Best-effort: poll thread may be the only chance near match end.
+    FlushPendingAnnihilateChat();
 }
 
 static DWORD WINAPI InstallThread(LPVOID)

@@ -35,12 +35,17 @@ struct ExtraFlags {
     bool endGameObserve = false;
     // Feature 6: gold lobby team digit on F11 alliances names.
     bool allianceTeamNumbers = false;
+    // Chat line "Name annihilated" when a computer is wipe-marked.
+    bool computerAnnihilatedChat = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
-               chatTimestamps || chatHistory || endGameObserve || allianceTeamNumbers;
+               chatTimestamps || chatHistory || endGameObserve || allianceTeamNumbers ||
+               computerAnnihilatedChat;
     }
+    // Leave/annihilated coloring needs the chat DLL even if ChatColoredNames is off.
     bool ChatDllWanted() const {
-        return chatNameColor || humanLeave || chatTimestamps || chatHistory;
+        return chatNameColor || humanLeave || computerAnnihilatedChat ||
+               chatTimestamps || chatHistory;
     }
 };
 
@@ -100,11 +105,13 @@ ExtraFlags ReadExtraFlags()
 
     flags.humanLeave = ReadJsonBool(buf, "AllyLeaveMarkHumans");
     flags.allianceTeamNumbers = ReadJsonBool(buf, "AllianceTeamNumbers");
+    flags.computerAnnihilatedChat = ReadJsonBool(buf, "ComputerAnnihilatedChat");
     flags.allyLeave =
         ReadJsonBool(buf, "AllyLeaveMarkComputers") ||
         flags.humanLeave ||
         ReadJsonBool(buf, "AllyLeaveRedNames") ||
-        flags.allianceTeamNumbers;
+        flags.allianceTeamNumbers ||
+        flags.computerAnnihilatedChat;
     flags.pauseChat = ReadJsonBool(buf, "ChatDuringPauseScreen");
     flags.dragSelect = ReadJsonBool(buf, "DragSelectColorEnabled");
     flags.chatNameColor = ReadJsonBool(buf, "ChatColoredNames");
@@ -258,9 +265,8 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.dragSelect && pid != 0 && pid != dragInjectedPid) {
             if (RunInjector(L"InjectDragSelect.exe", true)) dragInjectedPid = pid;
         }
-        // Inject the chat DLL when colors are on OR human gone marks are on;
-        // recolor is only enabled for the color feature — with humans-only the
-        // DLL just watches leave/drop/eliminated lines.
+        // Inject the chat DLL when colors, leave, or annihilate chat need it;
+        // name-recolor enable flag is separate (chatNameColor).
         if (flags.ChatDllWanted() && pid != 0 && pid != chatNameInjectedPid) {
             std::wstring chatArgs = flags.chatTimestamps ? L"--timestamps 1" : L"--timestamps 0";
             chatArgs += flags.chatHistory ? L" --history 1" : L" --history 0";
