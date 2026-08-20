@@ -608,8 +608,13 @@ DWORD WINAPI HistoryKeyThread(LPVOID)
             continue;
         }
         const bool focused = GameWindowFocused();
-        const bool up = focused && (GetAsyncKeyState(VK_PRIOR) & 0x8000) != 0;
-        const bool dn = focused && (GetAsyncKeyState(VK_NEXT) & 0x8000) != 0;
+        const bool ctrl = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+        const bool up = focused &&
+            (((GetAsyncKeyState(VK_PRIOR) & 0x8000) != 0) ||
+             (ctrl && (GetAsyncKeyState(VK_UP) & 0x8000) != 0));
+        const bool dn = focused &&
+            (((GetAsyncKeyState(VK_NEXT) & 0x8000) != 0) ||
+             (ctrl && (GetAsyncKeyState(VK_DOWN) & 0x8000) != 0));
         const DWORD now = GetTickCount();
         const bool viewing = InterlockedCompareExchange(&g_viewing, 0, 0) != 0;
 

@@ -32,10 +32,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly string _nativeDir;
     private readonly DispatcherTimer _hookWatchTimer;
     private readonly DispatcherTimer _dropMonitorTimer;
+    private readonly DispatcherTimer _selfMonitorTimer;
     private string _dropMonitorLog = string.Empty;
     private string _dropMonitorStatus = "Monitor is off.";
     private string _dropMonitorLastCause = "No drop recorded.";
     private bool _dropMonitorEnabled;
+    private string _selfMonitorLog = string.Empty;
+    private string _selfMonitorStatus = "Monitor is off.";
+    private string _selfMonitorLastCause = "No color change recorded.";
+    private bool _selfMonitorEnabled;
+    private readonly Dictionary<string, string> _selfMonitorLastColors = new(StringComparer.OrdinalIgnoreCase);
     private bool _allyLeaveMarkComputers;
     private bool _allyLeaveMarkHumans;
     private bool _appliedAllyLeaveMarkComputers;
@@ -60,6 +66,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _colorBlindPresetHintText = ColorBlindPresets.DefaultHint;
     private bool _unitSpriteColors;
     private bool _appliedUnitSpriteColors;
+    private bool _replaceClassicMusic;
+    private string _classicMusicSourcePath = string.Empty;
+    private string _classicMusicTarget = "HUMAN2_opl.wav";
+    private bool _appliedReplaceClassicMusic;
+    private string _appliedClassicMusicSourcePath = string.Empty;
+    private string _appliedClassicMusicTarget = "HUMAN2_opl.wav";
+    private bool _addRemasteredMusic;
+    private string _remasteredMusicSourcePath = string.Empty;
+    private string _remasteredMusicTarget = "HUMAN2_r.wav";
+    private bool _appliedAddRemasteredMusic;
+    private string _appliedRemasteredMusicSourcePath = string.Empty;
+    private string _appliedRemasteredMusicTarget = "HUMAN2_r.wav";
     private bool _appliedDragSelectColorEnabled;
     private bool _hookInjectedForRunningGame;
     private bool _pauseChatInjectedForRunningGame;
@@ -115,6 +133,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool DropMonitorCanStart => !DropMonitorEnabled;
 
+    public string SelfMonitorLog
+    {
+        get => _selfMonitorLog;
+        private set { _selfMonitorLog = value; OnPropertyChanged(); }
+    }
+
+    public string SelfMonitorStatus
+    {
+        get => _selfMonitorStatus;
+        private set { _selfMonitorStatus = value; OnPropertyChanged(); }
+    }
+
+    public string SelfMonitorLastCause
+    {
+        get => _selfMonitorLastCause;
+        private set { _selfMonitorLastCause = value; OnPropertyChanged(); }
+    }
+
+    public bool SelfMonitorEnabled
+    {
+        get => _selfMonitorEnabled;
+        private set
+        {
+            _selfMonitorEnabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SelfMonitorCanStart));
+        }
+    }
+
+    public bool SelfMonitorCanStart => !SelfMonitorEnabled;
+
     public bool AllyLeaveMarkComputers
     {
         get => _allyLeaveMarkComputers;
@@ -153,6 +202,42 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged();
             RefreshTabStatus();
         }
+    }
+
+    public bool ReplaceClassicMusic
+    {
+        get => _replaceClassicMusic;
+        set { if (_replaceClassicMusic == value) return; _replaceClassicMusic = value; OnPropertyChanged(); RefreshTabStatus(); }
+    }
+
+    public string ClassicMusicSourcePath
+    {
+        get => _classicMusicSourcePath;
+        set { _classicMusicSourcePath = value ?? string.Empty; OnPropertyChanged(); RefreshTabStatus(); }
+    }
+
+    public string ClassicMusicTarget
+    {
+        get => _classicMusicTarget;
+        set { _classicMusicTarget = value ?? "HUMAN2_opl.wav"; OnPropertyChanged(); RefreshTabStatus(); }
+    }
+
+    public bool AddRemasteredMusic
+    {
+        get => _addRemasteredMusic;
+        set { if (_addRemasteredMusic == value) return; _addRemasteredMusic = value; OnPropertyChanged(); RefreshTabStatus(); }
+    }
+
+    public string RemasteredMusicSourcePath
+    {
+        get => _remasteredMusicSourcePath;
+        set { _remasteredMusicSourcePath = value ?? string.Empty; OnPropertyChanged(); RefreshTabStatus(); }
+    }
+
+    public string RemasteredMusicTarget
+    {
+        get => _remasteredMusicTarget;
+        set { _remasteredMusicTarget = value ?? "HUMAN2_r.wav"; OnPropertyChanged(); RefreshTabStatus(); }
     }
 
     public bool ChatColoredNames
@@ -277,7 +362,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsApplyEnabled => !_isApplying;
 
-    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes";
+    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes" or "audio";
 
     public bool IsColorsStatusSingleLine => _activeTab == "colors";
 
@@ -387,6 +472,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _hookWatchTimer.Tick += (_, _) => UpdateExtraHookStatus(forceInject: false);
         _dropMonitorTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _dropMonitorTimer.Tick += (_, _) => RefreshDropMonitorLog();
+        _selfMonitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _selfMonitorTimer.Tick += (_, _) => RefreshSelfMonitor();
 
         try
         {
@@ -411,6 +498,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             WireOtherCards();
             LoadExtraFeatures();
+            LoadClassicMusicConfig();
             AppTheme.ApplyColorBlindMode(_colorBlindMode);
             RefreshCheckBoxVisuals();
             RefreshColorBlindModeButtons();
@@ -546,6 +634,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps() ||
         HasPendingAllianceTeamNumbers() || HasPendingComputerAnnihilatedChat();
     private bool HasPendingBugFixChanges() => HasPendingChatPause() || HasPendingChatHistory();
+    private bool HasPendingAudioChanges() =>
+        _replaceClassicMusic != _appliedReplaceClassicMusic ||
+        !string.Equals(_classicMusicSourcePath, _appliedClassicMusicSourcePath, StringComparison.OrdinalIgnoreCase) ||
+        !string.Equals(_classicMusicTarget, _appliedClassicMusicTarget, StringComparison.OrdinalIgnoreCase) ||
+        _addRemasteredMusic != _appliedAddRemasteredMusic ||
+        !string.Equals(_remasteredMusicSourcePath, _appliedRemasteredMusicSourcePath, StringComparison.OrdinalIgnoreCase) ||
+        !string.Equals(_remasteredMusicTarget, _appliedRemasteredMusicTarget, StringComparison.OrdinalIgnoreCase);
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
         new(icon, brush, text);
@@ -583,6 +678,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         "colors" => HasPendingColorChanges(),
         "feature" => HasPendingFeatureChanges(),
         "bugfixes" => HasPendingBugFixChanges(),
+        "audio" => HasPendingAudioChanges(),
         _ => false,
     };
 
@@ -621,6 +717,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SetStatusLines(StatusLine("✓", ReadyIconBrush,
                     "Bug fixes have been installed. Restart Warcraft II Remastered to take effect."));
             }
+            return;
+        }
+
+        if (_activeTab == "audio")
+        {
+            SetStatusLines(StatusLine("✓", ReadyIconBrush,
+                ReplaceClassicMusic || AddRemasteredMusic
+                    ? "Using custom scores."
+                    : "Using the original Warcraft scores."));
             return;
         }
 
@@ -1229,6 +1334,53 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         card.Hex = card.Hex;
         RefreshTabStatus();
+    }
+
+    private void SaveClassicMusicConfig()
+    {
+        var path = Path.Combine(Path.GetDirectoryName(_extraConfigPath)!, "classic-music.json");
+        var config = new ClassicMusicConfig
+        {
+            ClassicEnabled = ReplaceClassicMusic,
+            ClassicSourcePath = ClassicMusicSourcePath,
+            ClassicTargetFile = ClassicMusicTarget,
+            RemasteredEnabled = AddRemasteredMusic,
+            RemasteredSourcePath = RemasteredMusicSourcePath,
+            RemasteredTargetFile = RemasteredMusicTarget
+        };
+        File.WriteAllText(path, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
+        var installed = Path.Combine(NormalizeGameRoot(_appliedGameInstallPath), "x86", "Mods", "PlayerColorStudio", "mod", "classic-music.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(installed)!);
+        File.Copy(path, installed, true);
+    }
+
+    private void LoadClassicMusicConfig()
+    {
+        var path = Path.Combine(Path.GetDirectoryName(_extraConfigPath)!, "classic-music.json");
+        if (!File.Exists(path)) return;
+        var config = JsonSerializer.Deserialize<ClassicMusicConfig>(File.ReadAllText(path), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        ReplaceClassicMusic = config?.ClassicEnabled ?? false;
+        ClassicMusicSourcePath = config?.ClassicSourcePath ?? string.Empty;
+        ClassicMusicTarget = config?.ClassicTargetFile ?? "HUMAN2_opl.wav";
+        AddRemasteredMusic = config?.RemasteredEnabled ?? false;
+        RemasteredMusicSourcePath = config?.RemasteredSourcePath ?? string.Empty;
+        RemasteredMusicTarget = config?.RemasteredTargetFile ?? "HUMAN2_r.wav";
+    }
+
+    private void BrowseClassicMusic_Click(object sender, RoutedEventArgs e) =>
+        ChooseMusicFile(path => ClassicMusicSourcePath = path, "Choose a Classic music file");
+
+    private void BrowseRemasteredMusic_Click(object sender, RoutedEventArgs e) =>
+        ChooseMusicFile(path => RemasteredMusicSourcePath = path, "Choose a Remastered music file");
+
+    private static void ChooseMusicFile(Action<string> setPath, string title)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "WAV audio (*.wav)|*.wav|All files (*.*)|*.*",
+            Title = title
+        };
+        if (dialog.ShowDialog() == true) setPath(dialog.FileName);
     }
 
     private void ResetCard_Click(object sender, RoutedEventArgs e)
@@ -1926,6 +2078,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* optional while game closed */ }
                 });
             }
+            else if (_activeTab == "audio")
+            {
+                if (ReplaceClassicMusic && !File.Exists(ClassicMusicSourcePath))
+                    throw new FileNotFoundException("The selected Classic music file was not found.");
+                if (AddRemasteredMusic && !File.Exists(RemasteredMusicSourcePath))
+                    throw new FileNotFoundException("The selected Remastered music file was not found.");
+
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Applying audio settings…"));
+                await Task.Run(() =>
+                {
+                    SaveClassicMusicConfig();
+                    if (ReplaceClassicMusic || AddRemasteredMusic)
+                    {
+                        var music = RunEngine("-ApplyClassicMusicFromExtra", requireValidGameRoot: true);
+                        if (music.ExitCode != 0)
+                            throw new InvalidOperationException(music.Error.Length > 0 ? music.Error : music.Output);
+                    }
+                });
+                SetStatusLines(StatusLine("✓", ReadyIconBrush,
+                    "Audio settings applied. Restart Warcraft II Remastered to take effect."));
+            }
             else if (_activeTab == "feature")
             {
                 var markComputers = AllyLeaveMarkComputers;
@@ -1940,6 +2113,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
                 await Task.Run(() =>
                 {
+                    SaveClassicMusicConfig();
+                    if (ReplaceClassicMusic || AddRemasteredMusic)
+                    {
+                        var music = RunEngine("-ApplyClassicMusicFromExtra", requireValidGameRoot: true);
+                        if (music.ExitCode != 0) throw new InvalidOperationException(music.Error.Length > 0 ? music.Error : music.Output);
+                    }
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                         chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
@@ -2140,6 +2319,100 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return "Player left voluntarily or the game reported a quit: " + line.Trim();
         return "Unclassified drop event: " + line.Trim();
     }
+
+    private static readonly string[] SelfMonitorPaletteFiles =
+    [
+        @"x86\Data\Art\bgs\Forest\forest.ppl",
+        @"x86\Data\Art\bgs\Iceland\iceland.ppl",
+        @"x86\Data\Art\bgs\Swamp\swamp.ppl",
+        @"x86\Data\Art\bgs\XSwamp\xswamp.ppl",
+    ];
+
+    private void StartSelfMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        SelfMonitorEnabled = true;
+        _selfMonitorLastColors.Clear();
+        SelfMonitorStatus = "Monitor is running. Play until the self highlight changes.";
+        SelfMonitorLog = "Self-highlight monitor started.";
+        SelfMonitorLastCause = "No color change recorded.";
+        RefreshSelfMonitor();
+        _selfMonitorTimer.Start();
+    }
+
+    private void StopSelfMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        _selfMonitorTimer.Stop();
+        SelfMonitorEnabled = false;
+        SelfMonitorStatus = "Monitor is off.";
+    }
+
+    private void RefreshSelfMonitor()
+    {
+        var root = NormalizeGameRoot(_appliedGameInstallPath);
+        var expected = _appliedOtherHexByKey.TryGetValue("selectionHighlight", out var applied)
+            ? applied
+            : "#00FF00";
+        var events = new List<string>();
+        foreach (var relative in SelfMonitorPaletteFiles)
+        {
+            var path = Path.Combine(root, relative);
+            if (!File.Exists(path)) continue;
+            try
+            {
+                var bytes = File.ReadAllBytes(path);
+                const int paletteOffset = 250 * 3;
+                if (bytes.Length < paletteOffset + 3) continue;
+                var actual = $"#{ScalePaletteChannel(bytes[paletteOffset]):X2}{ScalePaletteChannel(bytes[paletteOffset + 1]):X2}{ScalePaletteChannel(bytes[paletteOffset + 2]):X2}";
+                var key = Path.GetFileName(path);
+                if (!_selfMonitorLastColors.TryGetValue(key, out var previous))
+                {
+                    _selfMonitorLastColors[key] = actual;
+                    continue;
+                }
+                if (string.Equals(previous, actual, StringComparison.OrdinalIgnoreCase)) continue;
+
+                var cause = ExplainSelfColorChange(path, previous, actual, expected);
+                events.Add($"[{DateTime.Now:HH:mm:ss}] {key}: {previous} -> {actual}. {cause}");
+                _selfMonitorLastColors[key] = actual;
+                SelfMonitorLastCause = cause;
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        if (events.Count > 0)
+        {
+            var existing = SelfMonitorLog == "Self-highlight monitor started." ? "" : SelfMonitorLog;
+            SelfMonitorLog = string.Join(Environment.NewLine,
+                (existing + Environment.NewLine + string.Join(Environment.NewLine, events))
+                    .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                    .TakeLast(250));
+        }
+        else if (_selfMonitorLastColors.Count > 0)
+        {
+            SelfMonitorStatus = "Monitoring palette index 250. No change detected.";
+        }
+    }
+
+    private string ExplainSelfColorChange(string palettePath, string previous, string actual, string expected)
+    {
+        var gameRunning = IsWarcraftIiRunning();
+        var patchLog = Path.Combine(Path.GetDirectoryName(_enginePath)!, "war2_color_patch_log.txt");
+        var recentPatch = File.Exists(patchLog)
+            ? File.ReadLines(patchLog).TakeLast(1).FirstOrDefault() ?? ""
+            : "";
+        if (!string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+        {
+            if (gameRunning)
+                return $"Runtime palette changed while the game was running (expected {expected}; likely game/HD palette selection).";
+            return $"Palette differs from the configured self highlight (expected {expected}; likely an apply/restore operation).";
+        }
+        if (!string.IsNullOrWhiteSpace(recentPatch) && recentPatch.Contains("Applied", StringComparison.OrdinalIgnoreCase))
+            return "Palette returned to the configured value after an apply operation.";
+        return $"Palette changed outside the expected value; file timestamp is {File.GetLastWriteTime(palettePath):HH:mm:ss}.";
+    }
+
+    private static int ScalePaletteChannel(byte channel) => (int)Math.Round(channel * 255.0 / 63.0);
 
     private void ColorBlindOn_Click(object sender, RoutedEventArgs e)
     {
@@ -2510,6 +2783,16 @@ public sealed class StudioSettings
     public string? MapEditorPath { get; set; }
     public string? MapsPath { get; set; }
     public bool ColorBlindMode { get; set; }
+}
+
+public sealed class ClassicMusicConfig
+{
+    public bool ClassicEnabled { get; set; }
+    public string ClassicSourcePath { get; set; } = string.Empty;
+    public string ClassicTargetFile { get; set; } = "HUMAN2_opl.wav";
+    public bool RemasteredEnabled { get; set; }
+    public string RemasteredSourcePath { get; set; } = string.Empty;
+    public string RemasteredTargetFile { get; set; } = "HUMAN2_r.wav";
 }
 
 public sealed class StatusLineItem

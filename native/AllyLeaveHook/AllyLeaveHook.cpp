@@ -2129,6 +2129,15 @@ bool PatchFuncPrologue(uint8_t* site, void* hook, uint8_t* savedOrig, void** tra
 bool InstallRenderLabelHook(uint8_t* base, size_t imageSize, uintptr_t imageBase)
 {
     (void)imageSize;
+    (void)base;
+    (void)imageBase;
+    // The render-label prologue is unstable in the current game build and can
+    // redirect execution into invalid memory during startup. Leave the skull
+    // overlay disabled; leave detection and chat marking remain active.
+    Log("InstallRenderLabel: disabled for startup stability");
+    return false;
+
+#if 0
     uint8_t* site = base + (kPreferredRenderLabel - imageBase);
     if (!IsLikelyCode(site, 7)) {
         Log("InstallRenderLabel: site unreadable");
@@ -2143,6 +2152,7 @@ bool InstallRenderLabelHook(uint8_t* base, size_t imageSize, uintptr_t imageBase
     g_originalRenderLabel = reinterpret_cast<RenderLabelFn>(original);
     Log("InstallRenderLabel: ok site=%p", site);
     return true;
+#endif
 }
 
 void Unpatch7(uint8_t* site, const uint8_t* savedOrig, void** tramp)
