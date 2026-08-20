@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -30,6 +31,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly string _settingsPath = string.Empty;
     private readonly string _nativeDir;
     private readonly DispatcherTimer _hookWatchTimer;
+    private readonly DispatcherTimer _dropMonitorTimer;
+    private string _dropMonitorLog = string.Empty;
+    private string _dropMonitorStatus = "Monitor is off.";
+    private string _dropMonitorLastCause = "No drop recorded.";
+    private bool _dropMonitorEnabled;
     private bool _allyLeaveMarkComputers;
     private bool _allyLeaveMarkHumans;
     private bool _appliedAllyLeaveMarkComputers;
@@ -77,6 +83,37 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ColorCard> Cards { get; } = [];
     public ObservableCollection<ColorCard> OtherCards { get; } = [];
     public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
+
+    public string DropMonitorLog
+    {
+        get => _dropMonitorLog;
+        private set { _dropMonitorLog = value; OnPropertyChanged(); }
+    }
+
+    public string DropMonitorStatus
+    {
+        get => _dropMonitorStatus;
+        private set { _dropMonitorStatus = value; OnPropertyChanged(); }
+    }
+
+    public string DropMonitorLastCause
+    {
+        get => _dropMonitorLastCause;
+        private set { _dropMonitorLastCause = value; OnPropertyChanged(); }
+    }
+
+    public bool DropMonitorEnabled
+    {
+        get => _dropMonitorEnabled;
+        private set
+        {
+            _dropMonitorEnabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DropMonitorCanStart));
+        }
+    }
+
+    public bool DropMonitorCanStart => !DropMonitorEnabled;
 
     public bool AllyLeaveMarkComputers
     {
@@ -348,6 +385,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _hookWatchTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _hookWatchTimer.Tick += (_, _) => UpdateExtraHookStatus(forceInject: false);
+        _dropMonitorTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _dropMonitorTimer.Tick += (_, _) => RefreshDropMonitorLog();
 
         try
         {
@@ -377,10 +416,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             RefreshColorBlindModeButtons();
             RefreshColorBlindPresetButtons();
             _hookWatchTimer.Start();
-            UpdateExtraHookStatus(forceInject: AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
-                _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
-                _appliedDragSelectColorEnabled);
+            InitializeDropMonitor();
+            UpdateExtraHookStatus(forceInject: false);
             RefreshTabStatus();
         }
         catch (Exception ex)
@@ -1995,6 +2032,114 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private const string DropMonitorDll = "DropMonitor.dll";
+    private static readonly string DropMonitorLogPath =
+        Path.Combine(Path.GetTempPath(), "war2_drop_monitor.log");
+
+    [DllImport(DropMonitorDll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void DropMonitor_Init();
+
+    [DllImport(DropMonitorDll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void DropMonitor_Enable();
+
+    [DllImport(DropMonitorDll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern void DropMonitor_Disable();
+
+    [DllImport(DropMonitorDll, CallingConvention = CallingConvention.Cdecl)]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static extern bool DropMonitor_IsEnabled();
+
+    private void InitializeDropMonitor()
+    {
+        // Do not call the legacy native initializer on the WPF startup thread.
+        // It can wait for a game-side event before the window is shown.
+        DropMonitorStatus = "Monitor is off. Start it when you are ready to test.";
+        RefreshDropMonitorLog();
+        _dropMonitorTimer.Start();
+    }
+
+    private void StartDropMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            DropMonitor_Enable();
+            DropMonitorEnabled = true;
+            DropMonitorStatus = "Monitor is running. Reproduce the drop in-game.";
+            RefreshDropMonitorLog();
+        }
+        catch (BadImageFormatException)
+        {
+            DropMonitorStatus = "Drop monitor requires the 32-bit app build.";
+        }
+        catch (DllNotFoundException)
+        {
+            DropMonitorStatus = "DropMonitor.dll is missing from the app folder.";
+        }
+        catch (Exception)
+        {
+            DropMonitorStatus = "Could not start monitor. Check that DropMonitor.dll is available.";
+        }
+    }
+
+    private void StopDropMonitor_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            DropMonitor_Disable();
+            DropMonitorEnabled = false;
+            DropMonitorStatus = "Monitor is off.";
+            RefreshDropMonitorLog();
+        }
+        catch (Exception)
+        {
+            DropMonitorStatus = "Could not stop monitor. Check that DropMonitor.dll is available.";
+        }
+    }
+
+    private void RefreshDropMonitorLog()
+    {
+        try
+        {
+            if (!File.Exists(DropMonitorLogPath))
+            {
+                DropMonitorLog = "No monitor log yet.";
+                DropMonitorLastCause = "No drop recorded.";
+                return;
+            }
+
+            var lines = File.ReadLines(DropMonitorLogPath).TakeLast(250).ToArray();
+            DropMonitorLog = string.Join(Environment.NewLine, lines);
+            var eventLine = lines.LastOrDefault(line =>
+                line.Contains("drop", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("disconnect", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("reason", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("cause", StringComparison.OrdinalIgnoreCase));
+            if (eventLine is not null)
+                DropMonitorLastCause = ClassifyDropCause(eventLine);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static string ClassifyDropCause(string line)
+    {
+        if (line.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("timed out", StringComparison.OrdinalIgnoreCase))
+            return "Likely network timeout: " + line.Trim();
+        if (line.Contains("disconnect", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("network", StringComparison.OrdinalIgnoreCase))
+            return "Likely network disconnect: " + line.Trim();
+        if (line.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("exception", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("failed", StringComparison.OrdinalIgnoreCase))
+            return "Hook/game error: " + line.Trim();
+        if (line.Contains("left", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("quit", StringComparison.OrdinalIgnoreCase))
+            return "Player left voluntarily or the game reported a quit: " + line.Trim();
+        return "Unclassified drop event: " + line.Trim();
+    }
 
     private void ColorBlindOn_Click(object sender, RoutedEventArgs e)
     {

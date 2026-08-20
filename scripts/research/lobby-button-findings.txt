@@ -1,0 +1,53 @@
+MP lobby button findings - 2026-08-20
+
+Requested behavior
+- Add a visible button labeled "Open map" only in the multiplayer lobby.
+- Initially no action/callback.
+- Preferred later test: make the existing Map/map-name row clickable.
+
+Repository and external research
+- The repo contains no declarative MP-lobby button layout.
+- Installed strings include mp_lobby_map and player_slots resources, but these are consumed by imperative executable UI code.
+- Desktop contains Warcraft-II-Plugins-main/lobby_map, a working 32-bit W2P plugin.
+- Working plugin lifecycle exports: w2p_init and screen_update.
+- Working plugin detects lobby state with in_lobby() and draws to the backbuffer.
+- The existing lobby_map plugin was backed up to mod/backup/lobby_map-original.w2p before replacement tests.
+
+Executable anchors found
+- Main MP lobby layout function: preferred VA 0x005362E0.
+- player_slots reference: around 0x0053674D.
+- player_slots_header reference: around 0x005367CE.
+- player_slots_header_offset reference: around 0x00536849.
+- Existing Map widget construction: around 0x00536CC8.
+- UI add route used by the Map widget: 0x005ACA30.
+- ButtonSpec constructor used elsewhere: 0x00530320.
+- Earlier candidate 0x00523470 was a resource/helper, not the lobby builder.
+
+Failed native-hook experiments
+- Prologue hooks on lobby/resource/helper functions caused crashes while leaving/re-entering the lobby.
+- Causes included wrong function identity, wrong calling convention/signature, and overwritten instruction boundaries.
+- All native lobby-hook experiments were removed from ObserveHook.cpp.
+- InjectObserve is restored to the normal ObserveHook behavior.
+- No lobby button is currently injected into the game executable.
+
+Overlay experiments
+- A WinForms overlay was created in the installed lobby_map_mod script.
+- It contains an Open map button and a transparent MapClickTarget.
+- UIAutomation was unreliable and produced PowerShell RuntimeException: Argumenttypen komen niet overeen.
+- The overlay also had sticky/black-bar behavior when lobby detection failed or stale processes remained.
+- The overlay now has defensive checks and is disabled by default unless -EnableLobbyButtonTest is explicitly supplied.
+- It was intentionally not treated as a finished solution.
+
+Plugin experiment
+- A separate LobbyButton.w2p was built with w2p_init and screen_update exports.
+- It was 32-bit and subsystem CONSOLE, matching the working plugin after correction.
+- The plugin loader did not produce its runtime log, so it was not proven to load.
+- The original lobby_map.w2p was restored after the experiment.
+- No experimental LobbyButton.w2p remains installed.
+
+Current safe state
+- Original lobby_map.w2p restored from mod/backup/lobby_map-original.w2p.
+- No native lobby hooks active.
+- Textbox scaling disabled/greyed out separately.
+- Other player-color, chat, pause, drop, selection, and QoL features were not intentionally changed by the lobby experiment.
+- The correct future path is to reuse the proven W2P plugin loader contract or build a standalone overlay with a verified lobby-state/Map-row anchor. Do not revive the failed native prologue hooks without validating ABI, instruction boundaries, ASLR, and object lifetime.

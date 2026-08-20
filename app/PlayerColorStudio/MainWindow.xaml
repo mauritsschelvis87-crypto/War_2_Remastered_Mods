@@ -540,6 +540,62 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+            <TabItem Header="Drop monitor" Tag="dropmonitor" DockPanel.Dock="Right">
+                <Grid Margin="16" Background="{DynamicResource PanelBrush}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Drop monitor" FontSize="22" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Margin="0,6,0,14" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   Text="Start the monitor before testing a mod. The live log records what the game reports around a player drop."/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button Content="Start monitor" Width="130" Height="34" Margin="0,0,8,0"
+                            IsEnabled="{Binding DropMonitorCanStart}"
+                                Click="StartDropMonitor_Click"/>
+                        <Button Content="Stop monitor" Width="130" Height="34"
+                                IsEnabled="{Binding DropMonitorEnabled}"
+                                Click="StopDropMonitor_Click"/>
+                        <TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   Text="{Binding DropMonitorStatus}"/>
+                    </StackPanel>
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Padding="12" Margin="0,0,8,0" CornerRadius="8"
+                                Background="{DynamicResource CardBrush}"
+                                BorderBrush="{DynamicResource CardBorderBrush}"
+                                BorderThickness="{DynamicResource CardBorderThickness}">
+                            <TextBox Text="{Binding DropMonitorLog, Mode=OneWay}" IsReadOnly="True"
+                                     TextWrapping="NoWrap" AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto"
+                                     Background="Transparent" BorderThickness="0"
+                                     Foreground="{DynamicResource TextBrush}"/>
+                        </Border>
+                        <Border Grid.Column="1" Padding="14" CornerRadius="8"
+                                Background="{DynamicResource CardBrush}"
+                                BorderBrush="{DynamicResource CardBorderBrush}"
+                                BorderThickness="{DynamicResource CardBorderThickness}">
+                            <StackPanel>
+                                <TextBlock Text="Latest cause" FontSize="17" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextBrush}"/>
+                                <TextBlock Margin="0,12,0,0" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource MutedTextBrush}"
+                                           Text="{Binding DropMonitorLastCause}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
             <TabItem Header="Paths" Tag="path" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
