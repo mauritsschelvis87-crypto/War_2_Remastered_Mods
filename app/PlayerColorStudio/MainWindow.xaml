@@ -211,38 +211,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Audio" Tag="audio-hidden" DockPanel.Dock="Left" Visibility="Collapsed">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
-                    <StackPanel Background="{DynamicResource PanelBrush}">
-                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="Replace one existing Classic track and one existing Remastered track with files you choose."/>
-                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
-                            <Expander Style="{StaticResource HelpExpanderStyle}">
-                                <Expander.Header><Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}"><CheckBox IsChecked="{Binding ReplaceClassicMusic}" IsEnabled="{Binding IsApplyEnabled}" Margin="0,0,0,14" VerticalAlignment="Center"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Replace Classic music"/></CheckBox></Grid></Expander.Header>
-                                <StackPanel>
-                                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" LineHeight="20" Text="Choose one file and replace one existing Classic/OPL track. The original track is backed up before applying."/>
-                                    <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="420"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Width="420" Text="{Binding ClassicMusicSourcePath}" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/><Button Grid.Column="1" Content="Browse..." Width="100" Margin="10,0,0,0" IsEnabled="{Binding ReplaceClassicMusic}" Click="BrowseClassicMusic_Click"/></Grid>
-                                    <ComboBox Margin="0,10,0,0" Width="240" HorizontalAlignment="Left" SelectedValuePath="Tag" SelectedValue="{Binding ClassicMusicTarget, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding ReplaceClassicMusic}"><ComboBoxItem Content="HUMAN2_opl.wav" Tag="HUMAN2_opl.wav"/><ComboBoxItem Content="HUMAN3_opl.wav" Tag="HUMAN3_opl.wav"/><ComboBoxItem Content="HUMAN4_opl.wav" Tag="HUMAN4_opl.wav"/><ComboBoxItem Content="HUMAN5_opl.wav" Tag="HUMAN5_opl.wav"/><ComboBoxItem Content="ORC2_opl.wav" Tag="ORC2_opl.wav"/><ComboBoxItem Content="ORC3_opl.wav" Tag="ORC3_opl.wav"/><ComboBoxItem Content="ORC4_opl.wav" Tag="ORC4_opl.wav"/><ComboBoxItem Content="ORC5_opl.wav" Tag="ORC5_opl.wav"/></ComboBox>
-                                </StackPanel>
-                            </Expander>
-                        </Border>
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
-                            <Expander Style="{StaticResource HelpExpanderStyle}">
-                                <Expander.Header><Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}"><CheckBox IsChecked="{Binding AddRemasteredMusic}" IsEnabled="{Binding IsApplyEnabled}" Margin="0,0,0,14" VerticalAlignment="Center"><TextBlock FontSize="17" FontWeight="SemiBold" Text="Replace Remastered music"/></CheckBox></Grid></Expander.Header>
-                                <StackPanel>
-                                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" LineHeight="20" Text="Choose one file and replace one existing Remastered track. The original track is backed up before applying."/>
-                                    <Grid Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="420"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Width="420" Text="{Binding RemasteredMusicSourcePath}" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/><Button Grid.Column="1" Content="Browse..." Width="100" Margin="10,0,0,0" IsEnabled="{Binding AddRemasteredMusic}" Click="BrowseRemasteredMusic_Click"/></Grid>
-                                    <ComboBox Margin="0,10,0,0" Width="240" HorizontalAlignment="Left" SelectedValuePath="Tag" SelectedValue="{Binding RemasteredMusicTarget, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding AddRemasteredMusic}"><ComboBoxItem Content="HUMAN1_r.wav" Tag="HUMAN1_r.wav"/><ComboBoxItem Content="HUMAN2_r.wav" Tag="HUMAN2_r.wav"/><ComboBoxItem Content="HUMAN3_r.wav" Tag="HUMAN3_r.wav"/><ComboBoxItem Content="HUMAN4_r.wav" Tag="HUMAN4_r.wav"/><ComboBoxItem Content="HUMAN5_r.wav" Tag="HUMAN5_r.wav"/><ComboBoxItem Content="HUMAN6_r.wav" Tag="HUMAN6_r.wav"/><ComboBoxItem Content="ORC1_r.wav" Tag="ORC1_r.wav"/><ComboBoxItem Content="ORC2_r.wav" Tag="ORC2_r.wav"/><ComboBoxItem Content="ORC3_r.wav" Tag="ORC3_r.wav"/><ComboBoxItem Content="ORC4_r.wav" Tag="ORC4_r.wav"/><ComboBoxItem Content="ORC5_r.wav" Tag="ORC5_r.wav"/><ComboBoxItem Content="ORC6_r.wav" Tag="ORC6_r.wav"/></ComboBox>
-                                </StackPanel>
-                            </Expander>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
             <TabItem Header="Feature mods" Tag="feature" DockPanel.Dock="Left">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
@@ -527,19 +495,21 @@
                 </ScrollViewer>
             </TabItem>
             <!-- Dock=Right: first Right tab is rightmost (Settings), then About, then Paths. -->
-            <TabItem Header="Audio" Tag="audio" DockPanel.Dock="Left">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
+            <TabItem Header="Audio" Tag="audio" DockPanel.Dock="Left" Visibility="Collapsed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}" IsEnabled="False">
                     <StackPanel Background="{DynamicResource PanelBrush}">
-                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Text="Replace one existing Classic track and one existing Remastered track with files you choose."/>
+                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Text="Under construction."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden" Text="Player 8 cannot be changed yet, I am working on it."/>
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8" Height="{StaticResource ExpandedColorCardMinHeight}" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
                             <StackPanel>
                                 <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <CheckBox IsChecked="{Binding ReplaceClassicMusic}" IsEnabled="{Binding IsApplyEnabled}" Margin="0,0,14,14" VerticalAlignment="Center"><TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" Text="Replace Classic music"/></CheckBox>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14"><TextBox Width="420" Height="34" Text="{Binding ClassicMusicSourcePath, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding ReplaceClassicMusic}" Padding="8,6" BorderThickness="{DynamicResource CardBorderThickness}"/><Button Content="Browse..." Width="100" Height="34" Margin="10,0,0,0" IsEnabled="{Binding ReplaceClassicMusic}" Click="BrowseClassicMusic_Click"/></StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14"><TextBox Width="420" Height="34" Text="{Binding ClassicMusicSourcePath, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding ReplaceClassicMusic}" Padding="8,6" BorderThickness="{DynamicResource CardBorderThickness}"/><Button Content="Browse..." Width="100" Height="34" Margin="10,0,0,0" IsEnabled="{Binding ReplaceClassicMusic}" Click="BrowseClassicMusic_Click"/><Button Content="Reset" Width="90" Height="34" Margin="8,0,0,0" IsEnabled="{Binding ReplaceClassicMusic}" Click="ResetClassicMusic_Click"/></StackPanel>
                                 </Grid>
-                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Text="Choose one file and replace one existing Classic/OPL track. The original track is backed up before applying."/>
+                                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20" MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           Text="Choose one file and replace one existing Classic/OPL track. The original track is backed up before applying."/>
                             </StackPanel>
                         </Border>
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8" Height="{StaticResource ExpandedColorCardMinHeight}" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
@@ -547,10 +517,30 @@
                                 <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                     <CheckBox IsChecked="{Binding AddRemasteredMusic}" IsEnabled="{Binding IsApplyEnabled}" Margin="0,0,14,14" VerticalAlignment="Center"><TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" Text="Replace Remastered music"/></CheckBox>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14"><TextBox Width="420" Height="34" Text="{Binding RemasteredMusicSourcePath, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding AddRemasteredMusic}" Padding="8,6" BorderThickness="{DynamicResource CardBorderThickness}"/><Button Content="Browse..." Width="100" Height="34" Margin="10,0,0,0" IsEnabled="{Binding AddRemasteredMusic}" Click="BrowseRemasteredMusic_Click"/></StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14"><TextBox Width="420" Height="34" Text="{Binding RemasteredMusicSourcePath, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding AddRemasteredMusic}" Padding="8,6" BorderThickness="{DynamicResource CardBorderThickness}"/><Button Content="Browse..." Width="100" Height="34" Margin="10,0,0,0" IsEnabled="{Binding AddRemasteredMusic}" Click="BrowseRemasteredMusic_Click"/><Button Content="Reset" Width="90" Height="34" Margin="8,0,0,0" IsEnabled="{Binding AddRemasteredMusic}" Click="ResetRemasteredMusic_Click"/></StackPanel>
                                 </Grid>
-                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Text="Choose one file and replace one existing Remastered track. The original track is backed up before applying."/>
+                                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20" MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           Text="Choose one file and replace one existing Remastered track. The original track is backed up before applying."/>
                             </StackPanel>
+                        </Border>
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Height="{StaticResource ExpandedColorCardMinHeight}"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <CheckBox IsChecked="{Binding HumanPaladinAudioEnabled}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          VerticalAlignment="Center">
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="Human Paladin"/>
+                                </CheckBox>
+                                <Button Grid.Column="1" Content="Reset" Width="90" Height="34"
+                                        IsEnabled="{Binding IsApplyEnabled}"
+                                        Click="ResetHumanPaladinAudio_Click"/>
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
@@ -670,114 +660,6 @@
 
                     </StackPanel>
                 </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Drop monitor" Tag="dropmonitor" DockPanel.Dock="Right">
-                <Grid Margin="16" Background="{DynamicResource PanelBrush}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel>
-                        <TextBlock Margin="0,6,0,14" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   Text="Start the monitor before testing a mod. The live log records what the game reports around a player drop."/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button Content="Start monitor" Width="130" Height="34" Margin="0,0,8,0"
-                            IsEnabled="{Binding DropMonitorCanStart}"
-                                Click="StartDropMonitor_Click"/>
-                        <Button Content="Stop monitor" Width="130" Height="34"
-                                IsEnabled="{Binding DropMonitorEnabled}"
-                                Click="StopDropMonitor_Click"/>
-                        <TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   Text="{Binding DropMonitorStatus}"/>
-                    </StackPanel>
-                    <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Padding="12" Margin="0,0,8,0" CornerRadius="8"
-                                Background="{DynamicResource CardBrush}"
-                                BorderBrush="{DynamicResource CardBorderBrush}"
-                                BorderThickness="{DynamicResource CardBorderThickness}">
-                            <TextBox Text="{Binding DropMonitorLog, Mode=OneWay}" IsReadOnly="True"
-                                     TextWrapping="NoWrap" AcceptsReturn="True"
-                                     VerticalScrollBarVisibility="Auto"
-                                     HorizontalScrollBarVisibility="Auto"
-                                     Background="Transparent" BorderThickness="0"
-                                     Foreground="{DynamicResource TextBrush}"/>
-                        </Border>
-                        <Border Grid.Column="1" Padding="14" CornerRadius="8"
-                                Background="{DynamicResource CardBrush}"
-                                BorderBrush="{DynamicResource CardBorderBrush}"
-                                BorderThickness="{DynamicResource CardBorderThickness}">
-                            <StackPanel>
-                                <TextBlock Text="Latest cause" FontSize="17" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextBrush}"/>
-                                <TextBlock Margin="0,12,0,0" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource MutedTextBrush}"
-                                           Text="{Binding DropMonitorLastCause}"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Self monitor" Tag="selfmonitor" DockPanel.Dock="Right">
-                <Grid Margin="16" Background="{DynamicResource PanelBrush}">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel>
-                        <TextBlock Margin="0,6,0,14" TextWrapping="Wrap"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   Text="Watch palette index 250 while testing. This monitor only reads the game files and does not change colors or hooks."/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button Content="Start monitor" Width="130" Height="34" Margin="0,0,8,0"
-                                IsEnabled="{Binding SelfMonitorCanStart}"
-                                Click="StartSelfMonitor_Click"/>
-                        <Button Content="Stop monitor" Width="130" Height="34"
-                                IsEnabled="{Binding SelfMonitorEnabled}"
-                                Click="StopSelfMonitor_Click"/>
-                        <TextBlock Margin="16,0,0,0" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   Text="{Binding SelfMonitorStatus}"/>
-                    </StackPanel>
-                    <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Padding="12" Margin="0,0,8,0" CornerRadius="8"
-                                Background="{DynamicResource CardBrush}"
-                                BorderBrush="{DynamicResource CardBorderBrush}"
-                                BorderThickness="{DynamicResource CardBorderThickness}">
-                            <TextBox Text="{Binding SelfMonitorLog, Mode=OneWay}" IsReadOnly="True"
-                                     TextWrapping="NoWrap" AcceptsReturn="True"
-                                     VerticalScrollBarVisibility="Auto"
-                                     HorizontalScrollBarVisibility="Auto"
-                                     Background="Transparent" BorderThickness="0"
-                                     Foreground="{DynamicResource TextBrush}"/>
-                        </Border>
-                        <Border Grid.Column="1" Padding="14" CornerRadius="8"
-                                Background="{DynamicResource CardBrush}"
-                                BorderBrush="{DynamicResource CardBorderBrush}"
-                                BorderThickness="{DynamicResource CardBorderThickness}">
-                            <StackPanel>
-                                <TextBlock Text="Latest cause" FontSize="17" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextBrush}"/>
-                                <TextBlock Margin="0,12,0,0" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource MutedTextBrush}"
-                                           Text="{Binding SelfMonitorLastCause}"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Grid>
             </TabItem>
             <TabItem Header="Paths" Tag="path" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">

@@ -16,6 +16,7 @@ $projectFile = Join-Path $sourceRoot 'app\PlayerColorStudio\PlayerColorStudio.cs
 $setupProject = Join-Path $installerDir 'SetupApp\SetupApp.csproj'
 $engineSource = Join-Path $sourceRoot 'mod'
 $nativeBuild = Join-Path $sourceRoot 'native\AllyLeaveHook\build.ps1'
+$setupIcon = Join-Path $installerDir 'SetupApp\app.ico'
 $installScript = Join-Path $installerDir 'Install-FromPackage.ps1'
 $installBat = Join-Path $installerDir 'package\Install.bat'
 $setupPayloadZip = Join-Path $installerDir 'SetupApp\payload.zip'
@@ -24,6 +25,7 @@ if (!(Test-Path -LiteralPath $projectFile)) { throw "Project not found: $project
 if (!(Test-Path -LiteralPath $setupProject)) { throw "Setup project not found: $setupProject" }
 if (!(Test-Path -LiteralPath $engineSource)) { throw "Mod engine not found: $engineSource" }
 if (!(Test-Path -LiteralPath $nativeBuild)) { throw "Native build script not found: $nativeBuild" }
+if (!(Test-Path -LiteralPath $setupIcon)) { throw "Setup icon not found: $setupIcon" }
 if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) {
     throw '.NET SDK is required to build the share package.'
 }
@@ -77,7 +79,12 @@ try {
     Copy-Item -Path (Join-Path $publishTemp '*') -Destination $payloadApp -Recurse -Force
     Get-ChildItem -LiteralPath $payloadApp -Filter '*.pdb' -Recurse -ErrorAction SilentlyContinue |
         Remove-Item -Force
+    Copy-Item -LiteralPath $setupIcon -Destination (Join-Path $payloadApp 'app.ico') -Force
     Copy-Item -LiteralPath (Join-Path $engineSource 'Apply-PlayerColors.ps1') -Destination $payloadMod -Force
+    $assetSource = Join-Path $engineSource 'assets'
+    if (Test-Path -LiteralPath $assetSource) {
+        Copy-Item -LiteralPath $assetSource -Destination $payloadMod -Recurse -Force
+    }
 
     $nativeSource = if ([string]::IsNullOrWhiteSpace($NativeSource)) {
         Join-Path $engineSource 'native'

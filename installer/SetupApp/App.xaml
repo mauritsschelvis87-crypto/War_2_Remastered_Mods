@@ -3,10 +3,29 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <SolidColorBrush x:Key="WindowBrush" Color="#FF1B2638"/>
-        <SolidColorBrush x:Key="PanelBrush" Color="#FF243044"/>
-        <SolidColorBrush x:Key="CardBrush" Color="#FF2C3A52"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#FF2EA85C"/>
+        <SolidColorBrush x:Key="WindowBrush" Color="#FF1A2740"/>
+        <SolidColorBrush x:Key="PanelBrush" Color="#FF223352"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#FF2C3D5C"/>
+        <SolidColorBrush x:Key="TextBrush" Color="#FFFFFFFF"/>
         <SolidColorBrush x:Key="MutedBrush" Color="#FFB8C4D8"/>
+        <SolidColorBrush x:Key="ControlBorderBrush" Color="#FF5A7398"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF4E9DFF"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource WindowBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Padding" Value="14,7"/>
+        </Style>
     </Application.Resources>
 </Application>

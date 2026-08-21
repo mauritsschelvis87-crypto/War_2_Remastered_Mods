@@ -78,6 +78,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedAddRemasteredMusic;
     private string _appliedRemasteredMusicSourcePath = string.Empty;
     private string _appliedRemasteredMusicTarget = "HUMAN2_r.wav";
+    private bool _humanPaladinAudioEnabled;
     private bool _appliedDragSelectColorEnabled;
     private bool _hookInjectedForRunningGame;
     private bool _pauseChatInjectedForRunningGame;
@@ -101,6 +102,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ColorCard> Cards { get; } = [];
     public ObservableCollection<ColorCard> OtherCards { get; } = [];
     public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
+
+    public bool HumanPaladinAudioEnabled
+    {
+        get => _humanPaladinAudioEnabled;
+        set
+        {
+            if (_humanPaladinAudioEnabled == value) return;
+            _humanPaladinAudioEnabled = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string DropMonitorLog
     {
@@ -1350,8 +1362,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         };
         File.WriteAllText(path, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
         var installed = Path.Combine(NormalizeGameRoot(_appliedGameInstallPath), "x86", "Mods", "PlayerColorStudio", "mod", "classic-music.json");
-        Directory.CreateDirectory(Path.GetDirectoryName(installed)!);
-        File.Copy(path, installed, true);
+        if (!string.Equals(Path.GetFullPath(path), Path.GetFullPath(installed), StringComparison.OrdinalIgnoreCase))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(installed)!);
+            File.Copy(path, installed, true);
+        }
     }
 
     private void LoadClassicMusicConfig()
@@ -1372,6 +1387,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void BrowseRemasteredMusic_Click(object sender, RoutedEventArgs e) =>
         ChooseMusicFile(path => RemasteredMusicSourcePath = path, "Choose a Remastered music file");
+
+    private void ResetClassicMusic_Click(object sender, RoutedEventArgs e) =>
+        ClassicMusicSourcePath = string.Empty;
+
+    private void ResetRemasteredMusic_Click(object sender, RoutedEventArgs e) =>
+        RemasteredMusicSourcePath = string.Empty;
+
+    private void ResetHumanPaladinAudio_Click(object sender, RoutedEventArgs e) =>
+        HumanPaladinAudioEnabled = false;
 
     private static void ChooseMusicFile(Action<string> setPath, string title)
     {
