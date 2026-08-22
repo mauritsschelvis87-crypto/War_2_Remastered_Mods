@@ -1240,9 +1240,64 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OilPatchHighlight = "#FFFBF3",
     };
 
+    private void MirrorPlayerColorsJson(string json)
+    {
+        try
+        {
+            var installConfig = Path.Combine(
+                NormalizeGameRoot(_appliedGameInstallPath),
+                "x86", "Mods", "PlayerColorStudio", "mod", "player-colors.json");
+            if (string.IsNullOrWhiteSpace(installConfig) ||
+                string.Equals(Path.GetFullPath(installConfig), Path.GetFullPath(_configPath),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var dir = Path.GetDirectoryName(installConfig);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            File.WriteAllText(installConfig, json);
+        }
+        catch { /* best-effort mirror for the in-game hook */ }
+    }
+
+    private void SyncNativeToGameInstall()
+    {
+        if (string.IsNullOrEmpty(_nativeDir) || !Directory.Exists(_nativeDir)) return;
+
+        try
+        {
+            var installNative = Path.Combine(
+                NormalizeGameRoot(_appliedGameInstallPath),
+                "x86", "Mods", "PlayerColorStudio", "mod", "native");
+            if (string.IsNullOrWhiteSpace(installNative) ||
+                string.Equals(Path.GetFullPath(installNative), Path.GetFullPath(_nativeDir),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(installNative);
+            foreach (var file in Directory.EnumerateFiles(_nativeDir))
+            {
+                var ext = Path.GetExtension(file);
+                if (string.Equals(ext, ".lib", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(ext, ".exp", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                File.Copy(file, Path.Combine(installNative, Path.GetFileName(file)), overwrite: true);
+            }
+        }
+        catch { /* best-effort mirror for AllyLeaveWatch / hooks in the game folder */ }
+    }
+
     private void WriteColorConfigAndApply(ColorConfig config)
     {
-        File.WriteAllText(_configPath, JsonSerializer.Serialize(config, JsonOpts));
+        var json = JsonSerializer.Serialize(config, JsonOpts);
+        File.WriteAllText(_configPath, json);
+        MirrorPlayerColorsJson(json);
         var result = RunEngine("-ApplySavedConfigOnly");
         if (result.ExitCode != 0)
         {
@@ -1585,7 +1640,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var anyExtra = AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
                 _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
-                _appliedDragSelectColorEnabled;
+                _appliedDragSelectColorEnabled || _appliedUnitSpriteColors;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
@@ -2074,6 +2129,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
+                    SyncNativeToGameInstall();
                     if (markComputers || markHumans)
                         ApplyAllyGoneSkullAtlas();
                 });
