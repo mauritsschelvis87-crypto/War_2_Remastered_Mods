@@ -568,8 +568,18 @@ function Get-SelectionPatchPaletteIndices {
     ) + $GoldMineHighlightPaletteIndices
 }
 
+function Get-AllyBarProgressColor($color) {
+    # End-game stat bars fill via progress_cursor over a darker progress track.
+    # Vanilla skins use ~50% RGB for progress (e.g. P2 [0,30,96] vs cursor [0,60,192]).
+    return [pscustomobject]@{
+        R = [int]($color.R / 2)
+        G = [int]($color.G / 2)
+        B = [int]($color.B / 2)
+    }
+}
+
 function Get-AllyBarCursorColor($color) {
-    # Ally chips render progress_cursor; keep the exact player color (no 2x clip to white).
+    # progress_cursor = bright player color (the animated fill).
     return [pscustomobject]@{
         R = $color.R
         G = $color.G
@@ -595,13 +605,14 @@ function Apply-AllyScreenSkinsJson {
         if ($DisabledPlayerIndices -contains $playerIndex) { continue }
 
         $base = $Colors[$playerIndex]
+        $track = Get-AllyBarProgressColor $base
         $cursor = Get-AllyBarCursorColor $base
         $skinId = "$AllyScreenSkinPrefix$playerIndex"
-        $baseRgba = "$($base.R), $($base.G), $($base.B), 255"
+        $trackRgba = "$($track.R), $($track.G), $($track.B), 255"
         $cursorRgba = "$($cursor.R), $($cursor.G), $($cursor.B), 255"
 
         $progressPattern = '(?s)("id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress"\s*:\s*\{\s*"color"\s*:\s*)\[[^\]]+\]'
-        $content = [regex]::Replace($content, $progressPattern, "`${1}[$baseRgba]", 1)
+        $content = [regex]::Replace($content, $progressPattern, "`${1}[$trackRgba]", 1)
 
         $cursorPattern = '(?s)("id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress_cursor"\s*:\s*\{\s*"color"\s*:\s*)\[[^\]]+\]'
         $content = [regex]::Replace($content, $cursorPattern, "`${1}[$cursorRgba]", 1)
@@ -615,17 +626,32 @@ function Test-AllyScreenSkinsJson($colors, [string]$Root) {
     $path = Get-GameFilePath $AllyScreenSkinsJson $Root
     $content = [IO.File]::ReadAllText($path)
     $base = $colors[0]
-    $expected = "$($base.R), $($base.G), $($base.B), 255"
+    $track = Get-AllyBarProgressColor $base
+    $cursor = Get-AllyBarCursorColor $base
+    $expectedTrack = "$($track.R), $($track.G), $($track.B), 255"
+    $expectedCursor = "$($cursor.R), $($cursor.G), $($cursor.B), 255"
     $skinId = "${AllyScreenSkinPrefix}0"
-    $pattern = '(?s)"id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress"\s*:\s*\{\s*"color"\s*:\s*\[([^\]]+)\]'
-    $match = [regex]::Match($content, $pattern)
-    if (!$match.Success) {
+
+    $trackPattern = '(?s)"id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress"\s*:\s*\{\s*"color"\s*:\s*\[([^\]]+)\]'
+    $trackMatch = [regex]::Match($content, $trackPattern)
+    if (!$trackMatch.Success) {
         throw "Kon fe_endgame_stats_bar_0 niet vinden in skins.json."
     }
-    $actual = ($match.Groups[1].Value -replace '\s', '')
-    $want = ($expected -replace '\s', '')
-    if ($actual -ne $want) {
+    $actualTrack = ($trackMatch.Groups[1].Value -replace '\s', '')
+    $wantTrack = ($expectedTrack -replace '\s', '')
+    if ($actualTrack -ne $wantTrack) {
         throw "Patch mislukt op skins.json ($skinId progress.color)."
+    }
+
+    $cursorPattern = '(?s)"id"\s*:\s*"' + [regex]::Escape($skinId) + '".*?"progress_cursor"\s*:\s*\{\s*"color"\s*:\s*\[([^\]]+)\]'
+    $cursorMatch = [regex]::Match($content, $cursorPattern)
+    if (!$cursorMatch.Success) {
+        throw "Kon fe_endgame_stats_bar_0 progress_cursor niet vinden in skins.json."
+    }
+    $actualCursor = ($cursorMatch.Groups[1].Value -replace '\s', '')
+    $wantCursor = ($expectedCursor -replace '\s', '')
+    if ($actualCursor -ne $wantCursor) {
+        throw "Patch mislukt op skins.json ($skinId progress_cursor.color)."
     }
 }
 

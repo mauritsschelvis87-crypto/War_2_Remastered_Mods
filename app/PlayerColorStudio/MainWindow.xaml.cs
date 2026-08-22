@@ -450,8 +450,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             var version = typeof(MainWindow).Assembly.GetName().Version;
             return version is null
-                ? "Version unknown"
-                : $"Version {version.Major}.{version.Minor}.{version.Build}";
+                ? "Beta Version unknown"
+                : $"Beta Version {version.Major}.{version.Minor}.{version.Build}";
         }
     }
 
@@ -478,6 +478,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public MainWindow()
     {
         InitializeComponent();
+        Title = $"{Title} — {AppVersionText}";
         DataContext = this;
 
         _hookWatchTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
