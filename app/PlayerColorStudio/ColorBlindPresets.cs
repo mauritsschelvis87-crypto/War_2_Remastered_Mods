@@ -6,7 +6,7 @@ public static class ColorBlindPresets
         "Pick a preset to load suggested player colors for that type of color blindness. Press Apply to use them in-game.";
 
     public const string CustomHint =
-        "Custom player colors. Edit each slot or press Apply to use them in-game.";
+        "Custom player colors. Edit each slot (or use the pickers), then press Apply to use them in-game.";
 
     private static readonly Dictionary<string, Preset> All = new(StringComparer.OrdinalIgnoreCase)
     {

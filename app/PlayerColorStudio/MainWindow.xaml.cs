@@ -64,6 +64,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedColorBlindPreset = string.Empty;
     private string _appliedColorBlindPreset = string.Empty;
     private string _colorBlindPresetHintText = ColorBlindPresets.DefaultHint;
+    private bool _suppressColorBlindPresetSync;
     private bool _unitSpriteColors;
     private bool _appliedUnitSpriteColors;
     private bool _appliedDragSelectColorEnabled;
@@ -446,7 +447,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 {
                     if (_activeTab != "colors") return;
                     if (args.PropertyName is null or nameof(ColorCard.Hex))
+                    {
+                        // Manual slot edits leave colorblind presets; Apply must use the cards.
+                        if (!_suppressColorBlindPresetSync &&
+                            !IsCustomColorPreset(_selectedColorBlindPreset) &&
+                            !string.IsNullOrEmpty(_selectedColorBlindPreset))
+                        {
+                            _selectedColorBlindPreset = "custom";
+                            ColorBlindPresetHintText = ColorBlindPresets.CustomHint;
+                            RefreshColorBlindPresetButtons();
+                        }
                         RefreshTabStatus();
+                    }
                 };
             }
             WireOtherCards();
@@ -1194,11 +1206,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     };
 
     // Colorblind presets: take hexes from the preset table so stale TextBox focus
-    // cannot overwrite them on Apply. Custom uses the cards (snapshotted before focus moves).
+    // cannot overwrite them on Apply — but only while the cards still match that
+    // preset. Any manual edit switches to Custom and Apply must use the cards.
     private List<PlayerColor> BuildPlayersForApply()
     {
         if (!IsCustomColorPreset(_selectedColorBlindPreset) &&
-            ColorBlindPresets.TryGet(_selectedColorBlindPreset, out var presetHexes, out _))
+            ColorBlindPresets.TryGet(_selectedColorBlindPreset, out var presetHexes, out _) &&
+            CardsMatchColorBlindPreset(presetHexes))
         {
             return Cards.Select(card =>
             {
@@ -1214,26 +1228,82 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return Cards.Select(card => new PlayerColor(card.Player, ColorCard.NormalizeHex(card.Hex))).ToList();
     }
 
+    private bool CardsMatchColorBlindPreset(string[] presetHexes)
+    {
+        foreach (var card in Cards.Where(c => c.IsEnabled))
+        {
+            if (card.Player < 1 || card.Player > presetHexes.Length)
+                continue;
+            if (!string.Equals(
+                    ColorCard.NormalizeHex(card.Hex),
+                    ColorCard.NormalizeHex(presetHexes[card.Player - 1]),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void SwitchToCustomColorMode(bool resetToVanilla)
+    {
+        _selectedColorBlindPreset = "custom";
+        if (resetToVanilla)
+        {
+            _suppressColorBlindPresetSync = true;
+            try
+            {
+                foreach (var card in Cards.Where(c => c.IsEnabled))
+                    card.Reset();
+            }
+            finally
+            {
+                _suppressColorBlindPresetSync = false;
+            }
+            SyncHexTextBoxesFromModel();
+            Keyboard.ClearFocus();
+        }
+        ColorBlindPresetHintText = ColorBlindPresets.CustomHint;
+        RefreshColorBlindPresetButtons();
+        RefreshTabStatus();
+    }
+
     private void ApplyPresetColorsToCards(string presetKey)
     {
         if (!ColorBlindPresets.TryGet(presetKey, out var hexes, out _)) return;
-        for (var i = 0; i < hexes.Length; i++)
+        _suppressColorBlindPresetSync = true;
+        try
         {
-            var card = Cards.FirstOrDefault(c => c.Player == i + 1 && c.IsEnabled);
-            if (card is not null)
-                card.Hex = hexes[i];
+            for (var i = 0; i < hexes.Length; i++)
+            {
+                var card = Cards.FirstOrDefault(c => c.Player == i + 1 && c.IsEnabled);
+                if (card is not null)
+                    card.Hex = hexes[i];
+            }
+        }
+        finally
+        {
+            _suppressColorBlindPresetSync = false;
         }
     }
 
     private void SyncCardsFromConfig(ColorConfig config)
     {
-        foreach (var player in config.Players)
+        _suppressColorBlindPresetSync = true;
+        try
         {
-            var card = Cards.FirstOrDefault(c => c.Player == player.Player);
-            if (card is not null)
-                card.Hex = player.Color;
+            foreach (var player in config.Players)
+            {
+                var card = Cards.FirstOrDefault(c => c.Player == player.Player);
+                if (card is not null)
+                    card.Hex = player.Color;
+            }
+            SyncHexTextBoxesFromModel();
         }
-        SyncHexTextBoxesFromModel();
+        finally
+        {
+            _suppressColorBlindPresetSync = false;
+        }
     }
 
     private void SyncHexTextBoxesFromModel()
@@ -2025,10 +2095,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
-            // Snapshot colors before focus moves — colorblind presets read preset hexes
-            // directly so stale TextBox text cannot win on Apply.
+            // Colorblind: snapshot from the preset table before focus moves so a
+            // stale TextBox cannot win. Custom: commit focus first, then read cards
+            // so typed/picked hexes are what get written.
             ColorConfig? preparedColorConfig = null;
-            if (_activeTab == "colors" || HasPendingColorChanges())
+            var prepareColors = _activeTab == "colors" || HasPendingColorChanges();
+            var customColorsApply = prepareColors &&
+                (IsCustomColorPreset(_selectedColorBlindPreset) ||
+                 string.IsNullOrEmpty(_selectedColorBlindPreset));
+
+            if (prepareColors && !customColorsApply)
                 preparedColorConfig = BuildColorConfigForColorsApply();
 
             IsApplying = true;
@@ -2036,6 +2112,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Commit any hex TextBox still focused so the latest typed value is saved.
             if (Keyboard.FocusedElement is UIElement focused)
                 focused.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+
+            if (prepareColors && customColorsApply)
+                preparedColorConfig = BuildColorConfigForColorsApply();
 
             SetStatusLines(StatusLine("", ReadyIconBrush,
                 _activeTab == "bugfixes" ? "Installing bug fixes…" : "Installing mod…"));
@@ -2476,14 +2555,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         if (IsCustomColorPreset(presetKey))
         {
-            _selectedColorBlindPreset = "custom";
-            foreach (var card in Cards.Where(c => c.IsEnabled))
-                card.Reset();
-            SyncHexTextBoxesFromModel();
-            Keyboard.ClearFocus();
-            ColorBlindPresetHintText = ColorBlindPresets.CustomHint;
-            RefreshColorBlindPresetButtons();
-            RefreshTabStatus();
+            // Keep current slot colors — Custom is free edit mode, not a vanilla wipe.
+            SwitchToCustomColorMode(resetToVanilla: false);
             return;
         }
 
