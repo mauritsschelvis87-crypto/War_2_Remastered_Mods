@@ -4,7 +4,6 @@ param(
     [switch]$ApplySavedConfigOnly,
     [switch]$ApplyDragSelectFromExtra,
     [switch]$ApplyAllyGoneIconFromExtra,
-    [switch]$ApplyClassicMusicFromExtra,
     [switch]$RestoreOnly,
     [switch]$SyncVanillaBackup,
     [switch]$GetDefaultConfig
@@ -1082,34 +1081,6 @@ function Ensure-VanillaBackupReady {
     Sync-AuthenticVanillaBackup
 }
 
-function Apply-ClassicMusicFromExtra {
-    $configPath = Join-Path (Split-Path -Parent $PSCommandPath) 'classic-music.json'
-    if (!(Test-Path -LiteralPath $configPath)) { return }
-    $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-    $jobs = @(
-        @{ Enabled = [bool]$config.ClassicEnabled; Source = [string]$config.ClassicSourcePath; Target = [string]$config.ClassicTargetFile; Label = 'Classic' },
-        @{ Enabled = [bool]$config.RemasteredEnabled; Source = [string]$config.RemasteredSourcePath; Target = [string]$config.RemasteredTargetFile; Label = 'Remastered' }
-    )
-    foreach ($job in $jobs) {
-        if (!$job.Enabled) { continue }
-        $source = [string]$job.Source
-        $targetName = [string]$job.Target
-        if (!$source -or !(Test-Path -LiteralPath $source)) { throw "$($job.Label) music source was not found: $source" }
-        if ([IO.Path]::GetExtension($source) -ine '.wav') { throw "$($job.Label) music source must be a WAV file." }
-        $suffix = if ($job.Label -eq 'Classic') { 'opl' } else { 'r' }
-        if ($targetName -notmatch ("^[A-Z0-9]+_" + $suffix + '\.wav$')) { throw "Invalid $($job.Label) music target: $targetName" }
-        $target = Join-Path $GameRootPath ("x86\Data\Music\" + $targetName)
-        if (!(Test-Path -LiteralPath $target)) { throw "$($job.Label) music target was not found: $target" }
-        $backup = Join-Path (Split-Path -Parent $PSCommandPath) ("backup\vanilla\x86\Data\Music\" + $targetName)
-        if (!(Test-Path -LiteralPath $backup)) {
-            New-Item -ItemType Directory -Path (Split-Path -Parent $backup) -Force | Out-Null
-            Copy-Item -LiteralPath $target -Destination $backup -Force
-        }
-        Copy-Item -LiteralPath $source -Destination $target -Force
-        Write-ApplyLog "Applied custom $($job.Label) music $source -> $targetName"
-    }
-}
-
 if ($GetDefaultConfig) {
     # Backups are deliberately created locally from this installation and are
     # never distributed with the app or committed to source control.
@@ -1167,11 +1138,6 @@ if ($ApplyAllyGoneIconFromExtra) {
     exit 0
 }
 
-if ($ApplyClassicMusicFromExtra) {
-    Apply-ClassicMusicFromExtra
-    exit 0
-}
-
 if ($ApplySavedConfigOnly) {
     Ensure-VanillaBackupReady
     $loaded = Load-ColorsFromJsonOrDefault
@@ -1191,6 +1157,6 @@ if ($ApplySavedConfigOnly) {
     exit 0
 }
 
-Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -ApplyClassicMusicFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
 exit 1
 

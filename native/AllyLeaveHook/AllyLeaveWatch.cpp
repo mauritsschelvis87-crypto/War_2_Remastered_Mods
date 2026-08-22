@@ -236,7 +236,7 @@ void WatchLoop(HANDLE quitEvent)
                 RunInjector(L"InjectPauseChat.exe", false);
                 pauseInjectedPid = 0;
             }
-            if (!flags.dragSelect && pid != 0) {
+            if (!flags.dragSelect && pid != 0 && (last.dragSelect || dragInjectedPid != 0)) {
                 RunInjector(L"InjectDragSelect.exe", false);
                 dragInjectedPid = 0;
             }

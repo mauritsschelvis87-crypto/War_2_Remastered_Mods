@@ -1,12 +1,15 @@
 // UnitColorHook.dll — recolors HD unit sprites to the Studio player colors.
 //
-// The HD renderer tints the unit team masks with a per-player RGBA float
-// color from a static 8-entry table in the game's data (vanilla holds the
-// original DOS palette values: P1 164,0,0 ... P8 252,252,72). The palette
-// files on disk do NOT feed this table, so the offline color patch never
-// reached unit sprites. This hook finds the table by scanning for those
-// vanilla float values and keeps writing the colors from player-colors.json
-// over it — color changes in the Studio therefore apply live, no restart.
+// Remastered tints HD units from a static 8-entry RGBA float table in the
+// game's .data (RVA 0x4C9640). Code paths use that table directly
+// (add eax, table_va / movups), so writing the heap "working copy" alone
+// never recolors units. Palette .ppl files only feed minimap/UI.
+//
+// Safety (earlier crashes came from scanning MEM_MAPPED for false-positive
+// tables and memcpy'ing into them):
+//   - Write ONLY the known master table at kMasterTableRva
+//   - Always VirtualProtect around the write
+//   - No process-wide memory scans
 //
 // Exports (used by InjectUnitColor.exe):
 //   UnitColor_SetEnabled(BOOL)  toggle; disable restores vanilla values
@@ -22,9 +25,6 @@ namespace {
 constexpr int kPlayers = 8;
 constexpr size_t kEntryBytes = 16;                    // RGBA floats
 constexpr size_t kTableBytes = kPlayers * kEntryBytes;
-constexpr uintptr_t kMatchInitFlagRva = 0x5B1798;
-// Static master tint table in Warcraft II.exe (.data). The renderer copies
-// from here into a per-match heap buffer; patch both when possible.
 constexpr uintptr_t kMasterTableRva = 0x4C9640;
 
 // Vanilla table contents (original DOS team colors, RGBA float, alpha 1).
@@ -41,13 +41,9 @@ const uint8_t kVanillaRgb[kPlayers][3] = {
 
 volatile LONG g_enabled = 1;
 volatile LONG g_ready = 0;
-float* g_table = nullptr;              // per-match heap working copy (optional)
-float* g_master = nullptr;             // exe .data master table (always present)
-float g_original[kPlayers * 4]{};      // saved heap copy for restore
-float g_masterOriginal[kPlayers * 4]{}; // saved master for restore
+float* g_master = nullptr;
+float g_original[kPlayers * 4]{};      // DOS vanilla for restore
 float g_colors[kPlayers * 4]{};        // desired colors (RGBA float)
-uint8_t g_matchSnapshot[kTableBytes]{}; // master bytes at match start
-bool g_haveMatchSnapshot = false;
 FILETIME g_jsonTime{};
 HANDLE g_thread = nullptr;
 volatile LONG g_stop = 0;
@@ -80,23 +76,6 @@ void BuildVanillaFloats(float* out)
     }
 }
 
-int ReadMatchActive()
-{
-    HMODULE game = GetModuleHandleW(nullptr);
-    if (!game) return -1;
-    auto* base = reinterpret_cast<uint8_t*>(game);
-    __try {
-        const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
-        if (dos->e_magic != IMAGE_DOS_SIGNATURE) return -1;
-        const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
-        if (nt->Signature != IMAGE_NT_SIGNATURE ||
-            nt->OptionalHeader.SizeOfImage <= kMatchInitFlagRva) return -1;
-        return base[kMatchInitFlagRva] ? 1 : 0;
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
-        return -1;
-    }
-}
-
 bool TableLooksValid(const float* table)
 {
     if (!table) return false;
@@ -124,7 +103,7 @@ float* ResolveMasterTable()
         if (dos->e_magic != IMAGE_DOS_SIGNATURE) return nullptr;
         const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
         if (nt->Signature != IMAGE_NT_SIGNATURE ||
-            nt->OptionalHeader.SizeOfImage <= kMasterTableRva) {
+            nt->OptionalHeader.SizeOfImage <= kMasterTableRva + kTableBytes) {
             return nullptr;
         }
         float* table = reinterpret_cast<float*>(base + kMasterTableRva);
@@ -134,74 +113,27 @@ float* ResolveMasterTable()
     }
 }
 
-void CaptureMatchSnapshot()
+bool WriteMaster(const float* values)
 {
-    g_haveMatchSnapshot = false;
-    g_master = ResolveMasterTable();
-    if (!g_master) return;
+    if (!g_master || !values) return false;
+    float* target = g_master;
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(target, kTableBytes, PAGE_READWRITE, &oldProtect)) {
+        Log("WriteMaster: VirtualProtect failed (%lu)", GetLastError());
+        return false;
+    }
+    bool ok = true;
     __try {
-        memcpy(g_matchSnapshot, g_master, kTableBytes);
-        g_haveMatchSnapshot = true;
+        memcpy(target, values, kTableBytes);
     } __except (EXCEPTION_EXECUTE_HANDLER) {
-        g_haveMatchSnapshot = false;
+        Log("WriteMaster: exception");
+        ok = false;
+        g_master = nullptr;
+        InterlockedExchange(&g_ready, 0);
     }
-}
-
-// The renderer clones the master table into a writable heap buffer each match.
-// After Studio colors are applied the heap copy no longer matches the old DOS
-// signature, so locate it by snapshotting the master table at match start.
-float* FindWorkingTable()
-{
-    if (!g_haveMatchSnapshot) return nullptr;
-
-    float vanilla[kPlayers * 4]{};
-    BuildVanillaFloats(vanilla);
-    const uint8_t* vanillaNeedle = reinterpret_cast<const uint8_t*>(vanilla + 4);
-    const size_t vanillaNeedleLen = (kPlayers - 1) * kEntryBytes;
-    const uint8_t* snapshotNeedle = g_matchSnapshot + kEntryBytes;
-    const size_t snapshotNeedleLen = kTableBytes - kEntryBytes;
-    const NT_TIB* tib = reinterpret_cast<const NT_TIB*>(NtCurrentTeb());
-    const uintptr_t stackLow = reinterpret_cast<uintptr_t>(tib->StackLimit);
-    const uintptr_t stackHigh = reinterpret_cast<uintptr_t>(tib->StackBase);
-    const uintptr_t masterAddr =
-        g_master ? reinterpret_cast<uintptr_t>(g_master) : 0;
-
-    MEMORY_BASIC_INFORMATION mbi{};
-    uintptr_t addr = 0x10000;
-    while (VirtualQuery(reinterpret_cast<LPCVOID>(addr), &mbi, sizeof(mbi)) == sizeof(mbi)) {
-        const uintptr_t regionBase = reinterpret_cast<uintptr_t>(mbi.BaseAddress);
-        const uintptr_t next = regionBase + mbi.RegionSize;
-        const bool ownStack = regionBase < stackHigh && next > stackLow;
-        const bool writable =
-            (mbi.Protect & PAGE_READWRITE) || (mbi.Protect & PAGE_WRITECOPY);
-        const bool candidateRegion =
-            !ownStack && mbi.State == MEM_COMMIT && writable &&
-            (mbi.Type == MEM_PRIVATE || mbi.Type == MEM_MAPPED);
-        if (candidateRegion) {
-            __try {
-                const uint8_t* p = reinterpret_cast<const uint8_t*>(regionBase);
-                for (size_t i = kEntryBytes; i + kTableBytes <= mbi.RegionSize; i += 4) {
-                    float* table = reinterpret_cast<float*>(const_cast<uint8_t*>(p + i));
-                    const uintptr_t tableAddr = reinterpret_cast<uintptr_t>(table);
-                    if (masterAddr && tableAddr == masterAddr) continue;
-                    if (!TableLooksValid(table)) continue;
-                    if (memcmp(p + i, g_matchSnapshot, kTableBytes) == 0) return table;
-                    if (memcmp(p + i + kEntryBytes, snapshotNeedle, snapshotNeedleLen) == 0) {
-                        return reinterpret_cast<float*>(const_cast<uint8_t*>(p + i));
-                    }
-                    if (memcmp(p + i + kEntryBytes, vanillaNeedle, vanillaNeedleLen) == 0) {
-                        return reinterpret_cast<float*>(const_cast<uint8_t*>(p + i));
-                    }
-                }
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
-                // A private region can disappear while the game changes state.
-            }
-        }
-        if (next <= addr) break;
-        addr = next;
-        if (addr >= 0x7FFF0000) break;
-    }
-    return nullptr;
+    DWORD ignored = 0;
+    VirtualProtect(target, kTableBytes, oldProtect, &ignored);
+    return ok;
 }
 
 uint32_t ParseHexRgb(const char* hex, uint32_t fallback)
@@ -249,8 +181,6 @@ void ConfigPath(wchar_t* out, size_t cap)
     }
 }
 
-// Load desired colors: vanilla defaults overridden by player-colors.json.
-// Returns true when the file changed since the previous load.
 bool LoadColors(bool force)
 {
     wchar_t path[MAX_PATH]{};
@@ -301,116 +231,39 @@ bool LoadColors(bool force)
     return true;
 }
 
-void WriteTable(const float* values)
-{
-    bool wrote = false;
-    if (g_master) {
-        __try {
-            memcpy(g_master, values, kTableBytes);
-            wrote = true;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            Log("WriteTable: master exception");
-            g_master = nullptr;
-        }
-    }
-    if (g_table) {
-        __try {
-            memcpy(g_table, values, kTableBytes);
-            wrote = true;
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-            Log("WriteTable: heap exception — table lost");
-            g_table = nullptr;
-        }
-    }
-    if (!wrote) InterlockedExchange(&g_ready, 0);
-}
-
-void RestoreTables()
-{
-    if (g_master) {
-        __try { memcpy(g_master, g_masterOriginal, kTableBytes); }
-        __except (EXCEPTION_EXECUTE_HANDLER) { g_master = nullptr; }
-    }
-    if (g_table) {
-        __try { memcpy(g_table, g_original, kTableBytes); }
-        __except (EXCEPTION_EXECUTE_HANDLER) { g_table = nullptr; }
-    }
-}
-
 DWORD WINAPI WorkThread(LPVOID)
 {
+    BuildVanillaFloats(g_original);
     LoadColors(true);
-    g_master = ResolveMasterTable();
-    if (g_master) {
-        __try { memcpy(g_masterOriginal, g_master, kTableBytes); }
-        __except (EXCEPTION_EXECUTE_HANDLER) { g_master = nullptr; }
-        InterlockedExchange(&g_ready, 1);
-        Log("master table @ %p (exe base %p)", g_master, GetModuleHandleW(nullptr));
-    } else {
-        Log("master table not found (game build changed?)");
+
+    for (int i = 0; i < 100 && !g_stop && !g_master; ++i) {
+        g_master = ResolveMasterTable();
+        if (!g_master) Sleep(50);
     }
+    if (!g_master) {
+        Log("master table not found (game build changed?)");
+        return 0;
+    }
+    InterlockedExchange(&g_ready, 1);
+    Log("master table @ %p (exe base %p)", g_master, GetModuleHandleW(nullptr));
 
     bool wasEnabled = false;
-    bool loggedMissing = false;
-    int lastMatch = -1;
     while (!g_stop) {
         if (!g_master) {
             g_master = ResolveMasterTable();
             if (g_master) {
-                __try { memcpy(g_masterOriginal, g_master, kTableBytes); }
-                __except (EXCEPTION_EXECUTE_HANDLER) { g_master = nullptr; }
-                if (g_master) {
-                    InterlockedExchange(&g_ready, 1);
-                    Log("master table @ %p (exe base %p)", g_master, GetModuleHandleW(nullptr));
-                }
-            }
-        }
-
-        const int match = ReadMatchActive();
-        if (match != lastMatch) {
-            if (match == 1) {
-                // Every match gets a newly cloned tint table. Never carry the
-                // previous match's heap pointer into the next one.
-                g_table = nullptr;
-                wasEnabled = false;
-                loggedMissing = false;
-                CaptureMatchSnapshot();
-                Log("new match — locating fresh working table");
-            } else if (match == 0 && lastMatch == 1) {
-                g_table = nullptr;
-                g_haveMatchSnapshot = false;
-                wasEnabled = false;
-                Log("match ended — discarded working table");
-            }
-            lastMatch = match;
-        }
-
-        if (!g_table && match != 0) {
-            g_table = FindWorkingTable();
-            if (g_table) {
-                __try { memcpy(g_original, g_table, kTableBytes); }
-                __except (EXCEPTION_EXECUTE_HANDLER) {
-                    g_table = nullptr;
-                }
-                if (g_table) {
-                    InterlockedExchange(&g_ready, 1);
-                    Log("working table found @ %p (master %p)", g_table, g_master);
-                    loggedMissing = false;
-                    wasEnabled = false;
-                }
-            } else if (!loggedMissing) {
-                Log("working table not ready — keep checking during match");
-                loggedMissing = true;
+                InterlockedExchange(&g_ready, 1);
+                Log("master table @ %p", g_master);
             }
         }
 
         const bool enabled = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
-        if (enabled && (g_master || g_table)) {
+        if (enabled && g_master) {
             LoadColors(false);
-            WriteTable(g_colors); // game may refresh tables — keep them ours
+            WriteMaster(g_colors);
             wasEnabled = true;
         } else if (wasEnabled) {
-            RestoreTables();
+            WriteMaster(g_original);
             wasEnabled = false;
             Log("disabled — vanilla restored");
         }
@@ -440,8 +293,8 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID)
         g_thread = CreateThread(nullptr, 0, WorkThread, nullptr, 0, nullptr);
     } else if (reason == DLL_PROCESS_DETACH) {
         InterlockedExchange(&g_stop, 1);
-        if (InterlockedCompareExchange(&g_ready, 0, 0)) {
-            RestoreTables();
+        if (g_master && InterlockedCompareExchange(&g_ready, 0, 0)) {
+            WriteMaster(g_original);
         }
     }
     return TRUE;

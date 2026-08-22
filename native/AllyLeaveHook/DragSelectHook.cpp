@@ -153,7 +153,9 @@ bool InstallSites()
 
     InterlockedExchange(&g_ready, 1);
     Log("InstallSites: ready immSite=%p", g_immSite);
+    // Heal leftover F5 patches from earlier injects; only remapping when enabled.
     if (g_enabled) ApplyPatch();
+    else RemovePatch();
     return true;
 }
 
@@ -193,7 +195,11 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(module);
-        InterlockedExchange(&g_enabled, 1);
+        // Stay OFF until InjectDragSelect --enable. Defaulting ON remapped the
+        // local selection outline from palette 250 (bright green) to 245
+        // (gold/brown) whenever this DLL was merely loaded — including on
+        // "--disable" injects from the watcher / Studio.
+        InterlockedExchange(&g_enabled, 0);
         HANDLE thread = CreateThread(nullptr, 0, InstallThread, nullptr, 0, nullptr);
         if (thread) CloseHandle(thread);
     } else if (reason == DLL_PROCESS_DETACH) {

@@ -105,7 +105,7 @@ try {
 
     $readme = @"
 Warcraft II Remastered — Quality of Life Mods
-Version $version
+Beta Version $version
 
 Easiest install
 ---------------

@@ -66,19 +66,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _colorBlindPresetHintText = ColorBlindPresets.DefaultHint;
     private bool _unitSpriteColors;
     private bool _appliedUnitSpriteColors;
-    private bool _replaceClassicMusic;
-    private string _classicMusicSourcePath = string.Empty;
-    private string _classicMusicTarget = "HUMAN2_opl.wav";
-    private bool _appliedReplaceClassicMusic;
-    private string _appliedClassicMusicSourcePath = string.Empty;
-    private string _appliedClassicMusicTarget = "HUMAN2_opl.wav";
-    private bool _addRemasteredMusic;
-    private string _remasteredMusicSourcePath = string.Empty;
-    private string _remasteredMusicTarget = "HUMAN2_r.wav";
-    private bool _appliedAddRemasteredMusic;
-    private string _appliedRemasteredMusicSourcePath = string.Empty;
-    private string _appliedRemasteredMusicTarget = "HUMAN2_r.wav";
-    private bool _humanPaladinAudioEnabled;
     private bool _appliedDragSelectColorEnabled;
     private bool _hookInjectedForRunningGame;
     private bool _pauseChatInjectedForRunningGame;
@@ -102,17 +89,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ColorCard> Cards { get; } = [];
     public ObservableCollection<ColorCard> OtherCards { get; } = [];
     public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
-
-    public bool HumanPaladinAudioEnabled
-    {
-        get => _humanPaladinAudioEnabled;
-        set
-        {
-            if (_humanPaladinAudioEnabled == value) return;
-            _humanPaladinAudioEnabled = value;
-            OnPropertyChanged();
-        }
-    }
 
     public string DropMonitorLog
     {
@@ -214,42 +190,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged();
             RefreshTabStatus();
         }
-    }
-
-    public bool ReplaceClassicMusic
-    {
-        get => _replaceClassicMusic;
-        set { if (_replaceClassicMusic == value) return; _replaceClassicMusic = value; OnPropertyChanged(); RefreshTabStatus(); }
-    }
-
-    public string ClassicMusicSourcePath
-    {
-        get => _classicMusicSourcePath;
-        set { _classicMusicSourcePath = value ?? string.Empty; OnPropertyChanged(); RefreshTabStatus(); }
-    }
-
-    public string ClassicMusicTarget
-    {
-        get => _classicMusicTarget;
-        set { _classicMusicTarget = value ?? "HUMAN2_opl.wav"; OnPropertyChanged(); RefreshTabStatus(); }
-    }
-
-    public bool AddRemasteredMusic
-    {
-        get => _addRemasteredMusic;
-        set { if (_addRemasteredMusic == value) return; _addRemasteredMusic = value; OnPropertyChanged(); RefreshTabStatus(); }
-    }
-
-    public string RemasteredMusicSourcePath
-    {
-        get => _remasteredMusicSourcePath;
-        set { _remasteredMusicSourcePath = value ?? string.Empty; OnPropertyChanged(); RefreshTabStatus(); }
-    }
-
-    public string RemasteredMusicTarget
-    {
-        get => _remasteredMusicTarget;
-        set { _remasteredMusicTarget = value ?? "HUMAN2_r.wav"; OnPropertyChanged(); RefreshTabStatus(); }
     }
 
     public bool ChatColoredNames
@@ -374,7 +314,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsApplyEnabled => !_isApplying;
 
-    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes" or "audio";
+    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes";
 
     public bool IsColorsStatusSingleLine => _activeTab == "colors";
 
@@ -511,7 +451,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             WireOtherCards();
             LoadExtraFeatures();
-            LoadClassicMusicConfig();
             AppTheme.ApplyColorBlindMode(_colorBlindMode);
             RefreshCheckBoxVisuals();
             RefreshColorBlindModeButtons();
@@ -595,7 +534,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (!string.Equals(current, applied, StringComparison.OrdinalIgnoreCase))
                 return true;
         }
-        return HasPendingUtilChanges();
+        return HasPendingUtilChanges() || HasPendingColorBlindPresetChanges();
     }
 
     private bool HasManualAppliedUtilColors() =>
@@ -647,13 +586,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps() ||
         HasPendingAllianceTeamNumbers() || HasPendingComputerAnnihilatedChat();
     private bool HasPendingBugFixChanges() => HasPendingChatPause() || HasPendingChatHistory();
-    private bool HasPendingAudioChanges() =>
-        _replaceClassicMusic != _appliedReplaceClassicMusic ||
-        !string.Equals(_classicMusicSourcePath, _appliedClassicMusicSourcePath, StringComparison.OrdinalIgnoreCase) ||
-        !string.Equals(_classicMusicTarget, _appliedClassicMusicTarget, StringComparison.OrdinalIgnoreCase) ||
-        _addRemasteredMusic != _appliedAddRemasteredMusic ||
-        !string.Equals(_remasteredMusicSourcePath, _appliedRemasteredMusicSourcePath, StringComparison.OrdinalIgnoreCase) ||
-        !string.Equals(_remasteredMusicTarget, _appliedRemasteredMusicTarget, StringComparison.OrdinalIgnoreCase);
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
         new(icon, brush, text);
@@ -665,6 +597,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             StatusLines.Add(line);
     }
 
+    private bool CurrentCardsMatchVanilla() =>
+        Cards.Where(c => c.IsEnabled).All(c =>
+            string.Equals(ColorCard.NormalizeHex(c.Hex), ColorCard.NormalizeHex(c.VanillaHex),
+                StringComparison.OrdinalIgnoreCase))
+        && OtherCards.Where(c => c.IsEnabled).All(c =>
+            string.Equals(ColorCard.NormalizeHex(c.Hex), ColorCard.NormalizeHex(c.VanillaHex),
+                StringComparison.OrdinalIgnoreCase));
+
+    private static bool IsCustomColorPreset(string presetKey) =>
+        string.Equals(presetKey, "custom", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(presetKey, "original", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsCustomOriginalMode() =>
+        IsCustomColorPreset(_selectedColorBlindPreset) &&
+        CurrentCardsMatchVanilla() &&
+        !HasManualAppliedColors();
+
     private StatusLineItem BuildColorsLine()
     {
         if (HasPendingColorChanges())
@@ -673,11 +622,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 "Changes have been made. Press Apply and restart Warcraft II Remastered for the color changes to take effect.");
         }
 
-        if (!string.IsNullOrEmpty(_appliedColorBlindPreset))
+        if (!string.IsNullOrEmpty(_appliedColorBlindPreset) &&
+            !IsCustomColorPreset(_appliedColorBlindPreset))
         {
             var label = ColorBlindPresets.LabelFor(_appliedColorBlindPreset);
             return StatusLine("✓", ReadyIconBrush,
                 $"{label} has been used. Please restart Warcraft II Remastered for the color changes to take effect.");
+        }
+
+        if (IsCustomOriginalMode() || IsCustomColorPreset(_appliedColorBlindPreset))
+        {
+            if (HasManualAppliedColors())
+            {
+                return StatusLine("✓", ReadyIconBrush,
+                    "Manual colors are being used. Please restart Warcraft II Remastered for the mods to take effect.");
+            }
+
+            return StatusLine("✓", ReadyIconBrush,
+                "Original colors are being used. Please restart Warcraft II Remastered for the color changes to take effect.");
         }
 
         return HasManualAppliedColors()
@@ -691,7 +653,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         "colors" => HasPendingColorChanges(),
         "feature" => HasPendingFeatureChanges(),
         "bugfixes" => HasPendingBugFixChanges(),
-        "audio" => HasPendingAudioChanges(),
         _ => false,
     };
 
@@ -730,15 +691,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SetStatusLines(StatusLine("✓", ReadyIconBrush,
                     "Bug fixes have been installed. Restart Warcraft II Remastered to take effect."));
             }
-            return;
-        }
-
-        if (_activeTab == "audio")
-        {
-            SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                ReplaceClassicMusic || AddRemasteredMusic
-                    ? "Using custom scores."
-                    : "Using the original Warcraft scores."));
             return;
         }
 
@@ -1231,7 +1183,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private ColorConfig BuildColorConfigForColorsApply() => new()
     {
-        Players = Cards.Select(card => new PlayerColor(card.Player, card.Hex)).ToList(),
+        Players = BuildPlayersForApply(),
         SelectionHighlight = OtherCurrent("selectionHighlight", "#00FF00"),
         // Keep vanilla for unused highlight slots so Apply script stays stable.
         EnemySelectionHighlight = "#FF0000",
@@ -1240,6 +1192,61 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         GoldMineHighlight = "#694114",
         OilPatchHighlight = "#FFFBF3",
     };
+
+    // Colorblind presets: take hexes from the preset table so stale TextBox focus
+    // cannot overwrite them on Apply. Custom uses the cards (snapshotted before focus moves).
+    private List<PlayerColor> BuildPlayersForApply()
+    {
+        if (!IsCustomColorPreset(_selectedColorBlindPreset) &&
+            ColorBlindPresets.TryGet(_selectedColorBlindPreset, out var presetHexes, out _))
+        {
+            return Cards.Select(card =>
+            {
+                if (card.IsEnabled && card.Player >= 1 && card.Player <= presetHexes.Length)
+                {
+                    return new PlayerColor(card.Player,
+                        ColorCard.NormalizeHex(presetHexes[card.Player - 1]));
+                }
+                return new PlayerColor(card.Player, ColorCard.NormalizeHex(card.Hex));
+            }).ToList();
+        }
+
+        return Cards.Select(card => new PlayerColor(card.Player, ColorCard.NormalizeHex(card.Hex))).ToList();
+    }
+
+    private void ApplyPresetColorsToCards(string presetKey)
+    {
+        if (!ColorBlindPresets.TryGet(presetKey, out var hexes, out _)) return;
+        for (var i = 0; i < hexes.Length; i++)
+        {
+            var card = Cards.FirstOrDefault(c => c.Player == i + 1 && c.IsEnabled);
+            if (card is not null)
+                card.Hex = hexes[i];
+        }
+    }
+
+    private void SyncCardsFromConfig(ColorConfig config)
+    {
+        foreach (var player in config.Players)
+        {
+            var card = Cards.FirstOrDefault(c => c.Player == player.Player);
+            if (card is not null)
+                card.Hex = player.Color;
+        }
+        SyncHexTextBoxesFromModel();
+    }
+
+    private void SyncHexTextBoxesFromModel()
+    {
+        foreach (var textBox in FindVisualChildren<System.Windows.Controls.TextBox>(this))
+        {
+            if (textBox.DataContext is not ColorCard) continue;
+            textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateTarget();
+        }
+    }
+
+    private bool HasPendingColorBlindPresetChanges() =>
+        !string.Equals(_selectedColorBlindPreset, _appliedColorBlindPreset, StringComparison.OrdinalIgnoreCase);
 
     private void MirrorPlayerColorsJson(string json)
     {
@@ -1390,6 +1397,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Hex_LostFocus(object sender, RoutedEventArgs e)
     {
+        if (_isApplying) return;
         if ((sender as FrameworkElement)?.DataContext is not ColorCard card) return;
         if (!ColorCard.IsValidHex(card.Hex))
         {
@@ -1402,65 +1410,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         card.Hex = card.Hex;
         RefreshTabStatus();
-    }
-
-    private void SaveClassicMusicConfig()
-    {
-        var path = Path.Combine(Path.GetDirectoryName(_extraConfigPath)!, "classic-music.json");
-        var config = new ClassicMusicConfig
-        {
-            ClassicEnabled = ReplaceClassicMusic,
-            ClassicSourcePath = ClassicMusicSourcePath,
-            ClassicTargetFile = ClassicMusicTarget,
-            RemasteredEnabled = AddRemasteredMusic,
-            RemasteredSourcePath = RemasteredMusicSourcePath,
-            RemasteredTargetFile = RemasteredMusicTarget
-        };
-        File.WriteAllText(path, JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true }));
-        var installed = Path.Combine(NormalizeGameRoot(_appliedGameInstallPath), "x86", "Mods", "PlayerColorStudio", "mod", "classic-music.json");
-        if (!string.Equals(Path.GetFullPath(path), Path.GetFullPath(installed), StringComparison.OrdinalIgnoreCase))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(installed)!);
-            File.Copy(path, installed, true);
-        }
-    }
-
-    private void LoadClassicMusicConfig()
-    {
-        var path = Path.Combine(Path.GetDirectoryName(_extraConfigPath)!, "classic-music.json");
-        if (!File.Exists(path)) return;
-        var config = JsonSerializer.Deserialize<ClassicMusicConfig>(File.ReadAllText(path), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        ReplaceClassicMusic = config?.ClassicEnabled ?? false;
-        ClassicMusicSourcePath = config?.ClassicSourcePath ?? string.Empty;
-        ClassicMusicTarget = config?.ClassicTargetFile ?? "HUMAN2_opl.wav";
-        AddRemasteredMusic = config?.RemasteredEnabled ?? false;
-        RemasteredMusicSourcePath = config?.RemasteredSourcePath ?? string.Empty;
-        RemasteredMusicTarget = config?.RemasteredTargetFile ?? "HUMAN2_r.wav";
-    }
-
-    private void BrowseClassicMusic_Click(object sender, RoutedEventArgs e) =>
-        ChooseMusicFile(path => ClassicMusicSourcePath = path, "Choose a Classic music file");
-
-    private void BrowseRemasteredMusic_Click(object sender, RoutedEventArgs e) =>
-        ChooseMusicFile(path => RemasteredMusicSourcePath = path, "Choose a Remastered music file");
-
-    private void ResetClassicMusic_Click(object sender, RoutedEventArgs e) =>
-        ClassicMusicSourcePath = string.Empty;
-
-    private void ResetRemasteredMusic_Click(object sender, RoutedEventArgs e) =>
-        RemasteredMusicSourcePath = string.Empty;
-
-    private void ResetHumanPaladinAudio_Click(object sender, RoutedEventArgs e) =>
-        HumanPaladinAudioEnabled = false;
-
-    private static void ChooseMusicFile(Action<string> setPath, string title)
-    {
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "WAV audio (*.wav)|*.wav|All files (*.*)|*.*",
-            Title = title
-        };
-        if (dialog.ShowDialog() == true) setPath(dialog.FileName);
     }
 
     private void ResetCard_Click(object sender, RoutedEventArgs e)
@@ -2076,11 +2025,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         try
         {
+            // Snapshot colors before focus moves — colorblind presets read preset hexes
+            // directly so stale TextBox text cannot win on Apply.
+            ColorConfig? preparedColorConfig = null;
+            if (_activeTab == "colors" || HasPendingColorChanges())
+                preparedColorConfig = BuildColorConfigForColorsApply();
+
+            IsApplying = true;
+
             // Commit any hex TextBox still focused so the latest typed value is saved.
             if (Keyboard.FocusedElement is UIElement focused)
                 focused.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
 
-            IsApplying = true;
             SetStatusLines(StatusLine("", ReadyIconBrush,
                 _activeTab == "bugfixes" ? "Installing bug fixes…" : "Installing mod…"));
             ApplyButtonBrush = ReadyButtonBrush;
@@ -2108,7 +2064,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     throw new InvalidOperationException($"{card.Name} has an invalid color.");
             }
 
-                var config = BuildColorConfigForColorsApply();
+                var config = preparedColorConfig ?? BuildColorConfigForColorsApply();
                 var markComputers = _appliedAllyLeaveMarkComputers;
                 var markHumans = _appliedAllyLeaveMarkHumans;
                 var chat = _appliedChatDuringPauseScreen;
@@ -2134,9 +2090,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     if (markComputers || markHumans)
                         ApplyAllyGoneSkullAtlas();
                 });
+                SyncCardsFromConfig(config);
                 CaptureAppliedColors();
                 CaptureAppliedUtilColors();
-                _appliedColorBlindPreset = _selectedColorBlindPreset;
+                _appliedColorBlindPreset = IsCustomColorPreset(_selectedColorBlindPreset)
+                    ? "custom"
+                    : _selectedColorBlindPreset;
                 _appliedUnitSpriteColors = true;
                 _appliedDragSelectColorEnabled = false;
                 _dragSelectInjectedForRunningGame = false;
@@ -2159,27 +2118,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* optional while game closed */ }
                 });
             }
-            else if (_activeTab == "audio")
-            {
-                if (ReplaceClassicMusic && !File.Exists(ClassicMusicSourcePath))
-                    throw new FileNotFoundException("The selected Classic music file was not found.");
-                if (AddRemasteredMusic && !File.Exists(RemasteredMusicSourcePath))
-                    throw new FileNotFoundException("The selected Remastered music file was not found.");
-
-                SetStatusLines(StatusLine("", ReadyIconBrush, "Applying audio settings…"));
-                await Task.Run(() =>
-                {
-                    SaveClassicMusicConfig();
-                    if (ReplaceClassicMusic || AddRemasteredMusic)
-                    {
-                        var music = RunEngine("-ApplyClassicMusicFromExtra", requireValidGameRoot: true);
-                        if (music.ExitCode != 0)
-                            throw new InvalidOperationException(music.Error.Length > 0 ? music.Error : music.Output);
-                    }
-                });
-                SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                    "Audio settings applied. Restart Warcraft II Remastered to take effect."));
-            }
             else if (_activeTab == "feature")
             {
                 var markComputers = AllyLeaveMarkComputers;
@@ -2194,12 +2132,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Saving Feature mod settings…"));
                 await Task.Run(() =>
                 {
-                    SaveClassicMusicConfig();
-                    if (ReplaceClassicMusic || AddRemasteredMusic)
-                    {
-                        var music = RunEngine("-ApplyClassicMusicFromExtra", requireValidGameRoot: true);
-                        if (music.ExitCode != 0) throw new InvalidOperationException(music.Error.Length > 0 ? music.Error : music.Output);
-                    }
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                         chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
@@ -2542,27 +2474,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ApplyColorBlindPreset(string presetKey)
     {
-        if (string.Equals(presetKey, "original", StringComparison.OrdinalIgnoreCase))
+        if (IsCustomColorPreset(presetKey))
         {
-            _selectedColorBlindPreset = presetKey;
+            _selectedColorBlindPreset = "custom";
             foreach (var card in Cards.Where(c => c.IsEnabled))
                 card.Reset();
-            ColorBlindPresetHintText = ColorBlindPresets.OriginalHint;
+            SyncHexTextBoxesFromModel();
+            Keyboard.ClearFocus();
+            ColorBlindPresetHintText = ColorBlindPresets.CustomHint;
             RefreshColorBlindPresetButtons();
             RefreshTabStatus();
             return;
         }
 
-        if (!ColorBlindPresets.TryGet(presetKey, out var hexes, out var hint))
+        if (!ColorBlindPresets.TryGet(presetKey, out _, out var hint))
             return;
 
+        _unitSpriteColors = true;
         _selectedColorBlindPreset = presetKey;
-        for (var i = 0; i < hexes.Length; i++)
-        {
-            var card = Cards.FirstOrDefault(c => c.Player == i + 1 && c.IsEnabled);
-            if (card is not null)
-                card.Hex = hexes[i];
-        }
+        ApplyPresetColorsToCards(presetKey);
+        SyncHexTextBoxesFromModel();
+        Keyboard.ClearFocus();
 
         ColorBlindPresetHintText = hint;
         RefreshColorBlindPresetButtons();
@@ -2588,7 +2520,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         foreach (var child in ColorBlindPresetPanel.Children)
         {
             if (child is not System.Windows.Controls.Button button) continue;
-            var selected = string.Equals(button.Tag as string, _selectedColorBlindPreset, StringComparison.OrdinalIgnoreCase);
+            var tag = button.Tag as string ?? "";
+            var selected = string.Equals(tag, _selectedColorBlindPreset, StringComparison.OrdinalIgnoreCase) ||
+                (IsCustomColorPreset(tag) && IsCustomColorPreset(_selectedColorBlindPreset));
             button.BorderThickness = borderThickness;
             button.Background = selected ? SegmentSelectedBrush : unselectedBackground;
             button.BorderBrush = selected ? SegmentSelectedBorderBrush : unselectedBorder;
@@ -2715,9 +2649,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             WireOtherCards();
 
-            _selectedColorBlindPreset = "original";
-            _appliedColorBlindPreset = "original";
-            ColorBlindPresetHintText = ColorBlindPresets.OriginalHint;
+            _selectedColorBlindPreset = "custom";
+            _appliedColorBlindPreset = "custom";
+            ColorBlindPresetHintText = ColorBlindPresets.CustomHint;
             RefreshColorBlindPresetButtons();
 
             _hookInjectedForRunningGame = false;
@@ -2864,16 +2798,6 @@ public sealed class StudioSettings
     public string? MapEditorPath { get; set; }
     public string? MapsPath { get; set; }
     public bool ColorBlindMode { get; set; }
-}
-
-public sealed class ClassicMusicConfig
-{
-    public bool ClassicEnabled { get; set; }
-    public string ClassicSourcePath { get; set; } = string.Empty;
-    public string ClassicTargetFile { get; set; } = "HUMAN2_opl.wav";
-    public bool RemasteredEnabled { get; set; }
-    public string RemasteredSourcePath { get; set; } = string.Empty;
-    public string RemasteredTargetFile { get; set; } = "HUMAN2_r.wav";
 }
 
 public sealed class StatusLineItem

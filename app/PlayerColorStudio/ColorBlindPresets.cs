@@ -5,8 +5,8 @@ public static class ColorBlindPresets
     public const string DefaultHint =
         "Pick a preset to load suggested player colors for that type of color blindness. Press Apply to use them in-game.";
 
-    public const string OriginalHint =
-        "Original Warcraft II player colors restored. Press Apply to use them in-game.";
+    public const string CustomHint =
+        "Custom player colors. Edit each slot or press Apply to use them in-game.";
 
     private static readonly Dictionary<string, Preset> All = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -42,8 +42,9 @@ public static class ColorBlindPresets
 
     public static string LabelFor(string key)
     {
-        if (key.Equals("original", StringComparison.OrdinalIgnoreCase))
-            return "Original";
+        if (key.Equals("custom", StringComparison.OrdinalIgnoreCase) ||
+            key.Equals("original", StringComparison.OrdinalIgnoreCase))
+            return "Custom";
         return All.TryGetValue(key, out var preset) ? preset.Label : key;
     }
 

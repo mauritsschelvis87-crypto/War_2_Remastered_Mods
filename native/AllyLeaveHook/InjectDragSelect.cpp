@@ -94,7 +94,16 @@ int InjectAndSet(const std::wstring& dllPath, bool enable)
         return 3;
     }
 
-    if (!ModuleLoaded(pid, L"DragSelectHook.dll")) {
+    const bool alreadyLoaded = ModuleLoaded(pid, L"DragSelectHook.dll");
+    // Disabling when the hook was never injected must be a no-op. Loading the
+    // DLL only to call --disable used to apply the F5 outline remap mid-game.
+    if (!enable && !alreadyLoaded) {
+        CloseHandle(process);
+        std::fwprintf(stdout, L"Drag-select color hook already off (not loaded).\n");
+        return 0;
+    }
+
+    if (!alreadyLoaded) {
         const size_t bytes = (dllPath.size() + 1) * sizeof(wchar_t);
         void* remote = VirtualAllocEx(process, nullptr, bytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (!remote) {
