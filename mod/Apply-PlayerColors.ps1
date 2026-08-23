@@ -4,6 +4,7 @@ param(
     [switch]$ApplySavedConfigOnly,
     [switch]$ApplyDragSelectFromExtra,
     [switch]$ApplyAllyGoneIconFromExtra,
+    [switch]$ApplyBugFixesFromExtra,
     [switch]$RestoreOnly,
     [switch]$SyncVanillaBackup,
     [switch]$GetDefaultConfig
@@ -84,6 +85,23 @@ $AllyScreenSkinPrefix = 'fe_endgame_stats_bar_'
 $AllyGoneAtlasPng = 'x86\Data\skins\qol_ally_leave.png'
 $AllyGoneAtlasJson = 'x86\Data\skins\qol_ally_leave.json'
 $AllyGoneAtlasId = 'qol_ally_leave'
+
+# Locale string tables (Castle/Fortress gold tooltip fix).
+$StringLocaleFiles = @(
+    'x86\Data\Strings\enUS.json',
+    'x86\Data\Strings\deDE.json',
+    'x86\Data\Strings\esES.json',
+    'x86\Data\Strings\esMX.json',
+    'x86\Data\Strings\frFR.json',
+    'x86\Data\Strings\jaJP.json',
+    'x86\Data\Strings\koKR.json',
+    'x86\Data\Strings\ptBR.json',
+    'x86\Data\Strings\ruRU.json',
+    'x86\Data\Strings\zhCN.json',
+    'x86\Data\Strings\zhTW.json'
+)
+
+$CastleGoldTooltipAdviceKeys = @('unit_90_tooltip_advice', 'unit_91_tooltip_advice')
 
 function Get-DisabledPlayerDisplayColor([int]$playerIndex) {
     # Prefer live/vanilla palette sample at the documented minimap source index.
@@ -207,7 +225,7 @@ function Sync-AuthenticVanillaBackup {
         New-Item -ItemType Directory -Path $vanillaRoot -Force | Out-Null
     }
 
-    foreach ($rel in ($PplFiles + $MapColorFiles + @($AllyScreenSkinsJson))) {
+    foreach ($rel in ($PplFiles + $MapColorFiles + @($AllyScreenSkinsJson) + $StringLocaleFiles)) {
         $source = Get-AuthenticVanillaSourcePath $rel
         if (!$source) {
             throw "Geen bron gevonden voor: $rel (run eerst Battle.net Scan and Repair)"
@@ -355,7 +373,7 @@ function Set-AllyGoneSkullAtlas([bool]$enabled) {
 }
 
 function Restore-OriginalPaletteFiles {
-    foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson))) {
+    foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson) + $StringLocaleFiles)) {
         Restore-FromBackup $rel
     }
     foreach ($root in (Get-GameRootPaths)) {
@@ -385,6 +403,48 @@ function Restore-FromBackup([string]$relativePath) {
         }
         Copy-Item -LiteralPath $backupPath -Destination $targetPath -Force
         Write-Host "Restored $targetPath <= $backupPath"
+    }
+}
+
+function Get-ExtraFeatureEnabled([string]$propertyName) {
+    $extraPath = Join-Path (Split-Path -Parent $PSCommandPath) 'extra-features.json'
+    if (!(Test-Path -LiteralPath $extraPath)) { return $false }
+    $raw = Get-Content -LiteralPath $extraPath -Raw
+    return $raw -match ('"' + [regex]::Escape($propertyName) + '"\s*:\s*true')
+}
+
+function Patch-CastleGoldTooltipStringsInFile([string]$path) {
+    if (!(Test-Path -LiteralPath $path)) { return $false }
+
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $text = [IO.File]::ReadAllText($path, $utf8)
+    $updated = $text
+    foreach ($key in $CastleGoldTooltipAdviceKeys) {
+        $pattern = '("' + [regex]::Escape($key) + '")\s*:\s*"([^"]*?)25\s*%([^"]*)"'
+        $updated = [regex]::Replace($updated, $pattern, '${1}: "${2}20%${3}"')
+    }
+    if ($updated -eq $text) { return $false }
+
+    [IO.File]::WriteAllText($path, $updated, $utf8)
+    Write-Host "  Patched castle/fortress gold tooltip in $(Split-Path -Leaf $path)"
+    return $true
+}
+
+function Set-CastleGoldTooltipFix([bool]$enabled) {
+    if ($enabled) {
+        foreach ($root in (Get-GameRootPaths)) {
+            foreach ($rel in $StringLocaleFiles) {
+                $targetPath = Get-GameFilePath $rel $root
+                if (!(Test-Path -LiteralPath $targetPath)) { continue }
+
+                Ensure-BackupOfFile $targetPath $root | Out-Null
+                Patch-CastleGoldTooltipStringsInFile $targetPath | Out-Null
+            }
+        }
+    } else {
+        foreach ($rel in $StringLocaleFiles) {
+            Restore-FromBackup $rel
+        }
     }
 }
 
@@ -1138,6 +1198,14 @@ if ($ApplyAllyGoneIconFromExtra) {
     exit 0
 }
 
+if ($ApplyBugFixesFromExtra) {
+    Ensure-VanillaBackupReady
+    $castleGoldTooltipFix = Get-ExtraFeatureEnabled 'CastleGoldTooltipFix'
+    Set-CastleGoldTooltipFix $castleGoldTooltipFix
+    Write-ApplyLog "ApplyBugFixesFromExtra: CastleGoldTooltipFix=$castleGoldTooltipFix"
+    exit 0
+}
+
 if ($ApplySavedConfigOnly) {
     Ensure-VanillaBackupReady
     $loaded = Load-ColorsFromJsonOrDefault
@@ -1157,6 +1225,6 @@ if ($ApplySavedConfigOnly) {
     exit 0
 }
 
-Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -ApplyBugFixesFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
 exit 1
 

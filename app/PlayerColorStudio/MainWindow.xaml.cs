@@ -54,6 +54,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedChatTimestamps;
     private bool _chatHistory;
     private bool _appliedChatHistory;
+    private bool _castleGoldTooltipFix;
+    private bool _appliedCastleGoldTooltipFix;
     private bool _endGameObserve;
     private bool _appliedEndGameObserve;
     private bool _allianceTeamNumbers;
@@ -224,6 +226,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             if (_chatHistory == value) return;
             _chatHistory = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    public bool CastleGoldTooltipFix
+    {
+        get => _castleGoldTooltipFix;
+        set
+        {
+            if (_castleGoldTooltipFix == value) return;
+            _castleGoldTooltipFix = value;
             OnPropertyChanged();
             RefreshTabStatus();
         }
@@ -597,7 +611,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool HasPendingFeatureChanges() =>
         HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps() ||
         HasPendingAllianceTeamNumbers() || HasPendingComputerAnnihilatedChat();
-    private bool HasPendingBugFixChanges() => HasPendingChatPause() || HasPendingChatHistory();
+    private bool HasPendingBugFixChanges() =>
+        HasPendingChatPause() || HasPendingChatHistory() || HasPendingCastleGoldTooltipFix();
+    private bool HasPendingCastleGoldTooltipFix() =>
+        _castleGoldTooltipFix != _appliedCastleGoldTooltipFix;
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
         new(icon, brush, text);
@@ -1260,9 +1277,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 _suppressColorBlindPresetSync = false;
             }
-            SyncHexTextBoxesFromModel();
-            Keyboard.ClearFocus();
         }
+
+        // Cards hold preset colors after a colorblind selection; push them into every
+        // hex TextBox (including any that still had focus) before Custom Apply reads cards.
+        SyncHexTextBoxesFromModel();
+        Keyboard.ClearFocus();
+
         ColorBlindPresetHintText = ColorBlindPresets.CustomHint;
         RefreshColorBlindPresetButtons();
         RefreshTabStatus();
@@ -1310,7 +1331,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         foreach (var textBox in FindVisualChildren<System.Windows.Controls.TextBox>(this))
         {
-            if (textBox.DataContext is not ColorCard) continue;
+            if (textBox.DataContext is not ColorCard card) continue;
+            // UpdateTarget alone does not refresh a focused TextBox; set Text from the
+            // model so a stale box cannot write old hexes back on Apply.
+            if (!string.Equals(textBox.Text, card.Hex, StringComparison.OrdinalIgnoreCase))
+                textBox.Text = card.Hex;
             textBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateTarget();
         }
     }
@@ -1387,6 +1412,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void ApplyBugFixes()
+    {
+        var result = RunEngine("-ApplyBugFixesFromExtra");
+        if (result.ExitCode != 0)
+        {
+            var details = string.Join(Environment.NewLine,
+                new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
+                ? "Bug fix install failed."
+                : details);
+        }
+    }
+
     private void ApplyAllyGoneSkullAtlas()
     {
         var result = RunEngine("-ApplyAllyGoneIconFromExtra");
@@ -1410,6 +1448,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         bool endGameObserve,
         bool allianceTeamNumbers,
         bool computerAnnihilatedChat,
+        bool castleGoldTooltipFix,
         bool dragEnabled,
         string dragHex)
     {
@@ -1428,6 +1467,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             EndGameObserve = endGameObserve,
             AllianceTeamNumbers = allianceTeamNumbers,
             ComputerAnnihilatedChat = computerAnnihilatedChat,
+            CastleGoldTooltipFix = castleGoldTooltipFix,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
             UnitSpriteColors = _unitSpriteColors,
@@ -1497,6 +1537,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var chatColored = false;
         var chatStamps = false;
         var chatHist = false;
+        var castleGoldTooltipFix = false;
         var endGameObserve = false;
         var allianceTeamNumbers = false;
         var computerAnnihilatedChat = false;
@@ -1516,6 +1557,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             chatColored = extra?.ChatColoredNames ?? false;
             chatStamps = extra?.ChatTimestamps ?? false;
             chatHist = extra?.ChatHistory ?? false;
+            castleGoldTooltipFix = extra?.CastleGoldTooltipFix ?? false;
             // Feature 5 disabled — ignore persisted Observe flag.
             endGameObserve = false;
             allianceTeamNumbers = extra?.AllianceTeamNumbers ?? false;
@@ -1535,6 +1577,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedChatTimestamps = chatStamps;
         _chatHistory = chatHist;
         _appliedChatHistory = chatHist;
+        _castleGoldTooltipFix = castleGoldTooltipFix;
+        _appliedCastleGoldTooltipFix = castleGoldTooltipFix;
         _endGameObserve = endGameObserve;
         _appliedEndGameObserve = endGameObserve;
         _allianceTeamNumbers = allianceTeamNumbers;
@@ -1550,6 +1594,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(ChatColoredNames));
         OnPropertyChanged(nameof(ChatTimestamps));
         OnPropertyChanged(nameof(ChatHistory));
+        OnPropertyChanged(nameof(CastleGoldTooltipFix));
         OnPropertyChanged(nameof(EndGameObserve));
         OnPropertyChanged(nameof(AllianceTeamNumbers));
         OnPropertyChanged(nameof(ComputerAnnihilatedChat));
@@ -1558,6 +1603,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             WriteExtraFeaturesFile(markComputers, markHumans, chatPause, chatColored, chatStamps,
                 chatHist, endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
+                castleGoldTooltipFix,
                 dragEnabled: false, dragHex: "#00FF00");
         }
         catch { /* best-effort persist normalized flags */ }
@@ -2107,6 +2153,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (prepareColors && !customColorsApply)
                 preparedColorConfig = BuildColorConfigForColorsApply();
 
+            // Custom Apply reads cards after focus moves; sync first so unchanged slots
+            // keep preset colors instead of stale TextBox text left over from before.
+            if (prepareColors && customColorsApply)
+                SyncHexTextBoxesFromModel();
+
             IsApplying = true;
 
             // Commit any hex TextBox still focused so the latest typed value is saved.
@@ -2162,6 +2213,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chat, chatNames, chatStamps, chatHist,
                         endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
+                        _appliedCastleGoldTooltipFix,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     WriteColorConfigAndApply(config);
@@ -2215,6 +2267,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                         chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
                         computerAnnihilatedChatEnabled,
+                        _appliedCastleGoldTooltipFix,
                         dragEnabled: false,
                         dragHex: "#00FF00");
                     ApplyAllyGoneSkullAtlas();
@@ -2255,16 +2308,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var endGameObserveEnabled = false; // Feature 5 greyed out
                 var allianceTeamNumbersEnabled = _appliedAllianceTeamNumbers;
                 var computerAnnihilatedChatEnabled = _appliedComputerAnnihilatedChat;
+                var castleGoldTooltipFixEnabled = CastleGoldTooltipFix;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Installing bug fixes…"));
-                await Task.Run(() => WriteExtraFeaturesFile(
-                    markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
-                    chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
-                    computerAnnihilatedChatEnabled,
-                    dragEnabled: false,
-                    dragHex: "#00FF00"));
+                await Task.Run(() =>
+                {
+                    WriteExtraFeaturesFile(
+                        markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
+                        chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
+                        computerAnnihilatedChatEnabled,
+                        castleGoldTooltipFixEnabled,
+                        dragEnabled: false,
+                        dragHex: "#00FF00");
+                    ApplyBugFixes();
+                });
 
                 _appliedChatDuringPauseScreen = chatPauseEnabled;
                 _appliedChatHistory = chatHistoryEnabled;
+                _appliedCastleGoldTooltipFix = castleGoldTooltipFixEnabled;
                 _pauseChatInjectedForRunningGame = false;
                 _chatNameColorInjectedForRunningGame = false;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
@@ -2669,6 +2729,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     EndGameObserve = false,
                     AllianceTeamNumbers = false,
                     ComputerAnnihilatedChat = false,
+                    CastleGoldTooltipFix = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
                     UnitSpriteColors = false,
@@ -2688,6 +2749,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedChatTimestamps = false;
             _chatHistory = false;
             _appliedChatHistory = false;
+            _castleGoldTooltipFix = false;
+            _appliedCastleGoldTooltipFix = false;
             _endGameObserve = false;
             _appliedEndGameObserve = false;
             _allianceTeamNumbers = false;
@@ -2703,6 +2766,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(ChatColoredNames));
             OnPropertyChanged(nameof(ChatTimestamps));
             OnPropertyChanged(nameof(ChatHistory));
+            OnPropertyChanged(nameof(CastleGoldTooltipFix));
             OnPropertyChanged(nameof(EndGameObserve));
             OnPropertyChanged(nameof(AllianceTeamNumbers));
             OnPropertyChanged(nameof(ComputerAnnihilatedChat));
@@ -2853,6 +2917,8 @@ public sealed class ExtraFeaturesConfig
     public bool ChatTimestamps { get; set; }
     /// <summary>PageUp/PageDown re-show earlier chat lines in a match.</summary>
     public bool ChatHistory { get; set; }
+    /// <summary>Fix Castle/Fortress tooltip: +25% to +20% gold production text.</summary>
+    public bool CastleGoldTooltipFix { get; set; }
     /// <summary>Observe button on the defeat popup (close screen, keep watching).</summary>
     public bool EndGameObserve { get; set; }
     /// <summary>Gold lobby team digit in front of alliances (F11) player names.</summary>

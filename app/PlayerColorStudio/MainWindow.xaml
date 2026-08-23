@@ -420,6 +420,27 @@
                                            Text="Press Page Up, or hold Ctrl and press Arrow Up, in a match to bring back earlier chat messages, page by page. Page Down, or Ctrl+Arrow Down, moves forward again and returns to live chat. The last 64 messages of the current game are kept — every new game starts fresh."/>
                             </Expander>
                         </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding CastleGoldTooltipFix}"
+                                                  IsEnabled="{Binding IsApplyEnabled}"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       Text="Castle / Fortress gold bonus text"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           Text="Upgrading a Keep to a Castle (Humans) or a Stronghold to a Fortress (Orcs) grants +20% gold production, but the build tooltip incorrectly says +25%."/>
+                            </Expander>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
