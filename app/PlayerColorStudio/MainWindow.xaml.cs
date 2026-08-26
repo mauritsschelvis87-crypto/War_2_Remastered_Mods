@@ -62,6 +62,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _appliedAllianceTeamNumbers;
     private bool _computerAnnihilatedChat;
     private bool _appliedComputerAnnihilatedChat;
+    private bool _blacksmithWorkCompleteChat;
+    private bool _appliedBlacksmithWorkCompleteChat;
+    private bool _humanFootmanAudio;
+    private bool _appliedHumanFootmanAudio;
+    private bool _humanKnightAudio;
+    private bool _appliedHumanKnightAudio;
     private bool _colorBlindMode;
     private string _selectedColorBlindPreset = string.Empty;
     private string _appliedColorBlindPreset = string.Empty;
@@ -281,6 +287,45 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    public bool BlacksmithWorkCompleteChat
+    {
+        get => false;
+        set
+        {
+            // Blacksmith upgrade chat is greyed out for now — keep state forced off.
+            if (_blacksmithWorkCompleteChat)
+            {
+                _blacksmithWorkCompleteChat = false;
+                OnPropertyChanged();
+                RefreshTabStatus();
+            }
+        }
+    }
+
+    public bool HumanFootmanAudio
+    {
+        get => _humanFootmanAudio;
+        set
+        {
+            if (_humanFootmanAudio == value) return;
+            _humanFootmanAudio = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
+    public bool HumanKnightAudio
+    {
+        get => _humanKnightAudio;
+        set
+        {
+            if (_humanKnightAudio == value) return;
+            _humanKnightAudio = value;
+            OnPropertyChanged();
+            RefreshTabStatus();
+        }
+    }
+
     public bool ColorBlindMode
     {
         get => _colorBlindMode;
@@ -329,7 +374,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsApplyEnabled => !_isApplying;
 
-    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes";
+    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "upgrades" or "audio" or "bugfixes";
 
     public bool IsColorsStatusSingleLine => _activeTab == "colors";
 
@@ -608,6 +653,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _allianceTeamNumbers != _appliedAllianceTeamNumbers;
     private bool HasPendingComputerAnnihilatedChat() =>
         _computerAnnihilatedChat != _appliedComputerAnnihilatedChat;
+    private bool HasPendingBlacksmithWorkCompleteChat() => false; // Blacksmith disabled
+    private bool HasPendingHumanFootmanAudio() =>
+        _humanFootmanAudio != _appliedHumanFootmanAudio;
+    private bool HasPendingHumanKnightAudio() =>
+        _humanKnightAudio != _appliedHumanKnightAudio;
+    private bool HasPendingUpgradeChanges() =>
+        HasPendingBlacksmithWorkCompleteChat();
+    private bool HasPendingAudioChanges() =>
+        HasPendingHumanFootmanAudio() || HasPendingHumanKnightAudio();
     private bool HasPendingFeatureChanges() =>
         HasPendingMarkGone() || HasPendingChatColoredNames() || HasPendingChatTimestamps() ||
         HasPendingAllianceTeamNumbers() || HasPendingComputerAnnihilatedChat();
@@ -681,6 +735,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         "colors" => HasPendingColorChanges(),
         "feature" => HasPendingFeatureChanges(),
+        "upgrades" => HasPendingUpgradeChanges(),
+        "audio" => HasPendingAudioChanges(),
         "bugfixes" => HasPendingBugFixChanges(),
         _ => false,
     };
@@ -704,6 +760,36 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             {
                 SetStatusLines(StatusLine("✓", ReadyIconBrush,
                     "Mods have been installed. Restart Warcraft II Remastered to take effect."));
+            }
+            return;
+        }
+
+        if (_activeTab == "upgrades")
+        {
+            if (HasPendingChangesForActiveTab())
+            {
+                SetStatusLines(StatusLine("✕", PendingIconBrush,
+                    "Changes have been made, please apply for the changes to take place."));
+            }
+            else
+            {
+                SetStatusLines(StatusLine("✓", ReadyIconBrush,
+                    "Upgrade notifications have been installed. Restart Warcraft II Remastered to take effect."));
+            }
+            return;
+        }
+
+        if (_activeTab == "audio")
+        {
+            if (HasPendingChangesForActiveTab())
+            {
+                SetStatusLines(StatusLine("✕", PendingIconBrush,
+                    "Changes have been made, please apply for the changes to take place."));
+            }
+            else
+            {
+                SetStatusLines(StatusLine("✓", ReadyIconBrush,
+                    "Audio mods have been installed. Restart Warcraft II Remastered to take effect."));
             }
             return;
         }
@@ -1425,6 +1511,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+    private void ApplyAudioMods()
+    {
+        var result = RunEngine("-ApplyAudioFromExtra");
+        if (result.ExitCode != 0)
+        {
+            var details = string.Join(Environment.NewLine,
+                new[] { result.Error, result.Output }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(details)
+                ? "Audio install failed."
+                : details);
+        }
+    }
+
     private void ApplyAllyGoneSkullAtlas()
     {
         var result = RunEngine("-ApplyAllyGoneIconFromExtra");
@@ -1448,12 +1547,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         bool endGameObserve,
         bool allianceTeamNumbers,
         bool computerAnnihilatedChat,
+        bool blacksmithWorkCompleteChat,
+        bool humanFootmanAudio,
+        bool humanKnightAudio,
         bool castleGoldTooltipFix,
         bool dragEnabled,
         string dragHex)
     {
         // Feature 5 is greyed out — never persist Observe as enabled.
         endGameObserve = false;
+        // Blacksmith upgrade chat is greyed out — never persist as enabled.
+        blacksmithWorkCompleteChat = false;
         var extraJson = JsonSerializer.Serialize(new ExtraFeaturesConfig
         {
             AllyLeaveMarkComputers = markComputers,
@@ -1467,6 +1571,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             EndGameObserve = endGameObserve,
             AllianceTeamNumbers = allianceTeamNumbers,
             ComputerAnnihilatedChat = computerAnnihilatedChat,
+            BlacksmithWorkCompleteChat = blacksmithWorkCompleteChat,
+            HumanFootmanAudio = humanFootmanAudio,
+            HumanKnightAudio = humanKnightAudio,
             CastleGoldTooltipFix = castleGoldTooltipFix,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
@@ -1541,6 +1648,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var endGameObserve = false;
         var allianceTeamNumbers = false;
         var computerAnnihilatedChat = false;
+        var blacksmithWorkCompleteChat = false;
+        var humanFootmanAudio = false;
+        var humanKnightAudio = false;
         var unitColors = false;
         const bool dragEnabled = false;
 
@@ -1562,6 +1672,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             endGameObserve = false;
             allianceTeamNumbers = extra?.AllianceTeamNumbers ?? false;
             computerAnnihilatedChat = extra?.ComputerAnnihilatedChat ?? false;
+            // Blacksmith disabled — ignore persisted flag.
+            blacksmithWorkCompleteChat = false;
+            humanFootmanAudio = extra?.HumanFootmanAudio ?? false;
+            humanKnightAudio = extra?.HumanKnightAudio ?? false;
             unitColors = extra?.UnitSpriteColors ?? false;
         }
 
@@ -1585,6 +1699,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedAllianceTeamNumbers = allianceTeamNumbers;
         _computerAnnihilatedChat = computerAnnihilatedChat;
         _appliedComputerAnnihilatedChat = computerAnnihilatedChat;
+        _blacksmithWorkCompleteChat = blacksmithWorkCompleteChat;
+        _appliedBlacksmithWorkCompleteChat = blacksmithWorkCompleteChat;
+        _humanFootmanAudio = humanFootmanAudio;
+        _appliedHumanFootmanAudio = humanFootmanAudio;
+        _humanKnightAudio = humanKnightAudio;
+        _appliedHumanKnightAudio = humanKnightAudio;
         _unitSpriteColors = unitColors;
         _appliedUnitSpriteColors = unitColors;
         _appliedDragSelectColorEnabled = dragEnabled;
@@ -1598,12 +1718,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(EndGameObserve));
         OnPropertyChanged(nameof(AllianceTeamNumbers));
         OnPropertyChanged(nameof(ComputerAnnihilatedChat));
+        OnPropertyChanged(nameof(BlacksmithWorkCompleteChat));
+        OnPropertyChanged(nameof(HumanFootmanAudio));
+        OnPropertyChanged(nameof(HumanKnightAudio));
 
         try
         {
             WriteExtraFeaturesFile(markComputers, markHumans, chatPause, chatColored, chatStamps,
                 chatHist, endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
-                castleGoldTooltipFix,
+                blacksmithWorkCompleteChat, humanFootmanAudio, humanKnightAudio, castleGoldTooltipFix,
                 dragEnabled: false, dragHex: "#00FF00");
         }
         catch { /* best-effort persist normalized flags */ }
@@ -1632,14 +1755,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncAllyLeaveHook(throwOnError: false); }
                 catch { /* keep tab status friendly */ }
             }
-            if (_activeTab is "feature" or "bugfixes") RefreshTabStatus();
+            if (_activeTab is "feature" or "upgrades" or "bugfixes") RefreshTabStatus();
             return;
         }
 
         if (!IsWarcraftIiRunning())
         {
             _hookInjectedForRunningGame = false;
-            if (_activeTab is "feature" or "bugfixes") RefreshTabStatus();
+            if (_activeTab is "feature" or "upgrades" or "bugfixes") RefreshTabStatus();
             return;
         }
 
@@ -1657,7 +1780,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _hookInjectedForRunningGame = false;
         }
 
-        if (_activeTab is "feature" or "bugfixes") RefreshTabStatus();
+        if (_activeTab is "feature" or "upgrades" or "bugfixes") RefreshTabStatus();
     }
 
     private void UpdatePauseChatHookStatus(bool forceInject)
@@ -1706,6 +1829,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var anyExtra = AnyAllyLeaveApplied || _appliedChatDuringPauseScreen ||
                 _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
                 _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
+                _appliedBlacksmithWorkCompleteChat ||
                 _appliedDragSelectColorEnabled || _appliedUnitSpriteColors;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
@@ -1916,7 +2040,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (string.IsNullOrEmpty(_nativeDir)) return;
 
         if (!_appliedChatColoredNames && !_appliedChatTimestamps && !_appliedChatHistory &&
-            !_appliedAllyLeaveMarkHumans && !_appliedComputerAnnihilatedChat)
+            !_appliedAllyLeaveMarkHumans && !_appliedComputerAnnihilatedChat &&
+            !_appliedBlacksmithWorkCompleteChat)
         {
             if (IsWarcraftIiRunning() && forceInject)
             {
@@ -1963,14 +2088,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             _chatNameColorInjectedForRunningGame = false;
             return _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-                _appliedAllyLeaveMarkHumans || _appliedComputerAnnihilatedChat
+                _appliedAllyLeaveMarkHumans || _appliedComputerAnnihilatedChat ||
+                _appliedBlacksmithWorkCompleteChat
                 ? "Chat mods ON — watcher auto-injects when Warcraft II starts."
                 : "Chat name colors setting saved.";
         }
 
         var args = (_appliedChatColoredNames ? "--enable" : "--disable") +
                    (_appliedChatTimestamps ? " --timestamps 1" : " --timestamps 0") +
-                   (_appliedChatHistory ? " --history 1" : " --history 0");
+                   (_appliedChatHistory ? " --history 1" : " --history 0") +
+                   (_appliedBlacksmithWorkCompleteChat ? " --blacksmith 1" : " --blacksmith 0");
         var start = new ProcessStartInfo(injector, args)
         {
             UseShellExecute = false,
@@ -1997,7 +2124,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _chatNameColorInjectedForRunningGame =
             _appliedChatColoredNames || _appliedChatTimestamps || _appliedChatHistory ||
-            _appliedAllyLeaveMarkHumans || _appliedComputerAnnihilatedChat;
+            _appliedAllyLeaveMarkHumans || _appliedComputerAnnihilatedChat ||
+            _appliedBlacksmithWorkCompleteChat;
         return string.IsNullOrWhiteSpace(output) ? "Chat-name-color hook updated." : output;
     }
 
@@ -2168,7 +2296,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 preparedColorConfig = BuildColorConfigForColorsApply();
 
             SetStatusLines(StatusLine("", ReadyIconBrush,
-                _activeTab == "bugfixes" ? "Installing bug fixes…" : "Installing mod…"));
+                _activeTab switch
+                {
+                    "bugfixes" => "Installing bug fixes…",
+                    "upgrades" => "Installing upgrade notifications…",
+                    "audio" => "Installing audio mods…",
+                    _ => "Installing mod…",
+                }));
             ApplyButtonBrush = ReadyButtonBrush;
             ApplyButtonBorderBrush = ReadyButtonBorderBrush;
             // Let the progress bar paint/animate before blocking work starts.
@@ -2204,6 +2338,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var endGameObserve = _appliedEndGameObserve;
                 var allianceTeamNumbers = _appliedAllianceTeamNumbers;
                 var computerAnnihilatedChat = _appliedComputerAnnihilatedChat;
+                var blacksmithWorkCompleteChat = _appliedBlacksmithWorkCompleteChat;
                 // Unit sprites always follow the installed player colors.
                 _unitSpriteColors = true;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Writing player colors…"));
@@ -2213,6 +2348,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chat, chatNames, chatStamps, chatHist,
                         endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
+                        blacksmithWorkCompleteChat, _appliedHumanFootmanAudio, _appliedHumanKnightAudio,
                         _appliedCastleGoldTooltipFix,
                         dragEnabled: false,
                         dragHex: "#00FF00");
@@ -2266,7 +2402,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                         chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
-                        computerAnnihilatedChatEnabled,
+                        computerAnnihilatedChatEnabled, _appliedBlacksmithWorkCompleteChat,
+                        _appliedHumanFootmanAudio, _appliedHumanKnightAudio,
                         _appliedCastleGoldTooltipFix,
                         dragEnabled: false,
                         dragHex: "#00FF00");
@@ -2297,6 +2434,70 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* optional while game closed */ }
                 });
             }
+            else if (_activeTab == "upgrades")
+            {
+                var markComputers = _appliedAllyLeaveMarkComputers;
+                var markHumans = _appliedAllyLeaveMarkHumans;
+                var chatPauseEnabled = _appliedChatDuringPauseScreen;
+                var chatNamesEnabled = _appliedChatColoredNames;
+                var chatStampsEnabled = _appliedChatTimestamps;
+                var chatHistoryEnabled = _appliedChatHistory;
+                var endGameObserveEnabled = false;
+                var allianceTeamNumbersEnabled = _appliedAllianceTeamNumbers;
+                var computerAnnihilatedChatEnabled = _appliedComputerAnnihilatedChat;
+                var blacksmithWorkCompleteChatEnabled = false; // greyed out
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Saving upgrade notification settings…"));
+                await Task.Run(() =>
+                {
+                    WriteExtraFeaturesFile(
+                        markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
+                        chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
+                        computerAnnihilatedChatEnabled, blacksmithWorkCompleteChatEnabled,
+                        _appliedHumanFootmanAudio, _appliedHumanKnightAudio,
+                        _appliedCastleGoldTooltipFix,
+                        dragEnabled: false,
+                        dragHex: "#00FF00");
+                });
+
+                _appliedBlacksmithWorkCompleteChat = false;
+                _chatNameColorInjectedForRunningGame = false;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Updating hooks…"));
+                await Task.Run(() =>
+                {
+                    SyncAllyLeaveWatch();
+                    try { SyncChatNameColorHook(throwOnError: false); }
+                    catch { /* optional while game closed */ }
+                });
+            }
+            else if (_activeTab == "audio")
+            {
+                var markComputers = _appliedAllyLeaveMarkComputers;
+                var markHumans = _appliedAllyLeaveMarkHumans;
+                var chatPauseEnabled = _appliedChatDuringPauseScreen;
+                var chatNamesEnabled = _appliedChatColoredNames;
+                var chatStampsEnabled = _appliedChatTimestamps;
+                var chatHistoryEnabled = _appliedChatHistory;
+                var endGameObserveEnabled = false;
+                var allianceTeamNumbersEnabled = _appliedAllianceTeamNumbers;
+                var computerAnnihilatedChatEnabled = _appliedComputerAnnihilatedChat;
+                var humanFootmanAudioEnabled = HumanFootmanAudio;
+                var humanKnightAudioEnabled = HumanKnightAudio;
+                SetStatusLines(StatusLine("", ReadyIconBrush, "Installing audio mods…"));
+                await Task.Run(() =>
+                {
+                    WriteExtraFeaturesFile(
+                        markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
+                        chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
+                        computerAnnihilatedChatEnabled, false, humanFootmanAudioEnabled, humanKnightAudioEnabled,
+                        _appliedCastleGoldTooltipFix,
+                        dragEnabled: false,
+                        dragHex: "#00FF00");
+                    ApplyAudioMods();
+                });
+
+                _appliedHumanFootmanAudio = humanFootmanAudioEnabled;
+                _appliedHumanKnightAudio = humanKnightAudioEnabled;
+            }
             else if (_activeTab == "bugfixes")
             {
                 var markComputers = _appliedAllyLeaveMarkComputers;
@@ -2308,6 +2509,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var endGameObserveEnabled = false; // Feature 5 greyed out
                 var allianceTeamNumbersEnabled = _appliedAllianceTeamNumbers;
                 var computerAnnihilatedChatEnabled = _appliedComputerAnnihilatedChat;
+                var blacksmithWorkCompleteChatEnabled = false;
                 var castleGoldTooltipFixEnabled = CastleGoldTooltipFix;
                 SetStatusLines(StatusLine("", ReadyIconBrush, "Installing bug fixes…"));
                 await Task.Run(() =>
@@ -2315,7 +2517,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     WriteExtraFeaturesFile(
                         markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
                         chatHistoryEnabled, endGameObserveEnabled, allianceTeamNumbersEnabled,
-                        computerAnnihilatedChatEnabled,
+                        computerAnnihilatedChatEnabled, blacksmithWorkCompleteChatEnabled,
+                        _appliedHumanFootmanAudio, _appliedHumanKnightAudio,
                         castleGoldTooltipFixEnabled,
                         dragEnabled: false,
                         dragHex: "#00FF00");
@@ -2729,6 +2932,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     EndGameObserve = false,
                     AllianceTeamNumbers = false,
                     ComputerAnnihilatedChat = false,
+                    BlacksmithWorkCompleteChat = false,
+                    HumanFootmanAudio = false,
+                    HumanKnightAudio = false,
                     CastleGoldTooltipFix = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
@@ -2757,6 +2963,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedAllianceTeamNumbers = false;
             _computerAnnihilatedChat = false;
             _appliedComputerAnnihilatedChat = false;
+            _blacksmithWorkCompleteChat = false;
+            _appliedBlacksmithWorkCompleteChat = false;
+            _humanFootmanAudio = false;
+            _appliedHumanFootmanAudio = false;
+            _humanKnightAudio = false;
+            _appliedHumanKnightAudio = false;
             _unitSpriteColors = false;
             _appliedUnitSpriteColors = false;
             _appliedDragSelectColorEnabled = false;
@@ -2770,6 +2982,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(EndGameObserve));
             OnPropertyChanged(nameof(AllianceTeamNumbers));
             OnPropertyChanged(nameof(ComputerAnnihilatedChat));
+            OnPropertyChanged(nameof(BlacksmithWorkCompleteChat));
+            OnPropertyChanged(nameof(HumanFootmanAudio));
+            OnPropertyChanged(nameof(HumanKnightAudio));
 
             Cards.Clear();
             LoadCards();
@@ -2925,6 +3140,12 @@ public sealed class ExtraFeaturesConfig
     public bool AllianceTeamNumbers { get; set; }
     /// <summary>Chat line "Name annihilated" when a computer AI is wiped.</summary>
     public bool ComputerAnnihilatedChat { get; set; }
+    /// <summary>Gold chat line when a blacksmith upgrade completes.</summary>
+    public bool BlacksmithWorkCompleteChat { get; set; }
+    /// <summary>Replace Human Footman Gamesfx voice lines with remake samples.</summary>
+    public bool HumanFootmanAudio { get; set; }
+    /// <summary>Replace Human Knight Gamesfx voice lines with remake samples.</summary>
+    public bool HumanKnightAudio { get; set; }
     public bool DragSelectColorEnabled { get; set; }
     public string? DragSelectColor { get; set; }
     /// <summary>Live-recolor HD unit sprites to the player colors.</summary>

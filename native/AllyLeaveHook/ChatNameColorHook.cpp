@@ -22,6 +22,15 @@ constexpr uint32_t kPreferredName0 = 0x0091ADA8;
 constexpr uint32_t kPreferredDrawColored = 0x005AEEB0;
 constexpr uint32_t kPreferredDrawImpl = 0x005AED00; // called only by 0x5AEEB0 (not 0x5AEE20)
 constexpr uint32_t kPreferredPushMapMsg = 0x00614A90;
+constexpr uint32_t kPreferredGameNotify = 0x004EA320;
+constexpr uint32_t kPreferredWorkCompleteNotifyCall = 0x004E962D;
+constexpr uint32_t kPreferredSpSystemNotify = 0x004A2480;
+constexpr uint32_t kPreferredSpSystemNotifyCall = 0x004E94CE;
+constexpr uint32_t kPreferredUpgradeCompleteSite = 0x004E9507;
+constexpr uint32_t kPreferredMapWorkComplete = 0x004A2C90;
+constexpr int kHumanBlacksmithType = 0x52;
+constexpr int kOrcBlacksmithType = 0x53;
+constexpr uint32_t kWorkCompleteChatDuration = 5000;
 constexpr uint32_t kPreferredMsgRing = 0x009B17A0;  // 15 × 0xD0 map-message slots
 constexpr uint32_t kPreferredTimeNow = 0x00625940;  // ms since app start (QPC-based)
 constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
@@ -34,6 +43,7 @@ using TimeNowFn = uint32_t(__cdecl*)();
 volatile LONG g_enabled = 0;       // chat "Name:" lines
 volatile LONG g_timestamps = 0;    // "[HH:MM] " prefix on chat lines (own mod)
 volatile LONG g_historyOn = 0;     // PageUp/PageDown chat history recall (own mod)
+volatile LONG g_blacksmithWorkComplete = 0;
 volatile LONG g_ready = 0;
 volatile LONG g_hits = 0;
 volatile LONG g_recolors = 0;
@@ -112,6 +122,25 @@ uint8_t* g_pushSite = nullptr;
 uint8_t g_pushPrologue[8]{};
 void* g_pushTrampoline = nullptr;
 PushMapMsgFn g_originalPush = nullptr;
+using GameNotifyFn = void(__cdecl*)(void* building, void* packet, void* unused);
+using SpSystemNotifyFn = void(__cdecl*)(void* building, void* packet);
+using MapWorkCompleteFn = void(__cdecl*)(void* building, void* packet);
+GameNotifyFn g_originalGameNotify = nullptr;
+SpSystemNotifyFn g_originalSpNotify = nullptr;
+uint8_t* g_workCompleteNotifyCallSite = nullptr;
+uint8_t g_workCompleteNotifyCallOrig[5]{};
+uint8_t* g_workCompleteNotifyResume = nullptr;
+uint8_t* g_spSystemNotifyCallSite = nullptr;
+uint8_t g_spSystemNotifyCallOrig[5]{};
+uint8_t* g_spSystemNotifyResume = nullptr;
+uint8_t* g_upgradeCompleteSite = nullptr;
+uint8_t g_upgradeCompleteOrig[7]{};
+uint8_t* g_upgradeCompleteResume = nullptr;
+uint8_t* g_mapWorkCompleteSite = nullptr;
+uint8_t g_mapWorkCompletePrologue[8]{};
+void* g_mapWorkCompleteTrampoline = nullptr;
+MapWorkCompleteFn g_originalMapWorkComplete = nullptr;
+volatile DWORD g_suppressWorkCompleteUntil = 0;
 HANDLE g_keyThread = nullptr;
 HANDLE g_matchThread = nullptr;
 volatile LONG g_keyStop = 0;
@@ -1186,6 +1215,13 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
         }
     }
 
+    // Blacksmith upgrade complete: gold system line (independent of chat-color mod).
+    if (InterlockedCompareExchange(&g_blacksmithWorkComplete, 0, 0) &&
+        _stricmp(text, "Blacksmith work complete") == 0) {
+        g_originalDraw(ui, base, kSystemMessageColor);
+        return;
+    }
+
     const bool chatOn = InterlockedCompareExchange(&g_enabled, 0, 0) != 0;
     if (!chatOn) {
         g_originalDraw(ui, base, color);
@@ -1258,6 +1294,20 @@ static void __declspec(naked) Hook_DrawColored()
 extern "C" void __cdecl ChatHistory_OnPushMapMsg(const char* text, uint32_t color, uint32_t duration)
 {
     RefreshSeatNameSnapshot();
+
+    // Drop the game's generic "Work Complete" if we just pushed our blacksmith line.
+    if (text && text[0]) {
+        const DWORD until = static_cast<DWORD>(InterlockedCompareExchange(
+            reinterpret_cast<volatile LONG*>(&g_suppressWorkCompleteUntil), 0, 0));
+        if (until != 0 && GetTickCount() <= until && _stricmp(text, "Work Complete") == 0) {
+            static LONG s_suppressLog = 0;
+            if (InterlockedIncrement(&s_suppressLog) <= 16) {
+                Log("Blacksmith: suppress generic work-complete line");
+            }
+            return;
+        }
+    }
+
     RecordHistory(text, static_cast<uint8_t>(color));
     if (text && text[0]) {
         size_t nameOff = 0;
@@ -1291,7 +1341,334 @@ static void __declspec(naked) Hook_PushMapMsg()
     }
 }
 
+static bool IsBlacksmithBuilding(void* building)
+{
+    if (!building) return false;
+    __try {
+        const int type = static_cast<int>(static_cast<uint8_t*>(building)[0x2c]);
+        if (type == kHumanBlacksmithType || type == kOrcBlacksmithType) return true;
+        void* inner = *reinterpret_cast<void**>(static_cast<uint8_t*>(building) + 0x32);
+        if (!inner) return false;
+        const int innerType = static_cast<int>(static_cast<uint8_t*>(inner)[0x2c]);
+        return innerType == kHumanBlacksmithType || innerType == kOrcBlacksmithType;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+
+static bool IsWorkCompletePacket(void* packet)
+{
+    if (!packet) return false;
+    __try {
+        return *reinterpret_cast<uint16_t*>(static_cast<uint8_t*>(packet) + 2) == 1;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return false;
+    }
+}
+
+static PushMapMsgFn PushMapMsgFnOrNull()
+{
+    if (g_originalPush) return g_originalPush;
+    HMODULE game = GetModuleHandleW(L"Warcraft II.exe");
+    if (!game) game = GetModuleHandleW(nullptr);
+    if (!game) return nullptr;
+    auto* base = reinterpret_cast<uint8_t*>(game);
+    return reinterpret_cast<PushMapMsgFn>(base + (kPreferredPushMapMsg - kPreferredImageBase));
+}
+
+static int SafeBuildingType(void* building)
+{
+    if (!building) return -1;
+    __try {
+        return static_cast<int>(static_cast<uint8_t*>(building)[0x2c]);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return -1;
+    }
+}
+
+static bool PushBlacksmithCompleteMessage(void* building, void* packet, const char* via)
+{
+    if (!InterlockedCompareExchange(&g_blacksmithWorkComplete, 0, 0)) return false;
+    if (!building) return false;
+    PushMapMsgFn push = PushMapMsgFnOrNull();
+    if (!push) return false;
+    if (!IsBlacksmithBuilding(building)) return false;
+
+    __try {
+        push("Blacksmith work complete", 0, kWorkCompleteChatDuration);
+        const DWORD until = GetTickCount() + 1500;
+        InterlockedExchange(reinterpret_cast<volatile LONG*>(&g_suppressWorkCompleteUntil),
+                            static_cast<LONG>(until));
+        static LONG s_log = 0;
+        if (InterlockedIncrement(&s_log) <= 64) {
+            Log("Blacksmith work complete pushed via=%s building=%p type=%d packet=%p",
+                via ? via : "?", building, SafeBuildingType(building), packet);
+        }
+        return true;
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        Log("Blacksmith work complete PushMapMsg exception via=%s building=%p",
+            via ? via : "?", building);
+        return false;
+    }
+}
+
+static bool TryPushBlacksmithComplete(void* building, void* packet)
+{
+    if (!IsWorkCompletePacket(packet)) return false;
+    return PushBlacksmithCompleteMessage(building, packet, "notify");
+}
+
+extern "C" void __cdecl OnBlacksmithUpgradeComplete(void* building)
+{
+    if (!InterlockedCompareExchange(&g_blacksmithWorkComplete, 0, 0)) return;
+    if (!IsBlacksmithBuilding(building)) return;
+    static LONG s_seen = 0;
+    if (InterlockedIncrement(&s_seen) <= 32) {
+        Log("UpgradeComplete blacksmith building=%p type=%d",
+            building, SafeBuildingType(building));
+    }
+    PushBlacksmithCompleteMessage(building, nullptr, "upgrade");
+}
+
+extern "C" void __cdecl BlacksmithNotify_Gate(void* building, void* packet, void* unused)
+{
+    const bool pushed = TryPushBlacksmithComplete(building, packet);
+    if (!pushed && g_originalGameNotify) {
+        g_originalGameNotify(building, packet, unused);
+    }
+}
+
+extern "C" void __cdecl SpSystemNotify_Gate(void* building, void* packet)
+{
+    const bool pushed = TryPushBlacksmithComplete(building, packet);
+    if (!pushed && g_originalSpNotify) {
+        g_originalSpNotify(building, packet);
+    }
+}
+
+extern "C" void __cdecl MapWorkComplete_OnEnter(void* building, void* packet)
+{
+    if (TryPushBlacksmithComplete(building, packet)) return;
+    if (g_originalMapWorkComplete) g_originalMapWorkComplete(building, packet);
+}
+
+static void __declspec(naked) Hook_MapWorkComplete()
+{
+    __asm {
+        jmp MapWorkComplete_OnEnter
+    }
+}
+
+static void __declspec(naked) UpgradeCompleteDetour()
+{
+    __asm {
+        // ebx = building; cdecl callee preserves ebx — do not push/pop here.
+        call OnBlacksmithUpgradeComplete
+        or dword ptr [ebx+0x18], 0x2000
+        jmp g_upgradeCompleteResume
+    }
+}
+
+static void __declspec(naked) WorkCompleteNotifyDetour()
+{
+    __asm {
+        // Stack on entry: building (ebx), packet (edi), unused (0), ret.
+        mov eax, esp
+        push dword ptr [eax+8]
+        push dword ptr [eax+4]
+        push dword ptr [eax]
+        call BlacksmithNotify_Gate
+        add esp, 12
+        jmp g_workCompleteNotifyResume
+    }
+}
+
+static void __declspec(naked) SpSystemNotifyDetour()
+{
+    __asm {
+        // Stack on entry: building (ebx), packet (edi), ret.
+        mov eax, esp
+        push dword ptr [eax+4]
+        push dword ptr [eax]
+        call SpSystemNotify_Gate
+        add esp, 8
+        jmp g_spSystemNotifyResume
+    }
+}
+
 namespace {
+
+bool PatchNotifyCall5(uint8_t* callSite, void* detour, uint8_t* savedOrig,
+                      uint8_t** resumeOut, void** originalOut)
+{
+    if (!callSite || callSite[0] != 0xE8) return false;
+
+    const int32_t rel = *reinterpret_cast<int32_t*>(callSite + 1);
+    void* original = (callSite + 5) + rel;
+    memcpy(savedOrig, callSite, 5);
+
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(callSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) return false;
+
+    callSite[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(callSite + 1) =
+        static_cast<int32_t>(static_cast<uint8_t*>(detour) - (callSite + 5));
+    VirtualProtect(callSite, 5, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), callSite, 5);
+
+    *resumeOut = callSite + 5;
+    *originalOut = original;
+    return true;
+}
+
+uint8_t* FindNotifyCall(uint8_t* base, size_t imageSize, uint32_t preferredCallVa,
+                        const uint8_t* notifyTarget, const uint8_t* leadPattern, size_t leadLen)
+{
+    uint8_t* preferred = base + (preferredCallVa - kPreferredImageBase);
+    if (preferred + 5 <= base + imageSize && preferred[0] == 0xE8) {
+        const int32_t rel = *reinterpret_cast<int32_t*>(preferred + 1);
+        if ((preferred + 5) + rel == notifyTarget) return preferred;
+    }
+
+    if (leadLen + 5 > imageSize) return nullptr;
+    for (size_t i = 0; i + leadLen + 5 <= imageSize; ++i) {
+        uint8_t* p = base + i;
+        if (!IsLikelyCode(p, leadLen + 5)) continue;
+        if (memcmp(p, leadPattern, leadLen) != 0) continue;
+        if (p[leadLen] != 0xE8) continue;
+        const int32_t rel = *reinterpret_cast<int32_t*>(p + leadLen + 1);
+        const uint8_t* target = (p + leadLen) + 5 + rel;
+        if (target == notifyTarget) return p + leadLen;
+    }
+    return nullptr;
+}
+
+uint8_t* FindWorkCompleteNotifyCall(uint8_t* base, size_t imageSize)
+{
+    const uint8_t* notifyTarget = base + (kPreferredGameNotify - kPreferredImageBase);
+    static const uint8_t kLead[] = { 0x6A, 0x00, 0x57, 0x53 };
+    return FindNotifyCall(base, imageSize, kPreferredWorkCompleteNotifyCall,
+                          notifyTarget, kLead, sizeof(kLead));
+}
+
+uint8_t* FindSpSystemNotifyCall(uint8_t* base, size_t imageSize)
+{
+    const uint8_t* notifyTarget = base + (kPreferredSpSystemNotify - kPreferredImageBase);
+    static const uint8_t kLead[] = { 0x57, 0x53 };
+    return FindNotifyCall(base, imageSize, kPreferredSpSystemNotifyCall,
+                          notifyTarget, kLead, sizeof(kLead));
+}
+
+uint8_t* FindUpgradeCompleteSite(uint8_t* base, size_t imageSize)
+{
+    static const uint8_t kPattern[] = { 0x81, 0x4B, 0x18, 0x00, 0x20, 0x00, 0x00 };
+    uint8_t* preferred = base + (kPreferredUpgradeCompleteSite - kPreferredImageBase);
+    if (preferred + sizeof(kPattern) <= base + imageSize &&
+        memcmp(preferred, kPattern, sizeof(kPattern)) == 0) {
+        return preferred;
+    }
+    if (sizeof(kPattern) > imageSize) return nullptr;
+    for (size_t i = 0; i + sizeof(kPattern) <= imageSize; ++i) {
+        uint8_t* p = base + i;
+        if (!IsLikelyCode(p, sizeof(kPattern))) continue;
+        if (memcmp(p, kPattern, sizeof(kPattern)) == 0) return p;
+    }
+    return nullptr;
+}
+
+bool PatchSite7(uint8_t* site, void* detour, uint8_t* savedOrig, uint8_t** resumeOut)
+{
+    if (!site) return false;
+    memcpy(savedOrig, site, 7);
+    DWORD oldProtect = 0;
+    if (!VirtualProtect(site, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) return false;
+    site[0] = 0xE9;
+    *reinterpret_cast<int32_t*>(site + 1) =
+        static_cast<int32_t>(static_cast<uint8_t*>(detour) - (site + 5));
+    site[5] = 0x90;
+    site[6] = 0x90;
+    VirtualProtect(site, 7, oldProtect, &oldProtect);
+    FlushInstructionCache(GetCurrentProcess(), site, 7);
+    *resumeOut = site + 7;
+    return true;
+}
+
+bool InstallBlacksmithWorkCompleteHook(uint8_t* base, size_t imageSize)
+{
+    bool any = false;
+
+    if (!g_workCompleteNotifyCallSite) {
+        uint8_t* callSite = FindWorkCompleteNotifyCall(base, imageSize);
+        if (!callSite) {
+            Log("Install: MP work-complete notify call not found");
+        } else if (PatchNotifyCall5(callSite, reinterpret_cast<void*>(&WorkCompleteNotifyDetour),
+                                    g_workCompleteNotifyCallOrig, &g_workCompleteNotifyResume,
+                                    reinterpret_cast<void**>(&g_originalGameNotify))) {
+            g_workCompleteNotifyCallSite = callSite;
+            Log("Install: ok MP workComplete call=%p notify=%p resume=%p",
+                callSite, g_originalGameNotify, g_workCompleteNotifyResume);
+            any = true;
+        } else {
+            Log("Install: PatchNotifyCall5(MP work-complete) failed");
+        }
+    } else {
+        any = true;
+    }
+
+    if (!g_spSystemNotifyCallSite) {
+        uint8_t* callSite = FindSpSystemNotifyCall(base, imageSize);
+        if (!callSite) {
+            Log("Install: SP system-notify call not found");
+        } else if (PatchNotifyCall5(callSite, reinterpret_cast<void*>(&SpSystemNotifyDetour),
+                                    g_spSystemNotifyCallOrig, &g_spSystemNotifyResume,
+                                    reinterpret_cast<void**>(&g_originalSpNotify))) {
+            g_spSystemNotifyCallSite = callSite;
+            Log("Install: ok SP systemNotify call=%p notify=%p resume=%p",
+                callSite, g_originalSpNotify, g_spSystemNotifyResume);
+            any = true;
+        } else {
+            Log("Install: PatchNotifyCall5(SP system-notify) failed");
+        }
+    } else {
+        any = true;
+    }
+
+    if (!g_upgradeCompleteSite) {
+        uint8_t* site = FindUpgradeCompleteSite(base, imageSize);
+        if (!site) {
+            Log("Install: upgrade-complete site not found");
+        } else if (PatchSite7(site, reinterpret_cast<void*>(&UpgradeCompleteDetour),
+                              g_upgradeCompleteOrig, &g_upgradeCompleteResume)) {
+            g_upgradeCompleteSite = site;
+            Log("Install: ok upgradeComplete site=%p resume=%p", site, g_upgradeCompleteResume);
+            any = true;
+        } else {
+            Log("Install: PatchSite7(upgrade-complete) failed");
+        }
+    } else {
+        any = true;
+    }
+
+    if (!g_mapWorkCompleteSite) {
+        uint8_t* fn = base + (kPreferredMapWorkComplete - kPreferredImageBase);
+        static const uint8_t kPrologue[7] = { 0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x08, 0x53 };
+        if (!IsLikelyCode(fn, sizeof(kPrologue)) || memcmp(fn, kPrologue, sizeof(kPrologue)) != 0) {
+            Log("Install: MapWorkComplete prologue mismatch at %p", fn);
+        } else if (PatchPrologue7(fn, reinterpret_cast<void*>(&Hook_MapWorkComplete),
+                                  g_mapWorkCompletePrologue, &g_mapWorkCompleteTrampoline,
+                                  reinterpret_cast<void**>(&g_originalMapWorkComplete))) {
+            g_mapWorkCompleteSite = fn;
+            Log("Install: ok MapWorkComplete fn=%p tramp=%p", fn, g_mapWorkCompleteTrampoline);
+            any = true;
+        } else {
+            Log("Install: PatchPrologue7(MapWorkComplete) failed");
+        }
+    } else {
+        any = true;
+    }
+
+    return any;
+}
 
 uint8_t* FindDrawTextColored(uint8_t* base, size_t imageSize)
 {
@@ -1500,6 +1877,8 @@ bool InstallHook()
     } else {
         Log("InstallHook: continuing without chat history (PageUp/PageDown off)");
     }
+    if (!InstallBlacksmithWorkCompleteHook(base, imageSize))
+        Log("InstallHook: continuing without blacksmith work-complete chat");
     return true;
 }
 
@@ -1557,6 +1936,52 @@ void RemoveHook()
     if (g_trampoline) {
         VirtualFree(g_trampoline, 0, MEM_RELEASE);
         g_trampoline = nullptr;
+    }
+    if (g_workCompleteNotifyCallSite && g_workCompleteNotifyCallOrig[0]) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_workCompleteNotifyCallSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_workCompleteNotifyCallSite, g_workCompleteNotifyCallOrig, 5);
+            VirtualProtect(g_workCompleteNotifyCallSite, 5, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_workCompleteNotifyCallSite, 5);
+        }
+        g_workCompleteNotifyCallSite = nullptr;
+        g_originalGameNotify = nullptr;
+        g_workCompleteNotifyResume = nullptr;
+    }
+    if (g_spSystemNotifyCallSite && g_spSystemNotifyCallOrig[0]) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_spSystemNotifyCallSite, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_spSystemNotifyCallSite, g_spSystemNotifyCallOrig, 5);
+            VirtualProtect(g_spSystemNotifyCallSite, 5, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_spSystemNotifyCallSite, 5);
+        }
+        g_spSystemNotifyCallSite = nullptr;
+        g_originalSpNotify = nullptr;
+        g_spSystemNotifyResume = nullptr;
+    }
+    if (g_upgradeCompleteSite && g_upgradeCompleteOrig[0]) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_upgradeCompleteSite, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_upgradeCompleteSite, g_upgradeCompleteOrig, 7);
+            VirtualProtect(g_upgradeCompleteSite, 7, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_upgradeCompleteSite, 7);
+        }
+        g_upgradeCompleteSite = nullptr;
+        g_upgradeCompleteResume = nullptr;
+    }
+    if (g_mapWorkCompleteSite && g_mapWorkCompletePrologue[0]) {
+        DWORD oldProtect = 0;
+        if (VirtualProtect(g_mapWorkCompleteSite, 7, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            memcpy(g_mapWorkCompleteSite, g_mapWorkCompletePrologue, 7);
+            VirtualProtect(g_mapWorkCompleteSite, 7, oldProtect, &oldProtect);
+            FlushInstructionCache(GetCurrentProcess(), g_mapWorkCompleteSite, 7);
+        }
+        g_mapWorkCompleteSite = nullptr;
+    }
+    if (g_mapWorkCompleteTrampoline) {
+        VirtualFree(g_mapWorkCompleteTrampoline, 0, MEM_RELEASE);
+        g_mapWorkCompleteTrampoline = nullptr;
+        g_originalMapWorkComplete = nullptr;
     }
     g_drawSite = nullptr;
     g_originalDraw = nullptr;
@@ -1624,5 +2049,15 @@ extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetHistory(LPVOID
     InterlockedExchange(&g_historyOn, enabled ? 1 : 0);
     Log("Chat SetHistory=%d count=%ld", enabled ? 1 : 0,
         InterlockedCompareExchange(&g_histCount, 0, 0));
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+// Blacksmith upgrade complete chat ("Blacksmith work complete" in gold).
+extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetBlacksmithWorkComplete(LPVOID enabled)
+{
+    InterlockedExchange(&g_blacksmithWorkComplete, enabled ? 1 : 0);
+    Log("Chat SetBlacksmithWorkComplete=%d push=%p upgrade=%p mapWork=%p mpNotify=%p spNotify=%p",
+        enabled ? 1 : 0, g_originalPush, g_upgradeCompleteSite, g_mapWorkCompleteSite,
+        g_originalGameNotify, g_originalSpNotify);
     return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
 }

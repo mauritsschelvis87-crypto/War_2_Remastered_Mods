@@ -5,6 +5,7 @@ param(
     [switch]$ApplyDragSelectFromExtra,
     [switch]$ApplyAllyGoneIconFromExtra,
     [switch]$ApplyBugFixesFromExtra,
+    [switch]$ApplyAudioFromExtra,
     [switch]$RestoreOnly,
     [switch]$SyncVanillaBackup,
     [switch]$GetDefaultConfig
@@ -102,6 +103,25 @@ $StringLocaleFiles = @(
 )
 
 $CastleGoldTooltipAdviceKeys = @('unit_90_tooltip_advice', 'unit_91_tooltip_advice')
+
+# Human Footman voice lines under x86\Data\Gamesfx\Human
+# (remake WAVs in assets\audio\human_footman use the same vanilla filenames).
+$HumanFootmanAudioFiles = @(
+    'Hpissed1.wav', 'Hpissed2.wav', 'Hpissed3.wav', 'Hpissed4.wav',
+    'Hpissed5.wav', 'Hpissed6.wav', 'Hpissed7.wav',
+    'Hready.wav',
+    'Hwhat1.wav', 'Hwhat2.wav', 'Hwhat3.wav', 'Hwhat4.wav', 'Hwhat5.wav', 'Hwhat6.wav',
+    'Hyessir1.wav', 'Hyessir2.wav', 'Hyessir3.wav', 'Hyessir4.wav'
+)
+
+# Human Knight voice lines under x86\Data\Gamesfx\Knight
+# (remake WAVs in assets\audio\human_knight use the same vanilla filenames).
+$HumanKnightAudioFiles = @(
+    'Knpissd1.wav', 'Knpissd2.wav', 'Knpissd3.wav',
+    'Knready.wav',
+    'Knwhat1.wav', 'Knwhat2.wav', 'Knwhat3.wav', 'Knwhat4.wav',
+    'Knyessr1.wav', 'Knyessr2.wav', 'Knyessr3.wav', 'Knyessr4.wav'
+)
 
 function Get-DisabledPlayerDisplayColor([int]$playerIndex) {
     # Prefer live/vanilla palette sample at the documented minimap source index.
@@ -372,9 +392,89 @@ function Set-AllyGoneSkullAtlas([bool]$enabled) {
     }
 }
 
+function Get-HumanFootmanRemakeDir {
+    return Join-Path (Split-Path -Parent $PSCommandPath) 'assets\audio\human_footman'
+}
+
+function Get-HumanKnightRemakeDir {
+    return Join-Path (Split-Path -Parent $PSCommandPath) 'assets\audio\human_knight'
+}
+
+function Ensure-VanillaBackupFromLive([string]$relativePath) {
+    $vanillaRoot = Get-VanillaBackupRoot
+    $dest = Join-Path $vanillaRoot $relativePath
+    if (Test-Path -LiteralPath $dest) { return $dest }
+
+    $source = Join-Path $GameRootPath $relativePath
+    if (!(Test-Path -LiteralPath $source)) {
+        throw "Game audio missing for backup: $relativePath"
+    }
+    $destDir = Split-Path -Parent $dest
+    if (!(Test-Path -LiteralPath $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    }
+    Copy-Item -LiteralPath $source -Destination $dest -Force
+    Write-Host "Vanilla audio backup <= $source"
+    return $dest
+}
+
+function Set-UnitAudioPack([bool]$enabled, [string]$sourceDir, [string]$gamesfxSubdir, [string[]]$files, [string]$label) {
+    if ($enabled -and !(Test-Path -LiteralPath $sourceDir)) {
+        throw "$label remake folder missing: $sourceDir"
+    }
+
+    $replaced = 0
+    $restored = 0
+    foreach ($file in $files) {
+        $rel = "x86\Data\Gamesfx\$gamesfxSubdir\$file"
+        if ($enabled) {
+            $src = Join-Path $sourceDir $file
+            if (!(Test-Path -LiteralPath $src)) {
+                throw "$label remake missing: $file"
+            }
+            Ensure-VanillaBackupFromLive $rel | Out-Null
+            foreach ($root in (Get-GameRootPaths)) {
+                $targetPath = Get-GameFilePath $rel $root
+                $targetDir = Split-Path -Parent $targetPath
+                if (!(Test-Path -LiteralPath $targetDir)) {
+                    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                }
+                Copy-Item -LiteralPath $src -Destination $targetPath -Force
+                $replaced++
+            }
+        } else {
+            $backup = Get-VanillaBackupPath $rel
+            if (!$backup) { continue }
+            Restore-FromBackup $rel
+            $restored++
+        }
+    }
+    Write-Host "$label enabled=$enabled replaced=$replaced restored=$restored"
+}
+
+function Set-HumanFootmanAudio([bool]$enabled) {
+    Set-UnitAudioPack $enabled (Get-HumanFootmanRemakeDir) 'Human' $HumanFootmanAudioFiles 'HumanFootmanAudio'
+}
+
+function Set-HumanKnightAudio([bool]$enabled) {
+    Set-UnitAudioPack $enabled (Get-HumanKnightRemakeDir) 'Knight' $HumanKnightAudioFiles 'HumanKnightAudio'
+}
+
 function Restore-OriginalPaletteFiles {
     foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson) + $StringLocaleFiles)) {
         Restore-FromBackup $rel
+    }
+    foreach ($file in $HumanFootmanAudioFiles) {
+        $rel = "x86\Data\Gamesfx\Human\$file"
+        if (Get-VanillaBackupPath $rel) {
+            Restore-FromBackup $rel
+        }
+    }
+    foreach ($file in $HumanKnightAudioFiles) {
+        $rel = "x86\Data\Gamesfx\Knight\$file"
+        if (Get-VanillaBackupPath $rel) {
+            Restore-FromBackup $rel
+        }
     }
     foreach ($root in (Get-GameRootPaths)) {
         Remove-AllyGoneSkullAtlasFiles $root
@@ -1206,6 +1306,16 @@ if ($ApplyBugFixesFromExtra) {
     exit 0
 }
 
+if ($ApplyAudioFromExtra) {
+    Ensure-VanillaBackupReady
+    $humanFootmanAudio = Get-ExtraFeatureEnabled 'HumanFootmanAudio'
+    $humanKnightAudio = Get-ExtraFeatureEnabled 'HumanKnightAudio'
+    Set-HumanFootmanAudio $humanFootmanAudio
+    Set-HumanKnightAudio $humanKnightAudio
+    Write-ApplyLog "ApplyAudioFromExtra: HumanFootmanAudio=$humanFootmanAudio HumanKnightAudio=$humanKnightAudio"
+    exit 0
+}
+
 if ($ApplySavedConfigOnly) {
     Ensure-VanillaBackupReady
     $loaded = Load-ColorsFromJsonOrDefault
@@ -1225,6 +1335,6 @@ if ($ApplySavedConfigOnly) {
     exit 0
 }
 
-Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -ApplyBugFixesFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -ApplyBugFixesFromExtra, -ApplyAudioFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
 exit 1
 

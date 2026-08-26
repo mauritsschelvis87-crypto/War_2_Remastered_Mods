@@ -37,15 +37,17 @@ struct ExtraFlags {
     bool allianceTeamNumbers = false;
     // Chat line "Name annihilated" when a computer is wipe-marked.
     bool computerAnnihilatedChat = false;
+    // "Blacksmith work complete" when a blacksmith upgrade finishes.
+    bool blacksmithWorkComplete = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
                chatTimestamps || chatHistory || endGameObserve || allianceTeamNumbers ||
-               computerAnnihilatedChat;
+               computerAnnihilatedChat || blacksmithWorkComplete;
     }
     // Leave/annihilated coloring needs the chat DLL even if ChatColoredNames is off.
     bool ChatDllWanted() const {
         return chatNameColor || humanLeave || computerAnnihilatedChat ||
-               chatTimestamps || chatHistory;
+               chatTimestamps || chatHistory || blacksmithWorkComplete;
     }
 };
 
@@ -118,6 +120,7 @@ ExtraFlags ReadExtraFlags()
     flags.unitColor = ReadJsonBool(buf, "UnitSpriteColors");
     flags.chatTimestamps = ReadJsonBool(buf, "ChatTimestamps");
     flags.chatHistory = ReadJsonBool(buf, "ChatHistory");
+    flags.blacksmithWorkComplete = ReadJsonBool(buf, "BlacksmithWorkCompleteChat");
     flags.endGameObserve = ReadJsonBool(buf, "EndGameObserve");
     return flags;
 }
@@ -225,6 +228,7 @@ void WatchLoop(HANDLE quitEvent)
             flags.dragSelect != last.dragSelect || flags.chatNameColor != last.chatNameColor ||
             flags.humanLeave != last.humanLeave || flags.unitColor != last.unitColor ||
             flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory ||
+            flags.blacksmithWorkComplete != last.blacksmithWorkComplete ||
             flags.endGameObserve != last.endGameObserve ||
             flags.allianceTeamNumbers != last.allianceTeamNumbers) {
             SetStartup(flags.Any());
@@ -241,7 +245,7 @@ void WatchLoop(HANDLE quitEvent)
                 dragInjectedPid = 0;
             }
             if (!flags.ChatDllWanted() && pid != 0) {
-                RunInjector(L"InjectChatNameColor.exe", false, L"--timestamps 0 --history 0");
+                RunInjector(L"InjectChatNameColor.exe", false, L"--timestamps 0 --history 0 --blacksmith 0");
             }
             if (!flags.unitColor && pid != 0) {
                 RunInjector(L"InjectUnitColor.exe", false);
@@ -270,6 +274,7 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.ChatDllWanted() && pid != 0 && pid != chatNameInjectedPid) {
             std::wstring chatArgs = flags.chatTimestamps ? L"--timestamps 1" : L"--timestamps 0";
             chatArgs += flags.chatHistory ? L" --history 1" : L" --history 0";
+            chatArgs += flags.blacksmithWorkComplete ? L" --blacksmith 1" : L" --blacksmith 0";
             if (RunInjector(L"InjectChatNameColor.exe", flags.chatNameColor, chatArgs.c_str())) {
                 chatNameInjectedPid = pid;
             }

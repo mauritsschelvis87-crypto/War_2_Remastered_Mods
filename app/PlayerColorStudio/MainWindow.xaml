@@ -370,6 +370,92 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+            <TabItem Header="Upgrades" Tag="upgrades" DockPanel.Dock="Left">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
+                    <StackPanel Background="{DynamicResource PanelBrush}">
+                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
+                                   Text="Gold chat notifications when a building upgrade completes. Each upgradeable building has its own option — enable only the ones you want, then press Apply."/>
+                        <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
+                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
+                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
+                                Opacity="0.55">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding BlacksmithWorkCompleteChat}"
+                                                  IsEnabled="False"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       Text="Blacksmith"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           Text="Temporarily unavailable while this upgrade notification is being reworked."/>
+                            </Expander>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Audio" Tag="audio" DockPanel.Dock="Left">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
+                    <StackPanel Background="{DynamicResource PanelBrush}">
+                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
+                                   Text="Replace unit voice lines with remade samples. Enable the units you want, then press Apply. Restart Warcraft II Remastered so the new audio loads."/>
+                        <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
+                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
+                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding HumanFootmanAudio}"
+                                                  IsEnabled="{Binding IsApplyEnabled}"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       Text="Human Footman"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           Text="Swaps the Human Footman what/yes/ready/pissed voice lines with the remake samples from the mod pack. Uncheck and Apply to restore the original Footman audio."/>
+                            </Expander>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding HumanKnightAudio}"
+                                                  IsEnabled="{Binding IsApplyEnabled}"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       Text="Human Knight"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           Text="Swaps the Human Knight what/yes/ready/pissed voice lines with the remake samples from the mod pack. Uncheck and Apply to restore the original Knight audio."/>
+                            </Expander>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
             <TabItem Header="Bug fixes" Tag="bugfixes" DockPanel.Dock="Left">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
