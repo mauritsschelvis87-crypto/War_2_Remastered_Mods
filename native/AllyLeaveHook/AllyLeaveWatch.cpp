@@ -31,6 +31,8 @@ struct ExtraFlags {
     bool chatTimestamps = false;
     // PageUp/PageDown chat history recall (lives in the chat DLL, own flag).
     bool chatHistory = false;
+    // MP lobby chat scroll preserved when slots refresh.
+    bool mpLobbyChatScrollFix = false;
     // Observe button on defeat popup (close screen, keep watching).
     bool endGameObserve = false;
     // Feature 6: gold lobby team digit on F11 alliances names.
@@ -39,15 +41,19 @@ struct ExtraFlags {
     bool computerAnnihilatedChat = false;
     // "Blacksmith work complete" when a blacksmith upgrade finishes.
     bool blacksmithWorkComplete = false;
+    // MP match frame-gap monitor (lockstep stall proxy) for Studio tab.
+    bool networkMonitor = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
-               chatTimestamps || chatHistory || endGameObserve || allianceTeamNumbers ||
-               computerAnnihilatedChat || blacksmithWorkComplete;
+               chatTimestamps || chatHistory || mpLobbyChatScrollFix || endGameObserve ||
+               allianceTeamNumbers ||
+               computerAnnihilatedChat || blacksmithWorkComplete || networkMonitor;
     }
     // Leave/annihilated coloring needs the chat DLL even if ChatColoredNames is off.
     bool ChatDllWanted() const {
         return chatNameColor || humanLeave || computerAnnihilatedChat ||
-               chatTimestamps || chatHistory || blacksmithWorkComplete;
+               chatTimestamps || chatHistory || blacksmithWorkComplete ||
+               mpLobbyChatScrollFix;
     }
 };
 
@@ -120,8 +126,10 @@ ExtraFlags ReadExtraFlags()
     flags.unitColor = ReadJsonBool(buf, "UnitSpriteColors");
     flags.chatTimestamps = ReadJsonBool(buf, "ChatTimestamps");
     flags.chatHistory = ReadJsonBool(buf, "ChatHistory");
+    flags.mpLobbyChatScrollFix = ReadJsonBool(buf, "MpLobbyChatScrollFix");
     flags.blacksmithWorkComplete = ReadJsonBool(buf, "BlacksmithWorkCompleteChat");
     flags.endGameObserve = ReadJsonBool(buf, "EndGameObserve");
+    flags.networkMonitor = ReadJsonBool(buf, "NetworkMonitor");
     return flags;
 }
 
@@ -213,6 +221,7 @@ void WatchLoop(HANDLE quitEvent)
     DWORD chatNameInjectedPid = 0;
     DWORD unitColorInjectedPid = 0;
     DWORD observeInjectedPid = 0;
+    DWORD networkInjectedPid = 0;
     ExtraFlags last = ReadExtraFlags();
     SetStartup(last.Any());
 
@@ -230,6 +239,7 @@ void WatchLoop(HANDLE quitEvent)
             flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory ||
             flags.blacksmithWorkComplete != last.blacksmithWorkComplete ||
             flags.endGameObserve != last.endGameObserve ||
+            flags.networkMonitor != last.networkMonitor ||
             flags.allianceTeamNumbers != last.allianceTeamNumbers) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
@@ -245,7 +255,7 @@ void WatchLoop(HANDLE quitEvent)
                 dragInjectedPid = 0;
             }
             if (!flags.ChatDllWanted() && pid != 0) {
-                RunInjector(L"InjectChatNameColor.exe", false, L"--timestamps 0 --history 0 --blacksmith 0");
+                RunInjector(L"InjectChatNameColor.exe", false, L"--timestamps 0 --history 0 --blacksmith 0 --lobby-scroll 0");
             }
             if (!flags.unitColor && pid != 0) {
                 RunInjector(L"InjectUnitColor.exe", false);
@@ -254,6 +264,10 @@ void WatchLoop(HANDLE quitEvent)
             if (!flags.endGameObserve && pid != 0) {
                 RunInjector(L"InjectObserve.exe", false);
                 observeInjectedPid = 0;
+            }
+            if (!flags.networkMonitor && pid != 0) {
+                RunInjector(L"InjectNetworkMonitor.exe", false);
+                networkInjectedPid = 0;
             }
             // Re-sync the chat DLL enable state on the next tick.
             chatNameInjectedPid = 0;
@@ -275,6 +289,7 @@ void WatchLoop(HANDLE quitEvent)
             std::wstring chatArgs = flags.chatTimestamps ? L"--timestamps 1" : L"--timestamps 0";
             chatArgs += flags.chatHistory ? L" --history 1" : L" --history 0";
             chatArgs += flags.blacksmithWorkComplete ? L" --blacksmith 1" : L" --blacksmith 0";
+            chatArgs += flags.mpLobbyChatScrollFix ? L" --lobby-scroll 1" : L" --lobby-scroll 0";
             if (RunInjector(L"InjectChatNameColor.exe", flags.chatNameColor, chatArgs.c_str())) {
                 chatNameInjectedPid = pid;
             }
@@ -285,6 +300,9 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.endGameObserve && pid != 0 && pid != observeInjectedPid) {
             if (RunInjector(L"InjectObserve.exe", true)) observeInjectedPid = pid;
         }
+        if (flags.networkMonitor && pid != 0 && pid != networkInjectedPid) {
+            if (RunInjector(L"InjectNetworkMonitor.exe", true)) networkInjectedPid = pid;
+        }
         if (pid == 0) {
             allyInjectedPid = 0;
             pauseInjectedPid = 0;
@@ -292,6 +310,7 @@ void WatchLoop(HANDLE quitEvent)
             chatNameInjectedPid = 0;
             unitColorInjectedPid = 0;
             observeInjectedPid = 0;
+            networkInjectedPid = 0;
         }
 
         if (quitEvent) {

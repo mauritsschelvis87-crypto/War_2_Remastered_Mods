@@ -51,6 +51,11 @@ try {
     Copy-Item -Path (Join-Path $stage 'app\*') -Destination $appTarget -Recurse -Force
     Copy-Item -Path (Join-Path $engineSource '*') -Destination $modTarget -Recurse -Force
 
+    $trust = Join-Path $PSScriptRoot 'Trust-NativeTools.ps1'
+    if (Test-Path -LiteralPath $trust) {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $trust -InstallRoot $installRoot | Write-Host
+    }
+
     $watch = Join-Path $modTarget 'native\AllyLeaveWatch.exe'
     $extraConfig = Join-Path $modTarget 'extra-features.json'
     if ((Test-Path -LiteralPath $watch) -and (Test-Path -LiteralPath $extraConfig)) {

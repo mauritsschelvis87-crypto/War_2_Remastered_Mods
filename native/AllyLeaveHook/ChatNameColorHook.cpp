@@ -151,6 +151,12 @@ char g_logPath[MAX_PATH]{};
 using MarkGoneByNameFn = void(__stdcall*)(const char* name);
 using MarkGoneFn = void(__stdcall*)(int playerIndex);
 
+bool LobbyChatModsAllowed();
+bool IsActiveMatchChat();
+
+void Log(const char* fmt, ...);
+int ReadMsgInitFlag();
+
 void Log(const char* fmt, ...)
 {
     if (!g_logPath[0]) {
@@ -520,6 +526,7 @@ uint32_t SafeTimeNow()
 
 void RecordHistory(const char* text, uint8_t color)
 {
+    if (!LobbyChatModsAllowed()) return;
     __try {
         if (!text || !text[0]) return;
         const LONG idx = InterlockedIncrement(&g_histCount) - 1;
@@ -538,7 +545,7 @@ void RecordHistory(const char* text, uint8_t color)
 // last so the game never draws a half-written line.
 void RenderHistoryView(uint32_t holdMs)
 {
-    if (!g_msgRing) return;
+    if (!g_msgRing || !LobbyChatModsAllowed()) return;
     const LONG total = InterlockedCompareExchange(&g_histCount, 0, 0);
     if (total <= 0) return;
     const uint32_t now = SafeTimeNow();
@@ -586,10 +593,25 @@ int ReadMsgInitFlag()
     }
 }
 
+bool IsActiveMatchChat()
+{
+    return ReadMsgInitFlag() == 1;
+}
+
+// Chat mods that rewrite the map-message ring must not run in the lobby
+// (that ring is match-only).
+bool LobbyChatModsAllowed()
+{
+    if (IsActiveMatchChat()) return true;
+    if (InterlockedCompareExchange(&g_historyOn, 0, 0)) return false;
+    return true;
+}
+
 void ExitHistoryView()
 {
     InterlockedExchange(&g_viewBack, 0);
-    if (InterlockedExchange(&g_viewing, 0) != 0) RenderHistoryView(kExitHoldMs);
+    if (InterlockedExchange(&g_viewing, 0) != 0 && LobbyChatModsAllowed())
+        RenderHistoryView(kExitHoldMs);
 }
 
 DWORD WINAPI MatchWatchThread(LPVOID)
@@ -632,6 +654,11 @@ DWORD WINAPI HistoryKeyThread(LPVOID)
         Sleep(60);
 
         if (!InterlockedCompareExchange(&g_historyOn, 0, 0)) {
+            ExitHistoryView();
+            upHeld = dnHeld = false;
+            continue;
+        }
+        if (!LobbyChatModsAllowed()) {
             ExitHistoryView();
             upHeld = dnHeld = false;
             continue;
@@ -1183,7 +1210,8 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     // Timestamp mod: prefix "[HH:MM] " (arrival time). Independent of the
     // name-color feature; all draw layers below shift by stampLen. Matching
     // (names, owners, stamps) always keys on the ORIGINAL text.
-    const bool stampsOn = InterlockedCompareExchange(&g_timestamps, 0, 0) != 0;
+    const bool stampsOn = InterlockedCompareExchange(&g_timestamps, 0, 0) != 0 &&
+                          LobbyChatModsAllowed();
     char stamped[224]{};
     size_t stampLen = 0;
     const char* base = text;
@@ -1324,7 +1352,7 @@ extern "C" void __cdecl ChatHistory_OnPushMapMsg(const char* text, uint32_t colo
         }
     }
     if (g_originalPush) g_originalPush(text, color, duration);
-    if (InterlockedCompareExchange(&g_viewing, 0, 0)) {
+    if (LobbyChatModsAllowed() && InterlockedCompareExchange(&g_viewing, 0, 0)) {
         LONG back = InterlockedCompareExchange(&g_viewBack, 0, 0) + 1;
         if (back > static_cast<LONG>(kHistRing) - 1) back = static_cast<LONG>(kHistRing) - 1;
         InterlockedExchange(&g_viewBack, back);
@@ -1866,12 +1894,18 @@ bool InstallHook()
     auto* base = reinterpret_cast<uint8_t*>(game);
     const size_t imageSize = nt->OptionalHeader.SizeOfImage;
     LoadColorsFromJson();
-    if (!InstallDrawColoredHook(base, imageSize)) return false;
+    bool installed = false;
+    if (InstallDrawColoredHook(base, imageSize)) {
+        installed = true;
+    } else {
+        Log("InstallHook: continuing without DrawTextColored hook");
+    }
     if (!InstallChatOwnerHook(base, imageSize))
         Log("InstallHook: continuing without chat-owner hook (duplicate names may share color)");
     g_matchThread = CreateThread(nullptr, 0, MatchWatchThread, nullptr, 0, nullptr);
     if (!g_matchThread) Log("InstallHook: match watch thread failed (%lu)", GetLastError());
     if (InstallPushHistoryHook(base)) {
+        installed = true;
         g_keyThread = CreateThread(nullptr, 0, HistoryKeyThread, nullptr, 0, nullptr);
         if (!g_keyThread) Log("InstallHook: history key thread failed (%lu)", GetLastError());
     } else {
@@ -1879,6 +1913,10 @@ bool InstallHook()
     }
     if (!InstallBlacksmithWorkCompleteHook(base, imageSize))
         Log("InstallHook: continuing without blacksmith work-complete chat");
+    if (!installed) {
+        Log("InstallHook: no hooks installed");
+        return false;
+    }
     return true;
 }
 
@@ -2049,6 +2087,13 @@ extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetHistory(LPVOID
     InterlockedExchange(&g_historyOn, enabled ? 1 : 0);
     Log("Chat SetHistory=%d count=%ld", enabled ? 1 : 0,
         InterlockedCompareExchange(&g_histCount, 0, 0));
+    return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+// MP lobby chat scroll fix — disabled (vanilla only). See mp-lobby-chat-scroll-findings.txt.
+extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetLobbyScrollFix(LPVOID enabled)
+{
+    (void)enabled;
     return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
 }
 

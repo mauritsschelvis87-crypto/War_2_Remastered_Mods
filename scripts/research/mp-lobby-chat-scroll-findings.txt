@@ -1,0 +1,70 @@
+MP lobby chat scroll fix — research log (2026-08-28)
+========================================================
+
+Status: DISABLED — reverted to vanilla. UI card greyed out in Player Color Studio.
+Hooks removed from ChatNameColorHook.dll; ChatNameColor_SetLobbyScrollFix is a no-op.
+
+Vanilla bug
+-----------
+When a player changes race or team in the multiplayer lobby, the chat scroll
+position jumps back to the top. Slot refresh rebuilds the lobby UI.
+
+Executable anchors (image base 0x00400000, Warcraft II Remastered x86 build)
+-----------------------------------------------------------------------------
+- MP lobby UI root global:     0x00965170  (pointer to root widget; push [0x965170])
+- SetScroll:                   0x005ABA00  (cdecl: widget, float y, int extra)
+- MpLobbyLayoutRebuild:        0x005362E0  (main lobby layout; ret ~0x00536BB9)
+- Only caller of layout:       0x00533103  (inside lobby builder 0x00533020)
+- Lobby builder callers:       0x004D128E, 0x004D12B4, 0x004D1315
+- Lobby slot refresh:          0x004D1380  (call from 0x004D1684)
+- Explicit scroll reset y=0:   0x005367C6  (before player_slots; SetScroll(widget,0))
+- Per-line chat scroll:        0x00536B9A  (only SetScroll in chat loop 0x536B50–0x536C00)
+- Wheel / scrollbar SetScroll: 0x00525A17  (lobby chat wheel path)
+- chat_history resource:       0x00846D84
+- lobby_chat_history resource: 0x00844B88
+
+Runtime behaviour (from war2_chat_name_color_hook.log)
+------------------------------------------------------
+- MpLobbyLayoutRebuild runs very frequently in lobby (~every 16 ms), not only on race change.
+- ReadWidgetScrollY via widget inner offsets (0x3D28 / scroll ctrl 0x8C / y at 0x40) usually
+  failed (scrollY unreadable); capture via SetScroll hook worked (e.g. scrollY=120 after wheel).
+- Wrapping layout with save/restore every frame restored stale low values (e.g. y=10) and
+  fought user scroll; never reliably preserved position on race/team change.
+- "block reset" log lines (SetScroll y=0 outside layout) almost never appeared — reset happens
+  inside layout rebuild (5367C6 and per-line 536B9A), not via a separate race-change path.
+
+Hook approaches tried
+---------------------
+1. Wrap call to MpLobbyLayoutRebuild (0x533103) — layout runs; restore after; chat stayed visible
+   with layout-only SetScroll call patches, but scroll still jumped; constant per-frame restore
+   polluted saved Y.
+
+2. Wrap lobby builder (0x533020) / refresh (0x4D1380) entry — wrappers often did not log on race
+   change; scroll still jumped.
+
+3. Global SetScroll prologue hook (filter / block y=0) — chat became INVISIBLE (regression).
+   Replacing per-line y at 0x536B9A with saved root Y also broke chat rendering.
+
+4. Filtered SetScroll: capture-only + block y=0 outside layout + hook 0x5367C6 only — chat OK,
+   scroll still jumped; no block-reset logs on race change.
+
+5. Skip 5367C6 reset + add saved offset to per-line 0x536B9A (y + saved) — parts of chat
+   disappeared; scroll still not fixed.
+
+Conclusion
+----------
+Preserving scroll by patching SetScroll in the layout rebuild is fragile: layout runs every
+frame, per-line scroll uses computed offsets (not a single root scroll), and hooking the
+global SetScroll entry breaks chat when y is substituted incorrectly.
+
+Future options (not implemented)
+--------------------------------
+- Skip or reduce full chat_history rebuild on slot-only changes (needs safer layout hook).
+- Find separate scroll state (not SetScroll y on 0x965170 root) e.g. chat_history child widget.
+- W2P overlay / UI plugin path (proven loader) instead of SetScroll patches.
+- Only attempt fix on explicit race/team UI event, not on every layout tick.
+
+Log files
+---------
+- Runtime hook log: %TEMP%\war2_chat_name_color_hook.log
+- This document: scripts/research/mp-lobby-chat-scroll-findings.txt

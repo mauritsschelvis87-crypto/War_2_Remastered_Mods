@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>War2 voice compare</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #12141a;
+      --panel: #1c2029;
+      --border: #2e3544;
+      --text: #e8eaef;
+      --muted: #9aa3b2;
+      --vanilla: #6b9bd1;
+      --enhanced: #7bc96f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 8px; }
+    p.lead { color: var(--muted); margin: 0 0 20px; line-height: 1.5; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+    select {
+      width: 100%;
+      max-width: 520px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 1rem;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    @media (max-width: 720px) {
+      .row { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .card h2 {
+      font-size: 0.95rem;
+      margin: 0 0 12px;
+      letter-spacing: 0.02em;
+    }
+    .card.vanilla h2 { color: var(--vanilla); }
+    .card.enhanced h2 { color: var(--enhanced); }
+    audio {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #252b36;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover { background: #303847; }
+    button.primary {
+      background: #3d4f68;
+      border-color: #4d6280;
+    }
+    .hint {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Voice sample compare</h1>
+    <p class="lead">Vanilla (left) vs mastered enhanced (right). Use <strong>Play both</strong> to start at the same time.</p>
+    <label for="sample">Sample</label>
+    <select id="sample"><option value="Aleria/Alpissd1.wav">Aleria/Alpissd1.wav</option>
+<option value="Aleria/Alpissd2.wav">Aleria/Alpissd2.wav</option>
+<option value="Aleria/Alpissd3.wav">Aleria/Alpissd3.wav</option>
+<option value="Aleria/Alwhat1.wav">Aleria/Alwhat1.wav</option>
+<option value="Aleria/Alwhat2.wav">Aleria/Alwhat2.wav</option>
+<option value="Aleria/Alwhat3.wav">Aleria/Alwhat3.wav</option>
+<option value="Aleria/Alyessr1.wav">Aleria/Alyessr1.wav</option>
+<option value="Aleria/Alyessr2.wav">Aleria/Alyessr2.wav</option>
+<option value="Aleria/Alyessr3.wav">Aleria/Alyessr3.wav</option>
+<option value="Danath/Dnpisd1.wav">Danath/Dnpisd1.wav</option>
+<option value="Danath/Dnpisd2.wav">Danath/Dnpisd2.wav</option>
+<option value="Danath/Dnpisd3.wav">Danath/Dnpisd3.wav</option>
+<option value="Danath/Dnwhat1.wav">Danath/Dnwhat1.wav</option>
+<option value="Danath/Dnwhat2.wav">Danath/Dnwhat2.wav</option>
+<option value="Danath/Dnwhat3.wav">Danath/Dnwhat3.wav</option>
+<option value="Danath/Dnyessr1.wav">Danath/Dnyessr1.wav</option>
+<option value="Danath/Dnyessr2.wav">Danath/Dnyessr2.wav</option>
+<option value="Danath/Dnyessr3.wav">Danath/Dnyessr3.wav</option>
+<option value="DeathKnt/Dkpissd1.wav">DeathKnt/Dkpissd1.wav</option>
+<option value="DeathKnt/Dkpissd2.wav">DeathKnt/Dkpissd2.wav</option>
+<option value="DeathKnt/Dkpissd3.wav">DeathKnt/Dkpissd3.wav</option>
+<option value="DeathKnt/Dkready.wav">DeathKnt/Dkready.wav</option>
+<option value="DeathKnt/Dkwhat1.wav">DeathKnt/Dkwhat1.wav</option>
+<option value="DeathKnt/Dkwhat2.wav">DeathKnt/Dkwhat2.wav</option>
+<option value="DeathKnt/Dkyessr1.wav">DeathKnt/Dkyessr1.wav</option>
+<option value="DeathKnt/Dkyessr2.wav">DeathKnt/Dkyessr2.wav</option>
+<option value="DeathKnt/Dkyessr3.wav">DeathKnt/Dkyessr3.wav</option>
+<option value="DeathWng/Depissd1.wav">DeathWng/Depissd1.wav</option>
+<option value="DeathWng/Depissd2.wav">DeathWng/Depissd2.wav</option>
+<option value="DeathWng/Depissd3.wav">DeathWng/Depissd3.wav</option>
+<option value="DeathWng/Dewhat1.wav">DeathWng/Dewhat1.wav</option>
+<option value="DeathWng/Dewhat2.wav">DeathWng/Dewhat2.wav</option>
+<option value="DeathWng/Dewhat3.wav">DeathWng/Dewhat3.wav</option>
+<option value="DeathWng/Deyessr1.wav">DeathWng/Deyessr1.wav</option>
+<option value="DeathWng/Deyessr2.wav">DeathWng/Deyessr2.wav</option>
+<option value="DeathWng/Deyessr3.wav">DeathWng/Deyessr3.wav</option>
+<option value="Dentarg/Odpissd1.wav">Dentarg/Odpissd1.wav</option>
+<option value="Dentarg/Odpissd2.wav">Dentarg/Odpissd2.wav</option>
+<option value="Dentarg/Odpissd3.wav">Dentarg/Odpissd3.wav</option>
+<option value="Dentarg/Odwhat1.wav">Dentarg/Odwhat1.wav</option>
+<option value="Dentarg/Odwhat2.wav">Dentarg/Odwhat2.wav</option>
+<option value="Dentarg/Odwhat3.wav">Dentarg/Odwhat3.wav</option>
+<option value="Dentarg/Odyessr1.wav">Dentarg/Odyessr1.wav</option>
+<option value="Dentarg/Odyessr2.wav">Dentarg/Odyessr2.wav</option>
+<option value="Dentarg/Odyessr3.wav">Dentarg/Odyessr3.wav</option>
+<option value="Dragon/Drready.wav">Dragon/Drready.wav</option>
+<option value="Dragon/Drwhat.wav">Dragon/Drwhat.wav</option>
+<option value="Dragon/Dryessr1.wav">Dragon/Dryessr1.wav</option>
+<option value="Dragon/Dryessr2.wav">Dragon/Dryessr2.wav</option>
+<option value="Dwarf/Dwhat1.wav">Dwarf/Dwhat1.wav</option>
+<option value="Dwarf/Dwhat2.wav">Dwarf/Dwhat2.wav</option>
+<option value="Dwarf/Dwpissd1.wav">Dwarf/Dwpissd1.wav</option>
+<option value="Dwarf/Dwpissd2.wav">Dwarf/Dwpissd2.wav</option>
+<option value="Dwarf/Dwpissd3.wav">Dwarf/Dwpissd3.wav</option>
+<option value="Dwarf/Dwready.wav">Dwarf/Dwready.wav</option>
+<option value="Dwarf/Dwyessr1.wav">Dwarf/Dwyessr1.wav</option>
+<option value="Dwarf/Dwyessr2.wav">Dwarf/Dwyessr2.wav</option>
+<option value="Dwarf/Dwyessr3.wav">Dwarf/Dwyessr3.wav</option>
+<option value="Dwarf/Dwyessr4.wav">Dwarf/Dwyessr4.wav</option>
+<option value="Dwarf/Dwyessr5.wav">Dwarf/Dwyessr5.wav</option>
+<option value="Elves/Epissed1.wav">Elves/Epissed1.wav</option>
+<option value="Elves/Epissed2.wav">Elves/Epissed2.wav</option>
+<option value="Elves/Epissed3.wav">Elves/Epissed3.wav</option>
+<option value="Elves/Eready.wav">Elves/Eready.wav</option>
+<option value="Elves/Ewhat1.wav">Elves/Ewhat1.wav</option>
+<option value="Elves/Ewhat2.wav">Elves/Ewhat2.wav</option>
+<option value="Elves/Ewhat3.wav">Elves/Ewhat3.wav</option>
+<option value="Elves/Ewhat4.wav">Elves/Ewhat4.wav</option>
+<option value="Elves/Eyessir1.wav">Elves/Eyessir1.wav</option>
+<option value="Elves/Eyessir2.wav">Elves/Eyessir2.wav</option>
+<option value="Elves/Eyessir3.wav">Elves/Eyessir3.wav</option>
+<option value="Elves/Eyessir4.wav">Elves/Eyessir4.wav</option>
+<option value="Gnome/Gnpissd1.wav">Gnome/Gnpissd1.wav</option>
+<option value="Gnome/Gnpissd2.wav">Gnome/Gnpissd2.wav</option>
+<option value="Gnome/Gnpissd3.wav">Gnome/Gnpissd3.wav</option>
+<option value="Gnome/Gnpissd4.wav">Gnome/Gnpissd4.wav</option>
+<option value="Gnome/Gnpissd5.wav">Gnome/Gnpissd5.wav</option>
+<option value="Gnome/Gnready.wav">Gnome/Gnready.wav</option>
+<option value="Gnome/Gnyessr1.wav">Gnome/Gnyessr1.wav</option>
+<option value="Goblin/Gopissd1.wav">Goblin/Gopissd1.wav</option>
+<option value="Goblin/Gopissd2.wav">Goblin/Gopissd2.wav</option>
+<option value="Goblin/Gopissd3.wav">Goblin/Gopissd3.wav</option>
+<option value="Goblin/Goready.wav">Goblin/Goready.wav</option>
+<option value="Goblin/Gowhat1.wav">Goblin/Gowhat1.wav</option>
+<option value="Goblin/Gowhat2.wav">Goblin/Gowhat2.wav</option>
+<option value="Goblin/Gowhat3.wav">Goblin/Gowhat3.wav</option>
+<option value="Goblin/Gowhat4.wav">Goblin/Gowhat4.wav</option>
+<option value="Goblin/Goyessr1.wav">Goblin/Goyessr1.wav</option>
+<option value="Goblin/Goyessr2.wav">Goblin/Goyessr2.wav</option>
+<option value="Goblin/Goyessr3.wav">Goblin/Goyessr3.wav</option>
+<option value="Goblin/Goyessr4.wav">Goblin/Goyessr4.wav</option>
+<option value="Griffon/Griffon1.wav">Griffon/Griffon1.wav</option>
+<option value="Griffon/Griffon2.wav">Griffon/Griffon2.wav</option>
+<option value="Griffon/Grwhat.wav">Griffon/Grwhat.wav</option>
+<option value="Grom/Grpissd1.wav">Grom/Grpissd1.wav</option>
+<option value="Grom/Grpissd2.wav">Grom/Grpissd2.wav</option>
+<option value="Grom/Grpissd3.wav">Grom/Grpissd3.wav</option>
+<option value="Grom/Grwhat1.wav">Grom/Grwhat1.wav</option>
+<option value="Grom/Grwhat2.wav">Grom/Grwhat2.wav</option>
+<option value="Grom/Grwhat3.wav">Grom/Grwhat3.wav</option>
+<option value="Grom/Gryessr1.wav">Grom/Gryessr1.wav</option>
+<option value="Grom/Gryessr2.wav">Grom/Gryessr2.wav</option>
+<option value="Grom/Gryessr3.wav">Grom/Gryessr3.wav</option>
+<option value="Human/Hdead.wav">Human/Hdead.wav</option>
+<option value="Human/Hdempis4.wav">Human/Hdempis4.wav</option>
+<option value="Human/Hdempis5.wav">Human/Hdempis5.wav</option>
+<option value="Human/Hdempis6.wav">Human/Hdempis6.wav</option>
+<option value="Human/Hdempis7.wav">Human/Hdempis7.wav</option>
+<option value="Human/Hhelp1.wav">Human/Hhelp1.wav</option>
+<option value="Human/Hhelp2.wav">Human/Hhelp2.wav</option>
+<option value="Human/Hpissed1.wav">Human/Hpissed1.wav</option>
+<option value="Human/Hpissed2.wav">Human/Hpissed2.wav</option>
+<option value="Human/Hpissed3.wav">Human/Hpissed3.wav</option>
+<option value="Human/Hpissed4.wav">Human/Hpissed4.wav</option>
+<option value="Human/Hpissed5.wav">Human/Hpissed5.wav</option>
+<option value="Human/Hpissed6.wav">Human/Hpissed6.wav</option>
+<option value="Human/Hpissed7.wav">Human/Hpissed7.wav</option>
+<option value="Human/Hready.wav">Human/Hready.wav</option>
+<option value="Human/Hwhat1.wav">Human/Hwhat1.wav</option>
+<option value="Human/Hwhat2.wav">Human/Hwhat2.wav</option>
+<option value="Human/Hwhat3.wav">Human/Hwhat3.wav</option>
+<option value="Human/Hwhat4.wav">Human/Hwhat4.wav</option>
+<option value="Human/Hwhat5.wav">Human/Hwhat5.wav</option>
+<option value="Human/Hwhat6.wav">Human/Hwhat6.wav</option>
+<option value="Human/Hwrkdone.wav">Human/Hwrkdone.wav</option>
+<option value="Human/Hyessir1.wav">Human/Hyessir1.wav</option>
+<option value="Human/Hyessir2.wav">Human/Hyessir2.wav</option>
+<option value="Human/Hyessir3.wav">Human/Hyessir3.wav</option>
+<option value="Human/Hyessir4.wav">Human/Hyessir4.wav</option>
+<option value="Kargath/Kapissd1.wav">Kargath/Kapissd1.wav</option>
+<option value="Kargath/Kapissd2.wav">Kargath/Kapissd2.wav</option>
+<option value="Kargath/Kapissd3.wav">Kargath/Kapissd3.wav</option>
+<option value="Kargath/Kawhat1.wav">Kargath/Kawhat1.wav</option>
+<option value="Kargath/Kawhat2.wav">Kargath/Kawhat2.wav</option>
+<option value="Kargath/Kawhat3.wav">Kargath/Kawhat3.wav</option>
+<option value="Kargath/Kayessr1.wav">Kargath/Kayessr1.wav</option>
+<option value="Kargath/Kayessr2.wav">Kargath/Kayessr2.wav</option>
+<option value="Kargath/Kayessr3.wav">Kargath/Kayessr3.wav</option>
+<option value="Khadgar/Khpissd1.wav">Khadgar/Khpissd1.wav</option>
+<option value="Khadgar/Khpissd2.wav">Khadgar/Khpissd2.wav</option>
+<option value="Khadgar/Khpissd3.wav">Khadgar/Khpissd3.wav</option>
+<option value="Khadgar/Khwhat1.wav">Khadgar/Khwhat1.wav</option>
+<option value="Khadgar/Khwhat2.wav">Khadgar/Khwhat2.wav</option>
+<option value="Khadgar/Khwhat3.wav">Khadgar/Khwhat3.wav</option>
+<option value="Khadgar/Khyessr1.wav">Khadgar/Khyessr1.wav</option>
+<option value="Khadgar/Khyessr2.wav">Khadgar/Khyessr2.wav</option>
+<option value="Khadgar/Khyessr3.wav">Khadgar/Khyessr3.wav</option>
+<option value="Knight/Knpissd1.wav">Knight/Knpissd1.wav</option>
+<option value="Knight/Knpissd2.wav">Knight/Knpissd2.wav</option>
+<option value="Knight/Knpissd3.wav">Knight/Knpissd3.wav</option>
+<option value="Knight/Knready.wav">Knight/Knready.wav</option>
+<option value="Knight/Knwhat1.wav">Knight/Knwhat1.wav</option>
+<option value="Knight/Knwhat2.wav">Knight/Knwhat2.wav</option>
+<option value="Knight/Knwhat3.wav">Knight/Knwhat3.wav</option>
+<option value="Knight/Knwhat4.wav">Knight/Knwhat4.wav</option>
+<option value="Knight/Knyessr1.wav">Knight/Knyessr1.wav</option>
+<option value="Knight/Knyessr2.wav">Knight/Knyessr2.wav</option>
+<option value="Knight/Knyessr3.wav">Knight/Knyessr3.wav</option>
+<option value="Knight/Knyessr4.wav">Knight/Knyessr4.wav</option>
+<option value="Kurdran/Kupissd1.wav">Kurdran/Kupissd1.wav</option>
+<option value="Kurdran/Kupissd2.wav">Kurdran/Kupissd2.wav</option>
+<option value="Kurdran/Kupissd3.wav">Kurdran/Kupissd3.wav</option>
+<option value="Kurdran/Kuwhat1.wav">Kurdran/Kuwhat1.wav</option>
+<option value="Kurdran/Kuwhat2.wav">Kurdran/Kuwhat2.wav</option>
+<option value="Kurdran/Kuwhat3.wav">Kurdran/Kuwhat3.wav</option>
+<option value="Kurdran/Kuyessr1.wav">Kurdran/Kuyessr1.wav</option>
+<option value="Kurdran/Kuyessr2.wav">Kurdran/Kuyessr2.wav</option>
+<option value="Kurdran/Kuyessr3.wav">Kurdran/Kuyessr3.wav</option>
+<option value="Ogre/Ogpissd1.wav">Ogre/Ogpissd1.wav</option>
+<option value="Ogre/Ogpissd2.wav">Ogre/Ogpissd2.wav</option>
+<option value="Ogre/Ogpissd3.wav">Ogre/Ogpissd3.wav</option>
+<option value="Ogre/Ogpissd4.wav">Ogre/Ogpissd4.wav</option>
+<option value="Ogre/Ogpissd5.wav">Ogre/Ogpissd5.wav</option>
+<option value="Ogre/Ogready.wav">Ogre/Ogready.wav</option>
+<option value="Ogre/Ogwhat1.wav">Ogre/Ogwhat1.wav</option>
+<option value="Ogre/Ogwhat2.wav">Ogre/Ogwhat2.wav</option>
+<option value="Ogre/Ogwhat3.wav">Ogre/Ogwhat3.wav</option>
+<option value="Ogre/Ogwhat4.wav">Ogre/Ogwhat4.wav</option>
+<option value="Ogre/Ogyessr1.wav">Ogre/Ogyessr1.wav</option>
+<option value="Ogre/Ogyessr2.wav">Ogre/Ogyessr2.wav</option>
+<option value="Ogre/Ogyessr3.wav">Ogre/Ogyessr3.wav</option>
+<option value="Ogremage/Ompissd1.wav">Ogremage/Ompissd1.wav</option>
+<option value="Ogremage/Ompissd2.wav">Ogremage/Ompissd2.wav</option>
+<option value="Ogremage/Ompissd3.wav">Ogremage/Ompissd3.wav</option>
+<option value="Ogremage/Omready.wav">Ogremage/Omready.wav</option>
+<option value="Ogremage/Omwhat1.wav">Ogremage/Omwhat1.wav</option>
+<option value="Ogremage/Omwhat2.wav">Ogremage/Omwhat2.wav</option>
+<option value="Ogremage/Omwhat3.wav">Ogremage/Omwhat3.wav</option>
+<option value="Ogremage/Omwhat4.wav">Ogremage/Omwhat4.wav</option>
+<option value="Ogremage/Omyessr1.wav">Ogremage/Omyessr1.wav</option>
+<option value="Ogremage/Omyessr2.wav">Ogremage/Omyessr2.wav</option>
+<option value="Ogremage/Omyessr3.wav">Ogremage/Omyessr3.wav</option>
+<option value="Orc/Odead.wav">Orc/Odead.wav</option>
+<option value="Orc/Odempis4.wav">Orc/Odempis4.wav</option>
+<option value="Orc/Odempis5.wav">Orc/Odempis5.wav</option>
+<option value="Orc/Odempis6.wav">Orc/Odempis6.wav</option>
+<option value="Orc/Odempis7.wav">Orc/Odempis7.wav</option>
+<option value="Orc/Ohelp1.wav">Orc/Ohelp1.wav</option>
+<option value="Orc/Ohelp2.wav">Orc/Ohelp2.wav</option>
+<option value="Orc/Opissed1.wav">Orc/Opissed1.wav</option>
+<option value="Orc/Opissed2.wav">Orc/Opissed2.wav</option>
+<option value="Orc/Opissed3.wav">Orc/Opissed3.wav</option>
+<option value="Orc/Opissed4.wav">Orc/Opissed4.wav</option>
+<option value="Orc/Opissed5.wav">Orc/Opissed5.wav</option>
+<option value="Orc/Opissed6.wav">Orc/Opissed6.wav</option>
+<option value="Orc/Opissed7.wav">Orc/Opissed7.wav</option>
+<option value="Orc/Oready.wav">Orc/Oready.wav</option>
+<option value="Orc/Owhat1.wav">Orc/Owhat1.wav</option>
+<option value="Orc/Owhat2.wav">Orc/Owhat2.wav</option>
+<option value="Orc/Owhat3.wav">Orc/Owhat3.wav</option>
+<option value="Orc/Owhat4.wav">Orc/Owhat4.wav</option>
+<option value="Orc/Owhat5.wav">Orc/Owhat5.wav</option>
+<option value="Orc/Owhat6.wav">Orc/Owhat6.wav</option>
+<option value="Orc/Owrkdone.wav">Orc/Owrkdone.wav</option>
+<option value="Orc/Oyessir1.wav">Orc/Oyessir1.wav</option>
+<option value="Orc/Oyessir2.wav">Orc/Oyessir2.wav</option>
+<option value="Orc/Oyessir3.wav">Orc/Oyessir3.wav</option>
+<option value="Orc/Oyessir4.wav">Orc/Oyessir4.wav</option>
+<option value="Paladin/Pkatak1.wav">Paladin/Pkatak1.wav</option>
+<option value="Paladin/Pkpissd1.wav">Paladin/Pkpissd1.wav</option>
+<option value="Paladin/Pkpissd2.wav">Paladin/Pkpissd2.wav</option>
+<option value="Paladin/Pkpissd3.wav">Paladin/Pkpissd3.wav</option>
+<option value="Paladin/Pkready.wav">Paladin/Pkready.wav</option>
+<option value="Paladin/Pkwhat1.wav">Paladin/Pkwhat1.wav</option>
+<option value="Paladin/Pkwhat2.wav">Paladin/Pkwhat2.wav</option>
+<option value="Paladin/Pkwhat3.wav">Paladin/Pkwhat3.wav</option>
+<option value="Paladin/Pkwhat4.wav">Paladin/Pkwhat4.wav</option>
+<option value="Paladin/Pkyessr1.wav">Paladin/Pkyessr1.wav</option>
+<option value="Paladin/Pkyessr2.wav">Paladin/Pkyessr2.wav</option>
+<option value="Paladin/Pkyessr3.wav">Paladin/Pkyessr3.wav</option>
+<option value="Paladin/Pkyessr4.wav">Paladin/Pkyessr4.wav</option>
+<option value="Peasant/Pspissd1.wav">Peasant/Pspissd1.wav</option>
+<option value="Peasant/Pspissd2.wav">Peasant/Pspissd2.wav</option>
+<option value="Peasant/Pspissd3.wav">Peasant/Pspissd3.wav</option>
+<option value="Peasant/Pspissd4.wav">Peasant/Pspissd4.wav</option>
+<option value="Peasant/Pspissd5.wav">Peasant/Pspissd5.wav</option>
+<option value="Peasant/Pspissd6.wav">Peasant/Pspissd6.wav</option>
+<option value="Peasant/Pspissd7.wav">Peasant/Pspissd7.wav</option>
+<option value="Peasant/Psready.wav">Peasant/Psready.wav</option>
+<option value="Peasant/Pswhat1.wav">Peasant/Pswhat1.wav</option>
+<option value="Peasant/Pswhat2.wav">Peasant/Pswhat2.wav</option>
+<option value="Peasant/Pswhat3.wav">Peasant/Pswhat3.wav</option>
+<option value="Peasant/Pswhat4.wav">Peasant/Pswhat4.wav</option>
+<option value="Peasant/Pswrkdon.wav">Peasant/Pswrkdon.wav</option>
+<option value="Peasant/Psyessr1.wav">Peasant/Psyessr1.wav</option>
+<option value="Peasant/Psyessr2.wav">Peasant/Psyessr2.wav</option>
+<option value="Peasant/Psyessr3.wav">Peasant/Psyessr3.wav</option>
+<option value="Peasant/Psyessr4.wav">Peasant/Psyessr4.wav</option>
+<option value="Peon/Pnready.wav">Peon/Pnready.wav</option>
+<option value="Ships/Foghorn.wav">Ships/Foghorn.wav</option>
+<option value="Ships/Hshppis1.wav">Ships/Hshppis1.wav</option>
+<option value="Ships/Hshppis2.wav">Ships/Hshppis2.wav</option>
+<option value="Ships/Hshppis3.wav">Ships/Hshppis3.wav</option>
+<option value="Ships/Hshpredy.wav">Ships/Hshpredy.wav</option>
+<option value="Ships/Hshpwht1.wav">Ships/Hshpwht1.wav</option>
+<option value="Ships/Hshpwht2.wav">Ships/Hshpwht2.wav</option>
+<option value="Ships/Hshpwht3.wav">Ships/Hshpwht3.wav</option>
+<option value="Ships/Hshpyes1.wav">Ships/Hshpyes1.wav</option>
+<option value="Ships/Hshpyes2.wav">Ships/Hshpyes2.wav</option>
+<option value="Ships/Hshpyes3.wav">Ships/Hshpyes3.wav</option>
+<option value="Ships/Oshppis1.wav">Ships/Oshppis1.wav</option>
+<option value="Ships/Oshppis2.wav">Ships/Oshppis2.wav</option>
+<option value="Ships/Oshppis3.wav">Ships/Oshppis3.wav</option>
+<option value="Ships/Oshpredy.wav">Ships/Oshpredy.wav</option>
+<option value="Ships/Oshpwht1.wav">Ships/Oshpwht1.wav</option>
+<option value="Ships/Oshpwht2.wav">Ships/Oshpwht2.wav</option>
+<option value="Ships/Oshpwht3.wav">Ships/Oshpwht3.wav</option>
+<option value="Ships/Oshpyes1.wav">Ships/Oshpyes1.wav</option>
+<option value="Ships/Oshpyes2.wav">Ships/Oshpyes2.wav</option>
+<option value="Ships/Oshpyes3.wav">Ships/Oshpyes3.wav</option>
+<option value="Ships/Shipsink.wav">Ships/Shipsink.wav</option>
+<option value="Ships/Subpiss1.wav">Ships/Subpiss1.wav</option>
+<option value="Ships/Subpiss2.wav">Ships/Subpiss2.wav</option>
+<option value="Ships/Subpiss3.wav">Ships/Subpiss3.wav</option>
+<option value="Ships/Subpiss4.wav">Ships/Subpiss4.wav</option>
+<option value="Teron/Tepissd1.wav">Teron/Tepissd1.wav</option>
+<option value="Teron/Tepissd2.wav">Teron/Tepissd2.wav</option>
+<option value="Teron/Tepissd3.wav">Teron/Tepissd3.wav</option>
+<option value="Teron/Tewhat1.wav">Teron/Tewhat1.wav</option>
+<option value="Teron/Tewhat2.wav">Teron/Tewhat2.wav</option>
+<option value="Teron/Tewhat3.wav">Teron/Tewhat3.wav</option>
+<option value="Teron/Teyessr1.wav">Teron/Teyessr1.wav</option>
+<option value="Teron/Teyessr2.wav">Teron/Teyessr2.wav</option>
+<option value="Teron/Teyessr3.wav">Teron/Teyessr3.wav</option>
+<option value="Troll/Trpissd1.wav">Troll/Trpissd1.wav</option>
+<option value="Troll/Trpissd2.wav">Troll/Trpissd2.wav</option>
+<option value="Troll/Trpissd3.wav">Troll/Trpissd3.wav</option>
+<option value="Troll/Trready.wav">Troll/Trready.wav</option>
+<option value="Troll/Trwhat1.wav">Troll/Trwhat1.wav</option>
+<option value="Troll/Trwhat2.wav">Troll/Trwhat2.wav</option>
+<option value="Troll/Trwhat3.wav">Troll/Trwhat3.wav</option>
+<option value="Troll/Tryessr1.wav">Troll/Tryessr1.wav</option>
+<option value="Troll/Tryessr2.wav">Troll/Tryessr2.wav</option>
+<option value="Troll/Tryessr3.wav">Troll/Tryessr3.wav</option>
+<option value="Turalyon/Tupissd1.wav">Turalyon/Tupissd1.wav</option>
+<option value="Turalyon/Tupissd2.wav">Turalyon/Tupissd2.wav</option>
+<option value="Turalyon/Tupissd3.wav">Turalyon/Tupissd3.wav</option>
+<option value="Turalyon/Tuwhat1.wav">Turalyon/Tuwhat1.wav</option>
+<option value="Turalyon/Tuwhat2.wav">Turalyon/Tuwhat2.wav</option>
+<option value="Turalyon/Tuwhat3.wav">Turalyon/Tuwhat3.wav</option>
+<option value="Turalyon/Tuyessr1.wav">Turalyon/Tuyessr1.wav</option>
+<option value="Turalyon/Tuyessr2.wav">Turalyon/Tuyessr2.wav</option>
+<option value="Turalyon/Tuyessr3.wav">Turalyon/Tuyessr3.wav</option>
+<option value="Wizard/Wzpissd1.wav">Wizard/Wzpissd1.wav</option>
+<option value="Wizard/Wzpissd2.wav">Wizard/Wzpissd2.wav</option>
+<option value="Wizard/Wzpissd3.wav">Wizard/Wzpissd3.wav</option>
+<option value="Wizard/Wzready.wav">Wizard/Wzready.wav</option>
+<option value="Wizard/Wzwhat1.wav">Wizard/Wzwhat1.wav</option>
+<option value="Wizard/Wzwhat2.wav">Wizard/Wzwhat2.wav</option>
+<option value="Wizard/Wzwhat3.wav">Wizard/Wzwhat3.wav</option>
+<option value="Wizard/Wzyessr1.wav">Wizard/Wzyessr1.wav</option>
+<option value="Wizard/Wzyessr2.wav">Wizard/Wzyessr2.wav</option>
+<option value="Wizard/Wzyessr3.wav">Wizard/Wzyessr3.wav</option>
+<option value="Zeppelin/Gbpissd1.wav">Zeppelin/Gbpissd1.wav</option>
+<option value="Zeppelin/Gbpissd2.wav">Zeppelin/Gbpissd2.wav</option>
+<option value="Zeppelin/Gbready.wav">Zeppelin/Gbready.wav</option>
+<option value="Zeppelin/Gbyessr1.wav">Zeppelin/Gbyessr1.wav</option></select>
+    <div class="row">
+      <div class="card vanilla">
+        <h2>Vanilla</h2>
+        <audio id="vanilla" controls preload="auto"></audio>
+        <div class="btn-row">
+          <button type="button" id="playVanilla">Play vanilla</button>
+        </div>
+      </div>
+      <div class="card enhanced">
+        <h2>Enhanced</h2>
+        <audio id="enhanced" controls preload="auto"></audio>
+        <div class="btn-row">
+          <button type="button" id="playEnhanced">Play enhanced</button>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button type="button" class="primary" id="playBoth">Play both</button>
+      <button type="button" id="stopBoth">Stop both</button>
+    </div>
+    <p class="hint">Tip: pick Human/Hwhat1.wav or Knight/Knwhat1.wav first — short lines, easy to compare.</p>
+  </div>
+  <script>
+    const pairs = [{"id": "Aleria/Alpissd1.wav", "label": "Aleria/Alpissd1.wav", "vanilla": "/vanilla/Aleria/Alpissd1.wav", "enhanced": "/enhanced/Aleria/Alpissd1.wav"}, {"id": "Aleria/Alpissd2.wav", "label": "Aleria/Alpissd2.wav", "vanilla": "/vanilla/Aleria/Alpissd2.wav", "enhanced": "/enhanced/Aleria/Alpissd2.wav"}, {"id": "Aleria/Alpissd3.wav", "label": "Aleria/Alpissd3.wav", "vanilla": "/vanilla/Aleria/Alpissd3.wav", "enhanced": "/enhanced/Aleria/Alpissd3.wav"}, {"id": "Aleria/Alwhat1.wav", "label": "Aleria/Alwhat1.wav", "vanilla": "/vanilla/Aleria/Alwhat1.wav", "enhanced": "/enhanced/Aleria/Alwhat1.wav"}, {"id": "Aleria/Alwhat2.wav", "label": "Aleria/Alwhat2.wav", "vanilla": "/vanilla/Aleria/Alwhat2.wav", "enhanced": "/enhanced/Aleria/Alwhat2.wav"}, {"id": "Aleria/Alwhat3.wav", "label": "Aleria/Alwhat3.wav", "vanilla": "/vanilla/Aleria/Alwhat3.wav", "enhanced": "/enhanced/Aleria/Alwhat3.wav"}, {"id": "Aleria/Alyessr1.wav", "label": "Aleria/Alyessr1.wav", "vanilla": "/vanilla/Aleria/Alyessr1.wav", "enhanced": "/enhanced/Aleria/Alyessr1.wav"}, {"id": "Aleria/Alyessr2.wav", "label": "Aleria/Alyessr2.wav", "vanilla": "/vanilla/Aleria/Alyessr2.wav", "enhanced": "/enhanced/Aleria/Alyessr2.wav"}, {"id": "Aleria/Alyessr3.wav", "label": "Aleria/Alyessr3.wav", "vanilla": "/vanilla/Aleria/Alyessr3.wav", "enhanced": "/enhanced/Aleria/Alyessr3.wav"}, {"id": "Danath/Dnpisd1.wav", "label": "Danath/Dnpisd1.wav", "vanilla": "/vanilla/Danath/Dnpisd1.wav", "enhanced": "/enhanced/Danath/Dnpisd1.wav"}, {"id": "Danath/Dnpisd2.wav", "label": "Danath/Dnpisd2.wav", "vanilla": "/vanilla/Danath/Dnpisd2.wav", "enhanced": "/enhanced/Danath/Dnpisd2.wav"}, {"id": "Danath/Dnpisd3.wav", "label": "Danath/Dnpisd3.wav", "vanilla": "/vanilla/Danath/Dnpisd3.wav", "enhanced": "/enhanced/Danath/Dnpisd3.wav"}, {"id": "Danath/Dnwhat1.wav", "label": "Danath/Dnwhat1.wav", "vanilla": "/vanilla/Danath/Dnwhat1.wav", "enhanced": "/enhanced/Danath/Dnwhat1.wav"}, {"id": "Danath/Dnwhat2.wav", "label": "Danath/Dnwhat2.wav", "vanilla": "/vanilla/Danath/Dnwhat2.wav", "enhanced": "/enhanced/Danath/Dnwhat2.wav"}, {"id": "Danath/Dnwhat3.wav", "label": "Danath/Dnwhat3.wav", "vanilla": "/vanilla/Danath/Dnwhat3.wav", "enhanced": "/enhanced/Danath/Dnwhat3.wav"}, {"id": "Danath/Dnyessr1.wav", "label": "Danath/Dnyessr1.wav", "vanilla": "/vanilla/Danath/Dnyessr1.wav", "enhanced": "/enhanced/Danath/Dnyessr1.wav"}, {"id": "Danath/Dnyessr2.wav", "label": "Danath/Dnyessr2.wav", "vanilla": "/vanilla/Danath/Dnyessr2.wav", "enhanced": "/enhanced/Danath/Dnyessr2.wav"}, {"id": "Danath/Dnyessr3.wav", "label": "Danath/Dnyessr3.wav", "vanilla": "/vanilla/Danath/Dnyessr3.wav", "enhanced": "/enhanced/Danath/Dnyessr3.wav"}, {"id": "DeathKnt/Dkpissd1.wav", "label": "DeathKnt/Dkpissd1.wav", "vanilla": "/vanilla/DeathKnt/Dkpissd1.wav", "enhanced": "/enhanced/DeathKnt/Dkpissd1.wav"}, {"id": "DeathKnt/Dkpissd2.wav", "label": "DeathKnt/Dkpissd2.wav", "vanilla": "/vanilla/DeathKnt/Dkpissd2.wav", "enhanced": "/enhanced/DeathKnt/Dkpissd2.wav"}, {"id": "DeathKnt/Dkpissd3.wav", "label": "DeathKnt/Dkpissd3.wav", "vanilla": "/vanilla/DeathKnt/Dkpissd3.wav", "enhanced": "/enhanced/DeathKnt/Dkpissd3.wav"}, {"id": "DeathKnt/Dkready.wav", "label": "DeathKnt/Dkready.wav", "vanilla": "/vanilla/DeathKnt/Dkready.wav", "enhanced": "/enhanced/DeathKnt/Dkready.wav"}, {"id": "DeathKnt/Dkwhat1.wav", "label": "DeathKnt/Dkwhat1.wav", "vanilla": "/vanilla/DeathKnt/Dkwhat1.wav", "enhanced": "/enhanced/DeathKnt/Dkwhat1.wav"}, {"id": "DeathKnt/Dkwhat2.wav", "label": "DeathKnt/Dkwhat2.wav", "vanilla": "/vanilla/DeathKnt/Dkwhat2.wav", "enhanced": "/enhanced/DeathKnt/Dkwhat2.wav"}, {"id": "DeathKnt/Dkyessr1.wav", "label": "DeathKnt/Dkyessr1.wav", "vanilla": "/vanilla/DeathKnt/Dkyessr1.wav", "enhanced": "/enhanced/DeathKnt/Dkyessr1.wav"}, {"id": "DeathKnt/Dkyessr2.wav", "label": "DeathKnt/Dkyessr2.wav", "vanilla": "/vanilla/DeathKnt/Dkyessr2.wav", "enhanced": "/enhanced/DeathKnt/Dkyessr2.wav"}, {"id": "DeathKnt/Dkyessr3.wav", "label": "DeathKnt/Dkyessr3.wav", "vanilla": "/vanilla/DeathKnt/Dkyessr3.wav", "enhanced": "/enhanced/DeathKnt/Dkyessr3.wav"}, {"id": "DeathWng/Depissd1.wav", "label": "DeathWng/Depissd1.wav", "vanilla": "/vanilla/DeathWng/Depissd1.wav", "enhanced": "/enhanced/DeathWng/Depissd1.wav"}, {"id": "DeathWng/Depissd2.wav", "label": "DeathWng/Depissd2.wav", "vanilla": "/vanilla/DeathWng/Depissd2.wav", "enhanced": "/enhanced/DeathWng/Depissd2.wav"}, {"id": "DeathWng/Depissd3.wav", "label": "DeathWng/Depissd3.wav", "vanilla": "/vanilla/DeathWng/Depissd3.wav", "enhanced": "/enhanced/DeathWng/Depissd3.wav"}, {"id": "DeathWng/Dewhat1.wav", "label": "DeathWng/Dewhat1.wav", "vanilla": "/vanilla/DeathWng/Dewhat1.wav", "enhanced": "/enhanced/DeathWng/Dewhat1.wav"}, {"id": "DeathWng/Dewhat2.wav", "label": "DeathWng/Dewhat2.wav", "vanilla": "/vanilla/DeathWng/Dewhat2.wav", "enhanced": "/enhanced/DeathWng/Dewhat2.wav"}, {"id": "DeathWng/Dewhat3.wav", "label": "DeathWng/Dewhat3.wav", "vanilla": "/vanilla/DeathWng/Dewhat3.wav", "enhanced": "/enhanced/DeathWng/Dewhat3.wav"}, {"id": "DeathWng/Deyessr1.wav", "label": "DeathWng/Deyessr1.wav", "vanilla": "/vanilla/DeathWng/Deyessr1.wav", "enhanced": "/enhanced/DeathWng/Deyessr1.wav"}, {"id": "DeathWng/Deyessr2.wav", "label": "DeathWng/Deyessr2.wav", "vanilla": "/vanilla/DeathWng/Deyessr2.wav", "enhanced": "/enhanced/DeathWng/Deyessr2.wav"}, {"id": "DeathWng/Deyessr3.wav", "label": "DeathWng/Deyessr3.wav", "vanilla": "/vanilla/DeathWng/Deyessr3.wav", "enhanced": "/enhanced/DeathWng/Deyessr3.wav"}, {"id": "Dentarg/Odpissd1.wav", "label": "Dentarg/Odpissd1.wav", "vanilla": "/vanilla/Dentarg/Odpissd1.wav", "enhanced": "/enhanced/Dentarg/Odpissd1.wav"}, {"id": "Dentarg/Odpissd2.wav", "label": "Dentarg/Odpissd2.wav", "vanilla": "/vanilla/Dentarg/Odpissd2.wav", "enhanced": "/enhanced/Dentarg/Odpissd2.wav"}, {"id": "Dentarg/Odpissd3.wav", "label": "Dentarg/Odpissd3.wav", "vanilla": "/vanilla/Dentarg/Odpissd3.wav", "enhanced": "/enhanced/Dentarg/Odpissd3.wav"}, {"id": "Dentarg/Odwhat1.wav", "label": "Dentarg/Odwhat1.wav", "vanilla": "/vanilla/Dentarg/Odwhat1.wav", "enhanced": "/enhanced/Dentarg/Odwhat1.wav"}, {"id": "Dentarg/Odwhat2.wav", "label": "Dentarg/Odwhat2.wav", "vanilla": "/vanilla/Dentarg/Odwhat2.wav", "enhanced": "/enhanced/Dentarg/Odwhat2.wav"}, {"id": "Dentarg/Odwhat3.wav", "label": "Dentarg/Odwhat3.wav", "vanilla": "/vanilla/Dentarg/Odwhat3.wav", "enhanced": "/enhanced/Dentarg/Odwhat3.wav"}, {"id": "Dentarg/Odyessr1.wav", "label": "Dentarg/Odyessr1.wav", "vanilla": "/vanilla/Dentarg/Odyessr1.wav", "enhanced": "/enhanced/Dentarg/Odyessr1.wav"}, {"id": "Dentarg/Odyessr2.wav", "label": "Dentarg/Odyessr2.wav", "vanilla": "/vanilla/Dentarg/Odyessr2.wav", "enhanced": "/enhanced/Dentarg/Odyessr2.wav"}, {"id": "Dentarg/Odyessr3.wav", "label": "Dentarg/Odyessr3.wav", "vanilla": "/vanilla/Dentarg/Odyessr3.wav", "enhanced": "/enhanced/Dentarg/Odyessr3.wav"}, {"id": "Dragon/Drready.wav", "label": "Dragon/Drready.wav", "vanilla": "/vanilla/Dragon/Drready.wav", "enhanced": "/enhanced/Dragon/Drready.wav"}, {"id": "Dragon/Drwhat.wav", "label": "Dragon/Drwhat.wav", "vanilla": "/vanilla/Dragon/Drwhat.wav", "enhanced": "/enhanced/Dragon/Drwhat.wav"}, {"id": "Dragon/Dryessr1.wav", "label": "Dragon/Dryessr1.wav", "vanilla": "/vanilla/Dragon/Dryessr1.wav", "enhanced": "/enhanced/Dragon/Dryessr1.wav"}, {"id": "Dragon/Dryessr2.wav", "label": "Dragon/Dryessr2.wav", "vanilla": "/vanilla/Dragon/Dryessr2.wav", "enhanced": "/enhanced/Dragon/Dryessr2.wav"}, {"id": "Dwarf/Dwhat1.wav", "label": "Dwarf/Dwhat1.wav", "vanilla": "/vanilla/Dwarf/Dwhat1.wav", "enhanced": "/enhanced/Dwarf/Dwhat1.wav"}, {"id": "Dwarf/Dwhat2.wav", "label": "Dwarf/Dwhat2.wav", "vanilla": "/vanilla/Dwarf/Dwhat2.wav", "enhanced": "/enhanced/Dwarf/Dwhat2.wav"}, {"id": "Dwarf/Dwpissd1.wav", "label": "Dwarf/Dwpissd1.wav", "vanilla": "/vanilla/Dwarf/Dwpissd1.wav", "enhanced": "/enhanced/Dwarf/Dwpissd1.wav"}, {"id": "Dwarf/Dwpissd2.wav", "label": "Dwarf/Dwpissd2.wav", "vanilla": "/vanilla/Dwarf/Dwpissd2.wav", "enhanced": "/enhanced/Dwarf/Dwpissd2.wav"}, {"id": "Dwarf/Dwpissd3.wav", "label": "Dwarf/Dwpissd3.wav", "vanilla": "/vanilla/Dwarf/Dwpissd3.wav", "enhanced": "/enhanced/Dwarf/Dwpissd3.wav"}, {"id": "Dwarf/Dwready.wav", "label": "Dwarf/Dwready.wav", "vanilla": "/vanilla/Dwarf/Dwready.wav", "enhanced": "/enhanced/Dwarf/Dwready.wav"}, {"id": "Dwarf/Dwyessr1.wav", "label": "Dwarf/Dwyessr1.wav", "vanilla": "/vanilla/Dwarf/Dwyessr1.wav", "enhanced": "/enhanced/Dwarf/Dwyessr1.wav"}, {"id": "Dwarf/Dwyessr2.wav", "label": "Dwarf/Dwyessr2.wav", "vanilla": "/vanilla/Dwarf/Dwyessr2.wav", "enhanced": "/enhanced/Dwarf/Dwyessr2.wav"}, {"id": "Dwarf/Dwyessr3.wav", "label": "Dwarf/Dwyessr3.wav", "vanilla": "/vanilla/Dwarf/Dwyessr3.wav", "enhanced": "/enhanced/Dwarf/Dwyessr3.wav"}, {"id": "Dwarf/Dwyessr4.wav", "label": "Dwarf/Dwyessr4.wav", "vanilla": "/vanilla/Dwarf/Dwyessr4.wav", "enhanced": "/enhanced/Dwarf/Dwyessr4.wav"}, {"id": "Dwarf/Dwyessr5.wav", "label": "Dwarf/Dwyessr5.wav", "vanilla": "/vanilla/Dwarf/Dwyessr5.wav", "enhanced": "/enhanced/Dwarf/Dwyessr5.wav"}, {"id": "Elves/Epissed1.wav", "label": "Elves/Epissed1.wav", "vanilla": "/vanilla/Elves/Epissed1.wav", "enhanced": "/enhanced/Elves/Epissed1.wav"}, {"id": "Elves/Epissed2.wav", "label": "Elves/Epissed2.wav", "vanilla": "/vanilla/Elves/Epissed2.wav", "enhanced": "/enhanced/Elves/Epissed2.wav"}, {"id": "Elves/Epissed3.wav", "label": "Elves/Epissed3.wav", "vanilla": "/vanilla/Elves/Epissed3.wav", "enhanced": "/enhanced/Elves/Epissed3.wav"}, {"id": "Elves/Eready.wav", "label": "Elves/Eready.wav", "vanilla": "/vanilla/Elves/Eready.wav", "enhanced": "/enhanced/Elves/Eready.wav"}, {"id": "Elves/Ewhat1.wav", "label": "Elves/Ewhat1.wav", "vanilla": "/vanilla/Elves/Ewhat1.wav", "enhanced": "/enhanced/Elves/Ewhat1.wav"}, {"id": "Elves/Ewhat2.wav", "label": "Elves/Ewhat2.wav", "vanilla": "/vanilla/Elves/Ewhat2.wav", "enhanced": "/enhanced/Elves/Ewhat2.wav"}, {"id": "Elves/Ewhat3.wav", "label": "Elves/Ewhat3.wav", "vanilla": "/vanilla/Elves/Ewhat3.wav", "enhanced": "/enhanced/Elves/Ewhat3.wav"}, {"id": "Elves/Ewhat4.wav", "label": "Elves/Ewhat4.wav", "vanilla": "/vanilla/Elves/Ewhat4.wav", "enhanced": "/enhanced/Elves/Ewhat4.wav"}, {"id": "Elves/Eyessir1.wav", "label": "Elves/Eyessir1.wav", "vanilla": "/vanilla/Elves/Eyessir1.wav", "enhanced": "/enhanced/Elves/Eyessir1.wav"}, {"id": "Elves/Eyessir2.wav", "label": "Elves/Eyessir2.wav", "vanilla": "/vanilla/Elves/Eyessir2.wav", "enhanced": "/enhanced/Elves/Eyessir2.wav"}, {"id": "Elves/Eyessir3.wav", "label": "Elves/Eyessir3.wav", "vanilla": "/vanilla/Elves/Eyessir3.wav", "enhanced": "/enhanced/Elves/Eyessir3.wav"}, {"id": "Elves/Eyessir4.wav", "label": "Elves/Eyessir4.wav", "vanilla": "/vanilla/Elves/Eyessir4.wav", "enhanced": "/enhanced/Elves/Eyessir4.wav"}, {"id": "Gnome/Gnpissd1.wav", "label": "Gnome/Gnpissd1.wav", "vanilla": "/vanilla/Gnome/Gnpissd1.wav", "enhanced": "/enhanced/Gnome/Gnpissd1.wav"}, {"id": "Gnome/Gnpissd2.wav", "label": "Gnome/Gnpissd2.wav", "vanilla": "/vanilla/Gnome/Gnpissd2.wav", "enhanced": "/enhanced/Gnome/Gnpissd2.wav"}, {"id": "Gnome/Gnpissd3.wav", "label": "Gnome/Gnpissd3.wav", "vanilla": "/vanilla/Gnome/Gnpissd3.wav", "enhanced": "/enhanced/Gnome/Gnpissd3.wav"}, {"id": "Gnome/Gnpissd4.wav", "label": "Gnome/Gnpissd4.wav", "vanilla": "/vanilla/Gnome/Gnpissd4.wav", "enhanced": "/enhanced/Gnome/Gnpissd4.wav"}, {"id": "Gnome/Gnpissd5.wav", "label": "Gnome/Gnpissd5.wav", "vanilla": "/vanilla/Gnome/Gnpissd5.wav", "enhanced": "/enhanced/Gnome/Gnpissd5.wav"}, {"id": "Gnome/Gnready.wav", "label": "Gnome/Gnready.wav", "vanilla": "/vanilla/Gnome/Gnready.wav", "enhanced": "/enhanced/Gnome/Gnready.wav"}, {"id": "Gnome/Gnyessr1.wav", "label": "Gnome/Gnyessr1.wav", "vanilla": "/vanilla/Gnome/Gnyessr1.wav", "enhanced": "/enhanced/Gnome/Gnyessr1.wav"}, {"id": "Goblin/Gopissd1.wav", "label": "Goblin/Gopissd1.wav", "vanilla": "/vanilla/Goblin/Gopissd1.wav", "enhanced": "/enhanced/Goblin/Gopissd1.wav"}, {"id": "Goblin/Gopissd2.wav", "label": "Goblin/Gopissd2.wav", "vanilla": "/vanilla/Goblin/Gopissd2.wav", "enhanced": "/enhanced/Goblin/Gopissd2.wav"}, {"id": "Goblin/Gopissd3.wav", "label": "Goblin/Gopissd3.wav", "vanilla": "/vanilla/Goblin/Gopissd3.wav", "enhanced": "/enhanced/Goblin/Gopissd3.wav"}, {"id": "Goblin/Goready.wav", "label": "Goblin/Goready.wav", "vanilla": "/vanilla/Goblin/Goready.wav", "enhanced": "/enhanced/Goblin/Goready.wav"}, {"id": "Goblin/Gowhat1.wav", "label": "Goblin/Gowhat1.wav", "vanilla": "/vanilla/Goblin/Gowhat1.wav", "enhanced": "/enhanced/Goblin/Gowhat1.wav"}, {"id": "Goblin/Gowhat2.wav", "label": "Goblin/Gowhat2.wav", "vanilla": "/vanilla/Goblin/Gowhat2.wav", "enhanced": "/enhanced/Goblin/Gowhat2.wav"}, {"id": "Goblin/Gowhat3.wav", "label": "Goblin/Gowhat3.wav", "vanilla": "/vanilla/Goblin/Gowhat3.wav", "enhanced": "/enhanced/Goblin/Gowhat3.wav"}, {"id": "Goblin/Gowhat4.wav", "label": "Goblin/Gowhat4.wav", "vanilla": "/vanilla/Goblin/Gowhat4.wav", "enhanced": "/enhanced/Goblin/Gowhat4.wav"}, {"id": "Goblin/Goyessr1.wav", "label": "Goblin/Goyessr1.wav", "vanilla": "/vanilla/Goblin/Goyessr1.wav", "enhanced": "/enhanced/Goblin/Goyessr1.wav"}, {"id": "Goblin/Goyessr2.wav", "label": "Goblin/Goyessr2.wav", "vanilla": "/vanilla/Goblin/Goyessr2.wav", "enhanced": "/enhanced/Goblin/Goyessr2.wav"}, {"id": "Goblin/Goyessr3.wav", "label": "Goblin/Goyessr3.wav", "vanilla": "/vanilla/Goblin/Goyessr3.wav", "enhanced": "/enhanced/Goblin/Goyessr3.wav"}, {"id": "Goblin/Goyessr4.wav", "label": "Goblin/Goyessr4.wav", "vanilla": "/vanilla/Goblin/Goyessr4.wav", "enhanced": "/enhanced/Goblin/Goyessr4.wav"}, {"id": "Griffon/Griffon1.wav", "label": "Griffon/Griffon1.wav", "vanilla": "/vanilla/Griffon/Griffon1.wav", "enhanced": "/enhanced/Griffon/Griffon1.wav"}, {"id": "Griffon/Griffon2.wav", "label": "Griffon/Griffon2.wav", "vanilla": "/vanilla/Griffon/Griffon2.wav", "enhanced": "/enhanced/Griffon/Griffon2.wav"}, {"id": "Griffon/Grwhat.wav", "label": "Griffon/Grwhat.wav", "vanilla": "/vanilla/Griffon/Grwhat.wav", "enhanced": "/enhanced/Griffon/Grwhat.wav"}, {"id": "Grom/Grpissd1.wav", "label": "Grom/Grpissd1.wav", "vanilla": "/vanilla/Grom/Grpissd1.wav", "enhanced": "/enhanced/Grom/Grpissd1.wav"}, {"id": "Grom/Grpissd2.wav", "label": "Grom/Grpissd2.wav", "vanilla": "/vanilla/Grom/Grpissd2.wav", "enhanced": "/enhanced/Grom/Grpissd2.wav"}, {"id": "Grom/Grpissd3.wav", "label": "Grom/Grpissd3.wav", "vanilla": "/vanilla/Grom/Grpissd3.wav", "enhanced": "/enhanced/Grom/Grpissd3.wav"}, {"id": "Grom/Grwhat1.wav", "label": "Grom/Grwhat1.wav", "vanilla": "/vanilla/Grom/Grwhat1.wav", "enhanced": "/enhanced/Grom/Grwhat1.wav"}, {"id": "Grom/Grwhat2.wav", "label": "Grom/Grwhat2.wav", "vanilla": "/vanilla/Grom/Grwhat2.wav", "enhanced": "/enhanced/Grom/Grwhat2.wav"}, {"id": "Grom/Grwhat3.wav", "label": "Grom/Grwhat3.wav", "vanilla": "/vanilla/Grom/Grwhat3.wav", "enhanced": "/enhanced/Grom/Grwhat3.wav"}, {"id": "Grom/Gryessr1.wav", "label": "Grom/Gryessr1.wav", "vanilla": "/vanilla/Grom/Gryessr1.wav", "enhanced": "/enhanced/Grom/Gryessr1.wav"}, {"id": "Grom/Gryessr2.wav", "label": "Grom/Gryessr2.wav", "vanilla": "/vanilla/Grom/Gryessr2.wav", "enhanced": "/enhanced/Grom/Gryessr2.wav"}, {"id": "Grom/Gryessr3.wav", "label": "Grom/Gryessr3.wav", "vanilla": "/vanilla/Grom/Gryessr3.wav", "enhanced": "/enhanced/Grom/Gryessr3.wav"}, {"id": "Human/Hdead.wav", "label": "Human/Hdead.wav", "vanilla": "/vanilla/Human/Hdead.wav", "enhanced": "/enhanced/Human/Hdead.wav"}, {"id": "Human/Hdempis4.wav", "label": "Human/Hdempis4.wav", "vanilla": "/vanilla/Human/Hdempis4.wav", "enhanced": "/enhanced/Human/Hdempis4.wav"}, {"id": "Human/Hdempis5.wav", "label": "Human/Hdempis5.wav", "vanilla": "/vanilla/Human/Hdempis5.wav", "enhanced": "/enhanced/Human/Hdempis5.wav"}, {"id": "Human/Hdempis6.wav", "label": "Human/Hdempis6.wav", "vanilla": "/vanilla/Human/Hdempis6.wav", "enhanced": "/enhanced/Human/Hdempis6.wav"}, {"id": "Human/Hdempis7.wav", "label": "Human/Hdempis7.wav", "vanilla": "/vanilla/Human/Hdempis7.wav", "enhanced": "/enhanced/Human/Hdempis7.wav"}, {"id": "Human/Hhelp1.wav", "label": "Human/Hhelp1.wav", "vanilla": "/vanilla/Human/Hhelp1.wav", "enhanced": "/enhanced/Human/Hhelp1.wav"}, {"id": "Human/Hhelp2.wav", "label": "Human/Hhelp2.wav", "vanilla": "/vanilla/Human/Hhelp2.wav", "enhanced": "/enhanced/Human/Hhelp2.wav"}, {"id": "Human/Hpissed1.wav", "label": "Human/Hpissed1.wav", "vanilla": "/vanilla/Human/Hpissed1.wav", "enhanced": "/enhanced/Human/Hpissed1.wav"}, {"id": "Human/Hpissed2.wav", "label": "Human/Hpissed2.wav", "vanilla": "/vanilla/Human/Hpissed2.wav", "enhanced": "/enhanced/Human/Hpissed2.wav"}, {"id": "Human/Hpissed3.wav", "label": "Human/Hpissed3.wav", "vanilla": "/vanilla/Human/Hpissed3.wav", "enhanced": "/enhanced/Human/Hpissed3.wav"}, {"id": "Human/Hpissed4.wav", "label": "Human/Hpissed4.wav", "vanilla": "/vanilla/Human/Hpissed4.wav", "enhanced": "/enhanced/Human/Hpissed4.wav"}, {"id": "Human/Hpissed5.wav", "label": "Human/Hpissed5.wav", "vanilla": "/vanilla/Human/Hpissed5.wav", "enhanced": "/enhanced/Human/Hpissed5.wav"}, {"id": "Human/Hpissed6.wav", "label": "Human/Hpissed6.wav", "vanilla": "/vanilla/Human/Hpissed6.wav", "enhanced": "/enhanced/Human/Hpissed6.wav"}, {"id": "Human/Hpissed7.wav", "label": "Human/Hpissed7.wav", "vanilla": "/vanilla/Human/Hpissed7.wav", "enhanced": "/enhanced/Human/Hpissed7.wav"}, {"id": "Human/Hready.wav", "label": "Human/Hready.wav", "vanilla": "/vanilla/Human/Hready.wav", "enhanced": "/enhanced/Human/Hready.wav"}, {"id": "Human/Hwhat1.wav", "label": "Human/Hwhat1.wav", "vanilla": "/vanilla/Human/Hwhat1.wav", "enhanced": "/enhanced/Human/Hwhat1.wav"}, {"id": "Human/Hwhat2.wav", "label": "Human/Hwhat2.wav", "vanilla": "/vanilla/Human/Hwhat2.wav", "enhanced": "/enhanced/Human/Hwhat2.wav"}, {"id": "Human/Hwhat3.wav", "label": "Human/Hwhat3.wav", "vanilla": "/vanilla/Human/Hwhat3.wav", "enhanced": "/enhanced/Human/Hwhat3.wav"}, {"id": "Human/Hwhat4.wav", "label": "Human/Hwhat4.wav", "vanilla": "/vanilla/Human/Hwhat4.wav", "enhanced": "/enhanced/Human/Hwhat4.wav"}, {"id": "Human/Hwhat5.wav", "label": "Human/Hwhat5.wav", "vanilla": "/vanilla/Human/Hwhat5.wav", "enhanced": "/enhanced/Human/Hwhat5.wav"}, {"id": "Human/Hwhat6.wav", "label": "Human/Hwhat6.wav", "vanilla": "/vanilla/Human/Hwhat6.wav", "enhanced": "/enhanced/Human/Hwhat6.wav"}, {"id": "Human/Hwrkdone.wav", "label": "Human/Hwrkdone.wav", "vanilla": "/vanilla/Human/Hwrkdone.wav", "enhanced": "/enhanced/Human/Hwrkdone.wav"}, {"id": "Human/Hyessir1.wav", "label": "Human/Hyessir1.wav", "vanilla": "/vanilla/Human/Hyessir1.wav", "enhanced": "/enhanced/Human/Hyessir1.wav"}, {"id": "Human/Hyessir2.wav", "label": "Human/Hyessir2.wav", "vanilla": "/vanilla/Human/Hyessir2.wav", "enhanced": "/enhanced/Human/Hyessir2.wav"}, {"id": "Human/Hyessir3.wav", "label": "Human/Hyessir3.wav", "vanilla": "/vanilla/Human/Hyessir3.wav", "enhanced": "/enhanced/Human/Hyessir3.wav"}, {"id": "Human/Hyessir4.wav", "label": "Human/Hyessir4.wav", "vanilla": "/vanilla/Human/Hyessir4.wav", "enhanced": "/enhanced/Human/Hyessir4.wav"}, {"id": "Kargath/Kapissd1.wav", "label": "Kargath/Kapissd1.wav", "vanilla": "/vanilla/Kargath/Kapissd1.wav", "enhanced": "/enhanced/Kargath/Kapissd1.wav"}, {"id": "Kargath/Kapissd2.wav", "label": "Kargath/Kapissd2.wav", "vanilla": "/vanilla/Kargath/Kapissd2.wav", "enhanced": "/enhanced/Kargath/Kapissd2.wav"}, {"id": "Kargath/Kapissd3.wav", "label": "Kargath/Kapissd3.wav", "vanilla": "/vanilla/Kargath/Kapissd3.wav", "enhanced": "/enhanced/Kargath/Kapissd3.wav"}, {"id": "Kargath/Kawhat1.wav", "label": "Kargath/Kawhat1.wav", "vanilla": "/vanilla/Kargath/Kawhat1.wav", "enhanced": "/enhanced/Kargath/Kawhat1.wav"}, {"id": "Kargath/Kawhat2.wav", "label": "Kargath/Kawhat2.wav", "vanilla": "/vanilla/Kargath/Kawhat2.wav", "enhanced": "/enhanced/Kargath/Kawhat2.wav"}, {"id": "Kargath/Kawhat3.wav", "label": "Kargath/Kawhat3.wav", "vanilla": "/vanilla/Kargath/Kawhat3.wav", "enhanced": "/enhanced/Kargath/Kawhat3.wav"}, {"id": "Kargath/Kayessr1.wav", "label": "Kargath/Kayessr1.wav", "vanilla": "/vanilla/Kargath/Kayessr1.wav", "enhanced": "/enhanced/Kargath/Kayessr1.wav"}, {"id": "Kargath/Kayessr2.wav", "label": "Kargath/Kayessr2.wav", "vanilla": "/vanilla/Kargath/Kayessr2.wav", "enhanced": "/enhanced/Kargath/Kayessr2.wav"}, {"id": "Kargath/Kayessr3.wav", "label": "Kargath/Kayessr3.wav", "vanilla": "/vanilla/Kargath/Kayessr3.wav", "enhanced": "/enhanced/Kargath/Kayessr3.wav"}, {"id": "Khadgar/Khpissd1.wav", "label": "Khadgar/Khpissd1.wav", "vanilla": "/vanilla/Khadgar/Khpissd1.wav", "enhanced": "/enhanced/Khadgar/Khpissd1.wav"}, {"id": "Khadgar/Khpissd2.wav", "label": "Khadgar/Khpissd2.wav", "vanilla": "/vanilla/Khadgar/Khpissd2.wav", "enhanced": "/enhanced/Khadgar/Khpissd2.wav"}, {"id": "Khadgar/Khpissd3.wav", "label": "Khadgar/Khpissd3.wav", "vanilla": "/vanilla/Khadgar/Khpissd3.wav", "enhanced": "/enhanced/Khadgar/Khpissd3.wav"}, {"id": "Khadgar/Khwhat1.wav", "label": "Khadgar/Khwhat1.wav", "vanilla": "/vanilla/Khadgar/Khwhat1.wav", "enhanced": "/enhanced/Khadgar/Khwhat1.wav"}, {"id": "Khadgar/Khwhat2.wav", "label": "Khadgar/Khwhat2.wav", "vanilla": "/vanilla/Khadgar/Khwhat2.wav", "enhanced": "/enhanced/Khadgar/Khwhat2.wav"}, {"id": "Khadgar/Khwhat3.wav", "label": "Khadgar/Khwhat3.wav", "vanilla": "/vanilla/Khadgar/Khwhat3.wav", "enhanced": "/enhanced/Khadgar/Khwhat3.wav"}, {"id": "Khadgar/Khyessr1.wav", "label": "Khadgar/Khyessr1.wav", "vanilla": "/vanilla/Khadgar/Khyessr1.wav", "enhanced": "/enhanced/Khadgar/Khyessr1.wav"}, {"id": "Khadgar/Khyessr2.wav", "label": "Khadgar/Khyessr2.wav", "vanilla": "/vanilla/Khadgar/Khyessr2.wav", "enhanced": "/enhanced/Khadgar/Khyessr2.wav"}, {"id": "Khadgar/Khyessr3.wav", "label": "Khadgar/Khyessr3.wav", "vanilla": "/vanilla/Khadgar/Khyessr3.wav", "enhanced": "/enhanced/Khadgar/Khyessr3.wav"}, {"id": "Knight/Knpissd1.wav", "label": "Knight/Knpissd1.wav", "vanilla": "/vanilla/Knight/Knpissd1.wav", "enhanced": "/enhanced/Knight/Knpissd1.wav"}, {"id": "Knight/Knpissd2.wav", "label": "Knight/Knpissd2.wav", "vanilla": "/vanilla/Knight/Knpissd2.wav", "enhanced": "/enhanced/Knight/Knpissd2.wav"}, {"id": "Knight/Knpissd3.wav", "label": "Knight/Knpissd3.wav", "vanilla": "/vanilla/Knight/Knpissd3.wav", "enhanced": "/enhanced/Knight/Knpissd3.wav"}, {"id": "Knight/Knready.wav", "label": "Knight/Knready.wav", "vanilla": "/vanilla/Knight/Knready.wav", "enhanced": "/enhanced/Knight/Knready.wav"}, {"id": "Knight/Knwhat1.wav", "label": "Knight/Knwhat1.wav", "vanilla": "/vanilla/Knight/Knwhat1.wav", "enhanced": "/enhanced/Knight/Knwhat1.wav"}, {"id": "Knight/Knwhat2.wav", "label": "Knight/Knwhat2.wav", "vanilla": "/vanilla/Knight/Knwhat2.wav", "enhanced": "/enhanced/Knight/Knwhat2.wav"}, {"id": "Knight/Knwhat3.wav", "label": "Knight/Knwhat3.wav", "vanilla": "/vanilla/Knight/Knwhat3.wav", "enhanced": "/enhanced/Knight/Knwhat3.wav"}, {"id": "Knight/Knwhat4.wav", "label": "Knight/Knwhat4.wav", "vanilla": "/vanilla/Knight/Knwhat4.wav", "enhanced": "/enhanced/Knight/Knwhat4.wav"}, {"id": "Knight/Knyessr1.wav", "label": "Knight/Knyessr1.wav", "vanilla": "/vanilla/Knight/Knyessr1.wav", "enhanced": "/enhanced/Knight/Knyessr1.wav"}, {"id": "Knight/Knyessr2.wav", "label": "Knight/Knyessr2.wav", "vanilla": "/vanilla/Knight/Knyessr2.wav", "enhanced": "/enhanced/Knight/Knyessr2.wav"}, {"id": "Knight/Knyessr3.wav", "label": "Knight/Knyessr3.wav", "vanilla": "/vanilla/Knight/Knyessr3.wav", "enhanced": "/enhanced/Knight/Knyessr3.wav"}, {"id": "Knight/Knyessr4.wav", "label": "Knight/Knyessr4.wav", "vanilla": "/vanilla/Knight/Knyessr4.wav", "enhanced": "/enhanced/Knight/Knyessr4.wav"}, {"id": "Kurdran/Kupissd1.wav", "label": "Kurdran/Kupissd1.wav", "vanilla": "/vanilla/Kurdran/Kupissd1.wav", "enhanced": "/enhanced/Kurdran/Kupissd1.wav"}, {"id": "Kurdran/Kupissd2.wav", "label": "Kurdran/Kupissd2.wav", "vanilla": "/vanilla/Kurdran/Kupissd2.wav", "enhanced": "/enhanced/Kurdran/Kupissd2.wav"}, {"id": "Kurdran/Kupissd3.wav", "label": "Kurdran/Kupissd3.wav", "vanilla": "/vanilla/Kurdran/Kupissd3.wav", "enhanced": "/enhanced/Kurdran/Kupissd3.wav"}, {"id": "Kurdran/Kuwhat1.wav", "label": "Kurdran/Kuwhat1.wav", "vanilla": "/vanilla/Kurdran/Kuwhat1.wav", "enhanced": "/enhanced/Kurdran/Kuwhat1.wav"}, {"id": "Kurdran/Kuwhat2.wav", "label": "Kurdran/Kuwhat2.wav", "vanilla": "/vanilla/Kurdran/Kuwhat2.wav", "enhanced": "/enhanced/Kurdran/Kuwhat2.wav"}, {"id": "Kurdran/Kuwhat3.wav", "label": "Kurdran/Kuwhat3.wav", "vanilla": "/vanilla/Kurdran/Kuwhat3.wav", "enhanced": "/enhanced/Kurdran/Kuwhat3.wav"}, {"id": "Kurdran/Kuyessr1.wav", "label": "Kurdran/Kuyessr1.wav", "vanilla": "/vanilla/Kurdran/Kuyessr1.wav", "enhanced": "/enhanced/Kurdran/Kuyessr1.wav"}, {"id": "Kurdran/Kuyessr2.wav", "label": "Kurdran/Kuyessr2.wav", "vanilla": "/vanilla/Kurdran/Kuyessr2.wav", "enhanced": "/enhanced/Kurdran/Kuyessr2.wav"}, {"id": "Kurdran/Kuyessr3.wav", "label": "Kurdran/Kuyessr3.wav", "vanilla": "/vanilla/Kurdran/Kuyessr3.wav", "enhanced": "/enhanced/Kurdran/Kuyessr3.wav"}, {"id": "Ogre/Ogpissd1.wav", "label": "Ogre/Ogpissd1.wav", "vanilla": "/vanilla/Ogre/Ogpissd1.wav", "enhanced": "/enhanced/Ogre/Ogpissd1.wav"}, {"id": "Ogre/Ogpissd2.wav", "label": "Ogre/Ogpissd2.wav", "vanilla": "/vanilla/Ogre/Ogpissd2.wav", "enhanced": "/enhanced/Ogre/Ogpissd2.wav"}, {"id": "Ogre/Ogpissd3.wav", "label": "Ogre/Ogpissd3.wav", "vanilla": "/vanilla/Ogre/Ogpissd3.wav", "enhanced": "/enhanced/Ogre/Ogpissd3.wav"}, {"id": "Ogre/Ogpissd4.wav", "label": "Ogre/Ogpissd4.wav", "vanilla": "/vanilla/Ogre/Ogpissd4.wav", "enhanced": "/enhanced/Ogre/Ogpissd4.wav"}, {"id": "Ogre/Ogpissd5.wav", "label": "Ogre/Ogpissd5.wav", "vanilla": "/vanilla/Ogre/Ogpissd5.wav", "enhanced": "/enhanced/Ogre/Ogpissd5.wav"}, {"id": "Ogre/Ogready.wav", "label": "Ogre/Ogready.wav", "vanilla": "/vanilla/Ogre/Ogready.wav", "enhanced": "/enhanced/Ogre/Ogready.wav"}, {"id": "Ogre/Ogwhat1.wav", "label": "Ogre/Ogwhat1.wav", "vanilla": "/vanilla/Ogre/Ogwhat1.wav", "enhanced": "/enhanced/Ogre/Ogwhat1.wav"}, {"id": "Ogre/Ogwhat2.wav", "label": "Ogre/Ogwhat2.wav", "vanilla": "/vanilla/Ogre/Ogwhat2.wav", "enhanced": "/enhanced/Ogre/Ogwhat2.wav"}, {"id": "Ogre/Ogwhat3.wav", "label": "Ogre/Ogwhat3.wav", "vanilla": "/vanilla/Ogre/Ogwhat3.wav", "enhanced": "/enhanced/Ogre/Ogwhat3.wav"}, {"id": "Ogre/Ogwhat4.wav", "label": "Ogre/Ogwhat4.wav", "vanilla": "/vanilla/Ogre/Ogwhat4.wav", "enhanced": "/enhanced/Ogre/Ogwhat4.wav"}, {"id": "Ogre/Ogyessr1.wav", "label": "Ogre/Ogyessr1.wav", "vanilla": "/vanilla/Ogre/Ogyessr1.wav", "enhanced": "/enhanced/Ogre/Ogyessr1.wav"}, {"id": "Ogre/Ogyessr2.wav", "label": "Ogre/Ogyessr2.wav", "vanilla": "/vanilla/Ogre/Ogyessr2.wav", "enhanced": "/enhanced/Ogre/Ogyessr2.wav"}, {"id": "Ogre/Ogyessr3.wav", "label": "Ogre/Ogyessr3.wav", "vanilla": "/vanilla/Ogre/Ogyessr3.wav", "enhanced": "/enhanced/Ogre/Ogyessr3.wav"}, {"id": "Ogremage/Ompissd1.wav", "label": "Ogremage/Ompissd1.wav", "vanilla": "/vanilla/Ogremage/Ompissd1.wav", "enhanced": "/enhanced/Ogremage/Ompissd1.wav"}, {"id": "Ogremage/Ompissd2.wav", "label": "Ogremage/Ompissd2.wav", "vanilla": "/vanilla/Ogremage/Ompissd2.wav", "enhanced": "/enhanced/Ogremage/Ompissd2.wav"}, {"id": "Ogremage/Ompissd3.wav", "label": "Ogremage/Ompissd3.wav", "vanilla": "/vanilla/Ogremage/Ompissd3.wav", "enhanced": "/enhanced/Ogremage/Ompissd3.wav"}, {"id": "Ogremage/Omready.wav", "label": "Ogremage/Omready.wav", "vanilla": "/vanilla/Ogremage/Omready.wav", "enhanced": "/enhanced/Ogremage/Omready.wav"}, {"id": "Ogremage/Omwhat1.wav", "label": "Ogremage/Omwhat1.wav", "vanilla": "/vanilla/Ogremage/Omwhat1.wav", "enhanced": "/enhanced/Ogremage/Omwhat1.wav"}, {"id": "Ogremage/Omwhat2.wav", "label": "Ogremage/Omwhat2.wav", "vanilla": "/vanilla/Ogremage/Omwhat2.wav", "enhanced": "/enhanced/Ogremage/Omwhat2.wav"}, {"id": "Ogremage/Omwhat3.wav", "label": "Ogremage/Omwhat3.wav", "vanilla": "/vanilla/Ogremage/Omwhat3.wav", "enhanced": "/enhanced/Ogremage/Omwhat3.wav"}, {"id": "Ogremage/Omwhat4.wav", "label": "Ogremage/Omwhat4.wav", "vanilla": "/vanilla/Ogremage/Omwhat4.wav", "enhanced": "/enhanced/Ogremage/Omwhat4.wav"}, {"id": "Ogremage/Omyessr1.wav", "label": "Ogremage/Omyessr1.wav", "vanilla": "/vanilla/Ogremage/Omyessr1.wav", "enhanced": "/enhanced/Ogremage/Omyessr1.wav"}, {"id": "Ogremage/Omyessr2.wav", "label": "Ogremage/Omyessr2.wav", "vanilla": "/vanilla/Ogremage/Omyessr2.wav", "enhanced": "/enhanced/Ogremage/Omyessr2.wav"}, {"id": "Ogremage/Omyessr3.wav", "label": "Ogremage/Omyessr3.wav", "vanilla": "/vanilla/Ogremage/Omyessr3.wav", "enhanced": "/enhanced/Ogremage/Omyessr3.wav"}, {"id": "Orc/Odead.wav", "label": "Orc/Odead.wav", "vanilla": "/vanilla/Orc/Odead.wav", "enhanced": "/enhanced/Orc/Odead.wav"}, {"id": "Orc/Odempis4.wav", "label": "Orc/Odempis4.wav", "vanilla": "/vanilla/Orc/Odempis4.wav", "enhanced": "/enhanced/Orc/Odempis4.wav"}, {"id": "Orc/Odempis5.wav", "label": "Orc/Odempis5.wav", "vanilla": "/vanilla/Orc/Odempis5.wav", "enhanced": "/enhanced/Orc/Odempis5.wav"}, {"id": "Orc/Odempis6.wav", "label": "Orc/Odempis6.wav", "vanilla": "/vanilla/Orc/Odempis6.wav", "enhanced": "/enhanced/Orc/Odempis6.wav"}, {"id": "Orc/Odempis7.wav", "label": "Orc/Odempis7.wav", "vanilla": "/vanilla/Orc/Odempis7.wav", "enhanced": "/enhanced/Orc/Odempis7.wav"}, {"id": "Orc/Ohelp1.wav", "label": "Orc/Ohelp1.wav", "vanilla": "/vanilla/Orc/Ohelp1.wav", "enhanced": "/enhanced/Orc/Ohelp1.wav"}, {"id": "Orc/Ohelp2.wav", "label": "Orc/Ohelp2.wav", "vanilla": "/vanilla/Orc/Ohelp2.wav", "enhanced": "/enhanced/Orc/Ohelp2.wav"}, {"id": "Orc/Opissed1.wav", "label": "Orc/Opissed1.wav", "vanilla": "/vanilla/Orc/Opissed1.wav", "enhanced": "/enhanced/Orc/Opissed1.wav"}, {"id": "Orc/Opissed2.wav", "label": "Orc/Opissed2.wav", "vanilla": "/vanilla/Orc/Opissed2.wav", "enhanced": "/enhanced/Orc/Opissed2.wav"}, {"id": "Orc/Opissed3.wav", "label": "Orc/Opissed3.wav", "vanilla": "/vanilla/Orc/Opissed3.wav", "enhanced": "/enhanced/Orc/Opissed3.wav"}, {"id": "Orc/Opissed4.wav", "label": "Orc/Opissed4.wav", "vanilla": "/vanilla/Orc/Opissed4.wav", "enhanced": "/enhanced/Orc/Opissed4.wav"}, {"id": "Orc/Opissed5.wav", "label": "Orc/Opissed5.wav", "vanilla": "/vanilla/Orc/Opissed5.wav", "enhanced": "/enhanced/Orc/Opissed5.wav"}, {"id": "Orc/Opissed6.wav", "label": "Orc/Opissed6.wav", "vanilla": "/vanilla/Orc/Opissed6.wav", "enhanced": "/enhanced/Orc/Opissed6.wav"}, {"id": "Orc/Opissed7.wav", "label": "Orc/Opissed7.wav", "vanilla": "/vanilla/Orc/Opissed7.wav", "enhanced": "/enhanced/Orc/Opissed7.wav"}, {"id": "Orc/Oready.wav", "label": "Orc/Oready.wav", "vanilla": "/vanilla/Orc/Oready.wav", "enhanced": "/enhanced/Orc/Oready.wav"}, {"id": "Orc/Owhat1.wav", "label": "Orc/Owhat1.wav", "vanilla": "/vanilla/Orc/Owhat1.wav", "enhanced": "/enhanced/Orc/Owhat1.wav"}, {"id": "Orc/Owhat2.wav", "label": "Orc/Owhat2.wav", "vanilla": "/vanilla/Orc/Owhat2.wav", "enhanced": "/enhanced/Orc/Owhat2.wav"}, {"id": "Orc/Owhat3.wav", "label": "Orc/Owhat3.wav", "vanilla": "/vanilla/Orc/Owhat3.wav", "enhanced": "/enhanced/Orc/Owhat3.wav"}, {"id": "Orc/Owhat4.wav", "label": "Orc/Owhat4.wav", "vanilla": "/vanilla/Orc/Owhat4.wav", "enhanced": "/enhanced/Orc/Owhat4.wav"}, {"id": "Orc/Owhat5.wav", "label": "Orc/Owhat5.wav", "vanilla": "/vanilla/Orc/Owhat5.wav", "enhanced": "/enhanced/Orc/Owhat5.wav"}, {"id": "Orc/Owhat6.wav", "label": "Orc/Owhat6.wav", "vanilla": "/vanilla/Orc/Owhat6.wav", "enhanced": "/enhanced/Orc/Owhat6.wav"}, {"id": "Orc/Owrkdone.wav", "label": "Orc/Owrkdone.wav", "vanilla": "/vanilla/Orc/Owrkdone.wav", "enhanced": "/enhanced/Orc/Owrkdone.wav"}, {"id": "Orc/Oyessir1.wav", "label": "Orc/Oyessir1.wav", "vanilla": "/vanilla/Orc/Oyessir1.wav", "enhanced": "/enhanced/Orc/Oyessir1.wav"}, {"id": "Orc/Oyessir2.wav", "label": "Orc/Oyessir2.wav", "vanilla": "/vanilla/Orc/Oyessir2.wav", "enhanced": "/enhanced/Orc/Oyessir2.wav"}, {"id": "Orc/Oyessir3.wav", "label": "Orc/Oyessir3.wav", "vanilla": "/vanilla/Orc/Oyessir3.wav", "enhanced": "/enhanced/Orc/Oyessir3.wav"}, {"id": "Orc/Oyessir4.wav", "label": "Orc/Oyessir4.wav", "vanilla": "/vanilla/Orc/Oyessir4.wav", "enhanced": "/enhanced/Orc/Oyessir4.wav"}, {"id": "Paladin/Pkatak1.wav", "label": "Paladin/Pkatak1.wav", "vanilla": "/vanilla/Paladin/Pkatak1.wav", "enhanced": "/enhanced/Paladin/Pkatak1.wav"}, {"id": "Paladin/Pkpissd1.wav", "label": "Paladin/Pkpissd1.wav", "vanilla": "/vanilla/Paladin/Pkpissd1.wav", "enhanced": "/enhanced/Paladin/Pkpissd1.wav"}, {"id": "Paladin/Pkpissd2.wav", "label": "Paladin/Pkpissd2.wav", "vanilla": "/vanilla/Paladin/Pkpissd2.wav", "enhanced": "/enhanced/Paladin/Pkpissd2.wav"}, {"id": "Paladin/Pkpissd3.wav", "label": "Paladin/Pkpissd3.wav", "vanilla": "/vanilla/Paladin/Pkpissd3.wav", "enhanced": "/enhanced/Paladin/Pkpissd3.wav"}, {"id": "Paladin/Pkready.wav", "label": "Paladin/Pkready.wav", "vanilla": "/vanilla/Paladin/Pkready.wav", "enhanced": "/enhanced/Paladin/Pkready.wav"}, {"id": "Paladin/Pkwhat1.wav", "label": "Paladin/Pkwhat1.wav", "vanilla": "/vanilla/Paladin/Pkwhat1.wav", "enhanced": "/enhanced/Paladin/Pkwhat1.wav"}, {"id": "Paladin/Pkwhat2.wav", "label": "Paladin/Pkwhat2.wav", "vanilla": "/vanilla/Paladin/Pkwhat2.wav", "enhanced": "/enhanced/Paladin/Pkwhat2.wav"}, {"id": "Paladin/Pkwhat3.wav", "label": "Paladin/Pkwhat3.wav", "vanilla": "/vanilla/Paladin/Pkwhat3.wav", "enhanced": "/enhanced/Paladin/Pkwhat3.wav"}, {"id": "Paladin/Pkwhat4.wav", "label": "Paladin/Pkwhat4.wav", "vanilla": "/vanilla/Paladin/Pkwhat4.wav", "enhanced": "/enhanced/Paladin/Pkwhat4.wav"}, {"id": "Paladin/Pkyessr1.wav", "label": "Paladin/Pkyessr1.wav", "vanilla": "/vanilla/Paladin/Pkyessr1.wav", "enhanced": "/enhanced/Paladin/Pkyessr1.wav"}, {"id": "Paladin/Pkyessr2.wav", "label": "Paladin/Pkyessr2.wav", "vanilla": "/vanilla/Paladin/Pkyessr2.wav", "enhanced": "/enhanced/Paladin/Pkyessr2.wav"}, {"id": "Paladin/Pkyessr3.wav", "label": "Paladin/Pkyessr3.wav", "vanilla": "/vanilla/Paladin/Pkyessr3.wav", "enhanced": "/enhanced/Paladin/Pkyessr3.wav"}, {"id": "Paladin/Pkyessr4.wav", "label": "Paladin/Pkyessr4.wav", "vanilla": "/vanilla/Paladin/Pkyessr4.wav", "enhanced": "/enhanced/Paladin/Pkyessr4.wav"}, {"id": "Peasant/Pspissd1.wav", "label": "Peasant/Pspissd1.wav", "vanilla": "/vanilla/Peasant/Pspissd1.wav", "enhanced": "/enhanced/Peasant/Pspissd1.wav"}, {"id": "Peasant/Pspissd2.wav", "label": "Peasant/Pspissd2.wav", "vanilla": "/vanilla/Peasant/Pspissd2.wav", "enhanced": "/enhanced/Peasant/Pspissd2.wav"}, {"id": "Peasant/Pspissd3.wav", "label": "Peasant/Pspissd3.wav", "vanilla": "/vanilla/Peasant/Pspissd3.wav", "enhanced": "/enhanced/Peasant/Pspissd3.wav"}, {"id": "Peasant/Pspissd4.wav", "label": "Peasant/Pspissd4.wav", "vanilla": "/vanilla/Peasant/Pspissd4.wav", "enhanced": "/enhanced/Peasant/Pspissd4.wav"}, {"id": "Peasant/Pspissd5.wav", "label": "Peasant/Pspissd5.wav", "vanilla": "/vanilla/Peasant/Pspissd5.wav", "enhanced": "/enhanced/Peasant/Pspissd5.wav"}, {"id": "Peasant/Pspissd6.wav", "label": "Peasant/Pspissd6.wav", "vanilla": "/vanilla/Peasant/Pspissd6.wav", "enhanced": "/enhanced/Peasant/Pspissd6.wav"}, {"id": "Peasant/Pspissd7.wav", "label": "Peasant/Pspissd7.wav", "vanilla": "/vanilla/Peasant/Pspissd7.wav", "enhanced": "/enhanced/Peasant/Pspissd7.wav"}, {"id": "Peasant/Psready.wav", "label": "Peasant/Psready.wav", "vanilla": "/vanilla/Peasant/Psready.wav", "enhanced": "/enhanced/Peasant/Psready.wav"}, {"id": "Peasant/Pswhat1.wav", "label": "Peasant/Pswhat1.wav", "vanilla": "/vanilla/Peasant/Pswhat1.wav", "enhanced": "/enhanced/Peasant/Pswhat1.wav"}, {"id": "Peasant/Pswhat2.wav", "label": "Peasant/Pswhat2.wav", "vanilla": "/vanilla/Peasant/Pswhat2.wav", "enhanced": "/enhanced/Peasant/Pswhat2.wav"}, {"id": "Peasant/Pswhat3.wav", "label": "Peasant/Pswhat3.wav", "vanilla": "/vanilla/Peasant/Pswhat3.wav", "enhanced": "/enhanced/Peasant/Pswhat3.wav"}, {"id": "Peasant/Pswhat4.wav", "label": "Peasant/Pswhat4.wav", "vanilla": "/vanilla/Peasant/Pswhat4.wav", "enhanced": "/enhanced/Peasant/Pswhat4.wav"}, {"id": "Peasant/Pswrkdon.wav", "label": "Peasant/Pswrkdon.wav", "vanilla": "/vanilla/Peasant/Pswrkdon.wav", "enhanced": "/enhanced/Peasant/Pswrkdon.wav"}, {"id": "Peasant/Psyessr1.wav", "label": "Peasant/Psyessr1.wav", "vanilla": "/vanilla/Peasant/Psyessr1.wav", "enhanced": "/enhanced/Peasant/Psyessr1.wav"}, {"id": "Peasant/Psyessr2.wav", "label": "Peasant/Psyessr2.wav", "vanilla": "/vanilla/Peasant/Psyessr2.wav", "enhanced": "/enhanced/Peasant/Psyessr2.wav"}, {"id": "Peasant/Psyessr3.wav", "label": "Peasant/Psyessr3.wav", "vanilla": "/vanilla/Peasant/Psyessr3.wav", "enhanced": "/enhanced/Peasant/Psyessr3.wav"}, {"id": "Peasant/Psyessr4.wav", "label": "Peasant/Psyessr4.wav", "vanilla": "/vanilla/Peasant/Psyessr4.wav", "enhanced": "/enhanced/Peasant/Psyessr4.wav"}, {"id": "Peon/Pnready.wav", "label": "Peon/Pnready.wav", "vanilla": "/vanilla/Peon/Pnready.wav", "enhanced": "/enhanced/Peon/Pnready.wav"}, {"id": "Ships/Foghorn.wav", "label": "Ships/Foghorn.wav", "vanilla": "/vanilla/Ships/Foghorn.wav", "enhanced": "/enhanced/Ships/Foghorn.wav"}, {"id": "Ships/Hshppis1.wav", "label": "Ships/Hshppis1.wav", "vanilla": "/vanilla/Ships/Hshppis1.wav", "enhanced": "/enhanced/Ships/Hshppis1.wav"}, {"id": "Ships/Hshppis2.wav", "label": "Ships/Hshppis2.wav", "vanilla": "/vanilla/Ships/Hshppis2.wav", "enhanced": "/enhanced/Ships/Hshppis2.wav"}, {"id": "Ships/Hshppis3.wav", "label": "Ships/Hshppis3.wav", "vanilla": "/vanilla/Ships/Hshppis3.wav", "enhanced": "/enhanced/Ships/Hshppis3.wav"}, {"id": "Ships/Hshpredy.wav", "label": "Ships/Hshpredy.wav", "vanilla": "/vanilla/Ships/Hshpredy.wav", "enhanced": "/enhanced/Ships/Hshpredy.wav"}, {"id": "Ships/Hshpwht1.wav", "label": "Ships/Hshpwht1.wav", "vanilla": "/vanilla/Ships/Hshpwht1.wav", "enhanced": "/enhanced/Ships/Hshpwht1.wav"}, {"id": "Ships/Hshpwht2.wav", "label": "Ships/Hshpwht2.wav", "vanilla": "/vanilla/Ships/Hshpwht2.wav", "enhanced": "/enhanced/Ships/Hshpwht2.wav"}, {"id": "Ships/Hshpwht3.wav", "label": "Ships/Hshpwht3.wav", "vanilla": "/vanilla/Ships/Hshpwht3.wav", "enhanced": "/enhanced/Ships/Hshpwht3.wav"}, {"id": "Ships/Hshpyes1.wav", "label": "Ships/Hshpyes1.wav", "vanilla": "/vanilla/Ships/Hshpyes1.wav", "enhanced": "/enhanced/Ships/Hshpyes1.wav"}, {"id": "Ships/Hshpyes2.wav", "label": "Ships/Hshpyes2.wav", "vanilla": "/vanilla/Ships/Hshpyes2.wav", "enhanced": "/enhanced/Ships/Hshpyes2.wav"}, {"id": "Ships/Hshpyes3.wav", "label": "Ships/Hshpyes3.wav", "vanilla": "/vanilla/Ships/Hshpyes3.wav", "enhanced": "/enhanced/Ships/Hshpyes3.wav"}, {"id": "Ships/Oshppis1.wav", "label": "Ships/Oshppis1.wav", "vanilla": "/vanilla/Ships/Oshppis1.wav", "enhanced": "/enhanced/Ships/Oshppis1.wav"}, {"id": "Ships/Oshppis2.wav", "label": "Ships/Oshppis2.wav", "vanilla": "/vanilla/Ships/Oshppis2.wav", "enhanced": "/enhanced/Ships/Oshppis2.wav"}, {"id": "Ships/Oshppis3.wav", "label": "Ships/Oshppis3.wav", "vanilla": "/vanilla/Ships/Oshppis3.wav", "enhanced": "/enhanced/Ships/Oshppis3.wav"}, {"id": "Ships/Oshpredy.wav", "label": "Ships/Oshpredy.wav", "vanilla": "/vanilla/Ships/Oshpredy.wav", "enhanced": "/enhanced/Ships/Oshpredy.wav"}, {"id": "Ships/Oshpwht1.wav", "label": "Ships/Oshpwht1.wav", "vanilla": "/vanilla/Ships/Oshpwht1.wav", "enhanced": "/enhanced/Ships/Oshpwht1.wav"}, {"id": "Ships/Oshpwht2.wav", "label": "Ships/Oshpwht2.wav", "vanilla": "/vanilla/Ships/Oshpwht2.wav", "enhanced": "/enhanced/Ships/Oshpwht2.wav"}, {"id": "Ships/Oshpwht3.wav", "label": "Ships/Oshpwht3.wav", "vanilla": "/vanilla/Ships/Oshpwht3.wav", "enhanced": "/enhanced/Ships/Oshpwht3.wav"}, {"id": "Ships/Oshpyes1.wav", "label": "Ships/Oshpyes1.wav", "vanilla": "/vanilla/Ships/Oshpyes1.wav", "enhanced": "/enhanced/Ships/Oshpyes1.wav"}, {"id": "Ships/Oshpyes2.wav", "label": "Ships/Oshpyes2.wav", "vanilla": "/vanilla/Ships/Oshpyes2.wav", "enhanced": "/enhanced/Ships/Oshpyes2.wav"}, {"id": "Ships/Oshpyes3.wav", "label": "Ships/Oshpyes3.wav", "vanilla": "/vanilla/Ships/Oshpyes3.wav", "enhanced": "/enhanced/Ships/Oshpyes3.wav"}, {"id": "Ships/Shipsink.wav", "label": "Ships/Shipsink.wav", "vanilla": "/vanilla/Ships/Shipsink.wav", "enhanced": "/enhanced/Ships/Shipsink.wav"}, {"id": "Ships/Subpiss1.wav", "label": "Ships/Subpiss1.wav", "vanilla": "/vanilla/Ships/Subpiss1.wav", "enhanced": "/enhanced/Ships/Subpiss1.wav"}, {"id": "Ships/Subpiss2.wav", "label": "Ships/Subpiss2.wav", "vanilla": "/vanilla/Ships/Subpiss2.wav", "enhanced": "/enhanced/Ships/Subpiss2.wav"}, {"id": "Ships/Subpiss3.wav", "label": "Ships/Subpiss3.wav", "vanilla": "/vanilla/Ships/Subpiss3.wav", "enhanced": "/enhanced/Ships/Subpiss3.wav"}, {"id": "Ships/Subpiss4.wav", "label": "Ships/Subpiss4.wav", "vanilla": "/vanilla/Ships/Subpiss4.wav", "enhanced": "/enhanced/Ships/Subpiss4.wav"}, {"id": "Teron/Tepissd1.wav", "label": "Teron/Tepissd1.wav", "vanilla": "/vanilla/Teron/Tepissd1.wav", "enhanced": "/enhanced/Teron/Tepissd1.wav"}, {"id": "Teron/Tepissd2.wav", "label": "Teron/Tepissd2.wav", "vanilla": "/vanilla/Teron/Tepissd2.wav", "enhanced": "/enhanced/Teron/Tepissd2.wav"}, {"id": "Teron/Tepissd3.wav", "label": "Teron/Tepissd3.wav", "vanilla": "/vanilla/Teron/Tepissd3.wav", "enhanced": "/enhanced/Teron/Tepissd3.wav"}, {"id": "Teron/Tewhat1.wav", "label": "Teron/Tewhat1.wav", "vanilla": "/vanilla/Teron/Tewhat1.wav", "enhanced": "/enhanced/Teron/Tewhat1.wav"}, {"id": "Teron/Tewhat2.wav", "label": "Teron/Tewhat2.wav", "vanilla": "/vanilla/Teron/Tewhat2.wav", "enhanced": "/enhanced/Teron/Tewhat2.wav"}, {"id": "Teron/Tewhat3.wav", "label": "Teron/Tewhat3.wav", "vanilla": "/vanilla/Teron/Tewhat3.wav", "enhanced": "/enhanced/Teron/Tewhat3.wav"}, {"id": "Teron/Teyessr1.wav", "label": "Teron/Teyessr1.wav", "vanilla": "/vanilla/Teron/Teyessr1.wav", "enhanced": "/enhanced/Teron/Teyessr1.wav"}, {"id": "Teron/Teyessr2.wav", "label": "Teron/Teyessr2.wav", "vanilla": "/vanilla/Teron/Teyessr2.wav", "enhanced": "/enhanced/Teron/Teyessr2.wav"}, {"id": "Teron/Teyessr3.wav", "label": "Teron/Teyessr3.wav", "vanilla": "/vanilla/Teron/Teyessr3.wav", "enhanced": "/enhanced/Teron/Teyessr3.wav"}, {"id": "Troll/Trpissd1.wav", "label": "Troll/Trpissd1.wav", "vanilla": "/vanilla/Troll/Trpissd1.wav", "enhanced": "/enhanced/Troll/Trpissd1.wav"}, {"id": "Troll/Trpissd2.wav", "label": "Troll/Trpissd2.wav", "vanilla": "/vanilla/Troll/Trpissd2.wav", "enhanced": "/enhanced/Troll/Trpissd2.wav"}, {"id": "Troll/Trpissd3.wav", "label": "Troll/Trpissd3.wav", "vanilla": "/vanilla/Troll/Trpissd3.wav", "enhanced": "/enhanced/Troll/Trpissd3.wav"}, {"id": "Troll/Trready.wav", "label": "Troll/Trready.wav", "vanilla": "/vanilla/Troll/Trready.wav", "enhanced": "/enhanced/Troll/Trready.wav"}, {"id": "Troll/Trwhat1.wav", "label": "Troll/Trwhat1.wav", "vanilla": "/vanilla/Troll/Trwhat1.wav", "enhanced": "/enhanced/Troll/Trwhat1.wav"}, {"id": "Troll/Trwhat2.wav", "label": "Troll/Trwhat2.wav", "vanilla": "/vanilla/Troll/Trwhat2.wav", "enhanced": "/enhanced/Troll/Trwhat2.wav"}, {"id": "Troll/Trwhat3.wav", "label": "Troll/Trwhat3.wav", "vanilla": "/vanilla/Troll/Trwhat3.wav", "enhanced": "/enhanced/Troll/Trwhat3.wav"}, {"id": "Troll/Tryessr1.wav", "label": "Troll/Tryessr1.wav", "vanilla": "/vanilla/Troll/Tryessr1.wav", "enhanced": "/enhanced/Troll/Tryessr1.wav"}, {"id": "Troll/Tryessr2.wav", "label": "Troll/Tryessr2.wav", "vanilla": "/vanilla/Troll/Tryessr2.wav", "enhanced": "/enhanced/Troll/Tryessr2.wav"}, {"id": "Troll/Tryessr3.wav", "label": "Troll/Tryessr3.wav", "vanilla": "/vanilla/Troll/Tryessr3.wav", "enhanced": "/enhanced/Troll/Tryessr3.wav"}, {"id": "Turalyon/Tupissd1.wav", "label": "Turalyon/Tupissd1.wav", "vanilla": "/vanilla/Turalyon/Tupissd1.wav", "enhanced": "/enhanced/Turalyon/Tupissd1.wav"}, {"id": "Turalyon/Tupissd2.wav", "label": "Turalyon/Tupissd2.wav", "vanilla": "/vanilla/Turalyon/Tupissd2.wav", "enhanced": "/enhanced/Turalyon/Tupissd2.wav"}, {"id": "Turalyon/Tupissd3.wav", "label": "Turalyon/Tupissd3.wav", "vanilla": "/vanilla/Turalyon/Tupissd3.wav", "enhanced": "/enhanced/Turalyon/Tupissd3.wav"}, {"id": "Turalyon/Tuwhat1.wav", "label": "Turalyon/Tuwhat1.wav", "vanilla": "/vanilla/Turalyon/Tuwhat1.wav", "enhanced": "/enhanced/Turalyon/Tuwhat1.wav"}, {"id": "Turalyon/Tuwhat2.wav", "label": "Turalyon/Tuwhat2.wav", "vanilla": "/vanilla/Turalyon/Tuwhat2.wav", "enhanced": "/enhanced/Turalyon/Tuwhat2.wav"}, {"id": "Turalyon/Tuwhat3.wav", "label": "Turalyon/Tuwhat3.wav", "vanilla": "/vanilla/Turalyon/Tuwhat3.wav", "enhanced": "/enhanced/Turalyon/Tuwhat3.wav"}, {"id": "Turalyon/Tuyessr1.wav", "label": "Turalyon/Tuyessr1.wav", "vanilla": "/vanilla/Turalyon/Tuyessr1.wav", "enhanced": "/enhanced/Turalyon/Tuyessr1.wav"}, {"id": "Turalyon/Tuyessr2.wav", "label": "Turalyon/Tuyessr2.wav", "vanilla": "/vanilla/Turalyon/Tuyessr2.wav", "enhanced": "/enhanced/Turalyon/Tuyessr2.wav"}, {"id": "Turalyon/Tuyessr3.wav", "label": "Turalyon/Tuyessr3.wav", "vanilla": "/vanilla/Turalyon/Tuyessr3.wav", "enhanced": "/enhanced/Turalyon/Tuyessr3.wav"}, {"id": "Wizard/Wzpissd1.wav", "label": "Wizard/Wzpissd1.wav", "vanilla": "/vanilla/Wizard/Wzpissd1.wav", "enhanced": "/enhanced/Wizard/Wzpissd1.wav"}, {"id": "Wizard/Wzpissd2.wav", "label": "Wizard/Wzpissd2.wav", "vanilla": "/vanilla/Wizard/Wzpissd2.wav", "enhanced": "/enhanced/Wizard/Wzpissd2.wav"}, {"id": "Wizard/Wzpissd3.wav", "label": "Wizard/Wzpissd3.wav", "vanilla": "/vanilla/Wizard/Wzpissd3.wav", "enhanced": "/enhanced/Wizard/Wzpissd3.wav"}, {"id": "Wizard/Wzready.wav", "label": "Wizard/Wzready.wav", "vanilla": "/vanilla/Wizard/Wzready.wav", "enhanced": "/enhanced/Wizard/Wzready.wav"}, {"id": "Wizard/Wzwhat1.wav", "label": "Wizard/Wzwhat1.wav", "vanilla": "/vanilla/Wizard/Wzwhat1.wav", "enhanced": "/enhanced/Wizard/Wzwhat1.wav"}, {"id": "Wizard/Wzwhat2.wav", "label": "Wizard/Wzwhat2.wav", "vanilla": "/vanilla/Wizard/Wzwhat2.wav", "enhanced": "/enhanced/Wizard/Wzwhat2.wav"}, {"id": "Wizard/Wzwhat3.wav", "label": "Wizard/Wzwhat3.wav", "vanilla": "/vanilla/Wizard/Wzwhat3.wav", "enhanced": "/enhanced/Wizard/Wzwhat3.wav"}, {"id": "Wizard/Wzyessr1.wav", "label": "Wizard/Wzyessr1.wav", "vanilla": "/vanilla/Wizard/Wzyessr1.wav", "enhanced": "/enhanced/Wizard/Wzyessr1.wav"}, {"id": "Wizard/Wzyessr2.wav", "label": "Wizard/Wzyessr2.wav", "vanilla": "/vanilla/Wizard/Wzyessr2.wav", "enhanced": "/enhanced/Wizard/Wzyessr2.wav"}, {"id": "Wizard/Wzyessr3.wav", "label": "Wizard/Wzyessr3.wav", "vanilla": "/vanilla/Wizard/Wzyessr3.wav", "enhanced": "/enhanced/Wizard/Wzyessr3.wav"}, {"id": "Zeppelin/Gbpissd1.wav", "label": "Zeppelin/Gbpissd1.wav", "vanilla": "/vanilla/Zeppelin/Gbpissd1.wav", "enhanced": "/enhanced/Zeppelin/Gbpissd1.wav"}, {"id": "Zeppelin/Gbpissd2.wav", "label": "Zeppelin/Gbpissd2.wav", "vanilla": "/vanilla/Zeppelin/Gbpissd2.wav", "enhanced": "/enhanced/Zeppelin/Gbpissd2.wav"}, {"id": "Zeppelin/Gbready.wav", "label": "Zeppelin/Gbready.wav", "vanilla": "/vanilla/Zeppelin/Gbready.wav", "enhanced": "/enhanced/Zeppelin/Gbready.wav"}, {"id": "Zeppelin/Gbyessr1.wav", "label": "Zeppelin/Gbyessr1.wav", "vanilla": "/vanilla/Zeppelin/Gbyessr1.wav", "enhanced": "/enhanced/Zeppelin/Gbyessr1.wav"}];
+    const byId = Object.fromEntries(pairs.map(p => [p.id, p]));
+    const select = document.getElementById('sample');
+    const vanilla = document.getElementById('vanilla');
+    const enhanced = document.getElementById('enhanced');
+
+    function loadSample(id) {
+      const p = byId[id];
+      if (!p) return;
+      vanilla.src = p.vanilla;
+      enhanced.src = p.enhanced;
+      vanilla.load();
+      enhanced.load();
+    }
+
+    select.addEventListener('change', () => loadSample(select.value));
+    document.getElementById('playVanilla').onclick = () => vanilla.play();
+    document.getElementById('playEnhanced').onclick = () => enhanced.play();
+    document.getElementById('playBoth').onclick = () => {
+      vanilla.currentTime = 0;
+      enhanced.currentTime = 0;
+      vanilla.play();
+      enhanced.play();
+    };
+    document.getElementById('stopBoth').onclick = () => {
+      vanilla.pause();
+      enhanced.pause();
+    };
+
+    if (select.value) loadSample(select.value);
+  </script>
+</body>
+</html>

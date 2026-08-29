@@ -1,0 +1,3178 @@
+{
+  "input": "C:\\Users\\mauri\\Projects\\war_2mod\\mod\\backup\\vanilla\\x86\\Data\\Gamesfx",
+  "output": "C:\\Users\\mauri\\Projects\\war_2mod\\mod\\assets\\audio\\voice",
+  "processed": 317,
+  "errors": [],
+  "entries": [
+    {
+      "file": "Aleria/Alpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2395,
+      "duration_after_s": 1.2395,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54704,
+      "bytes_out": 54704
+    },
+    {
+      "file": "Aleria/Alpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0616,
+      "duration_after_s": 2.0616,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 90960,
+      "bytes_out": 90960
+    },
+    {
+      "file": "Aleria/Alpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0995,
+      "duration_after_s": 2.0995,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 92632,
+      "bytes_out": 92632
+    },
+    {
+      "file": "Aleria/Alwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5673,
+      "duration_after_s": 0.5673,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 25060,
+      "bytes_out": 25060
+    },
+    {
+      "file": "Aleria/Alwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5705,
+      "duration_after_s": 0.5705,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 25204,
+      "bytes_out": 25204
+    },
+    {
+      "file": "Aleria/Alwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5009,
+      "duration_after_s": 0.5009,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 22132,
+      "bytes_out": 22132
+    },
+    {
+      "file": "Aleria/Alyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6023,
+      "duration_after_s": 0.6023,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 26604,
+      "bytes_out": 26604
+    },
+    {
+      "file": "Aleria/Alyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6195,
+      "duration_after_s": 0.6195,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 27364,
+      "bytes_out": 27364
+    },
+    {
+      "file": "Aleria/Alyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7516,
+      "duration_after_s": 0.7516,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 33188,
+      "bytes_out": 33188
+    },
+    {
+      "file": "Danath/Dnpisd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1992,
+      "duration_after_s": 1.1992,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 52928,
+      "bytes_out": 52928
+    },
+    {
+      "file": "Danath/Dnpisd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1695,
+      "duration_after_s": 1.1695,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 51620,
+      "bytes_out": 51620
+    },
+    {
+      "file": "Danath/Dnpisd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4832,
+      "duration_after_s": 1.4832,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 65452,
+      "bytes_out": 65452
+    },
+    {
+      "file": "Danath/Dnwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6671,
+      "duration_after_s": 0.6671,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29464,
+      "bytes_out": 29464
+    },
+    {
+      "file": "Danath/Dnwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9274,
+      "duration_after_s": 0.9274,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40944,
+      "bytes_out": 40944
+    },
+    {
+      "file": "Danath/Dnwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7459,
+      "duration_after_s": 0.7459,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 32940,
+      "bytes_out": 32940
+    },
+    {
+      "file": "Danath/Dnyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8736,
+      "duration_after_s": 0.8736,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38568,
+      "bytes_out": 38568
+    },
+    {
+      "file": "Danath/Dnyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3235,
+      "duration_after_s": 1.3235,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 58412,
+      "bytes_out": 58412
+    },
+    {
+      "file": "Danath/Dnyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3264,
+      "duration_after_s": 1.3264,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 58540,
+      "bytes_out": 58540
+    },
+    {
+      "file": "DeathKnt/Dkpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.1595,
+      "duration_after_s": 1.8839,
+      "duration_delta_pct": -12.76,
+      "bytes_in": 95616,
+      "bytes_out": 83124
+    },
+    {
+      "file": "DeathKnt/Dkpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.534,
+      "duration_after_s": 1.2347,
+      "duration_delta_pct": -19.51,
+      "bytes_in": 67952,
+      "bytes_out": 54494
+    },
+    {
+      "file": "DeathKnt/Dkpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 3.8013,
+      "duration_after_s": 3.8013,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 168020,
+      "bytes_out": 167680
+    },
+    {
+      "file": "DeathKnt/Dkready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0562,
+      "duration_after_s": 2.0562,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 90904,
+      "bytes_out": 90724
+    },
+    {
+      "file": "DeathKnt/Dkwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3465,
+      "duration_after_s": 1.0798,
+      "duration_delta_pct": -19.81,
+      "bytes_in": 60008,
+      "bytes_out": 47662
+    },
+    {
+      "file": "DeathKnt/Dkwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7337,
+      "duration_after_s": 1.4835,
+      "duration_delta_pct": -14.43,
+      "bytes_in": 76920,
+      "bytes_out": 65468
+    },
+    {
+      "file": "DeathKnt/Dkyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.4856,
+      "duration_after_s": 2.1871,
+      "duration_delta_pct": -12.01,
+      "bytes_in": 109840,
+      "bytes_out": 96496
+    },
+    {
+      "file": "DeathKnt/Dkyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.589,
+      "duration_after_s": 1.5197,
+      "duration_delta_pct": -4.36,
+      "bytes_in": 70380,
+      "bytes_out": 67064
+    },
+    {
+      "file": "DeathKnt/Dkyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6308,
+      "duration_after_s": 1.3327,
+      "duration_delta_pct": -18.28,
+      "bytes_in": 72144,
+      "bytes_out": 58818
+    },
+    {
+      "file": "DeathWng/Depissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9498,
+      "duration_after_s": 1.9498,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 86032,
+      "bytes_out": 86032
+    },
+    {
+      "file": "DeathWng/Depissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.782,
+      "duration_after_s": 1.782,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 78628,
+      "bytes_out": 78628
+    },
+    {
+      "file": "DeathWng/Depissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.5998,
+      "duration_after_s": 2.5998,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 114696,
+      "bytes_out": 114696
+    },
+    {
+      "file": "DeathWng/Dewhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1,
+      "duration_after_s": 1.1,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 48556,
+      "bytes_out": 48556
+    },
+    {
+      "file": "DeathWng/Dewhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7583,
+      "duration_after_s": 1.7583,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 77584,
+      "bytes_out": 77584
+    },
+    {
+      "file": "DeathWng/Dewhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5687,
+      "duration_after_s": 1.5687,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 69224,
+      "bytes_out": 69224
+    },
+    {
+      "file": "DeathWng/Deyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1378,
+      "duration_after_s": 1.1378,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 50220,
+      "bytes_out": 50220
+    },
+    {
+      "file": "DeathWng/Deyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0274,
+      "duration_after_s": 2.0253,
+      "duration_delta_pct": -0.1,
+      "bytes_in": 89452,
+      "bytes_out": 89360
+    },
+    {
+      "file": "DeathWng/Deyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6359,
+      "duration_after_s": 1.6359,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 72188,
+      "bytes_out": 72188
+    },
+    {
+      "file": "Dentarg/Odpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5936,
+      "duration_after_s": 1.5936,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 70320,
+      "bytes_out": 70320
+    },
+    {
+      "file": "Dentarg/Odpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0743,
+      "duration_after_s": 2.0743,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 91520,
+      "bytes_out": 91520
+    },
+    {
+      "file": "Dentarg/Odpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.2552,
+      "duration_after_s": 2.2361,
+      "duration_delta_pct": -0.85,
+      "bytes_in": 99500,
+      "bytes_out": 98656
+    },
+    {
+      "file": "Dentarg/Odwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.521,
+      "duration_after_s": 0.521,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 23020,
+      "bytes_out": 23020
+    },
+    {
+      "file": "Dentarg/Odwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1612,
+      "duration_after_s": 1.1612,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 51252,
+      "bytes_out": 51252
+    },
+    {
+      "file": "Dentarg/Odwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6298,
+      "duration_after_s": 0.6298,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 27820,
+      "bytes_out": 27820
+    },
+    {
+      "file": "Dentarg/Odyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6551,
+      "duration_after_s": 1.6551,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 73036,
+      "bytes_out": 73036
+    },
+    {
+      "file": "Dentarg/Odyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1898,
+      "duration_after_s": 1.1898,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 52516,
+      "bytes_out": 52516
+    },
+    {
+      "file": "Dentarg/Odyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5143,
+      "duration_after_s": 1.5143,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 66824,
+      "bytes_out": 66824
+    },
+    {
+      "file": "Dragon/Drready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0542,
+      "duration_after_s": 1.9432,
+      "duration_delta_pct": -5.41,
+      "bytes_in": 90816,
+      "bytes_out": 85738
+    },
+    {
+      "file": "Dragon/Drwhat.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9995,
+      "duration_after_s": 0.9995,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 44304,
+      "bytes_out": 44124
+    },
+    {
+      "file": "Dragon/Dryessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7917,
+      "duration_after_s": 1.6828,
+      "duration_delta_pct": -6.08,
+      "bytes_in": 79236,
+      "bytes_out": 74254
+    },
+    {
+      "file": "Dragon/Dryessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3924,
+      "duration_after_s": 1.3866,
+      "duration_delta_pct": -0.42,
+      "bytes_in": 61628,
+      "bytes_out": 61192
+    },
+    {
+      "file": "Dwarf/Dwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9257,
+      "duration_after_s": 0.9257,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 41048,
+      "bytes_out": 40868
+    },
+    {
+      "file": "Dwarf/Dwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.3521,
+      "duration_after_s": 0.3521,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 15832,
+      "bytes_out": 15572
+    },
+    {
+      "file": "Dwarf/Dwpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2532,
+      "duration_after_s": 1.2532,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 55488,
+      "bytes_out": 55308
+    },
+    {
+      "file": "Dwarf/Dwpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9872,
+      "duration_after_s": 0.9872,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 43656,
+      "bytes_out": 43580
+    },
+    {
+      "file": "Dwarf/Dwpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7124,
+      "duration_after_s": 1.7124,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 75740,
+      "bytes_out": 75560
+    },
+    {
+      "file": "Dwarf/Dwready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8416,
+      "duration_after_s": 0.8416,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37420,
+      "bytes_out": 37160
+    },
+    {
+      "file": "Dwarf/Dwyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9729,
+      "duration_after_s": 0.9729,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 43128,
+      "bytes_out": 42948
+    },
+    {
+      "file": "Dwarf/Dwyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5626,
+      "duration_after_s": 0.5626,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 24932,
+      "bytes_out": 24856
+    },
+    {
+      "file": "Dwarf/Dwyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.3616,
+      "duration_after_s": 0.3616,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 16068,
+      "bytes_out": 15992
+    },
+    {
+      "file": "Dwarf/Dwyessr4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.4132,
+      "duration_after_s": 0.4132,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 18928,
+      "bytes_out": 18268
+    },
+    {
+      "file": "Dwarf/Dwyessr5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6446,
+      "duration_after_s": 0.6446,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29132,
+      "bytes_out": 28472
+    },
+    {
+      "file": "Elves/Epissed1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0381,
+      "duration_after_s": 1.0381,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 46084,
+      "bytes_out": 45824
+    },
+    {
+      "file": "Elves/Epissed2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4101,
+      "duration_after_s": 1.4101,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 62408,
+      "bytes_out": 62228
+    },
+    {
+      "file": "Elves/Epissed3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.4639,
+      "duration_after_s": 2.4639,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 108884,
+      "bytes_out": 108704
+    },
+    {
+      "file": "Elves/Eready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3048,
+      "duration_after_s": 1.3048,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 57924,
+      "bytes_out": 57584
+    },
+    {
+      "file": "Elves/Ewhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0398,
+      "duration_after_s": 1.0398,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 46240,
+      "bytes_out": 45900
+    },
+    {
+      "file": "Elves/Ewhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8131,
+      "duration_after_s": 0.8131,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 36560,
+      "bytes_out": 35900
+    },
+    {
+      "file": "Elves/Ewhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7769,
+      "duration_after_s": 0.7769,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 34484,
+      "bytes_out": 34304
+    },
+    {
+      "file": "Elves/Ewhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8465,
+      "duration_after_s": 0.8465,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38196,
+      "bytes_out": 37376
+    },
+    {
+      "file": "Elves/Eyessir1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5231,
+      "duration_after_s": 0.5231,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 23292,
+      "bytes_out": 23112
+    },
+    {
+      "file": "Elves/Eyessir2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8798,
+      "duration_after_s": 0.8798,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 39344,
+      "bytes_out": 38844
+    },
+    {
+      "file": "Elves/Eyessir3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8911,
+      "duration_after_s": 0.8911,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 39520,
+      "bytes_out": 39340
+    },
+    {
+      "file": "Elves/Eyessir4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5648,
+      "duration_after_s": 0.5648,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 25532,
+      "bytes_out": 24952
+    },
+    {
+      "file": "Gnome/Gnpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9654,
+      "duration_after_s": 0.9654,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42956,
+      "bytes_out": 42616
+    },
+    {
+      "file": "Gnome/Gnpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0454,
+      "duration_after_s": 1.0454,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 46488,
+      "bytes_out": 46148
+    },
+    {
+      "file": "Gnome/Gnpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1471,
+      "duration_after_s": 1.1471,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 50812,
+      "bytes_out": 50632
+    },
+    {
+      "file": "Gnome/Gnpissd4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0143,
+      "duration_after_s": 2.0143,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 90096,
+      "bytes_out": 88876
+    },
+    {
+      "file": "Gnome/Gnpissd5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.939,
+      "duration_after_s": 1.939,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 86772,
+      "bytes_out": 85552
+    },
+    {
+      "file": "Gnome/Gnready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.8587,
+      "duration_after_s": 1.8587,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 82432,
+      "bytes_out": 82012
+    },
+    {
+      "file": "Gnome/Gnyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1076,
+      "duration_after_s": 1.1076,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 50108,
+      "bytes_out": 48888
+    },
+    {
+      "file": "Goblin/Gopissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5276,
+      "duration_after_s": 1.5276,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 67592,
+      "bytes_out": 67412
+    },
+    {
+      "file": "Goblin/Gopissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1253,
+      "duration_after_s": 1.1253,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 49848,
+      "bytes_out": 49668
+    },
+    {
+      "file": "Goblin/Gopissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7327,
+      "duration_after_s": 1.7327,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 76796,
+      "bytes_out": 76456
+    },
+    {
+      "file": "Goblin/Goready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8113,
+      "duration_after_s": 0.8113,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 36164,
+      "bytes_out": 35824
+    },
+    {
+      "file": "Goblin/Gowhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.529,
+      "duration_after_s": 0.529,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 24272,
+      "bytes_out": 23372
+    },
+    {
+      "file": "Goblin/Gowhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7049,
+      "duration_after_s": 0.7049,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 31312,
+      "bytes_out": 31132
+    },
+    {
+      "file": "Goblin/Gowhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5927,
+      "duration_after_s": 0.5927,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 26364,
+      "bytes_out": 26184
+    },
+    {
+      "file": "Goblin/Gowhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6915,
+      "duration_after_s": 0.6915,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 30720,
+      "bytes_out": 30540
+    },
+    {
+      "file": "Goblin/Goyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7115,
+      "duration_after_s": 0.7115,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 31840,
+      "bytes_out": 31420
+    },
+    {
+      "file": "Goblin/Goyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9208,
+      "duration_after_s": 0.9208,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40912,
+      "bytes_out": 40652
+    },
+    {
+      "file": "Goblin/Goyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9085,
+      "duration_after_s": 0.9085,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40528,
+      "bytes_out": 40108
+    },
+    {
+      "file": "Goblin/Goyessr4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6969,
+      "duration_after_s": 0.6969,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 31116,
+      "bytes_out": 30776
+    },
+    {
+      "file": "Griffon/Griffon1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1465,
+      "duration_after_s": 1.1465,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 50864,
+      "bytes_out": 50604
+    },
+    {
+      "file": "Griffon/Griffon2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1174,
+      "duration_after_s": 1.1174,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 49396,
+      "bytes_out": 49320
+    },
+    {
+      "file": "Griffon/Grwhat.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0321,
+      "duration_after_s": 1.9587,
+      "duration_delta_pct": -3.61,
+      "bytes_in": 89920,
+      "bytes_out": 86424
+    },
+    {
+      "file": "Grom/Grpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5964,
+      "duration_after_s": 1.5964,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 70444,
+      "bytes_out": 70444
+    },
+    {
+      "file": "Grom/Grpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2912,
+      "duration_after_s": 1.2912,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 56988,
+      "bytes_out": 56988
+    },
+    {
+      "file": "Grom/Grpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8817,
+      "duration_after_s": 0.8817,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38928,
+      "bytes_out": 38928
+    },
+    {
+      "file": "Grom/Grwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.4811,
+      "duration_after_s": 0.4811,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 21260,
+      "bytes_out": 21260
+    },
+    {
+      "file": "Grom/Grwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8812,
+      "duration_after_s": 0.8812,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38904,
+      "bytes_out": 38904
+    },
+    {
+      "file": "Grom/Grwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8083,
+      "duration_after_s": 0.8083,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 35692,
+      "bytes_out": 35692
+    },
+    {
+      "file": "Grom/Gryessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0216,
+      "duration_after_s": 1.0216,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 45096,
+      "bytes_out": 45096
+    },
+    {
+      "file": "Grom/Gryessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.448,
+      "duration_after_s": 0.448,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 19800,
+      "bytes_out": 19800
+    },
+    {
+      "file": "Grom/Gryessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0071,
+      "duration_after_s": 1.0071,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 44456,
+      "bytes_out": 44456
+    },
+    {
+      "file": "Human/Hdead.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2662,
+      "duration_after_s": 1.2662,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 55884,
+      "bytes_out": 55884
+    },
+    {
+      "file": "Human/Hdempis4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.8714,
+      "duration_after_s": 2.8714,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 127412,
+      "bytes_out": 126672
+    },
+    {
+      "file": "Human/Hdempis5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.4978,
+      "duration_after_s": 2.4978,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 110536,
+      "bytes_out": 110196
+    },
+    {
+      "file": "Human/Hdempis6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 5.0309,
+      "duration_after_s": 4.7706,
+      "duration_delta_pct": -5.17,
+      "bytes_in": 223048,
+      "bytes_out": 210428
+    },
+    {
+      "file": "Human/Hdempis7.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9126,
+      "duration_after_s": 0.9126,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40288,
+      "bytes_out": 40288
+    },
+    {
+      "file": "Human/Hhelp1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1842,
+      "duration_after_s": 1.1842,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 52268,
+      "bytes_out": 52268
+    },
+    {
+      "file": "Human/Hhelp2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3396,
+      "duration_after_s": 1.3396,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 59120,
+      "bytes_out": 59120
+    },
+    {
+      "file": "Human/Hpissed1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.462,
+      "duration_after_s": 1.462,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 64516,
+      "bytes_out": 64516
+    },
+    {
+      "file": "Human/Hpissed2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6112,
+      "duration_after_s": 1.6112,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 71100,
+      "bytes_out": 71100
+    },
+    {
+      "file": "Human/Hpissed3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.939,
+      "duration_after_s": 1.939,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 85552,
+      "bytes_out": 85552
+    },
+    {
+      "file": "Human/Hpissed4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.8095,
+      "duration_after_s": 1.8095,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 80104,
+      "bytes_out": 79844
+    },
+    {
+      "file": "Human/Hpissed5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9284,
+      "duration_after_s": 1.9284,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 85268,
+      "bytes_out": 85088
+    },
+    {
+      "file": "Human/Hpissed6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6956,
+      "duration_after_s": 1.6956,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 75000,
+      "bytes_out": 74820
+    },
+    {
+      "file": "Human/Hpissed7.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7998,
+      "duration_after_s": 1.7998,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 79596,
+      "bytes_out": 79416
+    },
+    {
+      "file": "Human/Hready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2064,
+      "duration_after_s": 1.2064,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54148,
+      "bytes_out": 53248
+    },
+    {
+      "file": "Human/Hwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9126,
+      "duration_after_s": 0.9126,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40288,
+      "bytes_out": 40288
+    },
+    {
+      "file": "Human/Hwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0112,
+      "duration_after_s": 1.0112,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 44640,
+      "bytes_out": 44640
+    },
+    {
+      "file": "Human/Hwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8068,
+      "duration_after_s": 0.8068,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 35624,
+      "bytes_out": 35624
+    },
+    {
+      "file": "Human/Hwhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5157,
+      "duration_after_s": 0.5117,
+      "duration_delta_pct": -0.77,
+      "bytes_in": 23052,
+      "bytes_out": 22612
+    },
+    {
+      "file": "Human/Hwhat5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5957,
+      "duration_after_s": 0.5957,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 26656,
+      "bytes_out": 26316
+    },
+    {
+      "file": "Human/Hwhat6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2009,
+      "duration_after_s": 1.2009,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 53504,
+      "bytes_out": 53004
+    },
+    {
+      "file": "Human/Hwrkdone.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2364,
+      "duration_after_s": 1.2364,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54568,
+      "bytes_out": 54568
+    },
+    {
+      "file": "Human/Hyessir1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5934,
+      "duration_after_s": 0.5934,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 26212,
+      "bytes_out": 26212
+    },
+    {
+      "file": "Human/Hyessir2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0041,
+      "duration_after_s": 1.0041,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 44324,
+      "bytes_out": 44324
+    },
+    {
+      "file": "Human/Hyessir3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9315,
+      "duration_after_s": 0.9315,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 41124,
+      "bytes_out": 41124
+    },
+    {
+      "file": "Human/Hyessir4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0424,
+      "duration_after_s": 1.0424,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 46016,
+      "bytes_out": 46016
+    },
+    {
+      "file": "Kargath/Kapissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3507,
+      "duration_after_s": 1.3501,
+      "duration_delta_pct": -0.04,
+      "bytes_in": 59608,
+      "bytes_out": 59584
+    },
+    {
+      "file": "Kargath/Kapissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.8763,
+      "duration_after_s": 1.8763,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 82788,
+      "bytes_out": 82788
+    },
+    {
+      "file": "Kargath/Kapissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.4555,
+      "duration_after_s": 2.4555,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 108332,
+      "bytes_out": 108332
+    },
+    {
+      "file": "Kargath/Kawhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2341,
+      "duration_after_s": 1.2341,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54468,
+      "bytes_out": 54468
+    },
+    {
+      "file": "Kargath/Kawhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.701,
+      "duration_after_s": 0.701,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 30960,
+      "bytes_out": 30960
+    },
+    {
+      "file": "Kargath/Kawhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5266,
+      "duration_after_s": 0.5266,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 23268,
+      "bytes_out": 23268
+    },
+    {
+      "file": "Kargath/Kayessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8583,
+      "duration_after_s": 0.8583,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37896,
+      "bytes_out": 37896
+    },
+    {
+      "file": "Kargath/Kayessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7484,
+      "duration_after_s": 0.7484,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 33048,
+      "bytes_out": 33048
+    },
+    {
+      "file": "Kargath/Kayessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5089,
+      "duration_after_s": 0.5089,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 22488,
+      "bytes_out": 22488
+    },
+    {
+      "file": "Khadgar/Khpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.661,
+      "duration_after_s": 1.661,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 73292,
+      "bytes_out": 73292
+    },
+    {
+      "file": "Khadgar/Khpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2335,
+      "duration_after_s": 1.2335,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54440,
+      "bytes_out": 54440
+    },
+    {
+      "file": "Khadgar/Khpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5392,
+      "duration_after_s": 1.5392,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 67924,
+      "bytes_out": 67924
+    },
+    {
+      "file": "Khadgar/Khwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6575,
+      "duration_after_s": 0.6575,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29040,
+      "bytes_out": 29040
+    },
+    {
+      "file": "Khadgar/Khwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6343,
+      "duration_after_s": 0.6343,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 28016,
+      "bytes_out": 28016
+    },
+    {
+      "file": "Khadgar/Khwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9281,
+      "duration_after_s": 0.9281,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40972,
+      "bytes_out": 40972
+    },
+    {
+      "file": "Khadgar/Khyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9664,
+      "duration_after_s": 0.9664,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42664,
+      "bytes_out": 42664
+    },
+    {
+      "file": "Khadgar/Khyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1231,
+      "duration_after_s": 1.1231,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 49572,
+      "bytes_out": 49572
+    },
+    {
+      "file": "Khadgar/Khyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.653,
+      "duration_after_s": 0.653,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 28840,
+      "bytes_out": 28840
+    },
+    {
+      "file": "Knight/Knpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6156,
+      "duration_after_s": 1.6145,
+      "duration_delta_pct": -0.07,
+      "bytes_in": 72992,
+      "bytes_out": 71244
+    },
+    {
+      "file": "Knight/Knpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4103,
+      "duration_after_s": 1.4103,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 62580,
+      "bytes_out": 62240
+    },
+    {
+      "file": "Knight/Knpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0547,
+      "duration_after_s": 2.0547,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 91236,
+      "bytes_out": 90656
+    },
+    {
+      "file": "Knight/Knready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5722,
+      "duration_after_s": 1.5722,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 69880,
+      "bytes_out": 69380
+    },
+    {
+      "file": "Knight/Knwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2022,
+      "duration_after_s": 1.2022,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 53136,
+      "bytes_out": 53060
+    },
+    {
+      "file": "Knight/Knwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2382,
+      "duration_after_s": 1.2382,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 55388,
+      "bytes_out": 54648
+    },
+    {
+      "file": "Knight/Knwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8407,
+      "duration_after_s": 0.8368,
+      "duration_delta_pct": -0.47,
+      "bytes_in": 37380,
+      "bytes_out": 36946
+    },
+    {
+      "file": "Knight/Knwhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6573,
+      "duration_after_s": 0.6573,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29212,
+      "bytes_out": 29032
+    },
+    {
+      "file": "Knight/Knyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0825,
+      "duration_after_s": 1.0825,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 48364,
+      "bytes_out": 47784
+    },
+    {
+      "file": "Knight/Knyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0348,
+      "duration_after_s": 1.0348,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 45940,
+      "bytes_out": 45680
+    },
+    {
+      "file": "Knight/Knyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3137,
+      "duration_after_s": 1.3137,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 58160,
+      "bytes_out": 57980
+    },
+    {
+      "file": "Knight/Knyessr4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3982,
+      "duration_after_s": 1.3982,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 61964,
+      "bytes_out": 61704
+    },
+    {
+      "file": "Kurdran/Kupissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5516,
+      "duration_after_s": 1.5239,
+      "duration_delta_pct": -1.78,
+      "bytes_in": 68468,
+      "bytes_out": 67248
+    },
+    {
+      "file": "Kurdran/Kupissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.628,
+      "duration_after_s": 1.628,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 71840,
+      "bytes_out": 71840
+    },
+    {
+      "file": "Kurdran/Kupissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7412,
+      "duration_after_s": 1.7412,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 76832,
+      "bytes_out": 76832
+    },
+    {
+      "file": "Kurdran/Kuwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.2689,
+      "duration_after_s": 0.2689,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 11904,
+      "bytes_out": 11904
+    },
+    {
+      "file": "Kurdran/Kuwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5146,
+      "duration_after_s": 0.5146,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 22740,
+      "bytes_out": 22740
+    },
+    {
+      "file": "Kurdran/Kuwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7008,
+      "duration_after_s": 0.7008,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 30948,
+      "bytes_out": 30948
+    },
+    {
+      "file": "Kurdran/Kuyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5095,
+      "duration_after_s": 0.4912,
+      "duration_delta_pct": -3.59,
+      "bytes_in": 22512,
+      "bytes_out": 21706
+    },
+    {
+      "file": "Kurdran/Kuyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1481,
+      "duration_after_s": 1.1481,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 50676,
+      "bytes_out": 50676
+    },
+    {
+      "file": "Kurdran/Kuyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.931,
+      "duration_after_s": 0.931,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 41100,
+      "bytes_out": 41100
+    },
+    {
+      "file": "Ogre/Ogpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0123,
+      "duration_after_s": 2.0123,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 89128,
+      "bytes_out": 88788
+    },
+    {
+      "file": "Ogre/Ogpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9116,
+      "duration_after_s": 1.9116,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 84604,
+      "bytes_out": 84344
+    },
+    {
+      "file": "Ogre/Ogpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5559,
+      "duration_after_s": 1.5559,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 68840,
+      "bytes_out": 68660
+    },
+    {
+      "file": "Ogre/Ogpissd4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.4636,
+      "duration_after_s": 2.4636,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 108868,
+      "bytes_out": 108688
+    },
+    {
+      "file": "Ogre/Ogpissd5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3624,
+      "duration_after_s": 1.3304,
+      "duration_delta_pct": -2.35,
+      "bytes_in": 60304,
+      "bytes_out": 58714
+    },
+    {
+      "file": "Ogre/Ogready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.1493,
+      "duration_after_s": 2.1493,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 95328,
+      "bytes_out": 94828
+    },
+    {
+      "file": "Ogre/Ogwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.816,
+      "duration_after_s": 0.8157,
+      "duration_delta_pct": -0.03,
+      "bytes_in": 36104,
+      "bytes_out": 36016
+    },
+    {
+      "file": "Ogre/Ogwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8467,
+      "duration_after_s": 0.8467,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37644,
+      "bytes_out": 37384
+    },
+    {
+      "file": "Ogre/Ogwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5521,
+      "duration_after_s": 0.5521,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 24732,
+      "bytes_out": 24392
+    },
+    {
+      "file": "Ogre/Ogwhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8471,
+      "duration_after_s": 0.8471,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37660,
+      "bytes_out": 37400
+    },
+    {
+      "file": "Ogre/Ogyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7673,
+      "duration_after_s": 0.7673,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 34304,
+      "bytes_out": 33884
+    },
+    {
+      "file": "Ogre/Ogyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9457,
+      "duration_after_s": 0.9457,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42008,
+      "bytes_out": 41748
+    },
+    {
+      "file": "Ogre/Ogyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9067,
+      "duration_after_s": 0.9067,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40288,
+      "bytes_out": 40028
+    },
+    {
+      "file": "Ogremage/Ompissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9309,
+      "duration_after_s": 1.9309,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 85272,
+      "bytes_out": 85196
+    },
+    {
+      "file": "Ogremage/Ompissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7449,
+      "duration_after_s": 1.7449,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 77492,
+      "bytes_out": 76992
+    },
+    {
+      "file": "Ogremage/Ompissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.1989,
+      "duration_after_s": 2.1989,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 97196,
+      "bytes_out": 97016
+    },
+    {
+      "file": "Ogremage/Omready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3624,
+      "duration_after_s": 1.3624,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 60464,
+      "bytes_out": 60124
+    },
+    {
+      "file": "Ogremage/Omwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.06,
+      "duration_after_s": 1.06,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 47212,
+      "bytes_out": 46792
+    },
+    {
+      "file": "Ogremage/Omwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5127,
+      "duration_after_s": 0.5058,
+      "duration_delta_pct": -1.36,
+      "bytes_in": 22996,
+      "bytes_out": 22348
+    },
+    {
+      "file": "Ogremage/Omwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5337,
+      "duration_after_s": 0.5337,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 24000,
+      "bytes_out": 23580
+    },
+    {
+      "file": "Ogremage/Omwhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6773,
+      "duration_after_s": 0.6773,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 30332,
+      "bytes_out": 29912
+    },
+    {
+      "file": "Ogremage/Omyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9903,
+      "duration_after_s": 0.9903,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 44136,
+      "bytes_out": 43716
+    },
+    {
+      "file": "Ogremage/Omyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8595,
+      "duration_after_s": 0.8595,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38288,
+      "bytes_out": 37948
+    },
+    {
+      "file": "Ogremage/Omyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9047,
+      "duration_after_s": 0.9047,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40280,
+      "bytes_out": 39940
+    },
+    {
+      "file": "Orc/Odead.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.438,
+      "duration_after_s": 1.438,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 63460,
+      "bytes_out": 63460
+    },
+    {
+      "file": "Orc/Odempis4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.1551,
+      "duration_after_s": 2.1551,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 95584,
+      "bytes_out": 95084
+    },
+    {
+      "file": "Orc/Odempis5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 3.3572,
+      "duration_after_s": 3.3533,
+      "duration_delta_pct": -0.12,
+      "bytes_in": 148436,
+      "bytes_out": 147924
+    },
+    {
+      "file": "Orc/Odempis6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 3.5044,
+      "duration_after_s": 3.5007,
+      "duration_delta_pct": -0.11,
+      "bytes_in": 155328,
+      "bytes_out": 154424
+    },
+    {
+      "file": "Orc/Odempis7.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 4.2068,
+      "duration_after_s": 4.2059,
+      "duration_delta_pct": -0.02,
+      "bytes_in": 185744,
+      "bytes_out": 185526
+    },
+    {
+      "file": "Orc/Ohelp1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4236,
+      "duration_after_s": 1.4234,
+      "duration_delta_pct": -0.01,
+      "bytes_in": 63088,
+      "bytes_out": 62818
+    },
+    {
+      "file": "Orc/Ohelp2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9439,
+      "duration_after_s": 1.9439,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 85768,
+      "bytes_out": 85768
+    },
+    {
+      "file": "Orc/Opissed1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2412,
+      "duration_after_s": 1.2258,
+      "duration_delta_pct": -1.24,
+      "bytes_in": 54780,
+      "bytes_out": 54102
+    },
+    {
+      "file": "Orc/Opissed2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.728,
+      "duration_after_s": 0.728,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 32648,
+      "bytes_out": 32148
+    },
+    {
+      "file": "Orc/Opissed3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7712,
+      "duration_after_s": 0.7712,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 34236,
+      "bytes_out": 34056
+    },
+    {
+      "file": "Orc/Opissed4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.8548,
+      "duration_after_s": 1.7883,
+      "duration_delta_pct": -3.58,
+      "bytes_in": 81840,
+      "bytes_out": 78908
+    },
+    {
+      "file": "Orc/Opissed5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6456,
+      "duration_after_s": 1.6456,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 72796,
+      "bytes_out": 72616
+    },
+    {
+      "file": "Orc/Opissed6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7278,
+      "duration_after_s": 1.7278,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 76420,
+      "bytes_out": 76240
+    },
+    {
+      "file": "Orc/Opissed7.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.2378,
+      "duration_after_s": 2.2378,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 99232,
+      "bytes_out": 98732
+    },
+    {
+      "file": "Orc/Oready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7111,
+      "duration_after_s": 1.639,
+      "duration_delta_pct": -4.21,
+      "bytes_in": 75928,
+      "bytes_out": 72326
+    },
+    {
+      "file": "Orc/Owhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5326,
+      "duration_after_s": 0.5326,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 23532,
+      "bytes_out": 23532
+    },
+    {
+      "file": "Orc/Owhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8046,
+      "duration_after_s": 0.8046,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 35528,
+      "bytes_out": 35528
+    },
+    {
+      "file": "Orc/Owhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8792,
+      "duration_after_s": 0.8792,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38816,
+      "bytes_out": 38816
+    },
+    {
+      "file": "Orc/Owhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6309,
+      "duration_after_s": 0.6309,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 27868,
+      "bytes_out": 27868
+    },
+    {
+      "file": "Orc/Owhat5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1453,
+      "duration_after_s": 1.1375,
+      "duration_delta_pct": -0.68,
+      "bytes_in": 50552,
+      "bytes_out": 50208
+    },
+    {
+      "file": "Orc/Owhat6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.3321,
+      "duration_after_s": 0.3321,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 14952,
+      "bytes_out": 14688
+    },
+    {
+      "file": "Orc/Owrkdone.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9517,
+      "duration_after_s": 0.9517,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42276,
+      "bytes_out": 42012
+    },
+    {
+      "file": "Orc/Oyessir1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.727,
+      "duration_after_s": 0.727,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 32288,
+      "bytes_out": 32104
+    },
+    {
+      "file": "Orc/Oyessir2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6524,
+      "duration_after_s": 0.6524,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29236,
+      "bytes_out": 28816
+    },
+    {
+      "file": "Orc/Oyessir3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8408,
+      "duration_after_s": 0.8408,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37228,
+      "bytes_out": 37124
+    },
+    {
+      "file": "Orc/Oyessir4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6868,
+      "duration_after_s": 0.6868,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 30676,
+      "bytes_out": 30332
+    },
+    {
+      "file": "Paladin/Pkatak1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.61,
+      "duration_after_s": 1.61,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 72424,
+      "bytes_out": 71044
+    },
+    {
+      "file": "Paladin/Pkpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7952,
+      "duration_after_s": 1.7901,
+      "duration_delta_pct": -0.29,
+      "bytes_in": 80912,
+      "bytes_out": 78986
+    },
+    {
+      "file": "Paladin/Pkpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4739,
+      "duration_after_s": 1.4731,
+      "duration_delta_pct": -0.06,
+      "bytes_in": 65384,
+      "bytes_out": 65006
+    },
+    {
+      "file": "Paladin/Pkpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.2589,
+      "duration_after_s": 2.2589,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 100240,
+      "bytes_out": 99660
+    },
+    {
+      "file": "Paladin/Pkready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7495,
+      "duration_after_s": 1.7241,
+      "duration_delta_pct": -1.45,
+      "bytes_in": 77696,
+      "bytes_out": 76078
+    },
+    {
+      "file": "Paladin/Pkwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3577,
+      "duration_after_s": 1.3577,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 60500,
+      "bytes_out": 59920
+    },
+    {
+      "file": "Paladin/Pkwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3955,
+      "duration_after_s": 1.3952,
+      "duration_delta_pct": -0.02,
+      "bytes_in": 62324,
+      "bytes_out": 61574
+    },
+    {
+      "file": "Paladin/Pkwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9744,
+      "duration_after_s": 0.9542,
+      "duration_delta_pct": -2.08,
+      "bytes_in": 43276,
+      "bytes_out": 42124
+    },
+    {
+      "file": "Paladin/Pkwhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2815,
+      "duration_after_s": 0.7857,
+      "duration_delta_pct": -38.69,
+      "bytes_in": 56736,
+      "bytes_out": 34692
+    },
+    {
+      "file": "Paladin/Pkyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2239,
+      "duration_after_s": 1.2239,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54596,
+      "bytes_out": 54016
+    },
+    {
+      "file": "Paladin/Pkyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1762,
+      "duration_after_s": 1.1538,
+      "duration_delta_pct": -1.91,
+      "bytes_in": 52176,
+      "bytes_out": 50926
+    },
+    {
+      "file": "Paladin/Pkyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4725,
+      "duration_after_s": 1.4725,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 65160,
+      "bytes_out": 64980
+    },
+    {
+      "file": "Paladin/Pkyessr4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5655,
+      "duration_after_s": 1.5487,
+      "duration_delta_pct": -1.07,
+      "bytes_in": 69344,
+      "bytes_out": 68342
+    },
+    {
+      "file": "Peasant/Pspissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6672,
+      "duration_after_s": 0.6672,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29728,
+      "bytes_out": 29468
+    },
+    {
+      "file": "Peasant/Pspissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7907,
+      "duration_after_s": 0.7907,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 34992,
+      "bytes_out": 34916
+    },
+    {
+      "file": "Peasant/Pspissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9842,
+      "duration_after_s": 0.9842,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 44828,
+      "bytes_out": 43448
+    },
+    {
+      "file": "Peasant/Pspissd4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9039,
+      "duration_after_s": 0.9039,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 39984,
+      "bytes_out": 39908
+    },
+    {
+      "file": "Peasant/Pspissd5.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7102,
+      "duration_after_s": 1.6674,
+      "duration_delta_pct": -2.5,
+      "bytes_in": 75644,
+      "bytes_out": 73576
+    },
+    {
+      "file": "Peasant/Pspissd6.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3225,
+      "duration_after_s": 1.3225,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 58444,
+      "bytes_out": 58368
+    },
+    {
+      "file": "Peasant/Pspissd7.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5804,
+      "duration_after_s": 1.5632,
+      "duration_delta_pct": -1.09,
+      "bytes_in": 69920,
+      "bytes_out": 68980
+    },
+    {
+      "file": "Peasant/Psready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.076,
+      "duration_after_s": 1.076,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 47676,
+      "bytes_out": 47496
+    },
+    {
+      "file": "Peasant/Pswhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5031,
+      "duration_after_s": 0.5031,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 22812,
+      "bytes_out": 22232
+    },
+    {
+      "file": "Peasant/Pswhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6447,
+      "duration_after_s": 0.6447,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 29776,
+      "bytes_out": 28476
+    },
+    {
+      "file": "Peasant/Pswhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7302,
+      "duration_after_s": 0.7302,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 32664,
+      "bytes_out": 32244
+    },
+    {
+      "file": "Peasant/Pswhat4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7051,
+      "duration_after_s": 0.7051,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 31560,
+      "bytes_out": 31140
+    },
+    {
+      "file": "Peasant/Pswrkdon.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1312,
+      "duration_after_s": 1.1015,
+      "duration_delta_pct": -2.63,
+      "bytes_in": 50192,
+      "bytes_out": 48622
+    },
+    {
+      "file": "Peasant/Psyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8029,
+      "duration_after_s": 0.8029,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 35528,
+      "bytes_out": 35452
+    },
+    {
+      "file": "Peasant/Psyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8816,
+      "duration_after_s": 0.8816,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 39184,
+      "bytes_out": 38924
+    },
+    {
+      "file": "Peasant/Psyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5916,
+      "duration_after_s": 0.5916,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 26312,
+      "bytes_out": 26132
+    },
+    {
+      "file": "Peasant/Psyessr4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9893,
+      "duration_after_s": 0.9893,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 43748,
+      "bytes_out": 43672
+    },
+    {
+      "file": "Peon/Pnready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8739,
+      "duration_after_s": 0.8739,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38764,
+      "bytes_out": 38584
+    },
+    {
+      "file": "Ships/Foghorn.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5251,
+      "duration_after_s": 1.5251,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 67300,
+      "bytes_out": 67300
+    },
+    {
+      "file": "Ships/Hshppis1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.8701,
+      "duration_after_s": 1.8701,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 83096,
+      "bytes_out": 82516
+    },
+    {
+      "file": "Ships/Hshppis2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9978,
+      "duration_after_s": 1.9553,
+      "duration_delta_pct": -2.13,
+      "bytes_in": 88488,
+      "bytes_out": 86274
+    },
+    {
+      "file": "Ships/Hshppis3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.1866,
+      "duration_after_s": 2.1217,
+      "duration_delta_pct": -2.97,
+      "bytes_in": 96812,
+      "bytes_out": 93610
+    },
+    {
+      "file": "Ships/Hshpredy.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2679,
+      "duration_after_s": 1.2679,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 56460,
+      "bytes_out": 55960
+    },
+    {
+      "file": "Ships/Hshpwht1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8881,
+      "duration_after_s": 0.8881,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 39628,
+      "bytes_out": 39208
+    },
+    {
+      "file": "Ships/Hshpwht2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5611,
+      "duration_after_s": 0.5611,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 25048,
+      "bytes_out": 24788
+    },
+    {
+      "file": "Ships/Hshpwht3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8463,
+      "duration_after_s": 0.8463,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37548,
+      "bytes_out": 37368
+    },
+    {
+      "file": "Ships/Hshpyes1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9837,
+      "duration_after_s": 0.9837,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 43424,
+      "bytes_out": 43424
+    },
+    {
+      "file": "Ships/Hshpyes2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9711,
+      "duration_after_s": 0.9711,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 43048,
+      "bytes_out": 42868
+    },
+    {
+      "file": "Ships/Hshpyes3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9116,
+      "duration_after_s": 0.9116,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40424,
+      "bytes_out": 40244
+    },
+    {
+      "file": "Ships/Oshppis1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8151,
+      "duration_after_s": 0.8151,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 36332,
+      "bytes_out": 35992
+    },
+    {
+      "file": "Ships/Oshppis2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1745,
+      "duration_after_s": 1.1745,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 52100,
+      "bytes_out": 51840
+    },
+    {
+      "file": "Ships/Oshppis3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 3.2075,
+      "duration_after_s": 3.1536,
+      "duration_delta_pct": -1.68,
+      "bytes_in": 141496,
+      "bytes_out": 139116
+    },
+    {
+      "file": "Ships/Oshpredy.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1014,
+      "duration_after_s": 1.0606,
+      "duration_delta_pct": -3.7,
+      "bytes_in": 49036,
+      "bytes_out": 46818
+    },
+    {
+      "file": "Ships/Oshpwht1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.516,
+      "duration_after_s": 0.516,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 22980,
+      "bytes_out": 22800
+    },
+    {
+      "file": "Ships/Oshpwht2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7483,
+      "duration_after_s": 0.7483,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 33224,
+      "bytes_out": 33044
+    },
+    {
+      "file": "Ships/Oshpwht3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8984,
+      "duration_after_s": 0.8984,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 39844,
+      "bytes_out": 39664
+    },
+    {
+      "file": "Ships/Oshpyes1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7072,
+      "duration_after_s": 0.7072,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 31812,
+      "bytes_out": 31232
+    },
+    {
+      "file": "Ships/Oshpyes2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9684,
+      "duration_after_s": 0.9684,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 43492,
+      "bytes_out": 42752
+    },
+    {
+      "file": "Ships/Oshpyes3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9619,
+      "duration_after_s": 0.9619,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42644,
+      "bytes_out": 42464
+    },
+    {
+      "file": "Ships/Shipsink.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.5093,
+      "duration_after_s": 2.3995,
+      "duration_delta_pct": -4.38,
+      "bytes_in": 110884,
+      "bytes_out": 105860
+    },
+    {
+      "file": "Ships/Subpiss1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1325,
+      "duration_after_s": 1.1325,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 50168,
+      "bytes_out": 49988
+    },
+    {
+      "file": "Ships/Subpiss2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.6889,
+      "duration_after_s": 0.6889,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 30604,
+      "bytes_out": 30424
+    },
+    {
+      "file": "Ships/Subpiss3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8197,
+      "duration_after_s": 0.8197,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 36532,
+      "bytes_out": 36192
+    },
+    {
+      "file": "Ships/Subpiss4.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4235,
+      "duration_after_s": 1.4235,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 63160,
+      "bytes_out": 62820
+    },
+    {
+      "file": "Teron/Tepissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.026,
+      "duration_after_s": 2.026,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 89392,
+      "bytes_out": 89392
+    },
+    {
+      "file": "Teron/Tepissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.5663,
+      "duration_after_s": 2.5612,
+      "duration_delta_pct": -0.2,
+      "bytes_in": 113216,
+      "bytes_out": 112992
+    },
+    {
+      "file": "Teron/Tepissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.8184,
+      "duration_after_s": 2.8184,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 124336,
+      "bytes_out": 124336
+    },
+    {
+      "file": "Teron/Tewhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.7305,
+      "duration_after_s": 1.7305,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 76360,
+      "bytes_out": 76360
+    },
+    {
+      "file": "Teron/Tewhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4366,
+      "duration_after_s": 1.4366,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 63400,
+      "bytes_out": 63400
+    },
+    {
+      "file": "Teron/Tewhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0361,
+      "duration_after_s": 1.0361,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 45736,
+      "bytes_out": 45736
+    },
+    {
+      "file": "Teron/Teyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4824,
+      "duration_after_s": 1.4824,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 65416,
+      "bytes_out": 65416
+    },
+    {
+      "file": "Teron/Teyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9435,
+      "duration_after_s": 1.9435,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 85752,
+      "bytes_out": 85752
+    },
+    {
+      "file": "Teron/Teyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9514,
+      "duration_after_s": 1.9514,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 86100,
+      "bytes_out": 86100
+    },
+    {
+      "file": "Troll/Trpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0277,
+      "duration_after_s": 1.0277,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 45944,
+      "bytes_out": 45364
+    },
+    {
+      "file": "Troll/Trpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.5566,
+      "duration_after_s": 2.5566,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 114252,
+      "bytes_out": 112792
+    },
+    {
+      "file": "Troll/Trpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.2252,
+      "duration_after_s": 2.2252,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 98596,
+      "bytes_out": 98176
+    },
+    {
+      "file": "Troll/Trready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.1089,
+      "duration_after_s": 1.1089,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 51208,
+      "bytes_out": 48948
+    },
+    {
+      "file": "Troll/Trwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5736,
+      "duration_after_s": 0.5736,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 25600,
+      "bytes_out": 25340
+    },
+    {
+      "file": "Troll/Trwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8393,
+      "duration_after_s": 0.8393,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37796,
+      "bytes_out": 37056
+    },
+    {
+      "file": "Troll/Trwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8529,
+      "duration_after_s": 0.8529,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 37836,
+      "bytes_out": 37656
+    },
+    {
+      "file": "Troll/Tryessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7323,
+      "duration_after_s": 0.7323,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 32760,
+      "bytes_out": 32340
+    },
+    {
+      "file": "Troll/Tryessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.5678,
+      "duration_after_s": 0.5678,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 25504,
+      "bytes_out": 25084
+    },
+    {
+      "file": "Troll/Tryessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9211,
+      "duration_after_s": 0.9211,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 40924,
+      "bytes_out": 40664
+    },
+    {
+      "file": "Turalyon/Tupissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.853,
+      "duration_after_s": 1.853,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 81760,
+      "bytes_out": 81760
+    },
+    {
+      "file": "Turalyon/Tupissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.9922,
+      "duration_after_s": 2.9922,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 132000,
+      "bytes_out": 132000
+    },
+    {
+      "file": "Turalyon/Tupissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.3299,
+      "duration_after_s": 2.3259,
+      "duration_delta_pct": -0.17,
+      "bytes_in": 102792,
+      "bytes_out": 102614
+    },
+    {
+      "file": "Turalyon/Tuwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.6886,
+      "duration_after_s": 1.6886,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 74512,
+      "bytes_out": 74512
+    },
+    {
+      "file": "Turalyon/Tuwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9566,
+      "duration_after_s": 0.9566,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42232,
+      "bytes_out": 42232
+    },
+    {
+      "file": "Turalyon/Tuwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3178,
+      "duration_after_s": 1.3178,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 58160,
+      "bytes_out": 58160
+    },
+    {
+      "file": "Turalyon/Tuyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.5592,
+      "duration_after_s": 1.4323,
+      "duration_delta_pct": -8.14,
+      "bytes_in": 68804,
+      "bytes_out": 63208
+    },
+    {
+      "file": "Turalyon/Tuyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3354,
+      "duration_after_s": 1.3252,
+      "duration_delta_pct": -0.77,
+      "bytes_in": 58936,
+      "bytes_out": 58484
+    },
+    {
+      "file": "Turalyon/Tuyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.9332,
+      "duration_after_s": 1.9332,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 85296,
+      "bytes_out": 85296
+    },
+    {
+      "file": "Wizard/Wzpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.3312,
+      "duration_after_s": 1.3312,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 60532,
+      "bytes_out": 58748
+    },
+    {
+      "file": "Wizard/Wzpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2678,
+      "duration_after_s": 1.2678,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 56536,
+      "bytes_out": 55956
+    },
+    {
+      "file": "Wizard/Wzpissd3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 3.5981,
+      "duration_after_s": 3.5341,
+      "duration_delta_pct": -1.78,
+      "bytes_in": 159220,
+      "bytes_out": 155900
+    },
+    {
+      "file": "Wizard/Wzready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.182,
+      "duration_after_s": 1.182,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 53152,
+      "bytes_out": 52172
+    },
+    {
+      "file": "Wizard/Wzwhat1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7591,
+      "duration_after_s": 0.7591,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 34260,
+      "bytes_out": 33520
+    },
+    {
+      "file": "Wizard/Wzwhat2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.4158,
+      "duration_after_s": 1.4158,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 63060,
+      "bytes_out": 62480
+    },
+    {
+      "file": "Wizard/Wzwhat3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.0621,
+      "duration_after_s": 1.0621,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 47704,
+      "bytes_out": 46884
+    },
+    {
+      "file": "Wizard/Wzyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9492,
+      "duration_after_s": 0.9492,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 42244,
+      "bytes_out": 41904
+    },
+    {
+      "file": "Wizard/Wzyessr2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.8581,
+      "duration_after_s": 0.8581,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 38148,
+      "bytes_out": 37888
+    },
+    {
+      "file": "Wizard/Wzyessr3.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.7395,
+      "duration_after_s": 0.7395,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 32836,
+      "bytes_out": 32656
+    },
+    {
+      "file": "Zeppelin/Gbpissd1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 2.0327,
+      "duration_after_s": 1.8224,
+      "duration_delta_pct": -10.34,
+      "bytes_in": 90184,
+      "bytes_out": 80414
+    },
+    {
+      "file": "Zeppelin/Gbpissd2.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.8095,
+      "duration_after_s": 1.8095,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 80344,
+      "bytes_out": 79844
+    },
+    {
+      "file": "Zeppelin/Gbready.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 0.9285,
+      "duration_after_s": 0.9285,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 41172,
+      "bytes_out": 40992
+    },
+    {
+      "file": "Zeppelin/Gbyessr1.wav",
+      "sr": 22050,
+      "channels": 1,
+      "duration_before_s": 1.2266,
+      "duration_after_s": 1.2266,
+      "duration_delta_pct": 0.0,
+      "bytes_in": 54636,
+      "bytes_out": 54136
+    }
+  ]
+}

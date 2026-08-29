@@ -8,6 +8,7 @@ param(
     [switch]$ApplyAudioFromExtra,
     [switch]$RestoreOnly,
     [switch]$SyncVanillaBackup,
+    [switch]$SyncVoiceGamesfxBackup,
     [switch]$GetDefaultConfig
 )
 
@@ -64,8 +65,9 @@ $EnemySelectionHighlightUiDisabled = $false
 $EnemySelectionDisplayHex = '#FF0000'
 
 # First palette index per player, used to read/write JSON defaults from authentic backup.
-# P2 defaults from minimap slot 1 (#0094FC); P8 still shared 188.
-$VanillaJsonColorIndices = @(208, 1, 216, 220, 224, 228, 232, 188)
+# P2 from exclusive unit band 212 (#0C49CE); minimap slot 1 stays separate on restore.
+# P8 still shared 188.
+$VanillaJsonColorIndices = @(208, 212, 216, 220, 224, 228, 232, 188)
 
 $PplFiles = @(
     'x86\Data\Art\bgs\Forest\forest.ppl',
@@ -104,24 +106,8 @@ $StringLocaleFiles = @(
 
 $CastleGoldTooltipAdviceKeys = @('unit_90_tooltip_advice', 'unit_91_tooltip_advice')
 
-# Human Footman voice lines under x86\Data\Gamesfx\Human
-# (remake WAVs in assets\audio\human_footman use the same vanilla filenames).
-$HumanFootmanAudioFiles = @(
-    'Hpissed1.wav', 'Hpissed2.wav', 'Hpissed3.wav', 'Hpissed4.wav',
-    'Hpissed5.wav', 'Hpissed6.wav', 'Hpissed7.wav',
-    'Hready.wav',
-    'Hwhat1.wav', 'Hwhat2.wav', 'Hwhat3.wav', 'Hwhat4.wav', 'Hwhat5.wav', 'Hwhat6.wav',
-    'Hyessir1.wav', 'Hyessir2.wav', 'Hyessir3.wav', 'Hyessir4.wav'
-)
-
-# Human Knight voice lines under x86\Data\Gamesfx\Knight
-# (remake WAVs in assets\audio\human_knight use the same vanilla filenames).
-$HumanKnightAudioFiles = @(
-    'Knpissd1.wav', 'Knpissd2.wav', 'Knpissd3.wav',
-    'Knready.wav',
-    'Knwhat1.wav', 'Knwhat2.wav', 'Knwhat3.wav', 'Knwhat4.wav',
-    'Knyessr1.wav', 'Knyessr2.wav', 'Knyessr3.wav', 'Knyessr4.wav'
-)
+# Unit/hero voice folders under x86\Data\Gamesfx (excludes Misc, Spells, Bldg sfx).
+$VoiceGamesfxSkipDirs = @('Misc', 'Spells', 'Bldg')
 
 function Get-DisabledPlayerDisplayColor([int]$playerIndex) {
     # Prefer live/vanilla palette sample at the documented minimap source index.
@@ -221,17 +207,19 @@ function Get-VanillaBackupRoot {
 }
 
 function Get-AuthenticVanillaSourcePath([string]$relativePath) {
-    # Ground truth = live game install (Program Files) after Scan and Repair.
-    $live = Join-Path $GameRootPath $relativePath
-    if (Test-Path -LiteralPath $live) { return $live }
-
+    # Prefer pre-mod captures over the live install — a patched game is not vanilla.
     $scriptDir = Split-Path -Parent $PSCommandPath
+    $dataRel = $relativePath -replace '^x86\\Data\\', ''
     $legacyRel = $relativePath -replace '^x86\\', ''
     $leaf = Split-Path -Leaf $relativePath
     $candidates = @(
+        (Join-Path $GameRootPath ("real_mod\mod\backup\vanilla\{0}" -f $relativePath)),
+        (Join-Path $GameRootPath ("mods\backup\Data\{0}" -f $dataRel)),
+        (Join-Path $GameRootPath ("x86\Mods\PlayerColorStudio\backup\Data\{0}" -f $dataRel)),
         (Join-Path (Join-Path $scriptDir 'backup\vanilla') $relativePath),
         (Join-Path $GameRootPath ("x86\Mods\Player6-Cyan\backup\{0}" -f $legacyRel)),
-        (Join-Path $scriptDir ("backup\Data\Art\hd\classic\{0}" -f $leaf))
+        (Join-Path $scriptDir ("backup\Data\Art\hd\classic\{0}" -f $leaf)),
+        (Join-Path $GameRootPath $relativePath)
     )
     foreach ($candidate in $candidates) {
         if (Test-Path -LiteralPath $candidate) { return $candidate }
@@ -254,6 +242,14 @@ function Sync-AuthenticVanillaBackup {
         $destDir = Split-Path -Parent $dest
         if (!(Test-Path -LiteralPath $destDir)) {
             New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        }
+        $sourceResolved = (Resolve-Path -LiteralPath $source).Path
+        if (Test-Path -LiteralPath $dest) {
+            $destResolved = (Resolve-Path -LiteralPath $dest).Path
+            if ($sourceResolved -eq $destResolved) {
+                Write-Host "Vanilla backup already present: $rel"
+                continue
+            }
         }
         Copy-Item -LiteralPath $source -Destination $dest -Force
         Write-Host "Vanilla backup <= $source"
@@ -392,12 +388,41 @@ function Set-AllyGoneSkullAtlas([bool]$enabled) {
     }
 }
 
-function Get-HumanFootmanRemakeDir {
-    return Join-Path (Split-Path -Parent $PSCommandPath) 'assets\audio\human_footman'
+function Get-VoiceGamesfxRemakeDir {
+    return Join-Path (Split-Path -Parent $PSCommandPath) 'assets\audio\voice'
 }
 
-function Get-HumanKnightRemakeDir {
-    return Join-Path (Split-Path -Parent $PSCommandPath) 'assets\audio\human_knight'
+function Get-VoiceGamesfxRelPaths([string]$gamesfxRoot) {
+    if (!(Test-Path -LiteralPath $gamesfxRoot)) { return @() }
+    $result = @()
+    foreach ($subdir in (Get-ChildItem -LiteralPath $gamesfxRoot -Directory)) {
+        if ($VoiceGamesfxSkipDirs -contains $subdir.Name) { continue }
+        foreach ($wav in (Get-ChildItem -LiteralPath $subdir.FullName -Filter '*.wav' -File)) {
+            $result += "x86\Data\Gamesfx\$($subdir.Name)\$($wav.Name)"
+        }
+    }
+    return $result
+}
+
+function Sync-VoiceGamesfxVanillaBackup {
+    $liveGamesfx = Join-Path $GameRootPath 'x86\Data\Gamesfx'
+    if (!(Test-Path -LiteralPath $liveGamesfx)) {
+        throw "Gamesfx folder missing: $liveGamesfx"
+    }
+    $vanillaRoot = Get-VanillaBackupRoot
+    $copied = 0
+    foreach ($rel in (Get-VoiceGamesfxRelPaths $liveGamesfx)) {
+        $source = Join-Path $GameRootPath $rel
+        $dest = Join-Path $vanillaRoot $rel
+        $destDir = Split-Path -Parent $dest
+        if (!(Test-Path -LiteralPath $destDir)) {
+            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $source -Destination $dest -Force
+        $copied++
+    }
+    Write-Host "Voice vanilla backup synced: $copied files <= $liveGamesfx"
+    Write-ApplyLog "SyncVoiceGamesfxVanillaBackup: copied=$copied"
 }
 
 function Ensure-VanillaBackupFromLive([string]$relativePath) {
@@ -452,26 +477,48 @@ function Set-UnitAudioPack([bool]$enabled, [string]$sourceDir, [string]$gamesfxS
     Write-Host "$label enabled=$enabled replaced=$replaced restored=$restored"
 }
 
-function Set-HumanFootmanAudio([bool]$enabled) {
-    Set-UnitAudioPack $enabled (Get-HumanFootmanRemakeDir) 'Human' $HumanFootmanAudioFiles 'HumanFootmanAudio'
-}
+function Set-VoiceGamesfxAudio([bool]$enabled) {
+    $sourceDir = Get-VoiceGamesfxRemakeDir
+    if ($enabled -and !(Test-Path -LiteralPath $sourceDir)) {
+        throw "VoiceAudioEnhance remake folder missing: $sourceDir"
+    }
 
-function Set-HumanKnightAudio([bool]$enabled) {
-    Set-UnitAudioPack $enabled (Get-HumanKnightRemakeDir) 'Knight' $HumanKnightAudioFiles 'HumanKnightAudio'
+    $replaced = 0
+    $restored = 0
+    if ($enabled) {
+        foreach ($rel in (Get-VoiceGamesfxRelPaths $sourceDir)) {
+            $src = Join-Path $sourceDir ($rel -replace '^x86\\Data\\Gamesfx\\', '')
+            if (!(Test-Path -LiteralPath $src)) {
+                throw "VoiceAudioEnhance missing: $rel"
+            }
+            Ensure-VanillaBackupFromLive $rel | Out-Null
+            foreach ($root in (Get-GameRootPaths)) {
+                $targetPath = Get-GameFilePath $rel $root
+                $targetDir = Split-Path -Parent $targetPath
+                if (!(Test-Path -LiteralPath $targetDir)) {
+                    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+                }
+                Copy-Item -LiteralPath $src -Destination $targetPath -Force
+                $replaced++
+            }
+        }
+    } else {
+        $vanillaGamesfx = Join-Path (Get-VanillaBackupRoot) 'x86\Data\Gamesfx'
+        foreach ($rel in (Get-VoiceGamesfxRelPaths $vanillaGamesfx)) {
+            if (!(Get-VanillaBackupPath $rel)) { continue }
+            Restore-FromBackup $rel
+            $restored++
+        }
+    }
+    Write-Host "VoiceAudioEnhance enabled=$enabled replaced=$replaced restored=$restored"
 }
 
 function Restore-OriginalPaletteFiles {
     foreach ($rel in ($MapColorFiles + $PplFiles + @($AllyScreenSkinsJson) + $StringLocaleFiles)) {
         Restore-FromBackup $rel
     }
-    foreach ($file in $HumanFootmanAudioFiles) {
-        $rel = "x86\Data\Gamesfx\Human\$file"
-        if (Get-VanillaBackupPath $rel) {
-            Restore-FromBackup $rel
-        }
-    }
-    foreach ($file in $HumanKnightAudioFiles) {
-        $rel = "x86\Data\Gamesfx\Knight\$file"
+    $vanillaGamesfx = Join-Path (Get-VanillaBackupRoot) 'x86\Data\Gamesfx'
+    foreach ($rel in (Get-VoiceGamesfxRelPaths $vanillaGamesfx)) {
         if (Get-VanillaBackupPath $rel) {
             Restore-FromBackup $rel
         }
@@ -1270,6 +1317,11 @@ if ($SyncVanillaBackup) {
     exit 0
 }
 
+if ($SyncVoiceGamesfxBackup) {
+    Sync-VoiceGamesfxVanillaBackup
+    exit 0
+}
+
 if ($RestoreOnly) {
     Ensure-VanillaBackupReady
     Restore-OriginalPaletteFiles
@@ -1308,11 +1360,13 @@ if ($ApplyBugFixesFromExtra) {
 
 if ($ApplyAudioFromExtra) {
     Ensure-VanillaBackupReady
-    $humanFootmanAudio = Get-ExtraFeatureEnabled 'HumanFootmanAudio'
-    $humanKnightAudio = Get-ExtraFeatureEnabled 'HumanKnightAudio'
-    Set-HumanFootmanAudio $humanFootmanAudio
-    Set-HumanKnightAudio $humanKnightAudio
-    Write-ApplyLog "ApplyAudioFromExtra: HumanFootmanAudio=$humanFootmanAudio HumanKnightAudio=$humanKnightAudio"
+    $voiceAudioEnhance = Get-ExtraFeatureEnabled 'VoiceAudioEnhance'
+    if (!$voiceAudioEnhance) {
+        $voiceAudioEnhance = (Get-ExtraFeatureEnabled 'HumanFootmanAudio') -or
+                             (Get-ExtraFeatureEnabled 'HumanKnightAudio')
+    }
+    Set-VoiceGamesfxAudio $voiceAudioEnhance
+    Write-ApplyLog "ApplyAudioFromExtra: VoiceAudioEnhance=$voiceAudioEnhance"
     exit 0
 }
 
@@ -1335,6 +1389,6 @@ if ($ApplySavedConfigOnly) {
     exit 0
 }
 
-Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -ApplyBugFixesFromExtra, -ApplyAudioFromExtra, -RestoreOnly, or -SyncVanillaBackup.'
+Write-Error 'Specify -GetDefaultConfig, -ApplySavedConfigOnly, -ApplyDragSelectFromExtra, -ApplyAllyGoneIconFromExtra, -ApplyBugFixesFromExtra, -ApplyAudioFromExtra, -RestoreOnly, -SyncVanillaBackup, or -SyncVoiceGamesfxBackup.'
 exit 1
 

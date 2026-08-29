@@ -1,6 +1,7 @@
 <Window x:Class="PlayerColorStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:PlayerColorStudio"
         Title="Warcraft II Remastered — Quality of Life Mods"
         Width="1120" Height="1000" MinWidth="960" MinHeight="860"
         WindowStartupLocation="CenterScreen"
@@ -12,10 +13,11 @@
         </Grid.RowDefinitions>
 
         <TabControl x:Name="MainTabs" SelectionChanged="MainTabs_SelectionChanged">
-            <TabItem Header="Player colors" Tag="colors" DockPanel.Dock="Left">
+            <TabItem loc:Loc.HeaderKey="Tab.PlayerColors" Header="Player colors" Tag="colors" DockPanel.Dock="Left">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
+                                   loc:Loc.TextKey="Colors.Intro"
                                    Text="Units on the battlefield, minimap, victory and ally screen all follow the selected colors."/>
                         <!-- Invisible spacer: same height as other tabs so the first box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
@@ -33,19 +35,20 @@
                                             <ColumnDefinition Width="1.08*"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
+                                                   loc:Loc.TextKey="Colors.ColorBlindPresets"
                                                    FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
                                                    VerticalAlignment="Center" Margin="0,0,14,14"
                                                    Text="Color blindness presets"/>
                                         <StackPanel x:Name="ColorBlindPresetPanel" Grid.Column="2"
                                                     Orientation="Horizontal" VerticalAlignment="Top"
                                                     HorizontalAlignment="Right" Margin="-18,0,36,0">
-                                            <Button Content="Custom" Tag="custom" Width="88" Margin="0,0,8,14" Padding="10,4"
+                                            <Button loc:Loc.TextKey="Btn.Custom" Content="Custom" Tag="custom" Width="88" Margin="0,0,8,14" Padding="10,4"
                                                     BorderThickness="2" Click="ColorBlindPreset_Click"/>
-                                            <Button Content="Deuteranopia" Tag="deuteranopia" Width="88" Margin="0,0,8,14" Padding="10,4"
+                                            <Button loc:Loc.TextKey="Colors.PresetDeuteranopia" Content="Deuteranopia" Tag="deuteranopia" Width="88" Margin="0,0,8,14" Padding="10,4"
                                                     BorderThickness="2" Click="ColorBlindPreset_Click"/>
-                                            <Button Content="Protanopia" Tag="protanopia" Width="88" Margin="0,0,8,14" Padding="10,4"
+                                            <Button loc:Loc.TextKey="Colors.PresetProtanopia" Content="Protanopia" Tag="protanopia" Width="88" Margin="0,0,8,14" Padding="10,4"
                                                     BorderThickness="2" Click="ColorBlindPreset_Click"/>
-                                            <Button Content="Tritanopia" Tag="tritanopia" Width="88" Margin="0,0,0,14" Padding="10,4"
+                                            <Button loc:Loc.TextKey="Colors.PresetTritanopia" Content="Tritanopia" Tag="tritanopia" Width="88" Margin="0,0,0,14" Padding="10,4"
                                                     BorderThickness="2" Click="ColorBlindPreset_Click"/>
                                         </StackPanel>
                                     </Grid>
@@ -85,7 +88,7 @@
                                                             <Border Width="36" Height="28" CornerRadius="4"
                                                                     Background="{Binding VanillaBrush}"
                                                                     BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="{DynamicResource SwatchBorderThickness}"/>
-                                                            <TextBlock Text="vanilla" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
+                                                            <TextBlock loc:Loc.TextKey="Label.Vanilla" Text="vanilla" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
                                                                        HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                         </StackPanel>
                                                         <TextBlock Text="{Binding VanillaHex}"
@@ -107,17 +110,17 @@
                                                             <Border Width="36" Height="28" CornerRadius="4"
                                                                     Background="{Binding CurrentBrush}"
                                                                     BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="{DynamicResource SwatchBorderThickness}"/>
-                                                            <TextBlock Text="edited" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
+                                                            <TextBlock loc:Loc.TextKey="Label.Edited" Text="edited" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
                                                                        HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                         </StackPanel>
                                                         <TextBox Width="110" Text="{Binding Hex, UpdateSourceTrigger=PropertyChanged}"
                                                                  IsEnabled="{Binding IsEnabled}" LostFocus="Hex_LostFocus"
                                                                  VerticalAlignment="Center" Margin="0,0,10,14"/>
-                                                        <Button Content="Choose color..." IsEnabled="{Binding IsEnabled}"
+                                                        <Button loc:Loc.TextKey="Btn.ChooseColor" Content="Choose color..." IsEnabled="{Binding IsEnabled}"
                                                                 Tag="{Binding}" Click="ChooseColor_Click"
                                                                 VerticalAlignment="Center" Margin="0,0,8,14"
                                                                 Padding="10,4"/>
-                                                        <Button Content="Reset" IsEnabled="{Binding IsEnabled}"
+                                                        <Button loc:Loc.TextKey="Btn.Reset" Content="Reset" IsEnabled="{Binding IsEnabled}"
                                                                 Tag="{Binding}" Click="ResetCard_Click"
                                                                 VerticalAlignment="Center" Margin="0,0,0,14"
                                                                 Width="100" Padding="10,4"/>
@@ -211,10 +214,11 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Feature mods" Tag="feature" DockPanel.Dock="Left">
+            <TabItem loc:Loc.HeaderKey="Tab.FeatureMods" Header="Feature mods" Tag="feature" DockPanel.Dock="Left">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
+                                   loc:Loc.TextKey="Feature.Intro"
                                    Text="Optional feature mods for multiplayer games. Each mod is compatible with the others — you can use them individually or simultaneously."/>
                         <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
@@ -229,6 +233,7 @@
                                                   IsEnabled="{Binding IsApplyEnabled}"
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       loc:Loc.TextKey="Feature.MarkGoneHumans"
                                                        Foreground="{DynamicResource TextBrush}"
                                                        Text="Mark gone humans"/>
                                         </CheckBox>
@@ -237,6 +242,7 @@
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Feature.MarkGoneHumans.Help"
                                            Text="When a human player leaves, disconnects, or is eliminated, their name turns red on the alliances screen. Works on its own or together with Mark gone computers."/>
                             </Expander>
                         </Border>
@@ -251,14 +257,14 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Mark gone computers"/>
+                                                       loc:Loc.TextKey="Feature.MarkGoneComputers" Text="Mark gone computers"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="When a computer opponent is wiped out or eliminated, its name turns red on the alliances screen. Works in games that also have human players — only computer slots are marked."/>
+                                           loc:Loc.TextKey="Feature.MarkGoneComputers.Help" Text="When a computer opponent is wiped out or eliminated, its name turns red on the alliances screen. Works in games that also have human players — only computer slots are marked."/>
                             </Expander>
                         </Border>
 
@@ -272,14 +278,14 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Announce computers defeat"/>
+                                                       loc:Loc.TextKey="Feature.AnnounceComputers" Text="Announce computers defeat"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Gives textual feedback when a computer player has been wiped out."/>
+                                           loc:Loc.TextKey="Feature.AnnounceComputers.Help" Text="Gives textual feedback when a computer player has been wiped out."/>
                             </Expander>
                         </Border>
 
@@ -293,14 +299,14 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Show chat names in player color"/>
+                                                       loc:Loc.TextKey="Feature.ChatColoredNames" Text="Show chat names in player color"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Multiplayer chat lines from a player use that player's current color from Player colors. The message text remains white and clearly visible. Leave and drop messages also show the leaving player's name in their color."/>
+                                           loc:Loc.TextKey="Feature.ChatColoredNames.Help" Text="Multiplayer chat lines from a player use that player's current color from Player colors. The message text remains white and clearly visible. Leave and drop messages also show the leaving player's name in their color."/>
                             </Expander>
                         </Border>
 
@@ -314,14 +320,14 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Show timestamps in chat"/>
+                                                       loc:Loc.TextKey="Feature.ChatTimestamps" Text="Show timestamps in chat"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Every chat line starts with the clock time it appeared, like [21:08]."/>
+                                           loc:Loc.TextKey="Feature.ChatTimestamps.Help" Text="Every chat line starts with the clock time it appeared, like [21:08]."/>
                             </Expander>
                         </Border>
 
@@ -335,14 +341,56 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Show lobby team number"/>
+                                                       loc:Loc.TextKey="Feature.LobbyTeamNumber" Text="Show lobby team number"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Puts the multiplayer team number in front of each player's name on the alliances screen, making it easier to observe games without confusion."/>
+                                           loc:Loc.TextKey="Feature.LobbyTeamNumber.Help" Text="Puts the multiplayer team number in front of each player's name on the alliances screen, making it easier to observe games without confusion."/>
+                            </Expander>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
+                                Opacity="0.55">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding UpgradeNotifications}"
+                                                  IsEnabled="False"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       loc:Loc.TextKey="Feature.UpgradeNotifications" Text="Upgrade notifications"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Feature.UpgradeNotifications.Help" Text="Gold chat notifications when a building upgrade completes. Temporarily unavailable while this feature is being reworked."/>
+                            </Expander>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding UnitVoiceOverhaul}"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       loc:Loc.TextKey="Feature.UnitVoiceOverhaul" Text="Audio unit voice overhaul"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Feature.UnitVoiceOverhaul.Help" Text="Replace all unit voice lines with mastered WAVs (cleaner, louder, more consistent). Restart Warcraft II after Apply."/>
                             </Expander>
                         </Border>
 
@@ -357,110 +405,24 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Observe after surrender or elimination"/>
+                                                       loc:Loc.TextKey="Feature.ObserveAfterEnd" Text="Observe after surrender or elimination"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Temporarily unavailable while this feature is being reworked."/>
+                                           loc:Loc.TextKey="Feature.ObserveAfterEnd.Help" Text="Temporarily unavailable while this feature is being reworked."/>
                             </Expander>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Upgrades" Tag="upgrades" DockPanel.Dock="Left">
+            <TabItem loc:Loc.HeaderKey="Tab.BugFixes" Header="Bug fixes" Tag="bugfixes" DockPanel.Dock="Left">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="Gold chat notifications when a building upgrade completes. Each upgradeable building has its own option — enable only the ones you want, then press Apply."/>
-                        <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
-                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
-
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
-                                Opacity="0.55">
-                            <Expander Style="{StaticResource HelpExpanderStyle}">
-                                <Expander.Header>
-                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
-                                        <CheckBox IsChecked="{Binding BlacksmithWorkCompleteChat}"
-                                                  IsEnabled="False"
-                                                  Margin="0,0,0,14" VerticalAlignment="Center">
-                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextBrush}"
-                                                       Text="Blacksmith"/>
-                                        </CheckBox>
-                                    </Grid>
-                                </Expander.Header>
-                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="13" LineHeight="20"
-                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Temporarily unavailable while this upgrade notification is being reworked."/>
-                            </Expander>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Audio" Tag="audio" DockPanel.Dock="Left">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
-                    <StackPanel Background="{DynamicResource PanelBrush}">
-                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="Replace unit voice lines with remade samples. Enable the units you want, then press Apply. Restart Warcraft II Remastered so the new audio loads."/>
-                        <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
-                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
-
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
-                            <Expander Style="{StaticResource HelpExpanderStyle}">
-                                <Expander.Header>
-                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
-                                        <CheckBox IsChecked="{Binding HumanFootmanAudio}"
-                                                  IsEnabled="{Binding IsApplyEnabled}"
-                                                  Margin="0,0,0,14" VerticalAlignment="Center">
-                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextBrush}"
-                                                       Text="Human Footman"/>
-                                        </CheckBox>
-                                    </Grid>
-                                </Expander.Header>
-                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="13" LineHeight="20"
-                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Swaps the Human Footman what/yes/ready/pissed voice lines with the remake samples from the mod pack. Uncheck and Apply to restore the original Footman audio."/>
-                            </Expander>
-                        </Border>
-
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
-                            <Expander Style="{StaticResource HelpExpanderStyle}">
-                                <Expander.Header>
-                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
-                                        <CheckBox IsChecked="{Binding HumanKnightAudio}"
-                                                  IsEnabled="{Binding IsApplyEnabled}"
-                                                  Margin="0,0,0,14" VerticalAlignment="Center">
-                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextBrush}"
-                                                       Text="Human Knight"/>
-                                        </CheckBox>
-                                    </Grid>
-                                </Expander.Header>
-                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="13" LineHeight="20"
-                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Swaps the Human Knight what/yes/ready/pissed voice lines with the remake samples from the mod pack. Uncheck and Apply to restore the original Knight audio."/>
-                            </Expander>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem Header="Bug fixes" Tag="bugfixes" DockPanel.Dock="Left">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
-                    <StackPanel Background="{DynamicResource PanelBrush}">
-                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="Fixes for known multiplayer annoyances."/>
+                                   loc:Loc.TextKey="Bugfixes.Intro" Text="Fixes for known multiplayer annoyances."/>
                         <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
                                    Text="Player 8 cannot be changed yet, I am working on it."/>
@@ -475,14 +437,14 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Chat during pause screen"/>
+                                                       loc:Loc.TextKey="Bugfixes.ChatDuringPause" Text="Chat during pause screen"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Lets you read, type, and send chat while the multiplayer game is paused. Both players need this bug fix installed — if only one side has it, that player can send, but the other only sees the message after unpause if the chat is within its timeframe."/>
+                                           loc:Loc.TextKey="Bugfixes.ChatDuringPause.Help" Text="Lets you read, type, and send chat while the multiplayer game is paused. Both players need this bug fix installed — if only one side has it, that player can send, but the other only sees the message after unpause if the chat is within its timeframe."/>
                             </Expander>
                         </Border>
 
@@ -496,14 +458,36 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       Text="Chat history"/>
+                                                       loc:Loc.TextKey="Bugfixes.ChatHistory" Text="Chat history"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Press Page Up, or hold Ctrl and press Arrow Up, in a match to bring back earlier chat messages, page by page. Page Down, or Ctrl+Arrow Down, moves forward again and returns to live chat. The last 64 messages of the current game are kept — every new game starts fresh."/>
+                                           loc:Loc.TextKey="Bugfixes.ChatHistory.Help" Text="Press Page Up, or hold Ctrl and press Arrow Up, in a match to bring back earlier chat messages, page by page. Page Down, or Ctrl+Arrow Down, moves forward again and returns to live chat. The last 64 messages of the current game are kept — every new game starts fresh."/>
+                            </Expander>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
+                                Opacity="0.55">
+                            <Expander Style="{StaticResource HelpExpanderStyle}">
+                                <Expander.Header>
+                                    <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                        <CheckBox IsChecked="{Binding MpLobbyChatScrollFix}"
+                                                  IsEnabled="False"
+                                                  Margin="0,0,0,14" VerticalAlignment="Center">
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextBrush}"
+                                                       loc:Loc.TextKey="Bugfixes.MpLobbyChatScroll" Text="Multiplayer lobby chat scroll"/>
+                                        </CheckBox>
+                                    </Grid>
+                                </Expander.Header>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Bugfixes.MpLobbyChatScroll.Help" Text="Keeps multiplayer lobby chat scroll position when a player changes race. Temporarily unavailable while this feature is being reworked."/>
                             </Expander>
                         </Border>
 
@@ -517,6 +501,7 @@
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
+                                                       loc:Loc.TextKey="Bugfixes.CastleGoldTooltip"
                                                        Text="Castle / Fortress gold bonus text"/>
                                         </CheckBox>
                                     </Grid>
@@ -524,20 +509,53 @@
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Bugfixes.CastleGoldTooltip.Help"
                                            Text="Upgrading a Keep to a Castle (Humans) or a Stronghold to a Fortress (Orcs) grants +20% gold production, but the build tooltip incorrectly says +25%."/>
                             </Expander>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <!-- Dock=Right: first Right tab is rightmost (Settings), then About, then Paths. -->
-            <TabItem Header="Settings" Tag="settings" DockPanel.Dock="Right">
+            <!-- Dock=Right: first Right tab is rightmost (Settings), then Network, then Paths. -->
+            <TabItem loc:Loc.HeaderKey="Tab.Settings" Header="Settings" Tag="settings" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="Restore and other app settings."/>
+                                   loc:Loc.TextKey="Settings.Intro" Text="Restore and other app settings."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
                                    Text="Player 8 cannot be changed yet, I am working on it."/>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Height="{StaticResource ExpandedColorCardMinHeight}"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
+                                Opacity="0.55">
+                            <StackPanel>
+                                <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,14,14"
+                                               loc:Loc.TextKey="Settings.Language"
+                                               Text="Language"/>
+                                    <ComboBox Grid.Column="1" Width="{StaticResource SegmentButtonPairWidth}" Margin="0,0,36,14"
+                                              Style="{StaticResource StudioComboBoxStyle}"
+                                              ItemContainerStyle="{StaticResource StudioComboBoxItemStyle}"
+                                              VerticalAlignment="Center" HorizontalAlignment="Right"
+                                              IsEnabled="False"
+                                              ItemsSource="{Binding LanguageOptions}"
+                                              SelectedValue="{Binding SelectedLanguageCode}"
+                                              SelectedValuePath="Code"
+                                              DisplayMemberPath="NativeName"/>
+                                </Grid>
+                                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Settings.Language.Help"
+                                           Text="Choose the language for this app. Your choice is saved automatically."/>
+                            </StackPanel>
+                        </Border>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 Height="{StaticResource ExpandedColorCardMinHeight}"
@@ -550,14 +568,14 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
                                                VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="Color blind mode"/>
+                                               loc:Loc.TextKey="Settings.ColorBlindMode" Text="Color blind mode"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                 HorizontalAlignment="Right" Margin="0,0,36,14">
-                                        <Button x:Name="ColorBlindOnButton" Content="On" Width="88" Margin="0,0,8,0" Padding="10,4"
+                                        <Button x:Name="ColorBlindOnButton" loc:Loc.TextKey="Btn.On" Content="On" Width="{StaticResource SegmentButtonWidth}" Margin="0,0,8,0" Padding="10,4"
                                                 BorderThickness="2"
                                                 IsEnabled="{Binding IsApplyEnabled}"
                                                 Click="ColorBlindOn_Click"/>
-                                        <Button x:Name="ColorBlindOffButton" Content="Off" Width="88" Padding="10,4"
+                                        <Button x:Name="ColorBlindOffButton" loc:Loc.TextKey="Btn.Off" Content="Off" Width="{StaticResource SegmentButtonWidth}" Padding="10,4"
                                                 BorderThickness="2"
                                                 IsEnabled="{Binding IsApplyEnabled}"
                                                 Click="ColorBlindOff_Click"/>
@@ -566,7 +584,7 @@
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Makes this app easier to read: light background, clear borders, and high-contrast text. Does not change in-game colors."/>
+                                           loc:Loc.TextKey="Settings.ColorBlindMode.Help" Text="Makes this app easier to read: light background, clear borders, and high-contrast text. Does not change in-game colors."/>
                             </StackPanel>
                         </Border>
 
@@ -581,8 +599,8 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
                                                VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="Restore to clean game files"/>
-                                    <Button Grid.Column="1" Content="Restore" Width="88" Margin="0,0,36,14" Padding="10,4"
+                                               loc:Loc.TextKey="Settings.RestoreClean" Text="Restore to clean game files"/>
+                                    <Button Grid.Column="1" loc:Loc.TextKey="Btn.Restore" Content="Restore" Width="88" Margin="0,0,36,14" Padding="10,4"
                                             BorderThickness="2"
                                             VerticalAlignment="Center" HorizontalAlignment="Right"
                                             IsEnabled="{Binding IsApplyEnabled}"
@@ -591,67 +609,66 @@
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Restore (fast) puts back the vanilla files from this app’s local backup and turns extras off. Battle.net Scan and Repair is slower and the fallback if you prefer Blizzard’s repair."/>
+                                           loc:Loc.TextKey="Settings.RestoreClean.Help" Text="Restore (fast) puts back the vanilla files from this app’s local backup and turns extras off. Battle.net Scan and Repair is slower and the fallback if you prefer Blizzard’s repair."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="About" Tag="info" DockPanel.Dock="Right">
+            <TabItem loc:Loc.HeaderKey="Tab.Network" Header="Network" Tag="network" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="About this Quality of Life Mods tool."/>
+                                   loc:Loc.TextKey="Network.Intro" Text="Lockstep tick-gap monitor for MP debug (v1). Not real per-player ping — a log foundation for a future /jitter command."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
                                    Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Height="{StaticResource ExpandedColorCardMinHeight}"
                                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
                             <StackPanel>
-                                <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
-                                               VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="Warcraft II Remastered — Quality of Life Mods"/>
-                                    <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedTextBrush}" FontSize="14"
-                                               VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,36,14"
-                                               Text="{Binding AppVersionText}"/>
-                                </Grid>
-                                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="13" LineHeight="20"
-                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Work in progress. I welcome hints, tips, and suggestions — please share what would help you. Author: Avent (Battle.net account)."/>
+                                <CheckBox IsChecked="{Binding NetworkMonitor}"
+                                          IsEnabled="{Binding IsApplyEnabled}"
+                                          Margin="0,0,0,10">
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextBrush}"
+                                               loc:Loc.TextKey="Network.MonitorTitle" Text="Multiplayer network monitor"/>
+                                </CheckBox>
+                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20" Margin="0,0,0,12"
+                                           loc:Loc.TextKey="Network.Monitor.Help" Text="V1 debug tool: during an MP match this measures time between game ticks (lockstep — everyone shares the same tick). Large gaps mean hitch/stall, not ICMP ping per player. Human players only in the list (no Computer). Writes a snapshot every second to %TEMP%\war2_network_monitor.log for later /jitter and analysis."/>
+                                <TextBlock Text="{Binding NetworkMonitorStatus}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource MutedTextBrush}" FontSize="13" Margin="0,0,0,8"/>
+                                <ListView ItemsSource="{Binding NetworkSeats}" Height="220" Margin="0,0,0,8"
+                                          Style="{StaticResource MonitorListViewStyle}"
+                                          ItemContainerStyle="{StaticResource MonitorListViewItemStyle}">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridView.ColumnHeaderContainerStyle>
+                                                <Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource MonitorGridViewColumnHeaderStyle}"/>
+                                            </GridView.ColumnHeaderContainerStyle>
+                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.Seat" Header="Seat" Width="48" DisplayMemberBinding="{Binding Seat}"/>
+                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.Player" Header="Player" Width="180" DisplayMemberBinding="{Binding Name}"/>
+                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.LastMs" Header="Last ms" Width="72" DisplayMemberBinding="{Binding LastMs}"/>
+                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.MaxMs" Header="Max ms" Width="72" DisplayMemberBinding="{Binding MaxMs}"/>
+                                        </GridView>
+                                    </ListView.View>
+                                </ListView>
+                                <TextBlock Text="{Binding NetworkMonitorSummary}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource TextBrush}" FontSize="13" Margin="0,0,0,8"/>
+                                <TextBox Text="{Binding NetworkMonitorLog, Mode=OneWay}"
+                                         Style="{StaticResource LogTextBoxStyle}"
+                                         Height="120" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                         FontFamily="Consolas" FontSize="12"/>
                             </StackPanel>
                         </Border>
-
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Height="{StaticResource ExpandedColorCardMinHeight}"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
-                            <StackPanel>
-                                <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
-                                    <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
-                                               VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="How it works"/>
-                                </Grid>
-                                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="13" LineHeight="20"
-                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="1. Change colors, features, or bug fixes. 2. Press Apply (local vanilla backup). 3. Restart Warcraft II Remastered. 4. Use Settings to restore if needed. Hooks keep working after you close this app via a small Windows watcher."/>
-                            </StackPanel>
-                        </Border>
-
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem Header="Paths" Tag="path" DockPanel.Dock="Right">
+            <TabItem loc:Loc.HeaderKey="Tab.Paths" Header="Paths" Tag="path" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   Text="Set your Warcraft II Remastered paths. Changes are saved automatically."/>
+                                   loc:Loc.TextKey="Paths.Intro" Text="Set your Warcraft II Remastered paths. Changes are saved automatically."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
                                    Text="Player 8 cannot be changed yet, I am working on it."/>
 
@@ -666,7 +683,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
                                                VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="Game install path"/>
+                                               loc:Loc.TextKey="Paths.GameInstall" Text="Game install path"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                 Margin="0,0,0,14">
                                         <TextBox Width="420" Text="{Binding GameInstallPath, UpdateSourceTrigger=PropertyChanged}"
@@ -674,16 +691,16 @@
                                                  BorderBrush="{Binding GameInstallPathBorderBrush}"
                                                  VerticalContentAlignment="Center" Padding="8,6"
                                                  LostFocus="GameInstallPath_LostFocus"/>
-                                        <Button Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Browse" Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="BrowseGamePath_Click"/>
-                                        <Button Content="Default" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Default" Content="Default" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="DefaultGamePath_Click"/>
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Choose the folder that contains Warcraft II Remastered (the one with an x86 folder). Mods and bug fixes install here. If the initial path is accepted, no changes are needed."/>
+                                           loc:Loc.TextKey="Paths.GameInstall.Help" Text="Choose the folder that contains Warcraft II Remastered (the one with an x86 folder). Mods and bug fixes install here. If the initial path is accepted, no changes are needed."/>
                             </StackPanel>
                         </Border>
 
@@ -698,7 +715,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
                                                VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="Map editor path"/>
+                                               loc:Loc.TextKey="Paths.MapEditor" Text="Map editor path"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                 Margin="0,0,0,14">
                                         <TextBox Width="420" Text="{Binding MapEditorPath, UpdateSourceTrigger=PropertyChanged}"
@@ -710,14 +727,14 @@
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="BrowseMapEditorPath_Click"/>
                                         <Button Content="Default" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="DefaultMapEditorPath_Click"/>
-                                        <Button Content="Open" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Open" Content="Open" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="OpenMapEditor_Click"/>
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="Points to Warcraft II Map Editor.exe inside your install. Open launches the map editor. For future upgrades; useful for quick access now."/>
+                                           loc:Loc.TextKey="Paths.MapEditor.Help" Text="Points to Warcraft II Map Editor.exe inside your install. Open launches the map editor. For future upgrades; useful for quick access now."/>
                             </StackPanel>
                         </Border>
 
@@ -732,7 +749,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
                                                VerticalAlignment="Center" Margin="0,0,14,14"
-                                               Text="Maps folder path"/>
+                                               loc:Loc.TextKey="Paths.MapsFolder" Text="Maps folder path"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                 Margin="0,0,0,14">
                                         <TextBox Width="420" Text="{Binding MapsPath, UpdateSourceTrigger=PropertyChanged}"
@@ -751,7 +768,7 @@
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           Text="The folder where your custom maps live (x86\Maps in most installs). Open shows it in Windows Explorer. For future upgrades; useful for quick access now."/>
+                                           loc:Loc.TextKey="Paths.MapsFolder.Help" Text="The folder where your custom maps live (x86\Maps in most installs). Open shows it in Windows Explorer. For future upgrades; useful for quick access now."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -801,12 +818,12 @@
                              Visibility="{Binding IsApplying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button Content="Apply" Width="110" Height="36" Foreground="White"
+                <Button loc:Loc.TextKey="Btn.Apply" Content="Apply" Width="110" Height="36" Foreground="White"
                         Background="{Binding ApplyButtonBrush}" BorderBrush="{Binding ApplyButtonBorderBrush}"
                         IsEnabled="{Binding IsApplyEnabled}"
                         Visibility="{Binding IsApplyVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
                         Click="Apply_Click"/>
-                <Button Content="Close" Width="110" Height="36" Margin="12,0,0,0"
+                <Button loc:Loc.TextKey="Btn.Close" Content="Close" Width="110" Height="36" Margin="12,0,0,0"
                         IsCancel="True" Click="Close_Click"/>
             </StackPanel>
         </Grid>

@@ -84,7 +84,8 @@ FARPROC RemoteGetProc(HANDLE process, DWORD pid, const wchar_t* moduleName, cons
     return reinterpret_cast<FARPROC>(reinterpret_cast<uintptr_t>(remoteBase) + offset);
 }
 
-int InjectAndSet(const std::wstring& dllPath, bool enable, int timestamps, int history, int blacksmith)
+int InjectAndSet(const std::wstring& dllPath, bool enable, int timestamps, int history, int blacksmith,
+                 int lobbyScroll)
 {
     const DWORD pid = FindPidByName(L"Warcraft II.exe");
     if (!pid) {
@@ -218,6 +219,21 @@ int InjectAndSet(const std::wstring& dllPath, bool enable, int timestamps, int h
             }
         }
     }
+
+    // MP lobby chat scroll fix. -1 = leave as-is.
+    if (lobbyScroll >= 0) {
+        FARPROC setLobbyScroll = RemoteGetProc(process, pid, L"ChatNameColorHook.dll",
+                                               "ChatNameColor_SetLobbyScrollFix");
+        if (setLobbyScroll) {
+            HANDLE lobbyThread = CreateRemoteThread(
+                process, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(setLobbyScroll),
+                reinterpret_cast<LPVOID>(static_cast<uintptr_t>(lobbyScroll ? 1 : 0)), 0, nullptr);
+            if (lobbyThread) {
+                WaitForSingleObject(lobbyThread, 5000);
+                CloseHandle(lobbyThread);
+            }
+        }
+    }
     CloseHandle(process);
 
     std::fwprintf(stdout,
@@ -245,6 +261,7 @@ int wmain(int argc, wchar_t** argv)
     int timestamps = -1; // -1 = don't touch
     int history = -1;    // -1 = don't touch
     int blacksmith = -1; // -1 = don't touch
+    int lobbyScroll = -1;
     for (int i = 1; i < argc; ++i) {
         if (_wcsicmp(argv[i], L"--disable") == 0 || _wcsicmp(argv[i], L"0") == 0) enable = false;
         if (_wcsicmp(argv[i], L"--enable") == 0 || _wcsicmp(argv[i], L"1") == 0) enable = true;
@@ -260,6 +277,10 @@ int wmain(int argc, wchar_t** argv)
             blacksmith = (_wcsicmp(argv[i + 1], L"1") == 0) ? 1 : 0;
             ++i;
         }
+        if (_wcsicmp(argv[i], L"--lobby-scroll") == 0 && i + 1 < argc) {
+            lobbyScroll = (_wcsicmp(argv[i + 1], L"1") == 0) ? 1 : 0;
+            ++i;
+        }
     }
 
     const std::wstring dllPath = SiblingPath(L"ChatNameColorHook.dll");
@@ -267,5 +288,5 @@ int wmain(int argc, wchar_t** argv)
         std::fwprintf(stderr, L"Missing DLL: %s\n", dllPath.c_str());
         return 1;
     }
-    return InjectAndSet(dllPath, enable, timestamps, history, blacksmith);
+    return InjectAndSet(dllPath, enable, timestamps, history, blacksmith, lobbyScroll);
 }

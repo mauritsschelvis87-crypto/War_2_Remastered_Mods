@@ -16,6 +16,7 @@
     <Product>Warcraft II — Quality of Life Modding</Product>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="lang\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(MSBuildProjectDirectory)\..\..\mod\native\DropMonitor.dll"
           Link="DropMonitor.dll"
           CopyToOutputDirectory="PreserveNewest" />

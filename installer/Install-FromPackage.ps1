@@ -67,6 +67,14 @@ if (!(Test-Path -LiteralPath $exe)) {
     throw 'Install failed: PlayerColorStudio.exe is missing after copy.'
 }
 
+$trust = Join-Path $PSScriptRoot 'Trust-NativeTools.ps1'
+if (!(Test-Path -LiteralPath $trust)) {
+    $trust = Join-Path $packageRoot 'Trust-NativeTools.ps1'
+}
+if (Test-Path -LiteralPath $trust) {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $trust -InstallRoot $installRoot | Write-Host
+}
+
 if (!$NoLaunch) {
     Start-Process -FilePath $exe -WorkingDirectory $appTarget
 }
