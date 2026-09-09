@@ -1,0 +1,871 @@
+
+##### MAGE_MASK=0x3f0 text_hits=26 total=27
+=== 0x45d4da (file 0x5c8da) section=.text ===
+  0045d4aa: clc      
+  0045d4ab: call     0x461c60
+  0045d4b0: inc      eax
+  0045d4b1: mov      dword ptr [ebp - 4], eax
+  0045d4b4: test     edi, edi
+  0045d4b6: jle      0x45d4bc
+  0045d4b8: test     eax, eax
+  0045d4ba: jg       0x45d4cc
+  0045d4bc: push     0x8a3be0
+  0045d4c1: push     7
+  0045d4c3: push     esi
+  0045d4c4: call     0x655480
+  0045d4c9: add      esp, 0xc
+  0045d4cc: mov      ebx, dword ptr [ebp - 4]
+  0045d4cf: lea      edi, [esi + 0x110]
+  0045d4d5: mov      esi, dword ptr [ebp - 8]
+  0045d4d8: mov      dword ptr [ebp - 0x10], 3  <== IMM HERE
+  0045d4df: nop      
+  0045d4e0: cmp      dword ptr [edi], -1
+  0045d4e3: je       0x45d526
+  0045d4e5: mov      eax, dword ptr [edi + 4]
+  0045d4e8: mov      edx, dword ptr [eax + 8]
+  0045d4eb: mov      ecx, dword ptr [eax + 0xc]
+  0045d4ee: lea      eax, [esi + esi]
+  0045d4f1: cmp      eax, edx
+  0045d4f3: jl       0x45d526
+  0045d4f5: lea      eax, [ebx + ebx]
+  0045d4f8: cmp      eax, ecx
+  0045d4fa: jl       0x45d526
+  0045d4fc: shl      edx, 4
+  0045d4ff: cmp      esi, edx
+  0045d501: jg       0x45d526
+  0045d503: shl      ecx, 4
+  0045d506: cmp      ebx, ecx
+  0045d508: jg       0x45d526
+  0045d50a: mov      eax, 1
+  0045d50f: jmp      0x45d528
+  0045d511: shl      edi, 6
+  0045d514: mov      eax, dword ptr [edi + esi + 0x114]
+  0045d51b: mov      edi, dword ptr [eax + 8]
+  0045d51e: mov      eax, dword ptr [eax + 0xc]
+  0045d521: mov      dword ptr [ebp - 8], edi
+  0045d524: jmp      0x45d4b1
+  0045d526: xor      eax, eax
+=== 0x45d555 (file 0x5c955) section=.text ===
+  0045d525: mov      esi, dword ptr [ebx]
+  0045d527: ror      byte ptr [ebx - 0x387c0bb3], 0x40
+  0045d52e: or       ecx, eax
+  0045d530: sub      dword ptr [ebp - 0x10], 1
+  0045d534: mov      dword ptr [ebp - 0xc], ecx
+  0045d537: jne      0x45d4e0
+  0045d539: mov      esi, dword ptr [ebp - 0x14]
+  0045d53c: mov      ebx, dword ptr [ebp - 0x18]
+  0045d53f: test     ecx, ecx
+  0045d541: jne      0x45d553
+  0045d543: push     0x8a3bf4
+  0045d548: push     7
+  0045d54a: push     esi
+  0045d54b: call     0x655480
+  0045d550: add      esp, 0xc
+  0045d553: mov      dword ptr [ebp - 0x10], 3  <== IMM HERE
+  0045d55a: lea      edi, [esi + 0x110]
+  0045d560: cmp      dword ptr [edi], -1
+  0045d563: je       0x45d589
+  0045d565: mov      ecx, dword ptr [edi + 4]
+  0045d568: mov      eax, dword ptr [ecx + 0x5c]
+  0045d56b: cmp      eax, dword ptr [esi + 0x4374]
+  0045d571: jne      0x45d589
+  0045d573: mov      eax, dword ptr [ecx + 0x54]
+  0045d576: cmp      eax, dword ptr [esi + 0xbc]
+  0045d57c: jne      0x45d589
+  0045d57e: mov      eax, dword ptr [ecx + 0x58]
+  0045d581: cmp      eax, dword ptr [esi + 0xc0]
+  0045d587: je       0x45d599
+  0045d589: push     0x8a3c18
+  0045d58e: push     7
+  0045d590: push     esi
+  0045d591: call     0x655480
+  0045d596: add      esp, 0xc
+  0045d599: add      edi, 0x40
+  0045d59c: sub      dword ptr [ebp - 0x10], 1
+  0045d5a0: jne      0x45d560
+  0045d5a2: push     dword ptr [ebp - 4]
+=== 0x4636f8 (file 0x62af8) section=.text ===
+  004636c8: mov      dword ptr [esi + 4], ecx
+  004636cb: mov      ecx, dword ptr [ebp - 8]
+  004636ce: jmp      0x463755
+  004636d3: movsx    eax, byte ptr [edx + 0xf26]
+  004636da: shl      eax, cl
+  004636dc: add      eax, ebx
+  004636de: jns      0x4636e4
+  004636e0: xor      eax, eax
+  004636e2: jmp      0x4636eb
+  004636e4: cmp      eax, 0x3f
+  004636e7: cmovg    eax, dword ptr [ebp - 4]
+  004636eb: mov      byte ptr [esi], al
+  004636ed: lea      edi, [edx + 0xf27]
+  004636f3: add      esi, 2
+  004636f6: mov      dword ptr [ebp - 0x10], 3  <== IMM HERE
+  004636fd: nop      dword ptr [eax]
+  00463700: movsx    ecx, byte ptr [edi]
+  00463703: movsx    eax, byte ptr [edx + 0xf2e]
+  0046370a: add      eax, ecx
+  0046370c: mov      ecx, dword ptr [ebp - 8]
+  0046370f: shl      eax, cl
+  00463711: add      eax, ebx
+  00463713: jns      0x463719
+  00463715: xor      eax, eax
+  00463717: jmp      0x463720
+  00463719: cmp      eax, 0x3f
+  0046371c: cmovg    eax, dword ptr [ebp - 4]
+  00463720: mov      byte ptr [esi], al
+  00463722: movsx    edx, byte ptr [edx + 0xf2f]
+  00463729: movsx    eax, byte ptr [edi]
+  0046372c: add      edx, eax
+  0046372e: shl      edx, cl
+  00463730: add      edx, ebx
+  00463732: jns      0x463738
+  00463734: xor      edx, edx
+  00463736: jmp      0x46373f
+  00463738: cmp      edx, 0x3f
+  0046373b: cmovg    edx, dword ptr [ebp - 4]
+  0046373f: mov      byte ptr [esi + 1], dl
+  00463742: inc      edi
+  00463743: mov      edx, dword ptr [ebp - 0xc]
+=== 0x47d409 (file 0x7c809) section=.text ===
+  0047d3d9: and      al, 0x60
+  0047d3db: movaps   xmmword ptr [esp + 0x140], xmm0
+  0047d3e3: movaps   xmmword ptr [esp + 0x130], xmm1
+  0047d3eb: movaps   xmm1, xmmword ptr [esp + 0x10]
+  0047d3f0: punpckhdq xmm4, xmm7
+  0047d3f4: movaps   xmm0, xmm1
+  0047d3f7: movups   xmm7, xmmword ptr [edi + 0x440]
+  0047d3fe: punpcklqdq xmm0, xmm4
+  0047d402: punpckhqdq xmm5, xmm3
+  0047d406: movups   xmm3, xmmword ptr [edi + 0x3f0]  <== IMM HERE
+  0047d40d: movaps   xmmword ptr [esp + 0x160], xmm0
+  0047d415: movups   xmm0, xmmword ptr [edi + 0x3e0]
+  0047d41c: punpcklwd xmm0, xmm3
+  0047d420: punpckhqdq xmm1, xmm4
+  0047d424: movaps   xmm4, xmm7
+  0047d427: movaps   xmmword ptr [esp + 0x150], xmm5
+  0047d42f: movups   xmm5, xmmword ptr [edi + 0x400]
+  0047d436: movaps   xmmword ptr [esp + 0x20], xmm0
+  0047d43b: movaps   xmm6, xmm5
+  0047d43e: movups   xmm0, xmmword ptr [edi + 0x420]
+  0047d445: movaps   xmmword ptr [esp + 0x110], xmm2
+  0047d44d: movups   xmm2, xmmword ptr [edi + 0x410]
+=== 0x48ae8d (file 0x8a28d) section=.text ===
+  0048ae5d: call     esi
+  0048ae5f: push     0
+  0048ae61: push     0x3f1
+  0048ae66: push     edi
+  0048ae67: call     ebx
+  0048ae69: push     eax
+  0048ae6a: call     esi
+  0048ae6c: push     0
+  0048ae6e: jmp      0x48ae8c
+  0048ae70: push     5
+  0048ae72: push     0x418
+  0048ae77: push     edi
+  0048ae78: call     ebx
+  0048ae7a: push     eax
+  0048ae7b: call     esi
+  0048ae7d: push     5
+  0048ae7f: push     0x3f1
+  0048ae84: push     edi
+  0048ae85: call     ebx
+  0048ae87: push     eax
+  0048ae88: call     esi
+  0048ae8a: push     5
+  0048ae8c: push     0x3f0  <== IMM HERE
+  0048ae91: push     edi
+  0048ae92: call     ebx
+  0048ae94: push     eax
+  0048ae95: call     esi
+  0048ae97: mov      eax, dword ptr [ebp - 4]
+  0048ae9a: cmp      word ptr [eax], 0xf
+  0048ae9e: jne      0x48aebf
+  0048aea0: push     5
+  0048aea2: push     0x5e1
+  0048aea7: push     edi
+  0048aea8: call     ebx
+  0048aeaa: push     eax
+  0048aeab: call     esi
+  0048aead: push     5
+  0048aeaf: push     0x5e0
+  0048aeb4: push     edi
+  0048aeb5: call     ebx
+  0048aeb7: push     eax
+  0048aeb8: call     esi
+  0048aeba: mov      eax, dword ptr [ebp - 4]
+  0048aebd: jmp      0x48aee0
+  0048aebf: push     0
+  0048aec1: push     0x5e1
+  0048aec6: push     edi
+  0048aec7: call     ebx
+  0048aec9: push     eax
+  0048aeca: call     esi
+  0048aecc: push     0
+  0048aece: push     0x5e0
+  0048aed3: push     edi
+  0048aed4: call     ebx
+  0048aed6: push     eax
+  0048aed7: call     esi
+  0048aed9: mov      eax, dword ptr [ebp - 4]
+=== 0x48b3af (file 0x8a7af) section=.text ===
+  0048b37f: je       0x48b3e6
+  0048b381: push     0
+  0048b383: push     eax
+  0048b384: push     0x150
+  0048b389: push     edi
+  0048b38a: call     ebx
+  0048b38c: pop      edi
+  0048b38d: mov      dword ptr [esi], 0
+  0048b393: pop      esi
+  0048b394: mov      dword ptr [0x913374], eax
+  0048b399: mov      eax, 1
+  0048b39e: pop      ebx
+  0048b39f: mov      ecx, dword ptr [ebp - 4]
+  0048b3a2: xor      ecx, ebp
+  0048b3a4: call     0x7e91e5
+  0048b3a9: mov      esp, ebp
+  0048b3ab: pop      ebp
+  0048b3ac: ret      
+  0048b3ad: sub      ecx, 0x3f0  <== IMM HERE
+  0048b3b3: je       0x48b3f9
+  0048b3b5: sub      ecx, 1
+  0048b3b8: jne      0x48b3e6
+  0048b3ba: shr      eax, 0x10
+  0048b3bd: cmp      eax, 1
+  0048b3c0: jne      0x48b3e6
+  0048b3c2: push     ebx
+  0048b3c3: call     0x48ccf0
+  0048b3c8: add      esp, 4
+  0048b3cb: test     eax, eax
+  0048b3cd: je       0x48b3e6
+  0048b3cf: push     0
+  0048b3d1: push     dword ptr [0x913374]
+  0048b3d7: push     dword ptr [0x913370]
+  0048b3dd: push     ebx
+  0048b3de: call     0x48ad80
+  0048b3e3: add      esp, 0x10
+  0048b3e6: pop      edi
+  0048b3e7: pop      esi
+  0048b3e8: xor      eax, eax
+  0048b3ea: pop      ebx
+  0048b3eb: mov      ecx, dword ptr [ebp - 4]
+  0048b3ee: xor      ecx, ebp
+  0048b3f0: call     0x7e91e5
+  0048b3f5: mov      esp, ebp
+  0048b3f7: pop      ebp
+  0048b3f8: ret      
+  0048b3f9: push     edi
+  0048b3fa: push     ebx
+=== 0x48bb82 (file 0x8af82) section=.text ===
+  0048bb52: push     0x836aac
+  0048bb57: push     1
+  0048bb59: push     -1
+  0048bb5b: push     0x836ad8
+  0048bb60: push     ebx
+  0048bb61: mov      dword ptr [ebp - 0xb0], ebx
+  0048bb67: mov      dword ptr [ebp - 0x10], 1
+  0048bb6e: mov      dword ptr [ebp - 0xc], 2
+  0048bb75: mov      dword ptr [ebp - 8], 0
+  0048bb7c: mov      dword ptr [ebp - 0xac], 0x3f0  <== IMM HERE
+  0048bb86: mov      dword ptr [ebp - 0xa8], 0
+  0048bb90: mov      dword ptr [ebp - 0xb8], 0x5e1
+  0048bb9a: mov      dword ptr [ebp - 0xb4], 0
+  0048bba4: mov      dword ptr [ebp - 0xc0], 0x5e3
+  0048bbae: mov      dword ptr [ebp - 0xbc], 0
+  0048bbb8: call     dword ptr [0x834708]
+  0048bbbe: push     eax
+  0048bbbf: push     ebx
+  0048bbc0: call     0x488b60
+  0048bbc5: push     1
+  0048bbc7: push     0x91334c
+  0048bbcc: push     0x913344
+=== 0x4ab508 (file 0xaa908) section=.text ===
+  004ab4d8: xchg     esp, eax
+  004ab4d9: xchg     ecx, eax
+  004ab4da: add      byte ptr [edi], cl
+  004ab4dc: adc      dword ptr [ebx + 0x3c0], eax
+  004ab4e2: movups   xmm0, xmmword ptr [0x919498]
+  004ab4e9: movups   xmmword ptr [ebx + 0x3d0], xmm0
+  004ab4f0: movups   xmm0, xmmword ptr [0x9194a8]
+  004ab4f7: movups   xmmword ptr [ebx + 0x3e0], xmm0
+  004ab4fe: movzx    eax, word ptr [0x919430]
+  004ab505: mov      word ptr [ebx + 0x3f0], ax  <== IMM HERE
+  004ab50c: movzx    eax, word ptr [0x919434]
+  004ab513: mov      word ptr [ebx + 0x3f2], ax
+  004ab51a: movups   xmm0, xmmword ptr [0x9194b8]
+  004ab521: movups   xmmword ptr [ebx + 0x3f4], xmm0
+  004ab528: movups   xmm0, xmmword ptr [0x9194c8]
+  004ab52f: movups   xmmword ptr [ebx + 0x404], xmm0
+  004ab536: movups   xmm0, xmmword ptr [0x9194d8]
+  004ab53d: movups   xmmword ptr [ebx + 0x414], xmm0
+  004ab544: movups   xmm0, xmmword ptr [0x9194e8]
+  004ab54b: movups   xmmword ptr [ebx + 0x424], xmm0
+=== 0x566ce5 (file 0x1660e5) section=.text ===
+  00566cb5: xchg     esi, eax
+  00566cb6: add      byte ptr [ebx + 0x1589ac55], cl
+  00566cbc: sub      al, 0x21
+  00566cbe: xchg     esi, eax
+  00566cbf: add      byte ptr [ecx + 0x961f10], bh
+  00566cc5: call     0x557660
+  00566cca: mov      eax, 1
+  00566ccf: mov      esp, ebp
+  00566cd1: pop      ebp
+  00566cd2: ret      0x14
+  00566cd5: int3     
+  00566cd6: int3     
+  00566cd7: int3     
+  00566cd8: int3     
+  00566cd9: int3     
+  00566cda: int3     
+  00566cdb: int3     
+  00566cdc: int3     
+  00566cdd: int3     
+  00566cde: int3     
+  00566cdf: int3     
+  00566ce0: push     ebp
+  00566ce1: mov      ebp, esp
+  00566ce3: sub      esp, 0x3f0  <== IMM HERE
+  00566ce9: mov      eax, dword ptr [0x90d6c0]
+  00566cee: xor      eax, ebp
+  00566cf0: mov      dword ptr [ebp - 4], eax
+  00566cf3: cmp      dword ptr [ebp + 0x1c], 0
+  00566cf7: je       0x566d06
+  00566cf9: mov      eax, dword ptr [0x961f68]
+  00566cfe: sub      eax, 1
+  00566d01: mov      ecx, dword ptr [ebp + 0x1c]
+  00566d04: mov      dword ptr [ecx], eax
+  00566d06: mov      dword ptr [ebp - 0x3d4], 0xffffffff
+  00566d10: cmp      dword ptr [ebp + 0x1c], 0
+  00566d14: je       0x566d22
+  00566d16: mov      dword ptr [ebp - 0x3d8], 0xffffffff
+  00566d20: jmp      0x566d2c
+  00566d22: mov      dword ptr [ebp - 0x3d8], 0
+  00566d2c: mov      edx, dword ptr [ebp - 0x3d4]
+=== 0x5741ab (file 0x1735ab) section=.text ===
+=== 0x58af9b (file 0x18a39b) section=.text ===
+  0058af6b: push     ecx
+  0058af6c: mov      ecx, dword ptr [ebp + 8]
+  0058af6f: call     0x58ef60
+  0058af74: movsx    edx, byte ptr [eax]
+  0058af77: and      edx, 0x3f
+  0058af7a: shl      edx, 6
+  0058af7d: or       esi, edx
+  0058af7f: mov      eax, dword ptr [ebp - 8]
+  0058af82: add      eax, 2
+  0058af85: push     eax
+  0058af86: mov      ecx, dword ptr [ebp + 8]
+  0058af89: call     0x58ef60
+  0058af8e: movsx    ecx, byte ptr [eax]
+  0058af91: and      ecx, 0x3f
+  0058af94: or       esi, ecx
+  0058af96: mov      dword ptr [ebp - 0xc], esi
+  0058af99: mov      dword ptr [ebp - 0x10], 3  <== IMM HERE
+  0058afa0: jmp      0x58b00c
+  0058afa2: mov      edx, dword ptr [ebp - 8]
+  0058afa5: push     edx
+  0058afa6: mov      ecx, dword ptr [ebp + 8]
+  0058afa9: call     0x58ef60
+  0058afae: movsx    esi, byte ptr [eax]
+  0058afb1: and      esi, 7
+  0058afb4: shl      esi, 0x12
+  0058afb7: mov      eax, dword ptr [ebp - 8]
+  0058afba: add      eax, 1
+  0058afbd: push     eax
+  0058afbe: mov      ecx, dword ptr [ebp + 8]
+  0058afc1: call     0x58ef60
+  0058afc6: movsx    ecx, byte ptr [eax]
+  0058afc9: and      ecx, 0x3f
+  0058afcc: shl      ecx, 0xc
+  0058afcf: or       esi, ecx
+  0058afd1: mov      edx, dword ptr [ebp - 8]
+  0058afd4: add      edx, 2
+  0058afd7: push     edx
+  0058afd8: mov      ecx, dword ptr [ebp + 8]
+  0058afdb: call     0x58ef60
+  0058afe0: movsx    eax, byte ptr [eax]
+  0058afe3: and      eax, 0x3f
+  0058afe6: shl      eax, 6
+  0058afe9: or       esi, eax
+=== 0x6543ec (file 0x2537ec) section=.text ===
+  006543bc: call     0x4d3050
+  006543c1: mov      esp, ebp
+  006543c3: pop      ebp
+  006543c4: ret      4
+  006543c7: int3     
+  006543c8: int3     
+  006543c9: int3     
+  006543ca: int3     
+  006543cb: int3     
+  006543cc: int3     
+  006543cd: int3     
+  006543ce: int3     
+  006543cf: int3     
+  006543d0: push     ebp
+  006543d1: mov      ebp, esp
+  006543d3: sub      esp, 8
+  006543d6: mov      dword ptr [ebp - 4], ecx
+  006543d9: mov      ecx, dword ptr [ebp - 4]
+  006543dc: add      ecx, 0xb8
+  006543e2: call     0x4d0f50
+  006543e7: push     eax
+  006543e8: mov      ecx, dword ptr [ebp - 4]
+  006543eb: call     0x6547e0  <== IMM HERE
+  006543f0: movzx    eax, al
+  006543f3: test     eax, eax
+  006543f5: jne      0x654400
+  006543f7: mov      dword ptr [ebp - 8], 1
+  006543fe: jmp      0x654407
+  00654400: mov      dword ptr [ebp - 8], 0
+  00654407: movzx    eax, byte ptr [ebp - 8]
+  0065440b: mov      esp, ebp
+  0065440d: pop      ebp
+  0065440e: ret      
+  0065440f: int3     
+  00654410: push     ebp
+  00654411: mov      ebp, esp
+  00654413: sub      esp, 0x44
+  00654416: mov      dword ptr [ebp - 8], ecx
+  00654419: mov      byte ptr [ebp - 1], 0
+  0065441d: mov      dword ptr [ebp - 0xc], 0
+  00654424: mov      eax, dword ptr [ebp - 8]
+  00654427: cmp      dword ptr [eax], 0
+  0065442a: jne      0x65445c
+  0065442c: mov      byte ptr [ebp - 1], 1
+  00654430: mov      ecx, dword ptr [ebp - 8]
+  00654433: xor      edx, edx
+  00654435: xor      eax, eax
+
+##### OGRE_MAGE_MASK=0x40c00 text_hits=0 total=1
+
+##### DK_MASK=0xbe000 text_hits=0 total=1
+
+##### PALADIN_MASK=0xb text_hits=99 total=234
+=== 0x40e34b (file 0xd74b) section=.text ===
+  0040e31b: add      cl, bh
+=== 0x41c44b (file 0x1b84b) section=.text ===
+  0041c41b: xor      eax, ebp
+  0041c41d: mov      dword ptr [ebp - 4], eax
+  0041c420: mov      ax, word ptr [0x844924]
+  0041c426: mov      edx, 0x811c9dc5
+  0041c42b: movq     xmm0, qword ptr [0x84491c]
+  0041c433: mov      word ptr [ebp - 0x14], ax
+  0041c437: mov      al, byte ptr [0x844926]
+  0041c43c: mov      byte ptr [ebp - 0x12], al
+  0041c43f: xor      eax, eax
+  0041c441: mov      dword ptr [ebp - 0x10], 0
+  0041c448: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0041c44f: mov      dword ptr [ebp - 8], 0xf
+  0041c456: movq     qword ptr [ebp - 0x1c], xmm0
+  0041c45b: mov      byte ptr [ebp - 0x11], 0
+  0041c45f: nop      
+  0041c460: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0041c465: inc      eax
+  0041c466: xor      ecx, edx
+  0041c468: imul     edx, ecx, 0x1000193
+  0041c46e: cmp      eax, 0xb
+  0041c471: jb       0x41c460
+  0041c473: mov      ecx, dword ptr [ebp - 4]
+  0041c476: xor      ecx, ebp
+  0041c478: mov      dword ptr [0x95c498], edx
+  0041c47e: call     0x7e91e5
+  0041c483: mov      esp, ebp
+  0041c485: pop      ebp
+  0041c486: ret      
+  0041c487: int3     
+  0041c488: int3     
+  0041c489: int3     
+  0041c48a: int3     
+  0041c48b: int3     
+  0041c48c: int3     
+  0041c48d: int3     
+  0041c48e: int3     
+  0041c48f: int3     
+  0041c490: push     ebp
+  0041c491: mov      ebp, esp
+  0041c493: sub      esp, 0x1c
+  0041c496: mov      eax, dword ptr [0x90d6c0]
+=== 0x41c4cb (file 0x1b8cb) section=.text ===
+  0041c49b: xor      eax, ebp
+  0041c49d: mov      dword ptr [ebp - 4], eax
+  0041c4a0: mov      ax, word ptr [0x844930]
+  0041c4a6: mov      edx, 0x811c9dc5
+  0041c4ab: movq     xmm0, qword ptr [0x844928]
+  0041c4b3: mov      word ptr [ebp - 0x14], ax
+  0041c4b7: mov      al, byte ptr [0x844932]
+  0041c4bc: mov      byte ptr [ebp - 0x12], al
+  0041c4bf: xor      eax, eax
+  0041c4c1: mov      dword ptr [ebp - 0x10], 0
+  0041c4c8: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0041c4cf: mov      dword ptr [ebp - 8], 0xf
+  0041c4d6: movq     qword ptr [ebp - 0x1c], xmm0
+  0041c4db: mov      byte ptr [ebp - 0x11], 0
+  0041c4df: nop      
+  0041c4e0: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0041c4e5: inc      eax
+  0041c4e6: xor      ecx, edx
+  0041c4e8: imul     edx, ecx, 0x1000193
+  0041c4ee: cmp      eax, 0xb
+  0041c4f1: jb       0x41c4e0
+  0041c4f3: mov      ecx, dword ptr [ebp - 4]
+  0041c4f6: xor      ecx, ebp
+  0041c4f8: mov      dword ptr [0x95c49c], edx
+  0041c4fe: call     0x7e91e5
+  0041c503: mov      esp, ebp
+  0041c505: pop      ebp
+  0041c506: ret      
+  0041c507: int3     
+  0041c508: int3     
+  0041c509: int3     
+  0041c50a: int3     
+  0041c50b: int3     
+  0041c50c: int3     
+  0041c50d: int3     
+  0041c50e: int3     
+  0041c50f: int3     
+  0041c510: push     ebp
+  0041c511: mov      ebp, esp
+  0041c513: sub      esp, 0x20
+  0041c516: mov      eax, dword ptr [0x90d6c0]
+=== 0x41c70b (file 0x1bb0b) section=.text ===
+  0041c6db: xor      eax, ebp
+  0041c6dd: mov      dword ptr [ebp - 4], eax
+  0041c6e0: mov      ax, word ptr [0x844968]
+  0041c6e6: mov      edx, 0x811c9dc5
+  0041c6eb: movq     xmm0, qword ptr [0x844960]
+  0041c6f3: mov      word ptr [ebp - 0x14], ax
+  0041c6f7: mov      al, byte ptr [0x84496a]
+  0041c6fc: mov      byte ptr [ebp - 0x12], al
+  0041c6ff: xor      eax, eax
+  0041c701: mov      dword ptr [ebp - 0x10], 0
+  0041c708: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0041c70f: mov      dword ptr [ebp - 8], 0xf
+  0041c716: movq     qword ptr [ebp - 0x1c], xmm0
+  0041c71b: mov      byte ptr [ebp - 0x11], 0
+  0041c71f: nop      
+  0041c720: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0041c725: inc      eax
+  0041c726: xor      ecx, edx
+  0041c728: imul     edx, ecx, 0x1000193
+  0041c72e: cmp      eax, 0xb
+  0041c731: jb       0x41c720
+  0041c733: mov      ecx, dword ptr [ebp - 4]
+  0041c736: xor      ecx, ebp
+  0041c738: mov      dword ptr [0x95c4a8], edx
+  0041c73e: call     0x7e91e5
+  0041c743: mov      esp, ebp
+  0041c745: pop      ebp
+  0041c746: ret      
+  0041c747: int3     
+  0041c748: int3     
+  0041c749: int3     
+  0041c74a: int3     
+  0041c74b: int3     
+  0041c74c: int3     
+  0041c74d: int3     
+  0041c74e: int3     
+  0041c74f: int3     
+  0041c750: push     ebp
+  0041c751: mov      ebp, esp
+  0041c753: sub      esp, 0x1c
+  0041c756: mov      eax, dword ptr [0x90d6c0]
+=== 0x41c78b (file 0x1bb8b) section=.text ===
+  0041c75b: xor      eax, ebp
+  0041c75d: mov      dword ptr [ebp - 4], eax
+  0041c760: mov      ax, word ptr [0x844974]
+  0041c766: mov      edx, 0x811c9dc5
+  0041c76b: movq     xmm0, qword ptr [0x84496c]
+  0041c773: mov      word ptr [ebp - 0x14], ax
+  0041c777: mov      al, byte ptr [0x844976]
+  0041c77c: mov      byte ptr [ebp - 0x12], al
+  0041c77f: xor      eax, eax
+  0041c781: mov      dword ptr [ebp - 0x10], 0
+  0041c788: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0041c78f: mov      dword ptr [ebp - 8], 0xf
+  0041c796: movq     qword ptr [ebp - 0x1c], xmm0
+  0041c79b: mov      byte ptr [ebp - 0x11], 0
+  0041c79f: nop      
+  0041c7a0: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0041c7a5: inc      eax
+  0041c7a6: xor      ecx, edx
+  0041c7a8: imul     edx, ecx, 0x1000193
+  0041c7ae: cmp      eax, 0xb
+  0041c7b1: jb       0x41c7a0
+  0041c7b3: mov      ecx, dword ptr [ebp - 4]
+  0041c7b6: xor      ecx, ebp
+  0041c7b8: mov      dword ptr [0x95c4ac], edx
+  0041c7be: call     0x7e91e5
+  0041c7c3: mov      esp, ebp
+  0041c7c5: pop      ebp
+  0041c7c6: ret      
+  0041c7c7: int3     
+  0041c7c8: int3     
+  0041c7c9: int3     
+  0041c7ca: int3     
+  0041c7cb: int3     
+  0041c7cc: int3     
+  0041c7cd: int3     
+  0041c7ce: int3     
+  0041c7cf: int3     
+  0041c7d0: push     ebp
+  0041c7d1: mov      ebp, esp
+  0041c7d3: sub      esp, 0x20
+  0041c7d6: mov      eax, dword ptr [0x90d6c0]
+=== 0x41d94b (file 0x1cd4b) section=.text ===
+  0041d91b: add      cl, bh
+=== 0x42f6db (file 0x2eadb) section=.text ===
+  0042f6ab: xor      eax, ebp
+  0042f6ad: mov      dword ptr [ebp - 4], eax
+  0042f6b0: mov      ax, word ptr [0x844924]
+  0042f6b6: mov      edx, 0x811c9dc5
+  0042f6bb: movq     xmm0, qword ptr [0x84491c]
+  0042f6c3: mov      word ptr [ebp - 0x14], ax
+  0042f6c7: mov      al, byte ptr [0x844926]
+  0042f6cc: mov      byte ptr [ebp - 0x12], al
+  0042f6cf: xor      eax, eax
+  0042f6d1: mov      dword ptr [ebp - 0x10], 0
+  0042f6d8: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0042f6df: mov      dword ptr [ebp - 8], 0xf
+  0042f6e6: movq     qword ptr [ebp - 0x1c], xmm0
+  0042f6eb: mov      byte ptr [ebp - 0x11], 0
+  0042f6ef: nop      
+  0042f6f0: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0042f6f5: inc      eax
+  0042f6f6: xor      ecx, edx
+  0042f6f8: imul     edx, ecx, 0x1000193
+  0042f6fe: cmp      eax, 0xb
+  0042f701: jb       0x42f6f0
+  0042f703: mov      ecx, dword ptr [ebp - 4]
+  0042f706: xor      ecx, ebp
+  0042f708: mov      dword ptr [0x95d198], edx
+  0042f70e: call     0x7e91e5
+  0042f713: mov      esp, ebp
+  0042f715: pop      ebp
+  0042f716: ret      
+  0042f717: int3     
+  0042f718: int3     
+  0042f719: int3     
+  0042f71a: int3     
+  0042f71b: int3     
+  0042f71c: int3     
+  0042f71d: int3     
+  0042f71e: int3     
+  0042f71f: int3     
+  0042f720: push     ebp
+  0042f721: mov      ebp, esp
+  0042f723: sub      esp, 0x1c
+  0042f726: mov      eax, dword ptr [0x90d6c0]
+=== 0x42f75b (file 0x2eb5b) section=.text ===
+  0042f72b: xor      eax, ebp
+  0042f72d: mov      dword ptr [ebp - 4], eax
+  0042f730: mov      ax, word ptr [0x844930]
+  0042f736: mov      edx, 0x811c9dc5
+  0042f73b: movq     xmm0, qword ptr [0x844928]
+  0042f743: mov      word ptr [ebp - 0x14], ax
+  0042f747: mov      al, byte ptr [0x844932]
+  0042f74c: mov      byte ptr [ebp - 0x12], al
+  0042f74f: xor      eax, eax
+  0042f751: mov      dword ptr [ebp - 0x10], 0
+  0042f758: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0042f75f: mov      dword ptr [ebp - 8], 0xf
+  0042f766: movq     qword ptr [ebp - 0x1c], xmm0
+  0042f76b: mov      byte ptr [ebp - 0x11], 0
+  0042f76f: nop      
+  0042f770: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0042f775: inc      eax
+  0042f776: xor      ecx, edx
+  0042f778: imul     edx, ecx, 0x1000193
+  0042f77e: cmp      eax, 0xb
+  0042f781: jb       0x42f770
+  0042f783: mov      ecx, dword ptr [ebp - 4]
+  0042f786: xor      ecx, ebp
+  0042f788: mov      dword ptr [0x95d19c], edx
+  0042f78e: call     0x7e91e5
+  0042f793: mov      esp, ebp
+  0042f795: pop      ebp
+  0042f796: ret      
+  0042f797: int3     
+  0042f798: int3     
+  0042f799: int3     
+  0042f79a: int3     
+  0042f79b: int3     
+  0042f79c: int3     
+  0042f79d: int3     
+  0042f79e: int3     
+  0042f79f: int3     
+  0042f7a0: push     ebp
+  0042f7a1: mov      ebp, esp
+  0042f7a3: sub      esp, 0x20
+  0042f7a6: mov      eax, dword ptr [0x90d6c0]
+=== 0x42f99b (file 0x2ed9b) section=.text ===
+  0042f96b: xor      eax, ebp
+  0042f96d: mov      dword ptr [ebp - 4], eax
+  0042f970: mov      ax, word ptr [0x844968]
+  0042f976: mov      edx, 0x811c9dc5
+  0042f97b: movq     xmm0, qword ptr [0x844960]
+  0042f983: mov      word ptr [ebp - 0x14], ax
+  0042f987: mov      al, byte ptr [0x84496a]
+  0042f98c: mov      byte ptr [ebp - 0x12], al
+  0042f98f: xor      eax, eax
+  0042f991: mov      dword ptr [ebp - 0x10], 0
+  0042f998: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0042f99f: mov      dword ptr [ebp - 8], 0xf
+  0042f9a6: movq     qword ptr [ebp - 0x1c], xmm0
+  0042f9ab: mov      byte ptr [ebp - 0x11], 0
+  0042f9af: nop      
+  0042f9b0: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0042f9b5: inc      eax
+  0042f9b6: xor      ecx, edx
+  0042f9b8: imul     edx, ecx, 0x1000193
+  0042f9be: cmp      eax, 0xb
+  0042f9c1: jb       0x42f9b0
+  0042f9c3: mov      ecx, dword ptr [ebp - 4]
+  0042f9c6: xor      ecx, ebp
+  0042f9c8: mov      dword ptr [0x95d1a8], edx
+  0042f9ce: call     0x7e91e5
+  0042f9d3: mov      esp, ebp
+  0042f9d5: pop      ebp
+  0042f9d6: ret      
+  0042f9d7: int3     
+  0042f9d8: int3     
+  0042f9d9: int3     
+  0042f9da: int3     
+  0042f9db: int3     
+  0042f9dc: int3     
+  0042f9dd: int3     
+  0042f9de: int3     
+  0042f9df: int3     
+  0042f9e0: push     ebp
+  0042f9e1: mov      ebp, esp
+  0042f9e3: sub      esp, 0x1c
+  0042f9e6: mov      eax, dword ptr [0x90d6c0]
+=== 0x42fa1b (file 0x2ee1b) section=.text ===
+  0042f9eb: xor      eax, ebp
+  0042f9ed: mov      dword ptr [ebp - 4], eax
+  0042f9f0: mov      ax, word ptr [0x844974]
+  0042f9f6: mov      edx, 0x811c9dc5
+  0042f9fb: movq     xmm0, qword ptr [0x84496c]
+  0042fa03: mov      word ptr [ebp - 0x14], ax
+  0042fa07: mov      al, byte ptr [0x844976]
+  0042fa0c: mov      byte ptr [ebp - 0x12], al
+  0042fa0f: xor      eax, eax
+  0042fa11: mov      dword ptr [ebp - 0x10], 0
+  0042fa18: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0042fa1f: mov      dword ptr [ebp - 8], 0xf
+  0042fa26: movq     qword ptr [ebp - 0x1c], xmm0
+  0042fa2b: mov      byte ptr [ebp - 0x11], 0
+  0042fa2f: nop      
+  0042fa30: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  0042fa35: inc      eax
+  0042fa36: xor      ecx, edx
+  0042fa38: imul     edx, ecx, 0x1000193
+  0042fa3e: cmp      eax, 0xb
+  0042fa41: jb       0x42fa30
+  0042fa43: mov      ecx, dword ptr [ebp - 4]
+  0042fa46: xor      ecx, ebp
+  0042fa48: mov      dword ptr [0x95d1ac], edx
+  0042fa4e: call     0x7e91e5
+  0042fa53: mov      esp, ebp
+  0042fa55: pop      ebp
+  0042fa56: ret      
+  0042fa57: int3     
+  0042fa58: int3     
+  0042fa59: int3     
+  0042fa5a: int3     
+  0042fa5b: int3     
+  0042fa5c: int3     
+  0042fa5d: int3     
+  0042fa5e: int3     
+  0042fa5f: int3     
+  0042fa60: push     ebp
+  0042fa61: mov      ebp, esp
+  0042fa63: sub      esp, 0x20
+  0042fa66: mov      eax, dword ptr [0x90d6c0]
+=== 0x43046b (file 0x2f86b) section=.text ===
+  0043043b: xor      eax, ebp
+  0043043d: mov      dword ptr [ebp - 4], eax
+  00430440: mov      ax, word ptr [0x844924]
+  00430446: mov      edx, 0x811c9dc5
+  0043044b: movq     xmm0, qword ptr [0x84491c]
+  00430453: mov      word ptr [ebp - 0x14], ax
+  00430457: mov      al, byte ptr [0x844926]
+  0043045c: mov      byte ptr [ebp - 0x12], al
+  0043045f: xor      eax, eax
+  00430461: mov      dword ptr [ebp - 0x10], 0
+  00430468: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0043046f: mov      dword ptr [ebp - 8], 0xf
+  00430476: movq     qword ptr [ebp - 0x1c], xmm0
+  0043047b: mov      byte ptr [ebp - 0x11], 0
+  0043047f: nop      
+  00430480: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  00430485: inc      eax
+  00430486: xor      ecx, edx
+  00430488: imul     edx, ecx, 0x1000193
+  0043048e: cmp      eax, 0xb
+  00430491: jb       0x430480
+  00430493: mov      ecx, dword ptr [ebp - 4]
+  00430496: xor      ecx, ebp
+  00430498: mov      dword ptr [0x95d21c], edx
+  0043049e: call     0x7e91e5
+  004304a3: mov      esp, ebp
+  004304a5: pop      ebp
+  004304a6: ret      
+  004304a7: int3     
+  004304a8: int3     
+  004304a9: int3     
+  004304aa: int3     
+  004304ab: int3     
+  004304ac: int3     
+  004304ad: int3     
+  004304ae: int3     
+  004304af: int3     
+  004304b0: push     ebp
+  004304b1: mov      ebp, esp
+  004304b3: sub      esp, 0x1c
+  004304b6: mov      eax, dword ptr [0x90d6c0]
+=== 0x43063b (file 0x2fa3b) section=.text ===
+  0043060b: xor      eax, ebp
+  0043060d: mov      dword ptr [ebp - 4], eax
+  00430610: mov      ax, word ptr [0x84685c]
+  00430616: mov      edx, 0x811c9dc5
+  0043061b: movq     xmm0, qword ptr [0x846854]
+  00430623: mov      word ptr [ebp - 0x14], ax
+  00430627: mov      al, byte ptr [0x84685e]
+  0043062c: mov      byte ptr [ebp - 0x12], al
+  0043062f: xor      eax, eax
+  00430631: mov      dword ptr [ebp - 0x10], 0
+  00430638: mov      dword ptr [ebp - 0xc], 0xb  <== IMM HERE
+  0043063f: mov      dword ptr [ebp - 8], 0xf
+  00430646: movq     qword ptr [ebp - 0x1c], xmm0
+  0043064b: mov      byte ptr [ebp - 0x11], 0
+  0043064f: nop      
+  00430650: movzx    ecx, byte ptr [ebp + eax - 0x1c]
+  00430655: inc      eax
+  00430656: xor      ecx, edx
+  00430658: imul     edx, ecx, 0x1000193
+  0043065e: cmp      eax, 0xb
+  00430661: jb       0x430650
+  00430663: mov      ecx, dword ptr [ebp - 4]
+  00430666: xor      ecx, ebp
+  00430668: mov      dword ptr [0x95d208], edx
+  0043066e: call     0x7e91e5
+  00430673: mov      esp, ebp
+  00430675: pop      ebp
+  00430676: ret      
+  00430677: int3     
+  00430678: int3     
+  00430679: int3     
+  0043067a: int3     
+  0043067b: int3     
+  0043067c: int3     
+  0043067d: int3     
+  0043067e: int3     
+  0043067f: int3     
+  00430680: mov      eax, dword ptr [0x95d19c]
+  00430685: mov      dword ptr [0x95d218], eax
+  0043068a: ret      
+
+##### spell_%d_tooltip at file 0x4447bc
+
+##### cmp unit==mage near mask imm: 0 hits
+
+##### spellish 110-u32 tables in .rdata: 0

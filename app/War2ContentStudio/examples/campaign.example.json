@@ -1,0 +1,16 @@
+{
+  "Version": 1,
+  "Name": "Example Campaign",
+  "CampaignFolderName": "Custom",
+  "GameRootPath": "C:\\Program Files (x86)\\Warcraft II Remastered",
+  "Missions": [
+    {
+      "Id": "m1",
+      "Title": "Mission 1",
+      "SourcePudPath": "C:\\path\\to\\mission1.pud",
+      "DeployFileName": "mission1.pud",
+      "Briefing": "Destroy all enemies.",
+      "SuggestedRace": 0
+    }
+  ]
+}

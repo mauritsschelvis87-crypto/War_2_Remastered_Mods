@@ -1,0 +1,8 @@
+[
+  { "code": "en", "nativeName": "English" },
+  { "code": "nl", "nativeName": "Nederlands" },
+  { "code": "de", "nativeName": "Deutsch" },
+  { "code": "es", "nativeName": "Español" },
+  { "code": "fr", "nativeName": "Français" },
+  { "code": "pl", "nativeName": "Polski" }
+]

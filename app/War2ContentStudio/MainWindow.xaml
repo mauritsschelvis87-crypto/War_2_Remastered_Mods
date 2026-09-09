@@ -1,0 +1,199 @@
+<Window x:Class="War2ContentStudio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:War2ContentStudio.Views"
+        Title="War2 Content Studio"
+        Width="1400" Height="900"
+        MinWidth="1100" MinHeight="700"
+        Background="{StaticResource WindowBrush}"
+        Foreground="{StaticResource TextBrush}">
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="War2 Content Studio" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <TextBlock x:Name="StatusText" Margin="16,0,0,0" VerticalAlignment="Center" Opacity="0.85"/>
+        </StackPanel>
+
+        <TabControl Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource ControlBorderBrush}">
+            <TabItem Header="Map Editor">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="220"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0" Margin="0,0,8,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="File" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <WrapPanel>
+                                <Button Content="New" Click="NewMap_Click"/>
+                                <Button Content="Open…" Click="OpenPud_Click"/>
+                                <Button Content="Save" Click="SavePud_Click"/>
+                                <Button Content="Save as…" Click="SaveAsPud_Click"/>
+                            </WrapPanel>
+                            <WrapPanel Margin="0,4,0,0">
+                                <Button Content="Undo" Click="Undo_Click"/>
+                                <Button Content="Redo" Click="Redo_Click"/>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Margin="0,10,0,8">
+                            <TextBlock Text="Tool" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <ComboBox x:Name="ToolCombo" SelectionChanged="ToolCombo_SelectionChanged">
+                                <ComboBoxItem Content="Terrain brush" Tag="Terrain"/>
+                                <ComboBoxItem Content="Place unit / building" Tag="Unit"/>
+                                <ComboBoxItem Content="Eraser (units)" Tag="Eraser"/>
+                            </ComboBox>
+                            <StackPanel x:Name="OwnerPanel" Margin="0,8,0,0">
+                                <TextBlock Text="Owner (player 1–8)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                <ComboBox x:Name="OwnerCombo" SelectionChanged="OwnerCombo_SelectionChanged"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Grid Grid.Row="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Name="PaletteHeader" Text="Terrain palette" FontWeight="SemiBold"/>
+                            <TextBox x:Name="PaletteFilterBox" Grid.Row="1" Margin="0,6,0,6"
+                                     TextChanged="PaletteFilterBox_TextChanged"
+                                     ToolTip="Filter terrain or units"
+                                     Tag="Search…"/>
+                            <ListBox x:Name="PaletteList" Grid.Row="2"
+                                     SelectionChanged="PaletteList_SelectionChanged"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.GroupStyle>
+                                    <GroupStyle>
+                                        <GroupStyle.HeaderTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource AccentBrush}"
+                                                           Margin="0,8,0,4"/>
+                                            </DataTemplate>
+                                        </GroupStyle.HeaderTemplate>
+                                    </GroupStyle>
+                                </ListBox.GroupStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="14" Height="14" Background="{Binding Swatch}"
+                                                    BorderBrush="{StaticResource ControlBorderBrush}"
+                                                    BorderThickness="1" Margin="0,0,8,0"/>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}"/>
+                                                <TextBlock Text="{Binding Detail}" Opacity="0.55" FontSize="10"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+
+                        <StackPanel Grid.Row="3" Margin="0,10,0,0">
+                            <TextBlock Text="Zoom" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock x:Name="ZoomLabel" Text="4×" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Ctrl+scroll on map" Opacity="0.65" VerticalAlignment="Center" FontSize="11"/>
+                            </StackPanel>
+                            <Slider x:Name="ZoomSlider" Minimum="1" Maximum="256" Value="4"
+                                    TickFrequency="1" IsSnapToTickEnabled="True"
+                                    ValueChanged="ZoomSlider_ValueChanged"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Column="1" BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1">
+                        <ScrollViewer x:Name="MapScroll" HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto" Background="#FF0E1524"
+                                      PreviewMouseWheel="MapScroll_PreviewMouseWheel">
+                            <Canvas x:Name="MapCanvas" Background="#FF0E1524"
+                                    MouseLeftButtonDown="MapCanvas_MouseLeftButtonDown"
+                                    MouseMove="MapCanvas_MouseMove"/>
+                        </ScrollViewer>
+                    </Border>
+
+                    <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                        <TextBlock Text="Map info" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <TextBlock x:Name="MapPathText" TextWrapping="Wrap" Opacity="0.85" Margin="0,0,0,8"/>
+                        <TextBlock Text="Description"/>
+                        <TextBox x:Name="DescriptionBox" Margin="0,4,0,8" LostFocus="DescriptionBox_LostFocus"/>
+                        <TextBlock Text="Era (tileset)"/>
+                        <ComboBox x:Name="EraCombo" Margin="0,4,0,8" SelectionChanged="EraCombo_SelectionChanged">
+                            <ComboBoxItem Content="Forest"/>
+                            <ComboBoxItem Content="Winter"/>
+                            <ComboBoxItem Content="Wasteland"/>
+                            <ComboBoxItem Content="Swamp"/>
+                        </ComboBox>
+                        <TextBlock x:Name="UdtaStatusText" TextWrapping="Wrap" Opacity="0.85" Margin="0,0,0,8"/>
+                        <TextBlock Text="Minimap preview" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <Border BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1"
+                                HorizontalAlignment="Left" Background="#FF0E1524">
+                            <Image x:Name="PreviewImage" Stretch="None"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Map Settings">
+                <views:MapSettingsView x:Name="MapSettings"/>
+            </TabItem>
+
+            <TabItem Header="Campaign">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock Text="Campaign project" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="New project" Click="NewCampaign_Click"/>
+                            <Button Content="Open project…" Click="OpenCampaign_Click"/>
+                            <Button Content="Save project" Click="SaveCampaign_Click"/>
+                        </StackPanel>
+                        <TextBlock Text="Game install (folder with x86)" Margin="0,8,0,4"/>
+                        <TextBox x:Name="GameRootBox" Margin="0,0,0,8"/>
+                        <TextBlock Text="Campaign folder name (under x86/Data/Campaign)"/>
+                        <TextBox x:Name="CampaignFolderBox" Text="Custom" Margin="0,4,0,8"/>
+                        <TextBlock Text="Project name"/>
+                        <TextBox x:Name="CampaignNameBox" Text="Custom Campaign" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="MissionGrid" Grid.Row="1" AutoGenerateColumns="False"
+                              CanUserAddRows="True" Background="{StaticResource InputBackgroundBrush}"
+                              Foreground="{StaticResource TextBrush}" BorderBrush="{StaticResource ControlBorderBrush}"
+                              RowBackground="{StaticResource InputBackgroundBrush}"
+                              AlternatingRowBackground="{StaticResource CardBrush}">
+                        <DataGrid.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
+                            <DataGridTextColumn Header="Source .pud" Binding="{Binding SourcePudPath}" Width="2*"/>
+                            <DataGridTextColumn Header="Deploy file" Binding="{Binding DeployFileName}" Width="*"/>
+                            <DataGridTextColumn Header="Briefing" Binding="{Binding Briefing}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                        <Button Content="Deploy to game (with backup)" Click="DeployCampaign_Click"/>
+                        <TextBox x:Name="DeployLogBox" Height="120" Margin="0,8,0,0"
+                                 IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

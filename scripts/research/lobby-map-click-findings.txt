@@ -1,0 +1,41 @@
+MP lobby map-name click — findings (2026-09-09)
+
+Goal: click map name in Remastered MP lobby → explorer /select the .pud
+
+Classic BNE (lobby_map.w2p)
+- MAP_NAME  0x004ABB0C
+- MAP_PATH  0x004ABFA4
+- GAME_MODE 0x004AE430 (== 0x0D in lobby)
+- MAP_LOBBY 0x004D3C9D (!= 0 in lobby)
+
+Remastered Warcraft II.exe (image base 0x400000, SizeOfImage 0x62B000)
+- Those four VAs are CODE, not string/data buffers (offline dump).
+- No direct push/lea dword refs to ASCII "mp_lobby_map" (0x8457BC) — keys go through the string/resource layer.
+- Static .pud paths in rdata are campaign templates only (Campaign\Human\…).
+
+Working signals reused from other hooks
+- Match-active byte: VA 0x009B1798 (msg ring init). 1 = in match, 0 = menus/lobby.
+  ChatNameColorHook: g_msgInitFlag. Prefer "not in match" before opening maps.
+
+Path resolve strategy (runtime, injected DLL)
+- Do NOT trust classic MAP_PATH.
+- On click: scan MEM_COMMIT|PAGE_READWRITE regions OUTSIDE the game image for
+  ASCII/UTF-16 paths ending in .pud/.PUD that PathFileExists.
+- Prefer paths containing \Maps\, \AllMaps\, Scenario, Ladder, or Saved Games\Warcraft2Remastered.
+- Reject pure Campaign\… static copies by requiring writable-memory origin.
+- Fallback: if only a basename is found, index under <game>\x86\Maps (+ AllMaps/Scenario/Ladder).
+
+Hitbox (client-relative fractions of the game window)
+- Default: x 0.05–0.62, y 0.07–0.30 of client size (Map label + value row on remaster lobby).
+- Tunable later via lobby-map-click.ini if needed; shipped defaults are hardcoded.
+
+Lobby gate
+- Foreground window belongs to Warcraft II.exe
+- msgInitFlag == 0 (not in an active match)
+- Cursor inside hitbox
+- At least one resolved existing .pud from writable scan / Maps index
+
+Open action
+- ShellExecuteW explorer.exe /select,"<fullpath>"
+
+Do NOT prologue-hook lobby layout 0x005362E0 (prior crash series).

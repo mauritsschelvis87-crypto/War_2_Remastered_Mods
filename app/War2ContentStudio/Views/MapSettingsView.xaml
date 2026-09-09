@@ -1,0 +1,81 @@
+<UserControl x:Class="War2ContentStudio.Views.MapSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="4">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Player" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <ComboBox x:Name="PlayerCombo" Width="120" SelectionChanged="PlayerCombo_SelectionChanged"/>
+        </StackPanel>
+        <TabControl Grid.Row="1">
+            <TabItem Header="Player">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Controller" Margin="0,0,8,8"/>
+                    <ComboBox x:Name="ControllerCombo" Grid.Row="0" Grid.Column="1" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Race" Margin="0,0,8,8"/>
+                    <ComboBox x:Name="RaceCombo" Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Starting gold" Margin="0,0,8,8"/>
+                    <TextBox x:Name="GoldBox" Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Starting lumber" Margin="0,0,8,8"/>
+                    <TextBox x:Name="LumberBox" Grid.Row="3" Grid.Column="1" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Starting oil" Margin="0,0,8,8"/>
+                    <TextBox x:Name="OilBox" Grid.Row="4" Grid.Column="1" Margin="0,0,0,8"/>
+                    <TextBlock Grid.Row="5" Grid.Column="0" Text="AI type" Margin="0,0,8,8"/>
+                    <ComboBox x:Name="AiCombo" Grid.Row="5" Grid.Column="1"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Units allowed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <WrapPanel x:Name="UnitAllowPanel" Margin="8"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Spells allowed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <WrapPanel x:Name="SpellAllowPanel" Margin="8"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Upgrades allowed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <WrapPanel x:Name="UpgradeAllowPanel" Margin="8"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Upgrade costs">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <CheckBox x:Name="UseDefaultUpgradesBox" Content="Use default upgrade data (vanilla costs)"
+                              Margin="0,0,0,8" Checked="UseDefaultUpgradesBox_Changed"
+                              Unchecked="UseDefaultUpgradesBox_Changed"/>
+                    <DataGrid x:Name="UpgradeGrid" Grid.Row="1" AutoGenerateColumns="False"
+                              CanUserAddRows="False" IsReadOnly="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="40" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Upgrade" Binding="{Binding Name}" Width="2*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Time (×6s)" Binding="{Binding BuildTime}" Width="*"/>
+                            <DataGridTextColumn Header="Gold" Binding="{Binding Gold}" Width="*"/>
+                            <DataGridTextColumn Header="Lumber" Binding="{Binding Lumber}" Width="*"/>
+                            <DataGridTextColumn Header="Oil" Binding="{Binding Oil}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

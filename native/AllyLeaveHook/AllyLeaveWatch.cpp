@@ -1,9 +1,11 @@
 // Background watcher: when Extra features are ON in extra-features.json, inject
 // the matching hooks into Warcraft II without keeping Modding Studio open.
 // Registers itself in HKCU Run so Extra preferences survive reboot.
+// Lobby map click: open the map .jpg externally (never ShellExecute from the game).
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shellapi.h>
 #include <tlhelp32.h>
 #include <cstdio>
 #include <cstring>
@@ -14,42 +16,34 @@ namespace {
 
 constexpr wchar_t kMutexName[] = L"Local\\War2AllyLeaveWatch";
 constexpr wchar_t kQuitEventName[] = L"Local\\War2AllyLeaveWatchQuit";
+constexpr wchar_t kOpenMapEventName[] = L"Local\\War2LobbyMapOpenRequest";
 constexpr wchar_t kRunValueName[] = L"War2AllyLeaveWatch";
 constexpr DWORD kPollMs = 2000;
+constexpr DWORD kOpenPollMs = 250;
 
 struct ExtraFlags {
     bool allyLeave = false;
     bool pauseChat = false;
     bool dragSelect = false;
     bool chatNameColor = false;
-    // Human gone marks need the chat hook injected too: it watches the
-    // "<name> Left / Dropped / Eliminated" system lines (recolor stays off).
     bool humanLeave = false;
-    // Live recolor of HD unit sprites to the Studio player colors.
     bool unitColor = false;
-    // "[HH:MM] " prefix on chat lines (lives in the chat DLL, own flag).
     bool chatTimestamps = false;
-    // PageUp/PageDown chat history recall (lives in the chat DLL, own flag).
     bool chatHistory = false;
-    // MP lobby chat scroll preserved when slots refresh.
     bool mpLobbyChatScrollFix = false;
-    // Observe button on defeat popup (close screen, keep watching).
     bool endGameObserve = false;
-    // Feature 6: gold lobby team digit on F11 alliances names.
     bool allianceTeamNumbers = false;
-    // Chat line "Name annihilated" when a computer is wipe-marked.
     bool computerAnnihilatedChat = false;
-    // "Blacksmith work complete" when a blacksmith upgrade finishes.
     bool blacksmithWorkComplete = false;
-    // MP match frame-gap monitor (lockstep stall proxy) for Studio tab.
     bool networkMonitor = false;
+    bool lobbyMapClick = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
                chatTimestamps || chatHistory || mpLobbyChatScrollFix || endGameObserve ||
                allianceTeamNumbers ||
-               computerAnnihilatedChat || blacksmithWorkComplete || networkMonitor;
+               computerAnnihilatedChat || blacksmithWorkComplete || networkMonitor ||
+               lobbyMapClick;
     }
-    // Leave/annihilated coloring needs the chat DLL even if ChatColoredNames is off.
     bool ChatDllWanted() const {
         return chatNameColor || humanLeave || computerAnnihilatedChat ||
                chatTimestamps || chatHistory || blacksmithWorkComplete ||
@@ -76,7 +70,6 @@ std::wstring ModuleExePath()
 
 std::wstring ExtraConfigPath()
 {
-    // native\ -> mod\extra-features.json
     std::wstring dir = ModuleDir() + L"..\\extra-features.json";
     wchar_t full[MAX_PATH]{};
     if (GetFullPathNameW(dir.c_str(), MAX_PATH, full, nullptr) == 0) return dir;
@@ -130,6 +123,7 @@ ExtraFlags ReadExtraFlags()
     flags.blacksmithWorkComplete = ReadJsonBool(buf, "BlacksmithWorkCompleteChat");
     flags.endGameObserve = ReadJsonBool(buf, "EndGameObserve");
     flags.networkMonitor = ReadJsonBool(buf, "NetworkMonitor");
+    flags.lobbyMapClick = ReadJsonBool(buf, "LobbyMapClickOpen");
     return flags;
 }
 
@@ -213,8 +207,112 @@ void SignalQuit()
     }
 }
 
+bool RunExportPudJpg(const wchar_t* pudPath, const wchar_t* jpgPath)
+{
+    if (!pudPath || !pudPath[0] || !jpgPath || !jpgPath[0]) return false;
+    const std::wstring script = ModuleDir() + L"Export-PudJpg.ps1";
+    if (GetFileAttributesW(script.c_str()) == INVALID_FILE_ATTRIBUTES) return false;
+
+    std::wstring cmd = L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"";
+    cmd += script;
+    cmd += L"\" -PudPath \"";
+    cmd += pudPath;
+    cmd += L"\" -OutputPath \"";
+    cmd += jpgPath;
+    cmd += L"\"";
+
+    std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end());
+    cmdBuf.push_back(L'\0');
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    PROCESS_INFORMATION pi{};
+    if (!CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, FALSE,
+                        CREATE_NO_WINDOW, nullptr, ModuleDir().c_str(), &si, &pi)) {
+        return false;
+    }
+    WaitForSingleObject(pi.hProcess, 90000);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    return GetFileAttributesW(jpgPath) != INVALID_FILE_ATTRIBUTES;
+}
+
+void ProcessLobbyMapOpenRequest()
+{
+    wchar_t tempDir[MAX_PATH]{};
+    GetTempPathW(MAX_PATH, tempDir);
+    wchar_t reqPath[MAX_PATH]{};
+    swprintf_s(reqPath, L"%swar2_lobby_map_open.txt", tempDir);
+    if (GetFileAttributesW(reqPath) == INVALID_FILE_ATTRIBUTES) return;
+
+    static DWORD s_lastOpenTick = 0;
+    const DWORD now = GetTickCount();
+    if (s_lastOpenTick != 0 && (now - s_lastOpenTick) < 2000) {
+        // Drop burst opens (startup spam / double inject).
+        DeleteFileW(reqPath);
+        return;
+    }
+
+    HANDLE h = CreateFileW(reqPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                           nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (h == INVALID_HANDLE_VALUE) return;
+
+    wchar_t pud[MAX_PATH]{};
+    DWORD read = 0;
+    const BOOL ok = ReadFile(h, pud, sizeof(pud) - sizeof(wchar_t), &read, nullptr);
+    CloseHandle(h);
+    DeleteFileW(reqPath);
+    if (!ok || read < sizeof(wchar_t)) return;
+    pud[read / sizeof(wchar_t)] = 0;
+    for (wchar_t* p = pud; *p; ++p) {
+        if (*p == L'\r' || *p == L'\n') { *p = 0; break; }
+    }
+    if (!pud[0] || GetFileAttributesW(pud) == INVALID_FILE_ATTRIBUTES) return;
+
+    // Sibling .jpg next to the .pud (create if missing).
+    wchar_t jpg[MAX_PATH]{};
+    wcsncpy_s(jpg, pud, _TRUNCATE);
+    wchar_t* dot = wcsrchr(jpg, L'.');
+    if (dot) wcscpy_s(dot, MAX_PATH - (dot - jpg), L".jpg");
+    else wcsncat_s(jpg, L".jpg", _TRUNCATE);
+
+    if (GetFileAttributesW(jpg) == INVALID_FILE_ATTRIBUTES) {
+        if (!RunExportPudJpg(pud, jpg)) {
+            wchar_t baseName[MAX_PATH]{};
+            const wchar_t* slash = wcsrchr(pud, L'\\');
+            if (!slash) slash = wcsrchr(pud, L'/');
+            wcsncpy_s(baseName, slash ? slash + 1 : pud, _TRUNCATE);
+            wchar_t* bdot = wcsrchr(baseName, L'.');
+            if (bdot) *bdot = 0;
+            wchar_t previewDir[MAX_PATH]{};
+            swprintf_s(previewDir, L"%sWar2MapPreviews", tempDir);
+            CreateDirectoryW(previewDir, nullptr);
+            swprintf_s(jpg, L"%s\\%s.jpg", previewDir, baseName);
+            if (GetFileAttributesW(jpg) == INVALID_FILE_ATTRIBUTES)
+                RunExportPudJpg(pud, jpg);
+        }
+    }
+
+    if (GetFileAttributesW(jpg) == INVALID_FILE_ATTRIBUTES) return;
+
+    s_lastOpenTick = now;
+    ShellExecuteW(nullptr, L"open", jpg, nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void WatchLoop(HANDLE quitEvent)
 {
+    // Drop any leftover open request from a previous crash/session.
+    {
+        wchar_t tempDir[MAX_PATH]{};
+        GetTempPathW(MAX_PATH, tempDir);
+        wchar_t stale[MAX_PATH]{};
+        swprintf_s(stale, L"%swar2_lobby_map_open.txt", tempDir);
+        DeleteFileW(stale);
+        swprintf_s(stale, L"%swar2_lobby_map_open.tmp", tempDir);
+        DeleteFileW(stale);
+    }
+
     DWORD allyInjectedPid = 0;
     DWORD pauseInjectedPid = 0;
     DWORD dragInjectedPid = 0;
@@ -222,13 +320,39 @@ void WatchLoop(HANDLE quitEvent)
     DWORD unitColorInjectedPid = 0;
     DWORD observeInjectedPid = 0;
     DWORD networkInjectedPid = 0;
+    DWORD lobbyMapInjectedPid = 0;
     ExtraFlags last = ReadExtraFlags();
     SetStartup(last.Any());
+    DWORD lastInjectTick = 0;
+
+    HANDLE openEvent = CreateEventW(nullptr, FALSE, FALSE, kOpenMapEventName);
 
     for (;;) {
         if (quitEvent && WaitForSingleObject(quitEvent, 0) == WAIT_OBJECT_0) {
             break;
         }
+
+        if (openEvent && WaitForSingleObject(openEvent, 0) == WAIT_OBJECT_0)
+            ProcessLobbyMapOpenRequest();
+        else
+            ProcessLobbyMapOpenRequest();
+
+        const DWORD now = GetTickCount();
+        const bool dueInject = (now - lastInjectTick) >= kPollMs;
+        if (!dueInject) {
+            if (quitEvent) {
+                HANDLE waits[2] = { quitEvent, openEvent ? openEvent : quitEvent };
+                const DWORD n = openEvent ? 2u : 1u;
+                const DWORD wr = WaitForMultipleObjects(n, waits, FALSE, kOpenPollMs);
+                if (wr == WAIT_OBJECT_0) break;
+                if (openEvent && wr == WAIT_OBJECT_0 + 1)
+                    ProcessLobbyMapOpenRequest();
+            } else {
+                Sleep(kOpenPollMs);
+            }
+            continue;
+        }
+        lastInjectTick = now;
 
         const ExtraFlags flags = ReadExtraFlags();
         const DWORD pid = FindWarcraftPid();
@@ -240,7 +364,8 @@ void WatchLoop(HANDLE quitEvent)
             flags.blacksmithWorkComplete != last.blacksmithWorkComplete ||
             flags.endGameObserve != last.endGameObserve ||
             flags.networkMonitor != last.networkMonitor ||
-            flags.allianceTeamNumbers != last.allianceTeamNumbers) {
+            flags.allianceTeamNumbers != last.allianceTeamNumbers ||
+            flags.lobbyMapClick != last.lobbyMapClick) {
             SetStartup(flags.Any());
             if (!flags.allyLeave && pid != 0) {
                 RunInjector(L"InjectAllyLeave.exe", false);
@@ -269,7 +394,10 @@ void WatchLoop(HANDLE quitEvent)
                 RunInjector(L"InjectNetworkMonitor.exe", false);
                 networkInjectedPid = 0;
             }
-            // Re-sync the chat DLL enable state on the next tick.
+            if (!flags.lobbyMapClick && pid != 0) {
+                RunInjector(L"InjectLobbyMapClick.exe", false);
+                lobbyMapInjectedPid = 0;
+            }
             chatNameInjectedPid = 0;
             last = flags;
         }
@@ -283,8 +411,6 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.dragSelect && pid != 0 && pid != dragInjectedPid) {
             if (RunInjector(L"InjectDragSelect.exe", true)) dragInjectedPid = pid;
         }
-        // Inject the chat DLL when colors, leave, or annihilate chat need it;
-        // name-recolor enable flag is separate (chatNameColor).
         if (flags.ChatDllWanted() && pid != 0 && pid != chatNameInjectedPid) {
             std::wstring chatArgs = flags.chatTimestamps ? L"--timestamps 1" : L"--timestamps 0";
             chatArgs += flags.chatHistory ? L" --history 1" : L" --history 0";
@@ -303,6 +429,9 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.networkMonitor && pid != 0 && pid != networkInjectedPid) {
             if (RunInjector(L"InjectNetworkMonitor.exe", true)) networkInjectedPid = pid;
         }
+        if (flags.lobbyMapClick && pid != 0 && pid != lobbyMapInjectedPid) {
+            if (RunInjector(L"InjectLobbyMapClick.exe", true)) lobbyMapInjectedPid = pid;
+        }
         if (pid == 0) {
             allyInjectedPid = 0;
             pauseInjectedPid = 0;
@@ -311,14 +440,11 @@ void WatchLoop(HANDLE quitEvent)
             unitColorInjectedPid = 0;
             observeInjectedPid = 0;
             networkInjectedPid = 0;
-        }
-
-        if (quitEvent) {
-            if (WaitForSingleObject(quitEvent, kPollMs) == WAIT_OBJECT_0) break;
-        } else {
-            Sleep(kPollMs);
+            lobbyMapInjectedPid = 0;
         }
     }
+
+    if (openEvent) CloseHandle(openEvent);
 }
 
 } // namespace

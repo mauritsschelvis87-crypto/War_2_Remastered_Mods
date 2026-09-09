@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace PlayerColorStudio;
@@ -10,15 +11,12 @@ public static class Localization
 
     public static string CurrentCode { get; private set; } = "en";
 
-    public static IReadOnlyList<LanguageOption> LanguageOptions { get; } = new[]
+    private static List<LanguageOption> _languageOptions = new()
     {
-        new LanguageOption("en", "English"),
-        new LanguageOption("nl", "Nederlands"),
-        new LanguageOption("fr", "Français"),
-        new LanguageOption("de", "Deutsch"),
-        new LanguageOption("pl", "Polski"),
-        new LanguageOption("es", "Español"),
+        new("en", "English"),
     };
+
+    public static IReadOnlyList<LanguageOption> LanguageOptions => _languageOptions;
 
     private static readonly Dictionary<string, Dictionary<string, string>> Tables = new(StringComparer.OrdinalIgnoreCase);
     private static Dictionary<string, string> _active = new();
@@ -26,11 +24,17 @@ public static class Localization
     public static void Initialize(string? preferredCode = null)
     {
         Tables.Clear();
-        foreach (var option in LanguageOptions)
+        _languageOptions = LoadLanguageOptions();
+
+        foreach (var option in _languageOptions)
             LoadTable(option.Code);
 
         if (Tables.Count == 0)
+        {
             Tables["en"] = BuildFallbackEnglish();
+            if (_languageOptions.Count == 0)
+                _languageOptions = new List<LanguageOption> { new("en", "English") };
+        }
 
         TrySetLanguage(preferredCode ?? "en");
     }
@@ -58,6 +62,51 @@ public static class Localization
 
     public static string Format(string key, params object[] args) =>
         string.Format(Get(key), args);
+
+    private static List<LanguageOption> LoadLanguageOptions()
+    {
+        foreach (var baseDir in GetLangSearchRoots())
+        {
+            var path = Path.Combine(baseDir, "languages.json");
+            if (!File.Exists(path)) continue;
+            try
+            {
+                var json = File.ReadAllText(path);
+                var entries = JsonSerializer.Deserialize<List<LanguageCatalogEntry>>(json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (entries is not { Count: > 0 }) continue;
+
+                var options = new List<LanguageOption>();
+                foreach (var entry in entries)
+                {
+                    var code = NormalizeCode(entry.Code);
+                    var name = string.IsNullOrWhiteSpace(entry.NativeName) ? code : entry.NativeName.Trim();
+                    if (string.IsNullOrWhiteSpace(code)) continue;
+                    if (options.Any(o => string.Equals(o.Code, code, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    options.Add(new LanguageOption(code, name));
+                }
+
+                if (options.Count > 0)
+                    return options;
+            }
+            catch
+            {
+                // try next root
+            }
+        }
+
+        // Fallback if languages.json is missing.
+        return new List<LanguageOption>
+        {
+            new("en", "English"),
+            new("nl", "Nederlands"),
+            new("de", "Deutsch"),
+            new("es", "Español"),
+            new("fr", "Français"),
+            new("pl", "Polski"),
+        };
+    }
 
     private static void LoadTable(string code)
     {
@@ -101,10 +150,10 @@ public static class Localization
         {
             "en" or "eng" or "english" => "en",
             "nl" or "dutch" or "nederlands" => "nl",
-            "fr" or "french" or "français" or "francais" => "fr",
             "de" or "german" or "deutsch" => "de",
-            "pl" or "polish" or "polski" => "pl",
             "es" or "spanish" or "español" or "espanol" => "es",
+            "fr" or "french" or "français" or "francais" => "fr",
+            "pl" or "polish" or "polski" => "pl",
             _ => c.Length >= 2 ? c[..2] : "en",
         };
     }
@@ -124,6 +173,12 @@ public static class Localization
         ["Settings.Language"] = "Language",
         ["Settings.Language.Help"] = "Choose the language for this app. Your choice is saved automatically.",
     };
+
+    private sealed class LanguageCatalogEntry
+    {
+        public string? Code { get; set; }
+        public string? NativeName { get; set; }
+    }
 }
 
 public sealed record LanguageOption(string Code, string NativeName);

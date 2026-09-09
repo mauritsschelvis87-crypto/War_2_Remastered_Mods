@@ -35,6 +35,7 @@ constexpr uint32_t kPreferredMsgRing = 0x009B17A0;  // 15 × 0xD0 map-message sl
 constexpr uint32_t kPreferredTimeNow = 0x00625940;  // ms since app start (QPC-based)
 constexpr uint32_t kBodyColor = 0xFFE3E3E3; // light gray / default chat body
 constexpr uint32_t kSystemMessageColor = 0xFF4BF0FF; // widget_text_yellow RGB(255,240,75)
+constexpr uint32_t kLobbyMapBlue = 0xFFFF9600; // RGB(0,150,255) via PackColor layout
 
 using DrawColoredFn = void(__cdecl*)(void* ui, const char* text, uint32_t color);
 using PushMapMsgFn = void(__cdecl*)(const char* text, uint32_t color, uint32_t duration);
@@ -44,9 +45,13 @@ volatile LONG g_enabled = 0;       // chat "Name:" lines
 volatile LONG g_timestamps = 0;    // "[HH:MM] " prefix on chat lines (own mod)
 volatile LONG g_historyOn = 0;     // PageUp/PageDown chat history recall (own mod)
 volatile LONG g_blacksmithWorkComplete = 0;
+volatile LONG g_lobbyMapBlue = 0;  // MP lobby map title drawn bright blue
 volatile LONG g_ready = 0;
 volatile LONG g_hits = 0;
 volatile LONG g_recolors = 0;
+char g_lobbyMapName[160]{};
+CRITICAL_SECTION g_lobbyMapLock;
+bool g_lobbyMapLockInit = false;
 
 uint8_t* g_drawSite = nullptr;
 uint8_t g_originalPrologue[8]{};
@@ -605,6 +610,39 @@ bool LobbyChatModsAllowed()
     if (IsActiveMatchChat()) return true;
     if (InterlockedCompareExchange(&g_historyOn, 0, 0)) return false;
     return true;
+}
+
+bool TextLooksLikeLobbyMapName(const char* text)
+{
+    if (!text || !text[0]) return false;
+    if (InterlockedCompareExchange(&g_lobbyMapBlue, 0, 0) == 0) return false;
+    // Only tint outside an active match (lobby / menus).
+    if (IsActiveMatchChat()) return false;
+
+    char want[160]{};
+    if (g_lobbyMapLockInit) EnterCriticalSection(&g_lobbyMapLock);
+    strcpy_s(want, g_lobbyMapName);
+    if (g_lobbyMapLockInit) LeaveCriticalSection(&g_lobbyMapLock);
+    if (!want[0]) return false;
+
+    if (_stricmp(text, want) == 0) return true;
+
+    // Lobby sometimes draws "Name.pud".
+    char withExt[168]{};
+    _snprintf_s(withExt, _TRUNCATE, "%s.pud", want);
+    if (_stricmp(text, withExt) == 0) return true;
+
+    // Or a path ending with the basename.
+    const size_t tlen = strlen(text);
+    const size_t wlen = strlen(want);
+    if (tlen > wlen) {
+        const char* tail = text + (tlen - wlen);
+        if (_stricmp(tail, want) == 0) {
+            const char prev = text[tlen - wlen - 1];
+            if (prev == '\\' || prev == '/' || prev == ' ') return true;
+        }
+    }
+    return false;
 }
 
 void ExitHistoryView()
@@ -1198,6 +1236,16 @@ extern "C" void __cdecl ChatNameColor_OnDrawColored(void* ui, const char* text, 
     if (!g_originalDraw) return;
     if (!ui || !text || !text[0]) {
         if (g_originalDraw) g_originalDraw(ui, text, color);
+        return;
+    }
+
+    // Lobby map title: whole string bright blue (driven by LobbyMapClickHook).
+    if (TextLooksLikeLobbyMapName(text)) {
+        InterlockedIncrement(&g_hits);
+        static LONG s_blueLog = 0;
+        if (InterlockedIncrement(&s_blueLog) <= 40)
+            Log("lobby-map-blue text=%.80s", text);
+        g_originalDraw(ui, text, kLobbyMapBlue);
         return;
     }
 
@@ -2033,6 +2081,8 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(module);
+        InitializeCriticalSection(&g_lobbyMapLock);
+        g_lobbyMapLockInit = true;
         if (InstallHook()) {
             InterlockedExchange(&g_ready, 1);
             InterlockedExchange(&g_enabled, 0);
@@ -2043,6 +2093,10 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
         }
     } else if (reason == DLL_PROCESS_DETACH) {
         RemoveHook();
+        if (g_lobbyMapLockInit) {
+            DeleteCriticalSection(&g_lobbyMapLock);
+            g_lobbyMapLockInit = false;
+        }
     }
     return TRUE;
 }
@@ -2105,4 +2159,20 @@ extern "C" __declspec(dllexport) DWORD __stdcall ChatNameColor_SetBlacksmithWork
         enabled ? 1 : 0, g_originalPush, g_upgradeCompleteSite, g_mapWorkCompleteSite,
         g_originalGameNotify, g_originalSpNotify);
     return static_cast<DWORD>(InterlockedCompareExchange(&g_ready, 0, 0));
+}
+
+// Lobby map title tint (whole string blue). Driven by LobbyMapClickHook.
+extern "C" __declspec(dllexport) void __stdcall ChatNameColor_SetLobbyMapBlue(int enabled)
+{
+    InterlockedExchange(&g_lobbyMapBlue, enabled ? 1 : 0);
+    Log("Chat SetLobbyMapBlue=%d", enabled ? 1 : 0);
+}
+
+extern "C" __declspec(dllexport) void __stdcall ChatNameColor_SetLobbyMapName(const char* name)
+{
+    if (g_lobbyMapLockInit) EnterCriticalSection(&g_lobbyMapLock);
+    if (!name || !name[0]) g_lobbyMapName[0] = 0;
+    else strcpy_s(g_lobbyMapName, name);
+    if (g_lobbyMapLockInit) LeaveCriticalSection(&g_lobbyMapLock);
+    Log("Chat SetLobbyMapName=%.80s", name ? name : "");
 }

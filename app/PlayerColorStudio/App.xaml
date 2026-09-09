@@ -506,7 +506,9 @@
             <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
             <Setter Property="BorderThickness" Value="{DynamicResource ControlBorderThickness}"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Height" Value="32"/>
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>

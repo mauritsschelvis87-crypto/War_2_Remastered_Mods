@@ -227,32 +227,51 @@ function Get-AuthenticVanillaSourcePath([string]$relativePath) {
     return $null
 }
 
+function Ensure-VanillaBackupFile([string]$relativePath, [switch]$Required) {
+    $existing = Get-VanillaBackupPath $relativePath
+    if ($existing) { return $existing }
+
+    $source = Get-AuthenticVanillaSourcePath $relativePath
+    if (!$source) {
+        if ($Required) {
+            throw "Geen bron gevonden voor: $relativePath (run eerst Battle.net Scan and Repair)"
+        }
+        return $null
+    }
+
+    $vanillaRoot = Get-VanillaBackupRoot
+    $dest = Join-Path $vanillaRoot $relativePath
+    $destDir = Split-Path -Parent $dest
+    if (!(Test-Path -LiteralPath $destDir)) {
+        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+    }
+    $sourceResolved = (Resolve-Path -LiteralPath $source).Path
+    if (Test-Path -LiteralPath $dest) {
+        $destResolved = (Resolve-Path -LiteralPath $dest).Path
+        if ($sourceResolved -eq $destResolved) {
+            Write-Host "Vanilla backup already present: $relativePath"
+            return $dest
+        }
+    }
+    Copy-Item -LiteralPath $source -Destination $dest -Force
+    Write-Host "Vanilla backup <= $source"
+    return $dest
+}
+
 function Sync-AuthenticVanillaBackup {
     $vanillaRoot = Get-VanillaBackupRoot
     if (!(Test-Path -LiteralPath $vanillaRoot)) {
         New-Item -ItemType Directory -Path $vanillaRoot -Force | Out-Null
     }
 
-    foreach ($rel in ($PplFiles + $MapColorFiles + @($AllyScreenSkinsJson) + $StringLocaleFiles)) {
-        $source = Get-AuthenticVanillaSourcePath $rel
-        if (!$source) {
-            throw "Geen bron gevonden voor: $rel (run eerst Battle.net Scan and Repair)"
+    foreach ($rel in ($PplFiles + $MapColorFiles + @($AllyScreenSkinsJson))) {
+        Ensure-VanillaBackupFile $rel -Required | Out-Null
+    }
+    # Locales vary by install language pack; skip missing ones.
+    foreach ($rel in $StringLocaleFiles) {
+        if (!(Ensure-VanillaBackupFile $rel)) {
+            Write-Host "Vanilla backup skipped (not installed): $rel"
         }
-        $dest = Join-Path $vanillaRoot $rel
-        $destDir = Split-Path -Parent $dest
-        if (!(Test-Path -LiteralPath $destDir)) {
-            New-Item -ItemType Directory -Path $destDir -Force | Out-Null
-        }
-        $sourceResolved = (Resolve-Path -LiteralPath $source).Path
-        if (Test-Path -LiteralPath $dest) {
-            $destResolved = (Resolve-Path -LiteralPath $dest).Path
-            if ($sourceResolved -eq $destResolved) {
-                Write-Host "Vanilla backup already present: $rel"
-                continue
-            }
-        }
-        Copy-Item -LiteralPath $source -Destination $dest -Force
-        Write-Host "Vanilla backup <= $source"
     }
 
     $pplPath = Join-Path $vanillaRoot 'x86\Data\Art\bgs\Forest\forest.ppl'
@@ -313,9 +332,9 @@ function Write-FileBytes([string]$path, [byte[]]$bytes) {
 
 function Ensure-BackupOfFile([string]$absolutePath, [string]$root) {
     $rel = Get-RelativeGamePath $absolutePath $root
-    $vanilla = Get-VanillaBackupPath $rel
+    $vanilla = Ensure-VanillaBackupFile $rel
     if (!$vanilla) {
-        throw "Vanilla backup ontbreekt voor: $rel. Voer sync-to-game.bat opnieuw uit."
+        throw "Vanilla backup ontbreekt voor: $rel. Gebruik Battle.net Scan and Repair, daarna opnieuw Apply."
     }
     return $vanilla
 }
@@ -1284,8 +1303,20 @@ function Test-VanillaBackupReady {
 }
 
 function Ensure-VanillaBackupReady {
-    if (Test-VanillaBackupReady) { return }
-    Sync-AuthenticVanillaBackup
+    if (!(Test-VanillaBackupReady)) {
+        Sync-AuthenticVanillaBackup
+        return
+    }
+
+    # Older installs captured palettes before locale string files were tracked
+    # (Castle/Fortress gold tooltip fix). Top those up without a full resync.
+    foreach ($rel in $StringLocaleFiles) {
+        $live = Join-Path $GameRootPath $rel
+        if (!(Test-Path -LiteralPath $live)) { continue }
+        if (!(Get-VanillaBackupPath $rel)) {
+            Ensure-VanillaBackupFile $rel | Out-Null
+        }
+    }
 }
 
 if ($GetDefaultConfig) {

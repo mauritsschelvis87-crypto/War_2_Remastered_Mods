@@ -1,0 +1,348 @@
+{
+  "exe": "C:\\Program Files (x86)\\Warcraft II Remastered\\x86\\Warcraft II.exe",
+  "size": 5558992,
+  "image_base": "0x400000",
+  "masks": {
+    "paladin": "0xb",
+    "mage": "0x3f0",
+    "ogre_mage": "0x40c00",
+    "death_knight": "0xbe000"
+  },
+  "string_keys": {
+    "spell_%d_tooltip": "0x4447bc",
+    "bloodlust": null,
+    "blizzard": "0x43bf2f",
+    "death_coil": null,
+    "holy_vision": null,
+    "flame_shield": null,
+    "eye_of_kilrogg": null,
+    "death_and_decay": null,
+    "unit_can_cast": null,
+    "spellbook": null,
+    "spell_mask": null,
+    "allowed_spells": null
+  },
+  "imm32_hits": {
+    "PALADIN_MASK": {
+      "value": "0xb",
+      "hit_count": 234,
+      "hits": [
+        {
+          "file_offset": "0xd74b",
+          "va": "0x40e34b"
+        },
+        {
+          "file_offset": "0x1b84b",
+          "va": "0x41c44b"
+        },
+        {
+          "file_offset": "0x1b8cb",
+          "va": "0x41c4cb"
+        },
+        {
+          "file_offset": "0x1bb0b",
+          "va": "0x41c70b"
+        },
+        {
+          "file_offset": "0x1bb8b",
+          "va": "0x41c78b"
+        },
+        {
+          "file_offset": "0x1cd4b",
+          "va": "0x41d94b"
+        },
+        {
+          "file_offset": "0x2eadb",
+          "va": "0x42f6db"
+        },
+        {
+          "file_offset": "0x2eb5b",
+          "va": "0x42f75b"
+        },
+        {
+          "file_offset": "0x2ed9b",
+          "va": "0x42f99b"
+        },
+        {
+          "file_offset": "0x2ee1b",
+          "va": "0x42fa1b"
+        },
+        {
+          "file_offset": "0x2f86b",
+          "va": "0x43046b"
+        },
+        {
+          "file_offset": "0x2fa3b",
+          "va": "0x43063b"
+        },
+        {
+          "file_offset": "0x2fb4b",
+          "va": "0x43074b"
+        },
+        {
+          "file_offset": "0x31f3b",
+          "va": "0x432b3b"
+        },
+        {
+          "file_offset": "0x31fbb",
+          "va": "0x432bbb"
+        }
+      ]
+    },
+    "MAGE_MASK": {
+      "value": "0x3f0",
+      "hit_count": 27,
+      "hits": [
+        {
+          "file_offset": "0x5c8da",
+          "va": "0x45d4da"
+        },
+        {
+          "file_offset": "0x5c955",
+          "va": "0x45d555"
+        },
+        {
+          "file_offset": "0x62af8",
+          "va": "0x4636f8"
+        },
+        {
+          "file_offset": "0x7c809",
+          "va": "0x47d409"
+        },
+        {
+          "file_offset": "0x8a28d",
+          "va": "0x48ae8d"
+        },
+        {
+          "file_offset": "0x8a7af",
+          "va": "0x48b3af"
+        },
+        {
+          "file_offset": "0x8af82",
+          "va": "0x48bb82"
+        },
+        {
+          "file_offset": "0xaa908",
+          "va": "0x4ab508"
+        },
+        {
+          "file_offset": "0x1660e5",
+          "va": "0x566ce5"
+        },
+        {
+          "file_offset": "0x1735ab",
+          "va": "0x5741ab"
+        },
+        {
+          "file_offset": "0x18a39b",
+          "va": "0x58af9b"
+        },
+        {
+          "file_offset": "0x2537ec",
+          "va": "0x6543ec"
+        },
+        {
+          "file_offset": "0x266e8a",
+          "va": "0x667a8a"
+        },
+        {
+          "file_offset": "0x269bd6",
+          "va": "0x66a7d6"
+        },
+        {
+          "file_offset": "0x26ea8c",
+          "va": "0x66f68c"
+        }
+      ]
+    },
+    "OGRE_MAGE_MASK": {
+      "value": "0x40c00",
+      "hit_count": 1,
+      "hits": [
+        {
+          "file_offset": "0x492a07",
+          "va": "0x894007"
+        }
+      ]
+    },
+    "DEATH_KNIGHT_MASK": {
+      "value": "0xbe000",
+      "hit_count": 1,
+      "hits": [
+        {
+          "file_offset": "0x527114",
+          "va": "0xa07114"
+        }
+      ]
+    },
+    "BLOODLUST_BIT": {
+      "value": "0x800",
+      "hit_count": 629,
+      "hits": [
+        {
+          "file_offset": "0xf676",
+          "va": "0x410276"
+        },
+        {
+          "file_offset": "0xfbee",
+          "va": "0x4107ee"
+        },
+        {
+          "file_offset": "0xfc7b",
+          "va": "0x41087b"
+        },
+        {
+          "file_offset": "0x10646",
+          "va": "0x411246"
+        },
+        {
+          "file_offset": "0x12336",
+          "va": "0x412f36"
+        },
+        {
+          "file_offset": "0x14156",
+          "va": "0x414d56"
+        },
+        {
+          "file_offset": "0x15f76",
+          "va": "0x416b76"
+        },
+        {
+          "file_offset": "0x18636",
+          "va": "0x419236"
+        },
+        {
+          "file_offset": "0x1b089",
+          "va": "0x41bc89"
+        },
+        {
+          "file_offset": "0x1f1d6",
+          "va": "0x41fdd6"
+        },
+        {
+          "file_offset": "0x210d6",
+          "va": "0x421cd6"
+        },
+        {
+          "file_offset": "0x24016",
+          "va": "0x424c16"
+        },
+        {
+          "file_offset": "0x25f06",
+          "va": "0x426b06"
+        },
+        {
+          "file_offset": "0x27bf6",
+          "va": "0x4287f6"
+        },
+        {
+          "file_offset": "0x29a96",
+          "va": "0x42a696"
+        }
+      ]
+    },
+    "BLIZZARD_BIT": {
+      "value": "0x200",
+      "hit_count": 1332,
+      "hits": [
+        {
+          "file_offset": "0x8352",
+          "va": "0x408f52"
+        },
+        {
+          "file_offset": "0x1009c",
+          "va": "0x410c9c"
+        },
+        {
+          "file_offset": "0x100e8",
+          "va": "0x410ce8"
+        },
+        {
+          "file_offset": "0x100f2",
+          "va": "0x410cf2"
+        },
+        {
+          "file_offset": "0x10134",
+          "va": "0x410d34"
+        },
+        {
+          "file_offset": "0x59dd1",
+          "va": "0x45a9d1"
+        },
+        {
+          "file_offset": "0x59fb8",
+          "va": "0x45abb8"
+        },
+        {
+          "file_offset": "0x5ada0",
+          "va": "0x45b9a0"
+        },
+        {
+          "file_offset": "0x5b638",
+          "va": "0x45c238"
+        },
+        {
+          "file_offset": "0x5b79e",
+          "va": "0x45c39e"
+        },
+        {
+          "file_offset": "0x5c530",
+          "va": "0x45d130"
+        },
+        {
+          "file_offset": "0x5c558",
+          "va": "0x45d158"
+        },
+        {
+          "file_offset": "0x5c59b",
+          "va": "0x45d19b"
+        },
+        {
+          "file_offset": "0x5d3af",
+          "va": "0x45dfaf"
+        },
+        {
+          "file_offset": "0x5d991",
+          "va": "0x45e591"
+        }
+      ]
+    },
+    "MAGE_PLUS_BLOODLUST": {
+      "value": "0xbf0",
+      "hit_count": 6,
+      "hits": [
+        {
+          "file_offset": "0xa2ee6",
+          "va": "0x4a3ae6"
+        },
+        {
+          "file_offset": "0x124d4c",
+          "va": "0x52594c"
+        },
+        {
+          "file_offset": "0x19cfdc",
+          "va": "0x59dbdc"
+        },
+        {
+          "file_offset": "0x2c4abc",
+          "va": "0x6c56bc"
+        },
+        {
+          "file_offset": "0x4f6563",
+          "va": "0x8f7f63"
+        },
+        {
+          "file_offset": "0x4f7903",
+          "va": "0x8f9303"
+        }
+      ]
+    }
+  },
+  "u32_table_candidates": [],
+  "verdict": {
+    "table_candidates": 0,
+    "likely_static_table": false,
+    "likely_hardcoded_in_code": false,
+    "sp_campaign_mix_feasibility": "RED \u2014 no clear mage/orc spell masks found with this fingerprint"
+  }
+}

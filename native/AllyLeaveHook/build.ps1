@@ -34,6 +34,8 @@ cl /nologo /O2 /W3 /EHsc /LD "$here\ObserveHook.cpp" /Fe:"$OutDir\ObserveHook.dl
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc /LD "$here\NetworkMonitorHook.cpp" /Fe:"$OutDir\NetworkMonitorHook.dll" /link /nologo /DLL /OUT:"$OutDir\NetworkMonitorHook.dll"
 if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc /LD "$here\LobbyMapClickHook.cpp" /Fe:"$OutDir\LobbyMapClickHook.dll" /link /nologo /DLL /OUT:"$OutDir\LobbyMapClickHook.dll" User32.lib Shell32.lib
+if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectAllyLeave.cpp" /Fe:"$OutDir\InjectAllyLeave.exe" /link /nologo
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectPauseChat.cpp" /Fe:"$OutDir\InjectPauseChat.exe" /link /nologo
@@ -48,7 +50,9 @@ cl /nologo /O2 /W3 /EHsc "$here\InjectObserve.cpp" /Fe:"$OutDir\InjectObserve.ex
 if errorlevel 1 exit /b 1
 cl /nologo /O2 /W3 /EHsc "$here\InjectNetworkMonitor.cpp" /Fe:"$OutDir\InjectNetworkMonitor.exe" /link /nologo
 if errorlevel 1 exit /b 1
-cl /nologo /O2 /W3 /EHsc "$here\AllyLeaveWatch.cpp" /Fe:"$OutDir\AllyLeaveWatch.exe" /link /nologo /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup Advapi32.lib
+cl /nologo /O2 /W3 /EHsc "$here\InjectLobbyMapClick.cpp" /Fe:"$OutDir\InjectLobbyMapClick.exe" /link /nologo
+if errorlevel 1 exit /b 1
+cl /nologo /O2 /W3 /EHsc "$here\AllyLeaveWatch.cpp" /Fe:"$OutDir\AllyLeaveWatch.exe" /link /nologo /SUBSYSTEM:WINDOWS /ENTRY:wWinMainCRTStartup Advapi32.lib Shell32.lib User32.lib
 if errorlevel 1 exit /b 1
 del /q *.obj 2>nul
 exit /b 0
@@ -74,6 +78,7 @@ Write-Host "Built: $OutDir\ChatNameColorHook.dll"
 Write-Host "Built: $OutDir\UnitColorHook.dll"
 Write-Host "Built: $OutDir\ObserveHook.dll"
 Write-Host "Built: $OutDir\NetworkMonitorHook.dll"
+Write-Host "Built: $OutDir\LobbyMapClickHook.dll"
 Write-Host "Built: $OutDir\InjectAllyLeave.exe"
 Write-Host "Built: $OutDir\InjectPauseChat.exe"
 Write-Host "Built: $OutDir\InjectDragSelect.exe"
@@ -81,4 +86,5 @@ Write-Host "Built: $OutDir\InjectChatNameColor.exe"
 Write-Host "Built: $OutDir\InjectUnitColor.exe"
 Write-Host "Built: $OutDir\InjectObserve.exe"
 Write-Host "Built: $OutDir\InjectNetworkMonitor.exe"
+Write-Host "Built: $OutDir\InjectLobbyMapClick.exe"
 Write-Host "Built: $OutDir\AllyLeaveWatch.exe"

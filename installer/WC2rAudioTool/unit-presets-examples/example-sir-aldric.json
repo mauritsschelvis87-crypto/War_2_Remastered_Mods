@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "id": "example-sir-aldric",
+  "displayName": "Sir Aldric",
+  "baseUnitType": 12,
+  "baseUnitLabel": "Paladin",
+  "audioBank": "Human",
+  "stats": {
+    "hitPoints": 120,
+    "armor": 5,
+    "basicDamage": 10,
+    "piercingDamage": 4,
+    "sightRange": 5,
+    "attackRange": 1,
+    "magic": 1,
+    "buildTime": 90,
+    "goldCostTenths": 80,
+    "lumberCostTenths": 0,
+    "oilCostTenths": 0,
+    "priority": 60,
+    "pointValue": 120
+  },
+  "notes": "Example preset. Spells = Paladin set. Edit WAVs in Audio tab."
+}

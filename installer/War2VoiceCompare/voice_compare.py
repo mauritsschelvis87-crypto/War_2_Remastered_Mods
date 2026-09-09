@@ -1,4 +1,4 @@
-"""War2 Voice Compare — desktop-style unit browser."""
+"""War2 Voice Compare — audio banks + custom unit presets for Content Studio."""
 from __future__ import annotations
 
 import cgi
@@ -11,6 +11,8 @@ from collections import defaultdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
+
+import unit_presets
 
 SKIP_DIRS = frozenset({"Misc", "Spells", "Bldg"})
 APP_DIR = Path(__file__).resolve().parent
@@ -25,7 +27,7 @@ APP_HTML = """<!DOCTYPE html>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="dark"/>
-  <title>War2 Voice Compare</title>
+  <title>War2 Content Lab</title>
   <style>
     html, body {
       margin: 0; height: 100%;
@@ -48,7 +50,41 @@ APP_HTML = """<!DOCTYPE html>
     }
     .brand h1 { margin: 0; font-size: 1.05rem; font-weight: 650; letter-spacing: .01em; }
     .brand p { margin: 2px 0 0; font-size: 0.78rem; color: #8b93a7; }
+    .tabs { display: flex; gap: 6px; margin-left: 12px; }
+    .tab {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid transparent;
+      background: transparent; color: #9aa3b5; cursor: pointer; font-size: 0.85rem;
+    }
+    .tab:hover { color: #e6e9ef; background: #1a2030; }
+    .tab.active { color: #fff; background: #243048; border-color: #33415c; font-weight: 600; }
+    .panel { display: none; min-height: 0; height: 100%; }
+    .panel.active { display: grid; }
     .top-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .units-main {
+      display: grid; grid-template-columns: 220px 1fr; min-height: 0; height: 100%;
+      background: #0c0e12;
+    }
+    .unit-form {
+      overflow-y: auto; padding: 16px 20px 48px; display: grid; gap: 14px;
+      grid-template-columns: 1fr 1fr; align-content: start;
+    }
+    .unit-form h3 {
+      grid-column: 1 / -1; margin: 8px 0 0; font-size: 0.75rem; text-transform: uppercase;
+      letter-spacing: .08em; color: #6d768a;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.wide { grid-column: 1 / -1; }
+    .field label { font-size: 0.78rem; color: #8b93a7; }
+    .field input, .field select, .field textarea {
+      padding: 8px 10px; border-radius: 8px; border: 1px solid #333b4d;
+      background: #1a1f2a; color: #e6e9ef; font-size: 0.88rem;
+    }
+    .field textarea { min-height: 64px; resize: vertical; }
+    .spell-hint { font-size: 0.8rem; color: #7bc96f; grid-column: 1 / -1; }
+    .form-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn.primary { background: #2f5d3a; border-color: #3f7a4c; }
+    .btn.danger { background: #4a2a2a; border-color: #6a3a3a; }
+    .audio-mini { grid-column: 1 / -1; border-top: 1px solid #232a38; padding-top: 12px; }
     #search {
       width: 240px; padding: 8px 12px; border-radius: 8px;
       border: 1px solid #333b4d; background: #1a1f2a; color: #e6e9ef;
@@ -158,18 +194,27 @@ APP_HTML = """<!DOCTYPE html>
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <h1>War2 Voice Compare</h1>
-        <p id="subtitle">Unit voices</p>
+        <h1>War2 Content Lab</h1>
+        <p id="subtitle">Audio + custom units</p>
       </div>
-      <div class="top-actions">
+      <div class="tabs">
+        <button class="tab active" data-tab="audio">Audio</button>
+        <button class="tab" data-tab="units">Units</button>
+      </div>
+      <div class="top-actions" id="audioActions">
         <input id="search" type="search" placeholder="Search samples…"/>
         <button class="btn ghost" id="stopAll">Stop</button>
         <button class="btn" id="openFolder">Open custom samples folder</button>
       </div>
+      <div class="top-actions" id="unitActions" style="display:none">
+        <button class="btn" id="newUnit">New unit</button>
+        <button class="btn ghost" id="openPresets">Open presets folder</button>
+      </div>
     </header>
+    <div class="panel active" id="panel-audio" style="grid-template-columns:1fr; grid-template-rows:1fr">
     <div class="main">
       <aside class="sidebar">
-        <h2>Units</h2>
+        <h2>Voice banks</h2>
         <div id="unitNav"></div>
       </aside>
       <section class="content">
@@ -179,18 +224,45 @@ APP_HTML = """<!DOCTYPE html>
         <div id="sampleList"></div>
       </section>
     </div>
+    </div>
+    <div class="panel" id="panel-units">
+      <div class="units-main">
+        <aside class="sidebar">
+          <h2>Custom units</h2>
+          <div id="presetNav"></div>
+        </aside>
+        <section class="unit-form" id="unitForm">
+          <div class="empty wide" style="grid-column:1/-1">Select a unit or create a new one.</div>
+        </section>
+      </div>
+    </div>
     <div class="status" id="status"></div>
   </div>
   <script>
     const DATA = __DATA_JSON__;
+    const CATALOG = __CATALOG_JSON__;
     let activeUnit = DATA.units[0]?.name || '';
+    let activePresetId = CATALOG.presets[0]?.id || '';
+    let draft = null;
     let playingBtn = null;
+    let currentTab = 'audio';
 
     function setStatus(msg, ok) {
       const el = document.getElementById('status');
       el.textContent = msg;
       el.className = 'status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
     }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      document.getElementById('panel-audio').classList.toggle('active', tab === 'audio');
+      document.getElementById('panel-units').classList.toggle('active', tab === 'units');
+      document.getElementById('audioActions').style.display = tab === 'audio' ? 'flex' : 'none';
+      document.getElementById('unitActions').style.display = tab === 'units' ? 'flex' : 'none';
+      if (tab === 'units') { renderPresetNav(); renderUnitForm(); }
+    }
+    document.querySelectorAll('.tab').forEach(t => t.onclick = () => switchTab(t.dataset.tab));
 
     function stopAll() {
       document.querySelectorAll('audio').forEach(a => { a.pause(); a.currentTime = 0; });
@@ -239,8 +311,10 @@ APP_HTML = """<!DOCTYPE html>
       nav.querySelectorAll('.unit-btn').forEach(btn => {
         btn.onclick = () => { activeUnit = btn.dataset.unit; renderNav(); renderSamples(); };
       });
-      document.getElementById('subtitle').textContent =
-        `${DATA.total} samples · ${DATA.customCount} custom · ${activeUnit}`;
+      if (currentTab === 'audio') {
+        document.getElementById('subtitle').textContent =
+          `${DATA.total} samples · ${DATA.customCount} custom · ${activeUnit}`;
+      }
     }
 
     function renderSamples() {
@@ -277,13 +351,150 @@ APP_HTML = """<!DOCTYPE html>
           <div class="track">${customCol}</div>
         </article>`;
       }).join('');
+      if (currentTab === 'audio') {
+        document.getElementById('subtitle').textContent =
+          `${DATA.total} samples · ${DATA.customCount} custom · ${activeUnit}`;
+      }
+    }
+
+    function blankDraft() {
+      return {
+        id: '',
+        displayName: 'New Hero',
+        baseUnitType: 0x0C,
+        audioBank: CATALOG.audioBanks.includes('Knight') ? 'Knight' : (CATALOG.audioBanks[0] || ''),
+        stats: { ...CATALOG.defaultStats },
+        notes: ''
+      };
+    }
+
+    function renderPresetNav() {
+      const nav = document.getElementById('presetNav');
+      if (!CATALOG.presets.length) {
+        nav.innerHTML = '<div class="empty" style="padding:12px">No presets yet</div>';
+        return;
+      }
+      nav.innerHTML = CATALOG.presets.map(p => `
+        <button class="unit-btn${p.id === activePresetId ? ' active' : ''}" data-id="${p.id}">
+          ${p.displayName}<span class="count">0x${Number(p.baseUnitType).toString(16).padStart(2,'0')}</span>
+        </button>`).join('');
+      nav.querySelectorAll('.unit-btn').forEach(btn => {
+        btn.onclick = () => {
+          activePresetId = btn.dataset.id;
+          draft = JSON.parse(JSON.stringify(CATALOG.presets.find(p => p.id === activePresetId)));
+          renderPresetNav();
+          renderUnitForm();
+        };
+      });
+    }
+
+    function renderUnitForm() {
+      const form = document.getElementById('unitForm');
+      if (!draft) {
+        if (activePresetId) {
+          draft = JSON.parse(JSON.stringify(CATALOG.presets.find(p => p.id === activePresetId) || blankDraft()));
+        } else {
+          form.innerHTML = '<div class="empty wide" style="grid-column:1/-1">Select a unit or create a new one.</div>';
+          return;
+        }
+      }
+      const typeOpts = CATALOG.baseUnitTypes.map(t =>
+        `<option value="${t.id}" ${Number(draft.baseUnitType)===t.id?'selected':''}>${t.group} — ${t.label}</option>`
+      ).join('');
+      const bankOpts = CATALOG.audioBanks.map(b =>
+        `<option value="${b}" ${draft.audioBank===b?'selected':''}>${b}</option>`
+      ).join('');
+      const selectedType = CATALOG.baseUnitTypes.find(t => t.id === Number(draft.baseUnitType));
+      const statsHtml = CATALOG.statFields.map(f => `
+        <div class="field">
+          <label>${f.label}</label>
+          <input type="number" data-stat="${f.key}" value="${draft.stats?.[f.key] ?? CATALOG.defaultStats[f.key]}"/>
+        </div>`).join('');
+      const bank = DATA.units.find(u => u.name === draft.audioBank);
+      const audioPreview = (bank?.samples || []).slice(0, 8).map(s => `
+        <article class="sample" style="grid-template-columns: 140px 1fr 1fr; margin-bottom:6px">
+          <div class="sample-name">${s.file}</div>
+          ${trackHtml('Original', s.vanilla, s.vanillaDurFmt, '')}
+          ${trackHtml('Yours', s.replacer || s.enhanced, s.replacer ? s.replacerDurFmt : s.enhancedDurFmt, '')}
+        </article>`).join('') || '<div class="empty">No samples in this audio bank</div>';
+
+      form.innerHTML = `
+        <div class="field"><label>Display name</label>
+          <input id="fName" value="${(draft.displayName||'').replace(/"/g,'&quot;')}"/></div>
+        <div class="field"><label>Preset id</label>
+          <input id="fId" value="${(draft.id||'').replace(/"/g,'&quot;')}" placeholder="auto from name"/></div>
+        <div class="field wide"><label>Base unit type (spells / behavior)</label>
+          <select id="fType">${typeOpts}</select></div>
+        <div class="spell-hint">${selectedType ? ('Spells: ' + selectedType.spells) : ''}</div>
+        <div class="field wide"><label>Audio bank (same as Audio tab)</label>
+          <select id="fBank">${bankOpts}</select></div>
+        <h3>Stats (UDTA on maps using this preset)</h3>
+        ${statsHtml}
+        <div class="field wide"><label>Notes</label>
+          <textarea id="fNotes">${draft.notes||''}</textarea></div>
+        <div class="form-actions">
+          <button class="btn primary" id="saveUnit">Save for map editor</button>
+          <button class="btn danger" id="deleteUnit" ${draft.id?'':'disabled'}>Delete</button>
+        </div>
+        <div class="audio-mini">
+          <h3>Audio preview — edit WAVs in the Audio tab</h3>
+          ${audioPreview}
+        </div>`;
+
       document.getElementById('subtitle').textContent =
-        `${DATA.total} samples · ${DATA.customCount} custom · ${activeUnit}`;
+        `Custom units · ${CATALOG.presets.length} presets · Content Studio reads this folder`;
+
+      const syncDraft = () => {
+        draft.displayName = document.getElementById('fName').value;
+        draft.id = document.getElementById('fId').value;
+        draft.baseUnitType = Number(document.getElementById('fType').value);
+        draft.audioBank = document.getElementById('fBank').value;
+        draft.notes = document.getElementById('fNotes').value;
+        draft.stats = draft.stats || {};
+        form.querySelectorAll('[data-stat]').forEach(inp => { draft.stats[inp.dataset.stat] = Number(inp.value); });
+      };
+      document.getElementById('fType').onchange = () => { syncDraft(); renderUnitForm(); };
+      document.getElementById('fBank').onchange = () => { syncDraft(); renderUnitForm(); };
+      document.getElementById('saveUnit').onclick = async () => {
+        syncDraft();
+        setStatus('Saving preset…');
+        try {
+          const res = await fetch('/api/presets', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(draft) });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Save failed');
+          CATALOG.presets = data.presets;
+          activePresetId = data.saved.id;
+          draft = JSON.parse(JSON.stringify(data.saved));
+          renderPresetNav();
+          renderUnitForm();
+          setStatus('Saved — available in War2 Content Studio under Custom', true);
+        } catch (err) { setStatus(err.message, false); }
+      };
+      document.getElementById('deleteUnit').onclick = async () => {
+        if (!draft.id) return;
+        if (!confirm('Delete preset ' + draft.displayName + '?')) return;
+        const res = await fetch('/api/presets/' + encodeURIComponent(draft.id), { method: 'DELETE' });
+        const data = await res.json();
+        CATALOG.presets = data.presets;
+        activePresetId = CATALOG.presets[0]?.id || '';
+        draft = activePresetId ? JSON.parse(JSON.stringify(CATALOG.presets[0])) : null;
+        renderPresetNav();
+        renderUnitForm();
+        setStatus('Deleted', true);
+      };
     }
 
     document.getElementById('search').oninput = renderSamples;
     document.getElementById('stopAll').onclick = stopAll;
     document.getElementById('openFolder').onclick = () => fetch('/api/open-replacer-folder', { method: 'POST' });
+    document.getElementById('openPresets').onclick = () => fetch('/api/open-presets-folder', { method: 'POST' });
+    document.getElementById('newUnit').onclick = () => {
+      draft = blankDraft();
+      activePresetId = '';
+      renderPresetNav();
+      renderUnitForm();
+      switchTab('units');
+    };
 
     document.getElementById('sampleList').addEventListener('change', async e => {
       if (e.target.type !== 'file' || !e.target.files[0]) return;
@@ -306,6 +517,7 @@ APP_HTML = """<!DOCTYPE html>
       location.reload();
     });
 
+    if (CATALOG.presets[0]) draft = JSON.parse(JSON.stringify(CATALOG.presets[0]));
     renderNav();
     renderSamples();
   </script>
@@ -388,7 +600,11 @@ def build_payload(samples: list[dict]) -> dict:
 
 def build_html(samples: list[dict]) -> str:
     payload = json.dumps(build_payload(samples))
-    return APP_HTML.replace("__DATA_JSON__", payload)
+    banks = [u["name"] for u in build_payload(samples)["units"]]
+    catalog = json.dumps(unit_presets.catalog_payload(banks))
+    return (
+        APP_HTML.replace("__DATA_JSON__", payload).replace("__CATALOG_JSON__", catalog)
+    )
 
 
 def open_app_window(url: str) -> None:
@@ -487,6 +703,21 @@ class Handler(BaseHTTPRequestHandler):
             subprocess.Popen(["explorer", str(REPLACER_DIR)])  # noqa: S603,S607
             self._json(200, {"ok": True})
             return
+        if clean == "/api/open-presets-folder":
+            unit_presets.ensure_presets_dir()
+            subprocess.Popen(["explorer", str(unit_presets.PRESETS_DIR)])  # noqa: S603,S607
+            self._json(200, {"ok": True})
+            return
+        if clean == "/api/presets":
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw.decode("utf-8"))
+                saved = unit_presets.save_preset(body)
+                self._json(200, {"ok": True, "saved": saved, "presets": unit_presets.load_presets()})
+            except (ValueError, json.JSONDecodeError) as exc:
+                self._json(400, {"error": str(exc)})
+            return
         self.send_error(404)
 
     def do_DELETE(self) -> None:
@@ -498,6 +729,11 @@ class Handler(BaseHTTPRequestHandler):
                 dest.unlink()
             self._json(200, {"ok": True})
             return
+        if clean.startswith("/api/presets/"):
+            preset_id = clean[len("/api/presets/"):]
+            unit_presets.delete_preset(preset_id)
+            self._json(200, {"ok": True, "presets": unit_presets.load_presets()})
+            return
         self.send_error(404)
 
     def log_message(self, format: str, *args) -> None:
@@ -506,6 +742,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     REPLACER_DIR.mkdir(parents=True, exist_ok=True)
+    unit_presets.ensure_presets_dir()
     if not VANILLA_DIR.is_dir():
         raise SystemExit("Audio missing. Run Install War2 Voice Compare on your Desktop.")
     samples = collect_samples()
@@ -544,7 +781,8 @@ def main() -> None:
                 raise SystemExit(f"Port {PORT} is in use. Close other Voice Compare windows.")
 
     url = f"http://127.0.0.1:{PORT}/"
-    print(f"War2 Voice Compare: {url}  ({len(samples)} samples)")
+    print(f"War2 Content Lab: {url}  ({len(samples)} samples, {len(unit_presets.load_presets())} presets)")
+    print(f"Presets folder: {unit_presets.PRESETS_DIR}")
     print("Close this window to stop.")
     open_app_window(url)
     try:

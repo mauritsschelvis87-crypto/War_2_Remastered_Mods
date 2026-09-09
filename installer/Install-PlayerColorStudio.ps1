@@ -51,6 +51,34 @@ try {
     Copy-Item -Path (Join-Path $stage 'app\*') -Destination $appTarget -Recurse -Force
     Copy-Item -Path (Join-Path $engineSource '*') -Destination $modTarget -Recurse -Force
 
+    $appIcon = Join-Path $sourceRoot 'app\PlayerColorStudio\app.ico'
+    if (!(Test-Path -LiteralPath $appIcon)) {
+        $appIcon = Join-Path $PSScriptRoot 'SetupApp\app.ico'
+    }
+    if (Test-Path -LiteralPath $appIcon) {
+        Copy-Item -LiteralPath $appIcon -Destination (Join-Path $appTarget 'app.ico') -Force
+    }
+
+    $exe = Join-Path $appTarget 'PlayerColorStudio.exe'
+    $icon = Join-Path $appTarget 'app.ico'
+    if (!(Test-Path -LiteralPath $icon)) { $icon = $exe }
+    $shortcutName = 'Quality of Life Modding.lnk'
+    $desktop = [Environment]::GetFolderPath('Desktop')
+    foreach ($shortcutPath in @(
+        (Join-Path $installRoot $shortcutName),
+        (Join-Path $desktop $shortcutName)
+    )) {
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = $exe
+        $shortcut.WorkingDirectory = $appTarget
+        $shortcut.IconLocation = "$icon,0"
+        $shortcut.Description = 'Warcraft II — Quality of Life Modding'
+        $shortcut.Save()
+        [System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) | Out-Null
+        [System.Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) | Out-Null
+    }
+
     $trust = Join-Path $PSScriptRoot 'Trust-NativeTools.ps1'
     if (Test-Path -LiteralPath $trust) {
         & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $trust -InstallRoot $installRoot | Write-Host

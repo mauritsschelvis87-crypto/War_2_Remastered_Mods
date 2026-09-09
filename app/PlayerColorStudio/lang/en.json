@@ -31,6 +31,9 @@
   "ColorBlind.Deuteranopia": "Deuteranopia",
   "ColorBlind.Protanopia": "Protanopia",
   "ColorBlind.Tritanopia": "Tritanopia",
+  "ColorBlind.Deuteranopia.Hint": "Green-blind (most common): suggested colors avoid red/green pairs and lean on blue, orange, yellow, and magenta.",
+  "ColorBlind.Protanopia.Hint": "Red-blind: suggested colors emphasize blue, yellow, and cyan so red and green no longer look alike.",
+  "ColorBlind.Tritanopia.Hint": "Blue-yellow blind: suggested colors avoid blue/yellow confusion and use red, orange, teal, and purple instead.",
   "Feature.Intro": "Optional feature mods for multiplayer games. Each mod is compatible with the others — you can use them individually or simultaneously.",
   "Feature.MarkGoneHumans": "Mark gone humans",
   "Feature.MarkGoneHumans.Help": "When a human player leaves, disconnects, or is eliminated, their name turns red on the alliances screen. Works on its own or together with Mark gone computers.",
@@ -44,10 +47,10 @@
   "Feature.ChatTimestamps.Help": "Every chat line starts with the clock time it appeared, like [21:08].",
   "Feature.LobbyTeamNumber": "Show lobby team number",
   "Feature.LobbyTeamNumber.Help": "Puts the multiplayer team number in front of each player's name on the alliances screen, making it easier to observe games without confusion.",
+  "Feature.LobbyMapClickOpen": "Open lobby map in Explorer",
+  "Feature.LobbyMapClickOpen.Help": "In a multiplayer lobby, click the map name to open its .jpg preview (created if missing). Uses the Maps folder path from Paths (nested folders included).",
   "Feature.UpgradeNotifications": "Upgrade notifications",
   "Feature.UpgradeNotifications.Help": "Gold chat notifications when a building upgrade completes. Temporarily unavailable while this feature is being reworked.",
-  "Feature.UnitVoiceOverhaul": "Audio unit voice overhaul",
-  "Feature.UnitVoiceOverhaul.Help": "Replace unit voice lines with remade samples. Temporarily unavailable while this feature is being reworked.",
   "Feature.ObserveAfterEnd": "Observe after surrender or elimination",
   "Feature.ObserveAfterEnd.Help": "Temporarily unavailable while this feature is being reworked.",
   "Bugfixes.Intro": "Fixes for known multiplayer annoyances.",
@@ -84,7 +87,7 @@
   "Paths.MapEditor": "Map editor path",
   "Paths.MapEditor.Help": "Points to Warcraft II Map Editor.exe inside your install. Open launches the map editor. Useful for quick access.",
   "Paths.MapsFolder": "Maps folder path",
-  "Paths.MapsFolder.Help": "The folder where your custom maps live (x86\\Maps in most installs). Open shows it in Windows Explorer.",
+  "Paths.MapsFolder.Help": "The folder where your custom maps live (usually x86\\Maps). For Open lobby map, JPG previews are generated here next to the .pud files. Open shows the folder in Explorer.",
   "Status.ChangesPending": "Changes have been made, please apply for the changes to take place.",
   "Status.Feature.Installed": "Mods have been installed. Restart Warcraft II Remastered to take effect.",
   "Status.Bugfixes.Installed": "Bug fixes have been installed. Restart Warcraft II Remastered to take effect.",
@@ -108,3 +111,10 @@
   "Status.Network.On": "Network monitor ON — play a multiplayer match while Warcraft II is running.",
   "Status.Network.Off": "Network monitor OFF."
 }
+
+
+
+
+
+
+

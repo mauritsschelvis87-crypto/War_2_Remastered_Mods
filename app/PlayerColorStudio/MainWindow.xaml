@@ -379,18 +379,19 @@
                             <Expander Style="{StaticResource HelpExpanderStyle}">
                                 <Expander.Header>
                                     <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
-                                        <CheckBox IsChecked="{Binding UnitVoiceOverhaul}"
+                                        <CheckBox IsChecked="{Binding LobbyMapClickOpen}"
+                                                  IsEnabled="{Binding IsApplyEnabled}"
                                                   Margin="0,0,0,14" VerticalAlignment="Center">
                                             <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextBrush}"
-                                                       loc:Loc.TextKey="Feature.UnitVoiceOverhaul" Text="Audio unit voice overhaul"/>
+                                                       loc:Loc.TextKey="Feature.LobbyMapClickOpen" Text="Open lobby map in Explorer"/>
                                         </CheckBox>
                                     </Grid>
                                 </Expander.Header>
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           loc:Loc.TextKey="Feature.UnitVoiceOverhaul.Help" Text="Replace all unit voice lines with mastered WAVs (cleaner, louder, more consistent). Restart Warcraft II after Apply."/>
+                                           loc:Loc.TextKey="Feature.LobbyMapClickOpen.Help" Text="In a multiplayer lobby, click the map name to open its .jpg preview (created if missing). Uses the Maps folder path from Paths (nested folders included)."/>
                             </Expander>
                         </Border>
 
@@ -527,8 +528,7 @@
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 Height="{StaticResource ExpandedColorCardMinHeight}"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}"
-                                Opacity="0.55">
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
                             <StackPanel>
                                 <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
                                     <Grid.ColumnDefinitions>
@@ -539,11 +539,12 @@
                                                VerticalAlignment="Center" Margin="0,0,14,14"
                                                loc:Loc.TextKey="Settings.Language"
                                                Text="Language"/>
-                                    <ComboBox Grid.Column="1" Width="{StaticResource SegmentButtonPairWidth}" Margin="0,0,36,14"
+                                    <ComboBox Grid.Column="1" Width="{StaticResource SegmentButtonPairWidth}" Height="32"
+                                              Margin="0,0,36,14"
                                               Style="{StaticResource StudioComboBoxStyle}"
                                               ItemContainerStyle="{StaticResource StudioComboBoxItemStyle}"
                                               VerticalAlignment="Center" HorizontalAlignment="Right"
-                                              IsEnabled="False"
+                                              VerticalContentAlignment="Center"
                                               ItemsSource="{Binding LanguageOptions}"
                                               SelectedValue="{Binding SelectedLanguageCode}"
                                               SelectedValuePath="Code"
@@ -571,11 +572,13 @@
                                                loc:Loc.TextKey="Settings.ColorBlindMode" Text="Color blind mode"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                                                 HorizontalAlignment="Right" Margin="0,0,36,14">
-                                        <Button x:Name="ColorBlindOnButton" loc:Loc.TextKey="Btn.On" Content="On" Width="{StaticResource SegmentButtonWidth}" Margin="0,0,8,0" Padding="10,4"
+                                        <Button x:Name="ColorBlindOnButton" loc:Loc.TextKey="Btn.On" Content="On"
+                                                Width="{StaticResource SegmentButtonWidth}" Height="32" Margin="0,0,8,0" Padding="10,0"
                                                 BorderThickness="2"
                                                 IsEnabled="{Binding IsApplyEnabled}"
                                                 Click="ColorBlindOn_Click"/>
-                                        <Button x:Name="ColorBlindOffButton" loc:Loc.TextKey="Btn.Off" Content="Off" Width="{StaticResource SegmentButtonWidth}" Padding="10,4"
+                                        <Button x:Name="ColorBlindOffButton" loc:Loc.TextKey="Btn.Off" Content="Off"
+                                                Width="{StaticResource SegmentButtonWidth}" Height="32" Padding="10,0"
                                                 BorderThickness="2"
                                                 IsEnabled="{Binding IsApplyEnabled}"
                                                 Click="ColorBlindOff_Click"/>
@@ -768,7 +771,7 @@
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           loc:Loc.TextKey="Paths.MapsFolder.Help" Text="The folder where your custom maps live (x86\Maps in most installs). Open shows it in Windows Explorer. For future upgrades; useful for quick access now."/>
+                                           loc:Loc.TextKey="Paths.MapsFolder.Help" Text="The folder where your custom maps live (usually x86\Maps). For Open lobby map, JPG previews are generated here next to the .pud files. Open shows the folder in Explorer."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>

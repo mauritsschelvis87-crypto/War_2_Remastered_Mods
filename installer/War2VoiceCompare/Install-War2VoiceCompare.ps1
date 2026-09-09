@@ -21,6 +21,18 @@ if (Test-Path -LiteralPath $OldLab) {
 
 New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'voice_compare.py') -Destination (Join-Path $AppDir 'voice_compare.py') -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'unit_presets.py') -Destination (Join-Path $AppDir 'unit_presets.py') -Force
+$examplePresets = Join-Path $PSScriptRoot 'unit-presets'
+if (Test-Path -LiteralPath $examplePresets) {
+    $presetDest = Join-Path $env:LOCALAPPDATA 'War2VoiceCompare\unit-presets'
+    New-Item -ItemType Directory -Force -Path $presetDest | Out-Null
+    Get-ChildItem -LiteralPath $examplePresets -Filter '*.json' | ForEach-Object {
+        $dest = Join-Path $presetDest $_.Name
+        if (!(Test-Path -LiteralPath $dest)) {
+            Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
+        }
+    }
+}
 
 function Copy-VoiceTree {
     param([string]$Source, [string]$Dest)
@@ -55,10 +67,10 @@ Write-Host "  $ec files"
 
 New-Item -ItemType Directory -Force -Path $replacerDest | Out-Null
 
-$Launcher = Join-Path $Desktop 'War2 Voice Compare.bat'
+$Launcher = Join-Path $Desktop 'War2 Content Lab.bat'
 @(
     '@echo off'
-    'title War2 Voice Compare'
+    'title War2 Content Lab'
     "cd /d `"$AppDir`""
     'REM Close stale servers on wrong port'
     'for /f "tokens=5" %%a in (''netstat -ano ^| findstr ":8766.*LISTENING"'') do taskkill /F /PID %%a >nul 2>&1'
@@ -67,7 +79,11 @@ $Launcher = Join-Path $Desktop 'War2 Voice Compare.bat'
     'if errorlevel 1 pause'
 ) | Set-Content -LiteralPath $Launcher -Encoding ASCII
 
+$OldLauncher = Join-Path $Desktop 'War2 Voice Compare.bat'
+if (Test-Path -LiteralPath $OldLauncher) { Remove-Item -LiteralPath $OldLauncher -Force }
+
 Write-Host ''
 Write-Host 'Done.'
-Write-Host "Double-click on Desktop: War2 Voice Compare.bat"
+Write-Host "Double-click on Desktop: War2 Content Lab.bat"
+Write-Host 'Tabs: Audio (voices) · Units (custom heroes for Content Studio)'
 Write-Host 'Re-run this installer to refresh enhanced audio from the mod.'

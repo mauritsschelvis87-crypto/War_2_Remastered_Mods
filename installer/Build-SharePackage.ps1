@@ -16,7 +16,10 @@ $projectFile = Join-Path $sourceRoot 'app\PlayerColorStudio\PlayerColorStudio.cs
 $setupProject = Join-Path $installerDir 'SetupApp\SetupApp.csproj'
 $engineSource = Join-Path $sourceRoot 'mod'
 $nativeBuild = Join-Path $sourceRoot 'native\AllyLeaveHook\build.ps1'
-$setupIcon = Join-Path $installerDir 'SetupApp\app.ico'
+$setupIcon = Join-Path $sourceRoot 'app\PlayerColorStudio\app.ico'
+if (!(Test-Path -LiteralPath $setupIcon)) {
+    $setupIcon = Join-Path $installerDir 'SetupApp\app.ico'
+}
 $installScript = Join-Path $installerDir 'Install-FromPackage.ps1'
 $installBat = Join-Path $installerDir 'package\Install.bat'
 $setupPayloadZip = Join-Path $installerDir 'SetupApp\payload.zip'
