@@ -1,4 +1,6 @@
 // Warcraft II Remastered — click lobby map name → open map .jpg preview.
+// Cache resets on match/lobby leave and on lobby-title change.
+// Resolve = exact lobby title == .pud/.jpg basename; watcher opens/creates .jpg.
 //
 // NEVER ShellExecute from inside the game process (that crashed Remastered).
 // On click we write a request file + signal; AllyLeaveWatch opens the .jpg
@@ -15,6 +17,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 #pragma comment(lib, "User32.lib")
 
@@ -139,23 +142,26 @@ HANDLE g_openEvent = nullptr;
 DWORD g_enabledTick = 0;
 
 constexpr uintptr_t kMsgInitFlagRva = 0x9B1798 - 0x400000;
-constexpr DWORD kMpLobbyFreshMs = 400;
+constexpr DWORD kMpLobbyFreshMs = 60000; // idle lobby often stops layout calls for many seconds
 // Hitbox fractions — tuned per aspect (ultrawide map row sits lower/center).
 constexpr float kHitL = 0.05f;
 constexpr float kHitR = 0.62f;
 constexpr float kHitT = 0.07f;
 constexpr float kHitB = 0.30f;
 // Ultrawide (3440x1440): map title sits mid-row.
-constexpr float kUwHitL = 0.36f;
-constexpr float kUwHitR = 0.78f;
-constexpr float kUwHitT = 0.36f;
-constexpr float kUwHitB = 0.50f;
+constexpr float kUwHitL = 0.34f;
+constexpr float kUwHitR = 0.80f;
+constexpr float kUwHitT = 0.32f;
+constexpr float kUwHitB = 0.72f; // was 0.50; map name/preview row sits lower for some hosts
 constexpr DWORD kDebounceMs = 900;
-constexpr DWORD kEnableGraceMs = 1500;
+constexpr DWORD kEnableGraceMs = 4000;
 constexpr wchar_t kOpenEventName[] = L"Local\\War2LobbyMapOpenRequest";
 
 char g_logPath[MAX_PATH]{};
 wchar_t g_cachedPud[MAX_PATH]{};
+wchar_t g_cachedTitleKey[MAX_PATH]{}; // lobby map basename last seen
+size_t g_lastResolveTitleReg = 0;
+int g_lastResolveScore = 0;
 wchar_t g_mapsRoot[MAX_PATH]{};
 CRITICAL_SECTION g_cacheLock;
 DWORD g_indexBuiltTick = 0;
@@ -166,7 +172,10 @@ struct PudCandidate {
     std::wstring path;
     int score = 0;
     ULONGLONG access = 0;
-    bool fromLobbyTitle = false; // bare name from a small UI buffer
+    bool fromLobbyTitle = false; // exact lobby title / basename sighting
+    int titleHits = 0;           // how often we saw this exact title
+    size_t titleRegion = 0;      // smaller = more likely the Map value field
+    size_t sourceRegion = 0;     // MEMORY_BASIC region size where we saw it
 };
 
 std::unordered_map<std::wstring, std::wstring> g_mapsByBase; // lower basename → full .pud path
@@ -608,35 +617,66 @@ void ConsiderCandidate(std::vector<PudCandidate>& list, const wchar_t* path, siz
 
     for (auto& c : list) {
         if (_wcsicmp(c.path.c_str(), chosen) == 0) {
-            if (score > c.score) {
-                c.score = score;
-            }
+            if (score > c.score) c.score = score;
+            if (regionSize > 0 && (c.sourceRegion == 0 || regionSize < c.sourceRegion))
+                c.sourceRegion = regionSize;
             if (regionSize > 0 && regionSize <= 8192)
                 c.score += 5;
             return;
         }
     }
-    list.push_back({ chosen, score, 0, false });
+    list.push_back({ chosen, score, 0, false, 0, 0, regionSize });
 }
 
 void ConsiderBasename(std::vector<PudCandidate>& list, const wchar_t* name, size_t regionSize)
 {
-    // Lobby map title lives in small UI buffers. Ignoring large heaps stops every
-    // pud basename that happens to appear anywhere in memory (e.g. Shared).
+    // Bare exact title. Path listings are full paths; this matches Map value only.
     if (!name || !name[0]) return;
-    if (regionSize == 0 || regionSize > 2048) return;
-
-    wchar_t resolved[MAX_PATH]{};
-    if (!ResolveUnderMapsRootCopy(name, resolved, MAX_PATH)) return;
-
-    ConsiderCandidate(list, resolved, regionSize);
-    for (auto& c : list) {
-        if (_wcsicmp(c.path.c_str(), resolved) == 0) {
-            c.fromLobbyTitle = true;
-            c.score += 250;
-            return;
+    if (regionSize == 0) return;
+    const size_t nlen = wcslen(name);
+    // Short tokens / single Classic names ("Rivers") spam memory — not lobby titles.
+    if (nlen < 5 || nlen > 80) return;
+    // Lobby display titles are multi-word ("Crosshair BNE"). Reject single tokens here.
+    if (!wcschr(name, L' ')) return;
+    // Remastered internal ids look like UUIDs - never lobby display titles.
+    {
+        int hy = 0, hexish = 0;
+        for (size_t i = 0; i < nlen; ++i) {
+            const wchar_t c = name[i];
+            if (c == L'-') ++hy;
+            else if ((c >= L'0' && c <= L'9') || (c >= L'a' && c <= L'f') || (c >= L'A' && c <= L'F'))
+                ++hexish;
         }
+        if (hy >= 4 && hexish >= 20) return;
     }
+
+    auto markTitle = [&](const wchar_t* resolved) {
+        ConsiderCandidate(list, resolved, regionSize);
+        for (auto& c : list) {
+            if (_wcsicmp(c.path.c_str(), resolved) == 0) {
+                c.fromLobbyTitle = true;
+                c.titleHits += 1;
+                if (c.titleRegion == 0 || regionSize < c.titleRegion)
+                    c.titleRegion = regionSize;
+                int boost = 120;
+                if (regionSize <= 64) boost += 120;
+                else if (regionSize <= 256) boost += 60;
+                else if (regionSize <= 4096) boost += 20;
+                if (wcschr(name, L' ')) boost += 200;
+                // Hosted BNE maps show "... BNE" in the lobby title.
+                if (nlen >= 4 && _wcsicmp(name + (nlen - 4), L" BNE") == 0)
+                    boost += 800;
+                c.score += boost;
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // Exact basename only: lobby title == pud stem == jpg stem (case-insensitive).
+    wchar_t resolved[MAX_PATH]{};
+    if (ResolveUnderMapsRootCopy(name, resolved, MAX_PATH))
+        markTitle(resolved);
 }
 
 void TryAsciiPath(std::vector<PudCandidate>& list, const char* start, size_t maxLen, size_t regionSize)
@@ -695,22 +735,25 @@ void ScanRegion(std::vector<PudCandidate>& list, const uint8_t* p, size_t size)
             TryWidePath(list, reinterpret_cast<const wchar_t*>(p + i), remainBytes / 2, size);
         }
 
-        // Lobby title is often a bare map name (no path) as UTF-16 in small UI buffers.
-        if (size <= 2048 && (i % 2) == 0 && i + 12 < size && p[i + 1] == 0) {
+        // Lobby Map title: bare UTF-16 name == pud stem (null-terminated).
+        // Used as fallback when Map-adjacent resolve finds nothing; pick logic
+        // still prefers titleRegion==32 and multi-word titles.
+        if ((i % 2) == 0 && i + 12 < size && p[i + 1] == 0) {
             const wchar_t* ws = reinterpret_cast<const wchar_t*>(p + i);
             size_t n = 0;
             const size_t maxChars = (size - i) / 2;
-            while (n < maxChars && n < 96) {
+            while (n < maxChars && n < 80) {
                 const wchar_t c = ws[n];
                 if (c == 0) break;
                 if (c < 32 || c == L'"' || c == L'<' || c == L'>' || c == L'|' || c == L'\\' || c == L'/')
                     break;
                 ++n;
             }
-            if (n >= 3 && n < 96) {
+            if (n >= 5 && n < 80 && n < maxChars && ws[n] == 0) {
                 wchar_t name[100]{};
                 wcsncpy_s(name, ws, n);
-                ConsiderBasename(list, name, size);
+                // Reject UUID-like / single-token noise is handled in ConsiderBasename + pick.
+                ConsiderBasename(list, name, (n + 1) * sizeof(wchar_t));
             }
         }
     }
@@ -729,6 +772,113 @@ bool PathIsUnderModule(const uint8_t* p, uint8_t* base, size_t imageSize)
 {
     if (!base || !imageSize) return false;
     return p >= base && p < base + imageSize;
+}
+
+
+// Remastered has no reliable UIA for the Map row. Find UTF-16 "Map"/"Map:" labels in
+// writable memory and resolve nearby bare names against the Studio maps index.
+void ConsiderNearMapLabel(std::vector<PudCandidate>& list, const uint8_t* p, size_t size)
+{
+    if (!p || size < 8) return;
+    const wchar_t* labels[] = { L"Map", L"Map:" };
+    for (size_t i = 0; i + 4 < size; i += 2) {
+        if (p[i + 1] != 0) continue;
+        const wchar_t* ws = reinterpret_cast<const wchar_t*>(p + i);
+        for (const wchar_t* lab : labels) {
+            const size_t labLen = wcslen(lab);
+            bool match = true;
+            for (size_t k = 0; k < labLen; ++k) {
+                if (i + 2 * k + 1 >= size || ws[k] != lab[k]) { match = false; break; }
+            }
+            if (!match) continue;
+            const wchar_t after = (i + 2 * labLen + 1 < size) ? ws[labLen] : 0;
+            if (after != 0 && after != L' ' && after != L'\t' && after != L'\r' && after != L'\n')
+                continue;
+
+            const size_t winStart = i + 2 * labLen;
+            const size_t winEnd = (std::min)(size, winStart + 768);
+
+            // Full .pud path next to Map label (best signal for selected map).
+            for (size_t j = winStart; j + 8 < winEnd; ++j) {
+                size_t remain = winEnd - j;
+                if (remain > 260) remain = 260;
+                if (p[j] == 'M' || p[j] == 'm' || p[j] == '\\' ||
+                    (p[j] >= 'A' && p[j] <= 'Z' && j + 1 < winEnd && p[j + 1] == ':')) {
+                    bool hasPud = false;
+                    for (size_t k = 4; k + 4 <= remain; ++k) {
+                        if (_strnicmp(reinterpret_cast<const char*>(p + j + k - 4), ".pud", 4) == 0) {
+                            hasPud = true;
+                            break;
+                        }
+                    }
+                    if (hasPud) {
+                        const size_t before = list.size();
+                        TryAsciiPath(list, reinterpret_cast<const char*>(p + j), remain, 64);
+                        for (size_t n = before; n < list.size(); ++n) {
+                            list[n].fromLobbyTitle = true;
+                            list[n].titleHits += 1;
+                            list[n].titleRegion = 32;
+                            list[n].sourceRegion = 64;
+                            list[n].score += 1200;
+                        }
+                    }
+                }
+                if ((j % 2) == 0 && j + 10 < winEnd && p[j + 1] == 0) {
+                    TryWidePath(list, reinterpret_cast<const wchar_t*>(p + j), remain / 2, 64);
+                    // boost any new wide puds — handled below via basename too
+                }
+            }
+
+            // Bare map title next to Map label.
+            for (size_t j = winStart; j + 6 < winEnd; j += 2) {
+                if ((j % 2) != 0 || p[j + 1] != 0) continue;
+                const wchar_t* name = reinterpret_cast<const wchar_t*>(p + j);
+                size_t n = 0;
+                const size_t maxChars = (winEnd - j) / 2;
+                while (n < maxChars && n < 96) {
+                    const wchar_t c = name[n];
+                    if (c == 0) break;
+                    if (c < 32 || c == L'"' || c == L'<' || c == L'>' || c == L'|' ||
+                        c == L'\\' || c == L'/')
+                        break;
+                    ++n;
+                }
+                if (n < 3 || n >= 96) continue;
+                const bool nullTerm = (n < maxChars && name[n] == 0);
+                if (!nullTerm && n > 40) continue;
+
+                wchar_t buf[100]{};
+                wcsncpy_s(buf, name, n);
+                wchar_t resolved[MAX_PATH]{};
+                // Exact title == pud basename only (no " BNE" invent).
+                if (!ResolveUnderMapsRootCopy(buf, resolved, MAX_PATH))
+                    continue;
+                ConsiderCandidate(list, resolved, 64);
+                for (auto& c : list) {
+                    if (_wcsicmp(c.path.c_str(), resolved) == 0) {
+                        c.fromLobbyTitle = true;
+                        c.titleHits += 1;
+                        c.titleRegion = 32;
+                        c.sourceRegion = 64;
+                        c.score += 1100;
+                        if (nullTerm) c.score += 100;
+                        c.score += static_cast<int>(n);
+                        if (wcschr(buf, L' ')) c.score += 200;
+                        if (n >= 4 && _wcsicmp(buf + (n - 4), L" BNE") == 0) c.score += 800;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ConsiderNearMapLabelSEH(std::vector<PudCandidate>& list, const uint8_t* p, size_t size)
+{
+    __try {
+        ConsiderNearMapLabel(list, p, size);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
 }
 
 void ResolvePudFromMemoryInto(wchar_t* out, size_t outChars)
@@ -756,42 +906,116 @@ void ResolvePudFromMemoryInto(wchar_t* out, size_t outChars)
                              PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)) &&
             mbi.RegionSize <= 1024 * 1024) {
             auto* p = reinterpret_cast<uint8_t*>(mbi.BaseAddress);
-            if (!PathIsUnderModule(p, image, imageSize))
+            if (!PathIsUnderModule(p, image, imageSize)) {
                 ScanRegionSEH(list, p, mbi.RegionSize);
+                // Map UI strings can live in larger RW pages than 64 KiB.
+                if (mbi.RegionSize <= 512 * 1024)
+                    ConsiderNearMapLabelSEH(list, p, mbi.RegionSize);
+            }
         }
         addr = next;
     }
 
     if (list.empty()) return;
 
-    // Prefer lobby-title basename match; otherwise best memory score (may be wrong map).
+
+    
+    auto hasSpace = [](const wchar_t* path) -> bool {
+        std::wstring k = BasenameKeyFromPath(path);
+        return k.find(L' ') != std::wstring::npos;
+    };
+    auto better = [&](const PudCandidate& x, const PudCandidate& y) -> bool {
+        const bool xa = x.titleRegion == 32;
+        const bool ya = y.titleRegion == 32;
+        if (xa != ya) return xa;
+        const bool xs = hasSpace(x.path.c_str());
+        const bool ys = hasSpace(y.path.c_str());
+        if (xs != ys) return xs;
+        if (x.score != y.score) return x.score > y.score;
+        if (x.titleHits != y.titleHits) return x.titleHits > y.titleHits;
+        return x.titleRegion != 0 && (y.titleRegion == 0 || x.titleRegion < y.titleRegion);
+    };
+
     const PudCandidate* best = nullptr;
+    unsigned titleCount = 0;
+    unsigned mapAdjCount = 0;
     for (const auto& c : list) {
-        if (!c.fromLobbyTitle) continue;
-        if (!best || c.score > best->score) best = &c;
+        if (c.fromLobbyTitle) ++titleCount;
+        if (c.titleRegion == 32) ++mapAdjCount;
     }
+    // 1) Prefer Map-adjacent titles.
+    for (const auto& c : list) {
+        if (c.titleRegion != 32 || !c.fromLobbyTitle) continue;
+        if (!best || better(c, *best)) best = &c;
+    }
+    // 2) Else multi-word lobby titles (bare-name hits).
     if (!best) {
         for (const auto& c : list) {
-            if (!best || c.score > best->score) best = &c;
+            if (!c.fromLobbyTitle || !hasSpace(c.path.c_str())) continue;
+            if (!best || better(c, *best)) best = &c;
         }
+        if (best) Log("resolve: fallback multi-word title score=%d", best->score);
     }
-    if (!best) return;
-
+    // 3) Else multi-word pud path (last resort so click still opens something real).
+    if (!best) {
+        for (const auto& c : list) {
+            if (!hasSpace(c.path.c_str())) continue;
+            if (!best || better(c, *best)) best = &c;
+        }
+        if (best) Log("resolve: fallback multi-word path score=%d", best->score);
+    }
+    if (!best) {
+        Log("resolve: no usable map among=%u titles=%u mapAdj=%u",
+            static_cast<unsigned>(list.size()), titleCount, mapAdjCount);
+        return;
+    }
+    Log("resolve: mapAdj=%u titleCount=%u score=%d titleReg=%u",
+        mapAdjCount, titleCount, best->score, static_cast<unsigned>(best->titleRegion));
+    g_lastResolveTitleReg = best->titleRegion;
+    g_lastResolveScore = best->score;
     wcsncpy_s(out, outChars, best->path.c_str(), _TRUNCATE);
     wchar_t rootLog[MAX_PATH]{};
     EnterCriticalSection(&g_cacheLock);
     wcsncpy_s(rootLog, g_mapsRoot, _TRUNCATE);
     LeaveCriticalSection(&g_cacheLock);
-    Log("resolve: picked score=%d title=%d among=%u root=%ls %ls", best->score,
-        best->fromLobbyTitle ? 1 : 0, static_cast<unsigned>(list.size()),
+    Log("resolve: picked score=%d title=%d titleReg=%u among=%u root=%ls %ls", best->score,
+        best->fromLobbyTitle ? 1 : 0, static_cast<unsigned>(best->titleRegion),
+        static_cast<unsigned>(list.size()),
         rootLog[0] ? rootLog : L"(none)", best->path.c_str());
 }
 
 void SetCachedPud(const wchar_t* path)
 {
     EnterCriticalSection(&g_cacheLock);
-    if (!path || !path[0]) g_cachedPud[0] = 0;
-    else wcsncpy_s(g_cachedPud, path, _TRUNCATE);
+    if (!path || !path[0]) {
+        g_cachedPud[0] = 0;
+        g_cachedTitleKey[0] = 0;
+    } else {
+        wcsncpy_s(g_cachedPud, path, _TRUNCATE);
+        // Keep title key in sync with the pud basename unless caller set it.
+        if (!g_cachedTitleKey[0]) {
+            std::wstring key = BasenameKeyFromPath(path);
+            wcsncpy_s(g_cachedTitleKey, key.c_str(), _TRUNCATE);
+        }
+    }
+    LeaveCriticalSection(&g_cacheLock);
+}
+
+void SetCachedPudWithTitle(const wchar_t* path, const wchar_t* titleKey)
+{
+    EnterCriticalSection(&g_cacheLock);
+    if (!path || !path[0]) {
+        g_cachedPud[0] = 0;
+        g_cachedTitleKey[0] = 0;
+    } else {
+        wcsncpy_s(g_cachedPud, path, _TRUNCATE);
+        if (titleKey && titleKey[0])
+            wcsncpy_s(g_cachedTitleKey, titleKey, _TRUNCATE);
+        else {
+            std::wstring key = BasenameKeyFromPath(path);
+            wcsncpy_s(g_cachedTitleKey, key.c_str(), _TRUNCATE);
+        }
+    }
     LeaveCriticalSection(&g_cacheLock);
 }
 
@@ -802,22 +1026,97 @@ void GetCachedPud(wchar_t* out, size_t outChars)
     LeaveCriticalSection(&g_cacheLock);
 }
 
-void RefreshCachedPud()
+void GetCachedTitleKey(wchar_t* out, size_t outChars)
 {
-    if (InActiveMatch() || !InMpLobbyScreen()) {
+    EnterCriticalSection(&g_cacheLock);
+    wcsncpy_s(out, outChars, g_cachedTitleKey, _TRUNCATE);
+    LeaveCriticalSection(&g_cacheLock);
+}
+
+void RefreshCachedPud(bool forceForClick = false)
+{
+    // Match always clears. Outside lobby: keep cache unless this is a forced click resolve.
+    if (InActiveMatch()) {
         SetCachedPud(nullptr);
+        return;
+    }
+    if (!forceForClick && !InMpLobbyScreen()) {
         return;
     }
     wchar_t found[MAX_PATH]{};
     ResolvePudFromMemoryInto(found, MAX_PATH);
-    if (!found[0] || GetFileAttributesW(found) == INVALID_FILE_ATTRIBUTES)
+    if (!found[0] || GetFileAttributesW(found) == INVALID_FILE_ATTRIBUTES) {
+        // Keep last short-memory value while still in this lobby (cleared on leave).
+        Log("cached pud: resolve miss (keeping short-memory if any)");
         return;
+    }
 
+    std::wstring newKey = BasenameKeyFromPath(found);
+    wchar_t prevKey[MAX_PATH]{};
+    GetCachedTitleKey(prevKey, MAX_PATH);
     wchar_t prev[MAX_PATH]{};
     GetCachedPud(prev, MAX_PATH);
-    SetCachedPud(found);
+
+    const bool same = prevKey[0] && !newKey.empty() && _wcsicmp(prevKey, newKey.c_str()) == 0;
+    auto keyHasSpace = [](const wchar_t* key) -> bool {
+        return key && key[0] && wcschr(key, L' ') != nullptr;
+    };
+    const bool prevMulti = keyHasSpace(prevKey);
+    const bool newMulti = keyHasSpace(newKey.c_str());
+    // Sticky: keep a multi-word lobby title over single-word Classic noise.
+    if (prev[0] && !same && prevMulti && !newMulti && !forceForClick) {
+        Log("cached pud: keep multi-word sticky %ls (reject %ls)", prev, found);
+        return;
+    }
+    if (prev[0] && !same && prevMulti && !newMulti && forceForClick) {
+        Log("cached pud: keep multi-word on click %ls (reject single-word %ls)", prev, found);
+        return;
+    }
+    if (prevKey[0] && !newKey.empty() && !same) {
+        Log("cached pud: title changed %ls -> %ls", prevKey, newKey.c_str());
+    }
+
+    SetCachedPudWithTitle(found, newKey.c_str());
     if (_wcsicmp(prev, found) != 0)
         Log("cached pud: %ls", found);
+}
+
+void RequestPathUiOnly()
+{
+    wchar_t tempDir[MAX_PATH]{};
+    GetTempPathW(MAX_PATH, tempDir);
+    wchar_t reqPath[MAX_PATH]{};
+    wchar_t tmpPath[MAX_PATH]{};
+    swprintf_s(reqPath, L"%swar2_lobby_map_open.txt", tempDir);
+    swprintf_s(tmpPath, L"%swar2_lobby_map_open.tmp", tempDir);
+
+    const wchar_t* pud = L"__UI_RESOLVE__";
+    HANDLE h = CreateFileW(tmpPath, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (h == INVALID_HANDLE_VALUE) {
+        Log("click: temp write failed %lu", GetLastError());
+        return;
+    }
+    DWORD written = 0;
+    const DWORD bytes = static_cast<DWORD>((wcslen(pud) + 1) * sizeof(wchar_t));
+    const BOOL ok = WriteFile(h, pud, bytes, &written, nullptr);
+    CloseHandle(h);
+    if (!ok || written != bytes) {
+        DeleteFileW(tmpPath);
+        Log("click: WriteFile failed");
+        return;
+    }
+    DeleteFileW(reqPath);
+    if (!MoveFileW(tmpPath, reqPath)) {
+        if (!CopyFileW(tmpPath, reqPath, FALSE)) {
+            Log("click: publish request failed %lu", GetLastError());
+            DeleteFileW(tmpPath);
+            return;
+        }
+        DeleteFileW(tmpPath);
+    }
+    if (g_openEvent) SetEvent(g_openEvent);
+    Log("click: requested UI resolve (Studio maps folder)");
 }
 
 void RequestPath()
@@ -832,8 +1131,9 @@ void RequestPath()
     wchar_t pud[MAX_PATH]{};
     GetCachedPud(pud, MAX_PATH);
     if (!pud[0] || GetFileAttributesW(pud) == INVALID_FILE_ATTRIBUTES) {
-        Log("click: no cached pud yet");
-        return;
+        // Ask AllyLeaveWatch to resolve via UI Automation (Map row).
+        wcsncpy_s(pud, L"__UI_RESOLVE__", _TRUNCATE);
+        Log("click: requesting UI resolve (no title pud yet)");
     }
 
     HANDLE h = CreateFileW(tmpPath, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
@@ -874,8 +1174,8 @@ void OnMapNameClick()
         return;
     }
 
-    if (!InMpLobbyScreen()) {
-        Log("click ignored: not MP lobby");
+    if (InActiveMatch()) {
+        Log("click ignored: in match");
         return;
     }
 
@@ -885,29 +1185,46 @@ void OnMapNameClick()
         return;
     }
 
+    // Prefer the foreground game window, but do NOT abort if Photos/Explorer
+    // stole focus after a previous open — hitbox + lobby still decide.
     HWND fg = GetForegroundWindow();
     if (fg) {
         DWORD pid = 0;
         GetWindowThreadProcessId(fg, &pid);
-        if (pid != GetCurrentProcessId()) {
-            Log("click ignored: not foreground");
-            return;
-        }
-        hwnd = fg;
+        if (pid == GetCurrentProcessId())
+            hwnd = fg;
+        else
+            Log("click: game not foreground (continuing via hitbox/lobby)");
     }
 
     POINT client{};
     int cw = 0, ch = 0;
     const bool inHit = CursorInMapHitbox(hwnd, &client, &cw, &ch);
-    Log("click at client=%d,%d size=%dx%d hit=%d",
-        client.x, client.y, cw, ch, inHit ? 1 : 0);
+    Log("click at client=%d,%d size=%dx%d hit=%d lobby=%d",
+        client.x, client.y, cw, ch, inHit ? 1 : 0, InMpLobbyScreen() ? 1 : 0);
 
     if (!inHit) {
         Log("click ignored: outside map hitbox");
         return;
     }
+    // Lobby probe often goes idle while still hosting. Soft-open on hitbox when
+    // not in a match: resolve first; if probe is off, require a multi-word title
+    // (space in basename) so Classic single names like Rivers do not open on menu.
+    // When probe is on, any exact resolved title is allowed (incl. non-BNE).
+    const bool lobby = InMpLobbyScreen();
+    if (!lobby)
+        Log("click: lobby probe off — soft open if Map-adjacent title");
 
-    RefreshCachedPud();
+    // Never reuse a sticky wrong map (e.g. Cramped) from a previous lobby.
+    SetCachedPud(nullptr);
+    RefreshCachedPud(true);
+    wchar_t pud[MAX_PATH]{};
+    GetCachedPud(pud, MAX_PATH);
+    if (!pud[0] || GetFileAttributesW(pud) == INVALID_FILE_ATTRIBUTES) {
+        Log("click ignored: no resolved pud");
+        return;
+    }
+    // Map-adjacent resolve already filtered; allow soft-open when probe idle.
     RequestPath();
 }
 
@@ -946,8 +1263,17 @@ DWORD WINAPI WatchThread(LPVOID)
             indexed = true;
         }
 
-        if (!InMpLobbyScreen())
+        // Only a live match drops short-memory. Idle lobby must keep the last map.
+        if (InActiveMatch()) {
             SetCachedPud(nullptr);
+        } else if (InMpLobbyScreen()) {
+            static DWORD s_lastMemRefresh = 0;
+            const DWORD nowRefresh = GetTickCount();
+            if (s_lastMemRefresh == 0 || (nowRefresh - s_lastMemRefresh) >= 450) {
+                s_lastMemRefresh = nowRefresh;
+                RefreshCachedPud(false);
+            }
+        }
 
         const DWORD now = GetTickCount();
         const bool down = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;

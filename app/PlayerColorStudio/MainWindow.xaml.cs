@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Net.Http;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -72,6 +74,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _blacksmithWorkCompleteChat;
     private bool _appliedBlacksmithWorkCompleteChat;
     private bool _lobbyMapClickOpen;
+    private string _mapsSearchText = "";
+    private string _mapsCategoryFilter = "All";
+    private string _mapsSizeFilter = "All";
+    private string _mapsSyncStatusText = "";
+    private string _mapsPudSyncStatusText = "";
+    private string _mapsDownloadProgressText = "";
+    private string _mapsFilterSummary = "";
+    private bool _mapsDownloadBusy;
+    private bool _hasInitialMapImagesDownload;
+    private CancellationTokenSource? _mapsDownloadCts;
+    private List<MapCatalogEntry> _mapsCatalog = new();
+    private string _mapsPlayersFilter = "All";
+    private string _mapsTilesetFilter = "All";
+    private string _mapsResultsCountText = "";
+    private bool _mapsCatalogLoading;
+
     private bool _appliedLobbyMapClickOpen;
     private bool _lobbyMapClickInjectedForRunningGame;
     private bool _colorBlindMode;
@@ -96,6 +114,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _appliedMapEditorPath = DefaultMapEditorPathFor(DefaultGameRootPath);
     private string _mapsPath = DefaultMapsPathFor(DefaultGameRootPath);
     private string _appliedMapsPath = DefaultMapsPathFor(DefaultGameRootPath);
+    private string _mapImagesPath = "";
+    private string _appliedMapImagesPath = "";
     private System.Windows.Media.Brush _applyButtonBrush = CreateBrush(0x2E, 0xA8, 0x5C);
     private System.Windows.Media.Brush _applyButtonBorderBrush = CreateBrush(0x4C, 0xC3, 0x7A);
     private readonly Dictionary<int, string> _appliedHexByPlayer = new();
@@ -301,6 +321,430 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
+
+    public IReadOnlyList<string> MapsCategoryOptions { get; } = new[] { "All", "Classic", "BNE", "Community", "Expansion" };
+    public IReadOnlyList<string> MapsSizeOptions { get; } = new[] { "All", "28x28", "32x32", "64x64", "96x96", "128x128" };
+
+    public string MapsCategoryFilter
+    {
+        get => _mapsCategoryFilter;
+        set
+        {
+            var next = string.IsNullOrWhiteSpace(value) ? "All" : value.Trim();
+            if (_mapsCategoryFilter == next) return;
+            _mapsCategoryFilter = next;
+            OnPropertyChanged(nameof(MapsCategoryFilter));
+            ApplyMapsFilters();
+        }
+    }
+
+    public string MapsSizeFilter
+    {
+        get => _mapsSizeFilter;
+        set
+        {
+            var next = string.IsNullOrWhiteSpace(value) ? "All" : value.Trim();
+            if (_mapsSizeFilter == next) return;
+            _mapsSizeFilter = next;
+            OnPropertyChanged(nameof(MapsSizeFilter));
+            ApplyMapsFilters();
+        }
+    }
+
+    public string MapsSearchText
+    {
+        get => _mapsSearchText;
+        set
+        {
+            var next = value ?? "";
+            if (_mapsSearchText == next) return;
+            _mapsSearchText = next;
+            OnPropertyChanged(nameof(MapsSearchText));
+            ApplyMapsFilters();
+        }
+    }
+
+    public string MapsSyncStatusText
+    {
+        get => _mapsSyncStatusText;
+        set { if (_mapsSyncStatusText == value) return; _mapsSyncStatusText = value; OnPropertyChanged(nameof(MapsSyncStatusText)); OnPropertyChanged(nameof(MapsImagesFeedbackText)); }
+    }
+
+    public string MapsDownloadProgressText
+    {
+        get => _mapsDownloadProgressText;
+        set
+        {
+            if (_mapsDownloadProgressText == value) return;
+            _mapsDownloadProgressText = value;
+            OnPropertyChanged(nameof(MapsDownloadProgressText));
+            OnPropertyChanged(nameof(MapsImagesFeedbackText));
+            if (_activeTab == "path")
+                PushMapsFeedbackToStatus();
+        }
+    }
+
+    public string MapsFilterSummary
+    {
+        get => _mapsFilterSummary;
+        set { if (_mapsFilterSummary == value) return; _mapsFilterSummary = value; OnPropertyChanged(nameof(MapsFilterSummary)); }
+    }
+
+    public bool IsMapsDownloadEnabled => IsApplyEnabled && !_mapsDownloadBusy && IsValidMapImagesPath(MapImagesPath);
+
+    public bool IsMapsFolderDownloadEnabled => IsApplyEnabled && !_mapsDownloadBusy && IsValidMapsPath(MapsPath);
+
+    public string MapsImagesActionLabel => Localization.Get("Maps.Download");
+
+    public string MapsImagesFeedbackText
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(_mapsDownloadProgressText))
+                return _mapsDownloadProgressText;
+            return _mapsSyncStatusText;
+        }
+    }
+
+    public ObservableCollection<MapCatalogEntry> FilteredMaps { get; } = new();
+
+    public IReadOnlyList<string> MapsPlayersOptions { get; } =
+        new[] { "All", "2", "3", "4", "5", "6", "7", "8" };
+
+    public IReadOnlyList<string> MapsTilesetOptions { get; } =
+        new[] { "All", "Forest", "Winter", "Wasteland", "Swamp" };
+
+    public string MapsPlayersFilter
+    {
+        get => _mapsPlayersFilter;
+        set
+        {
+            var next = string.IsNullOrWhiteSpace(value) ? "All" : value.Trim();
+            if (_mapsPlayersFilter == next) return;
+            _mapsPlayersFilter = next;
+            OnPropertyChanged(nameof(MapsPlayersFilter));
+            ApplyMapsFilters();
+        }
+    }
+
+    public string MapsTilesetFilter
+    {
+        get => _mapsTilesetFilter;
+        set
+        {
+            var next = string.IsNullOrWhiteSpace(value) ? "All" : value.Trim();
+            if (_mapsTilesetFilter == next) return;
+            _mapsTilesetFilter = next;
+            OnPropertyChanged(nameof(MapsTilesetFilter));
+            ApplyMapsFilters();
+        }
+    }
+
+
+    public string MapsResultsCountText
+    {
+        get => _mapsResultsCountText;
+        set
+        {
+            if (_mapsResultsCountText == value) return;
+            _mapsResultsCountText = value;
+            OnPropertyChanged(nameof(MapsResultsCountText));
+        }
+    }
+
+    private async Task EnsureMapsCatalogLoadedAsync()
+    {
+        if (_mapsCatalogLoading) return;
+        if (_mapsCatalog.Count > 0)
+        {
+            MarkLocalImagesOnCatalog();
+            ApplyMapsFilters();
+            return;
+        }
+
+        _mapsCatalogLoading = true;
+        MapsResultsCountText = "Loading map list…";
+        try
+        {
+            EnsureMapsRootLayout();
+            var dir = MapImagesDir();
+            var cachePath = Path.Combine(dir, "_maps_catalog.json");
+            if (!Directory.Exists(dir))
+                cachePath = Path.Combine(Path.GetTempPath(), "war2_maps_catalog.json");
+
+            if (File.Exists(cachePath))
+            {
+                try
+                {
+                    var raw = await File.ReadAllTextAsync(cachePath);
+                    var cached = System.Text.Json.JsonSerializer.Deserialize<List<MapCatalogEntry>>(raw);
+                    var hasEra = raw.Contains("\"Era\"", StringComparison.OrdinalIgnoreCase);
+                    if (cached is { Count: > 0 } && hasEra)
+                    {
+                        _mapsCatalog = cached;
+                        MarkLocalImagesOnCatalog();
+                        ApplyMapsFilters();
+                        return;
+                    }
+                }
+                catch { /* fetch fresh */ }
+            }
+
+            await FetchMapsCatalogAsync(cachePath);
+        }
+        catch (Exception ex)
+        {
+            MapsResultsCountText = "Could not load maps: " + ex.Message;
+        }
+        finally
+        {
+            _mapsCatalogLoading = false;
+        }
+    }
+
+    private async Task FetchMapsCatalogAsync(string cachePath)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("PlayerColorStudio-Maps/1.0");
+        var list = new List<MapCatalogEntry>();
+        long? cursor = null;
+        for (var page = 0; page < 500; page++)
+        {
+            var url = "https://warcraft2.site/api/maps?pageSize=100" + (cursor is null ? "" : $"&cursor={cursor}");
+            using var resp = await http.GetAsync(url);
+            resp.EnsureSuccessStatusCode();
+            using var doc = System.Text.Json.JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+            var rootEl = doc.RootElement;
+            if (rootEl.TryGetProperty("items", out var items))
+            {
+                foreach (var it in items.EnumerateArray())
+                {
+                    var filename = it.TryGetProperty("filename", out var fn) ? fn.GetString() ?? "" : "";
+                    if (string.IsNullOrWhiteSpace(filename)) continue;
+                    var title = it.TryGetProperty("title", out var t) ? t.GetString() ?? "" : "";
+                    var category = it.TryGetProperty("category", out var c) ? c.GetString() ?? "" : "";
+                    var size = it.TryGetProperty("size", out var s) ? s.GetString() ?? "" : "";
+                    var players = it.TryGetProperty("playerCount", out var p) && p.TryGetInt32(out var pc) ? pc : 0;
+                    var era = it.TryGetProperty("era", out var er) && er.TryGetInt32(out var eraVal) ? eraVal : -1;
+                    list.Add(new MapCatalogEntry
+                    {
+                        Filename = filename,
+                        Title = title,
+                        Category = category,
+                        Size = size,
+                        PlayerCount = players,
+                        Era = era,
+                    });
+                }
+            }
+            MapsResultsCountText = $"Loading map list… {list.Count}";
+            var hasMore = rootEl.TryGetProperty("hasMore", out var hm) && hm.GetBoolean();
+            if (!hasMore) break;
+            if (rootEl.TryGetProperty("nextCursor", out var nc) && nc.ValueKind == System.Text.Json.JsonValueKind.Number)
+                cursor = nc.GetInt64();
+            else break;
+        }
+
+        _mapsCatalog = list
+            .GroupBy(x => x.Filename, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .OrderBy(x => x.MapName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        try
+        {
+            var dir = Path.GetDirectoryName(cachePath);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            await File.WriteAllTextAsync(cachePath,
+                System.Text.Json.JsonSerializer.Serialize(_mapsCatalog, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch { /* cache best-effort */ }
+
+        MarkLocalImagesOnCatalog();
+        ApplyMapsFilters();
+    }
+
+    private void MarkLocalImagesOnCatalog()
+    {
+        var dir = MapImagesDir();
+        foreach (var entry in _mapsCatalog)
+        {
+            var stem = Path.GetFileNameWithoutExtension(entry.Filename);
+            var webp = Path.Combine(dir, stem + ".webp");
+            var ok = File.Exists(webp) && new FileInfo(webp).Length >= 2048;
+            entry.HasLocalImage = ok;
+            entry.PreviewPath = ok ? webp : null;
+        }
+    }
+
+
+    private void MapsPreviewMap_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: MapCatalogEntry entry })
+            return;
+        var path = entry.PreviewPath;
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            StudioDialog.Show(this, "No local preview image for this map.", "Preview map", StudioDialogKind.Warning);
+            return;
+        }
+        try
+        {
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            StudioDialog.Show(this, ex.Message, "Preview map", StudioDialogKind.Error);
+        }
+    }
+
+    private void MapsOpenInEditor_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Button { Tag: MapCatalogEntry entry })
+            return;
+        var pud = FindLocalPudForMap(entry.Filename);
+        if (string.IsNullOrWhiteSpace(pud))
+        {
+            StudioDialog.Show(this,
+                $"Could not find \"{entry.Filename}\" under your Maps folder.",
+                "Open in editor", StudioDialogKind.Warning);
+            return;
+        }
+        var editor = MapEditorPath.Trim();
+        if (!IsValidMapEditorPath(editor))
+        {
+            StudioDialog.Show(this,
+                $"Map editor not found. The path must point to \"{MapEditorExeName}\" inside your install.",
+                "Open in editor", StudioDialogKind.Warning);
+            return;
+        }
+        try
+        {
+            Process.Start(new ProcessStartInfo(editor, $"\"{pud}\"")
+            {
+                WorkingDirectory = Path.GetDirectoryName(editor) ?? string.Empty,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            StudioDialog.Show(this, ex.Message, "Open in editor", StudioDialogKind.Error);
+        }
+    }
+
+    private string? FindLocalPudForMap(string? filename)
+    {
+        if (string.IsNullOrWhiteSpace(filename)) return null;
+        var mapsRoot = NormalizePathText(MapsPath);
+        if (!Directory.Exists(mapsRoot)) return null;
+        var want = Path.GetFileName(filename);
+        try
+        {
+            return Directory.EnumerateFiles(mapsRoot, want, SearchOption.AllDirectories)
+                .FirstOrDefault(File.Exists);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void MapsFiltersReset_Click(object sender, RoutedEventArgs e)
+    {
+        MapsSearchText = "";
+        MapsCategoryFilter = "All";
+        MapsSizeFilter = "All";
+        MapsPlayersFilter = "All";
+        MapsTilesetFilter = "All";
+        ApplyMapsFilters();
+    }
+
+    private void ApplyMapsFilters()
+    {
+        // Only maps with a local preview image.
+        IEnumerable<MapCatalogEntry> q = _mapsCatalog.Where(m => m.HasLocalImage);
+
+        var search = (MapsSearchText ?? "").Trim();
+        var categoryActive = !string.Equals(MapsCategoryFilter, "All", StringComparison.OrdinalIgnoreCase);
+        var sizeActive = !string.Equals(MapsSizeFilter, "All", StringComparison.OrdinalIgnoreCase);
+        var playersWanted = 0;
+        var playersActive = !string.Equals(MapsPlayersFilter, "All", StringComparison.OrdinalIgnoreCase) &&
+                            int.TryParse(MapsPlayersFilter, out playersWanted);
+        var tilesetActive = !string.Equals(MapsTilesetFilter, "All", StringComparison.OrdinalIgnoreCase);
+        var anyFilter = categoryActive || sizeActive || playersActive || tilesetActive;
+
+        // Empty search + no dropdown filters => empty list.
+        // Empty search + at least one filter => show matching locals A-Z.
+        if (search.Length == 0 && !anyFilter)
+        {
+            FilteredMaps.Clear();
+            var localCount = _mapsCatalog.Count(m => m.HasLocalImage);
+            MapsResultsCountText = _mapsCatalog.Count == 0
+                ? "No maps loaded yet."
+                : localCount == 0
+                    ? "No local map images yet - download them under Paths."
+                    : "Type in Search, or pick a filter, to list local map images.";
+            RefreshMapsFilterSummary();
+            return;
+        }
+
+        if (categoryActive)
+            q = q.Where(m => string.Equals(m.Category, MapsCategoryFilter, StringComparison.OrdinalIgnoreCase));
+        if (sizeActive)
+            q = q.Where(m => string.Equals(m.Size, MapsSizeFilter, StringComparison.OrdinalIgnoreCase));
+        if (playersActive)
+            q = q.Where(m => m.PlayerCount == playersWanted);
+        if (tilesetActive)
+            q = q.Where(m => string.Equals(m.Tileset, MapsTilesetFilter, StringComparison.OrdinalIgnoreCase));
+
+        List<MapCatalogEntry> list;
+        if (search.Length == 0)
+        {
+            list = q.OrderBy(m => m.MapName, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+        else
+        {
+            q = q.Where(m =>
+                (m.MapName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.Filename?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
+
+            // Prefer names that start with the query ("ga" -> Garden first).
+            list = q
+                .Select(m =>
+                {
+                    var name = m.MapName ?? "";
+                    var starts = name.StartsWith(search, StringComparison.OrdinalIgnoreCase) ||
+                                 (m.Filename?.StartsWith(search, StringComparison.OrdinalIgnoreCase) ?? false);
+                    var wordStarts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                        .Any(w => w.StartsWith(search, StringComparison.OrdinalIgnoreCase));
+                    var rank = starts ? 0 : wordStarts ? 1 : 2;
+                    return (m, rank, name);
+                })
+                .OrderBy(t => t.rank)
+                .ThenBy(t => t.name, StringComparer.OrdinalIgnoreCase)
+                .Select(t => t.m)
+                .ToList();
+        }
+
+        FilteredMaps.Clear();
+        foreach (var m in list)
+            FilteredMaps.Add(m);
+        var localTotal = _mapsCatalog.Count(m => m.HasLocalImage);
+        MapsResultsCountText = $"Showing {FilteredMaps.Count} of {localTotal} local maps.";
+        RefreshMapsFilterSummary();
+    }
+
+    private void PushMapsFeedbackToStatus()
+    {
+        if (_activeTab != "path") return;
+        void apply() => SetStatusLines(BuildPathLines());
+        if (Dispatcher.CheckAccess()) apply();
+        else Dispatcher.BeginInvoke(apply);
+    }
+
+
+
+
     public bool CastleGoldTooltipFix
     {
         get => _castleGoldTooltipFix;
@@ -497,6 +941,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public System.Windows.Media.Brush MapsPathBorderBrush =>
         IsValidMapsPath(MapsPath) ? DefaultPathBorderBrush : PendingIconBrush;
 
+    public string MapImagesPath
+    {
+        get => _mapImagesPath;
+        set
+        {
+            var next = NormalizePathText(value);
+            if (_mapImagesPath == next) return;
+            _mapImagesPath = next;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+            OnPropertyChanged(nameof(MapImagesPathBorderBrush));
+            OnPropertyChanged(nameof(IsMapImagesOpenEnabled));
+            RefreshMapsSyncStatus();
+        }
+    }
+
+    public bool IsMapImagesOpenEnabled => IsApplyEnabled && IsValidMapImagesPath(MapImagesPath);
+
+    public System.Windows.Media.Brush MapImagesPathBorderBrush =>
+        IsValidMapImagesPath(MapImagesPath) ? DefaultPathBorderBrush : PendingIconBrush;
+
+
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         WriteIndented = true,
@@ -649,6 +1116,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(IsApplyVisible));
         OnPropertyChanged(nameof(IsColorsStatusSingleLine));
         RefreshTabStatus();
+        if (_activeTab == "maps")
+            _ = EnsureMapsCatalogLoadedAsync();
     }
 
     private void CaptureAppliedColors()
@@ -905,8 +1374,94 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
+        if (_activeTab == "maps")
+        {
+            SetStatusLines(BuildMapsTabLines());
+            return;
+        }
+
         SetStatusLines(BuildColorsLine());
     }
+
+    private StatusLineItem[] BuildMapsTabLines()
+    {
+        RefreshMapsSyncStatus();
+        RefreshMapsPudSyncStatus();
+
+        var lines = new List<StatusLineItem>();
+
+        // Prefer live progress while a download is running.
+        if (_mapsDownloadBusy && !string.IsNullOrWhiteSpace(_mapsDownloadProgressText))
+        {
+            lines.Add(StatusLine("✕", PendingIconBrush, _mapsDownloadProgressText.Trim()));
+        }
+
+        var imageLine = string.IsNullOrWhiteSpace(_mapsSyncStatusText)
+            ? "Last image download: none yet (Paths → Map images → Download)."
+            : (_mapsSyncStatusText.StartsWith("Last image download", StringComparison.OrdinalIgnoreCase)
+                ? _mapsSyncStatusText
+                : "Last image download: " + _mapsSyncStatusText);
+        var imagePending = imageLine.Contains("none yet", StringComparison.OrdinalIgnoreCase) ||
+                           imageLine.Contains("No download", StringComparison.OrdinalIgnoreCase) ||
+                           imageLine.Contains("Could not", StringComparison.OrdinalIgnoreCase);
+        lines.Add(imagePending
+            ? StatusLine("✕", PendingIconBrush, imageLine)
+            : StatusLine("✓", ReadyIconBrush, imageLine));
+
+        var pudLine = string.IsNullOrWhiteSpace(_mapsPudSyncStatusText)
+            ? "Last maps download: none yet (Paths → Maps folder path → Download)."
+            : _mapsPudSyncStatusText;
+        var pudPending = pudLine.Contains("none yet", StringComparison.OrdinalIgnoreCase) ||
+                         pudLine.Contains("Could not", StringComparison.OrdinalIgnoreCase) ||
+                         pudLine.Contains("login", StringComparison.OrdinalIgnoreCase) ||
+                         pudLine.Contains("401", StringComparison.OrdinalIgnoreCase);
+        lines.Add(pudPending
+            ? StatusLine("✕", PendingIconBrush, pudLine)
+            : StatusLine("✓", ReadyIconBrush, pudLine));
+
+        return lines.ToArray();
+    }
+
+    private void RefreshMapsPudSyncStatus()
+    {
+        try
+        {
+            EnsureMapsRootLayout();
+            var mapsRoot = NormalizePathText(MapsPath);
+            var dir = Path.Combine(mapsRoot, "downloads");
+            var count = Directory.Exists(dir)
+                ? Directory.GetFiles(dir, "*.pud").Length
+                : 0;
+            var metaPath = Path.Combine(dir, "_pud_download_meta.json");
+            string last = "never";
+            if (File.Exists(metaPath))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(metaPath));
+                    if (doc.RootElement.TryGetProperty("lastDownloadUtc", out var p))
+                    {
+                        var raw = p.GetString();
+                        if (!string.IsNullOrWhiteSpace(raw) &&
+                            DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out var utc))
+                            last = utc.ToLocalTime().ToString("g");
+                        else if (!string.IsNullOrWhiteSpace(raw))
+                            last = raw!;
+                    }
+                }
+                catch { /* ignore */ }
+            }
+
+            _mapsPudSyncStatusText = count > 0 || File.Exists(metaPath)
+                ? $"Last maps download: {last} · {count} .pud files (downloads folder)"
+                : "Last maps download: none yet (Paths → Maps folder path → Download).";
+        }
+        catch (Exception ex)
+        {
+            _mapsPudSyncStatusText = "Last maps download: could not read downloads folder: " + ex.Message;
+        }
+    }
+
 
     private static string FindEnginePath()
     {
@@ -955,6 +1510,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ? savedMaps!
             : (TryFindInstalledMapsFolder(_gameInstallPath) ?? DefaultMapsPathFor(_gameInstallPath));
         _appliedMapsPath = _mapsPath;
+        var savedImages = settings?.MapImagesPath?.Trim();
+        _mapImagesPath = IsValidMapImagesPath(savedImages ?? string.Empty)
+            ? NormalizePathText(savedImages!)
+            : DefaultMapImagesPathFor(_mapsPath);
+        _appliedMapImagesPath = _mapImagesPath;
+        OnPropertyChanged(nameof(MapImagesPath));
+        OnPropertyChanged(nameof(IsMapImagesOpenEnabled));
+        OnPropertyChanged(nameof(MapImagesPathBorderBrush));
+        OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+        RefreshMapsSyncStatus();
         OnPropertyChanged(nameof(MapsPath));
         OnPropertyChanged(nameof(IsMapsOpenEnabled));
         OnPropertyChanged(nameof(MapsPathBorderBrush));
@@ -1009,6 +1574,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             Path.Combine(gameRoot, MapEditorExeName),
         };
         return candidates.FirstOrDefault(File.Exists);
+    }
+
+
+    private static string DefaultMapImagesPathFor(string mapsPath)
+    {
+        var root = NormalizePathText(mapsPath);
+        if (string.IsNullOrWhiteSpace(root))
+            root = DefaultMapsPathFor(DefaultGameRootPath);
+        return Path.Combine(root, "map_images");
+    }
+
+    private static bool IsValidMapImagesPath(string path)
+    {
+        var pth = NormalizePathText(path);
+        if (string.IsNullOrWhiteSpace(pth)) return false;
+        try
+        {
+            if (Directory.Exists(pth)) return true;
+            var parent = Path.GetDirectoryName(pth);
+            return !string.IsNullOrWhiteSpace(parent) && Directory.Exists(parent);
+        }
+        catch { return false; }
     }
 
     private static string DefaultMapsPathFor(string gameRoot) =>
@@ -1080,26 +1667,43 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             lines.Add(StatusLine("✓", ReadyIconBrush, $"Using game install: {path}."));
         }
 
-        lines.Add(IsValidMapEditorPath(MapEditorPath)
-            ? StatusLine("✓", ReadyIconBrush, "Map editor found.")
-            : StatusLine("✕", PendingIconBrush,
-                $"Map editor not found — the path must point to \"{MapEditorExeName}\" inside your install."));
-
         var mapsPath = NormalizePathText(MapsPath);
         if (!Directory.Exists(mapsPath))
         {
             lines.Add(StatusLine("✕", PendingIconBrush,
-                "Maps folder not found — browse to your maps folder (x86\\Maps)."));
+                "Maps folder not found - browse to your maps folder (x86\\Maps)."));
         }
         else if (!FolderContainsPudFiles(mapsPath))
         {
             lines.Add(StatusLine("✕", PendingIconBrush,
-                "No .pud map files found in this folder — browse to your maps folder (x86\\Maps)."));
+                "No .pud map files found in this folder - browse to your maps folder (x86\\Maps)."));
         }
         else
         {
             lines.Add(StatusLine("✓", ReadyIconBrush, "Maps folder found (contains .pud maps)."));
         }
+
+        var imagesFeedback = MapsImagesFeedbackText?.Trim();
+        if (!string.IsNullOrWhiteSpace(imagesFeedback))
+        {
+            var busy = _mapsDownloadBusy ||
+                       imagesFeedback.StartsWith("Downloading", StringComparison.OrdinalIgnoreCase) ||
+                       imagesFeedback.StartsWith("Listing", StringComparison.OrdinalIgnoreCase) ||
+                       imagesFeedback.StartsWith("Checking", StringComparison.OrdinalIgnoreCase) ||
+                       imagesFeedback.StartsWith("Map download", StringComparison.OrdinalIgnoreCase);
+            var failed = imagesFeedback.StartsWith("Failed", StringComparison.OrdinalIgnoreCase) ||
+                         imagesFeedback.StartsWith("Could not", StringComparison.OrdinalIgnoreCase) ||
+                         imagesFeedback.Contains("login", StringComparison.OrdinalIgnoreCase);
+            if (busy || failed)
+                lines.Add(StatusLine("✕", PendingIconBrush, imagesFeedback));
+            else
+                lines.Add(StatusLine("✓", ReadyIconBrush, imagesFeedback));
+        }
+
+        lines.Add(IsValidMapEditorPath(MapEditorPath)
+            ? StatusLine("✓", ReadyIconBrush, "Map editor found.")
+            : StatusLine("✕", PendingIconBrush,
+                $"Map editor not found - the path must point to \"{MapEditorExeName}\" inside your install."));
 
         return [.. lines];
     }
@@ -1124,6 +1728,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (IsValidGameRoot(root)) _appliedGameInstallPath = root;
         _appliedMapEditorPath = NormalizePathText(MapEditorPath);
         _appliedMapsPath = NormalizePathText(MapsPath);
+        _appliedMapImagesPath = NormalizePathText(MapImagesPath);
 
         if (string.IsNullOrEmpty(_settingsPath)) return;
         try
@@ -1133,6 +1738,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 GameRootPath = NormalizeGameRoot(_appliedGameInstallPath),
                 MapEditorPath = _appliedMapEditorPath,
                 MapsPath = _appliedMapsPath,
+                MapImagesPath = _appliedMapImagesPath,
                 ColorBlindMode = _colorBlindMode,
                 Language = Localization.CurrentCode,
             };
@@ -1208,6 +1814,25 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             StudioDialog.Show(this, ex.Message, "Open map editor", StudioDialogKind.Error);
         }
+    }
+
+
+    private void BrowseMapImagesPath_Click(object sender, RoutedEventArgs e)
+    {
+        var current = NormalizePathText(MapImagesPath);
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "Select map images folder",
+            SelectedPath = Directory.Exists(current) ? current : (Directory.Exists(MapsPath) ? MapsPath : ""),
+            ShowNewFolderButton = true,
+        };
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+        MapImagesPath = dialog.SelectedPath;
+    }
+
+    private void DefaultMapImagesPath_Click(object sender, RoutedEventArgs e)
+    {
+        MapImagesPath = DefaultMapImagesPathFor(MapsPath);
     }
 
     private void BrowseMapsPath_Click(object sender, RoutedEventArgs e)
@@ -1939,7 +2564,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void SyncAllyLeaveWatch()
     {
         if (string.IsNullOrEmpty(_nativeDir)) return;
-        var watch = Path.Combine(_nativeDir, "AllyLeaveWatch.exe");
+
+        // Prefer the game-install copy so HKCU Run survives moves of the project folder
+        // and always reads the mirrored extra-features.json next to it.
+        SyncNativeToGameInstall();
+        var installNative = Path.Combine(
+            NormalizeGameRoot(_appliedGameInstallPath),
+            "x86", "Mods", "PlayerColorStudio", "mod", "native");
+        var watchDir = (!string.IsNullOrWhiteSpace(installNative) &&
+                        File.Exists(Path.Combine(installNative, "AllyLeaveWatch.exe")))
+            ? installNative
+            : _nativeDir;
+        var watch = Path.Combine(watchDir, "AllyLeaveWatch.exe");
         if (!File.Exists(watch)) return;
 
         try
@@ -1949,11 +2585,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _appliedMpLobbyChatScrollFix ||
                 _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
                 _appliedBlacksmithWorkCompleteChat ||
-                _appliedDragSelectColorEnabled || _appliedUnitSpriteColors;
+                _appliedDragSelectColorEnabled || _appliedUnitSpriteColors ||
+                _appliedNetworkMonitor || _appliedLobbyMapClickOpen;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
-                WorkingDirectory = _nativeDir,
+                WorkingDirectory = watchDir,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
@@ -1965,7 +2602,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 // Ensure a watcher instance is running (second start is a no-op via mutex).
                 var run = new ProcessStartInfo(watch)
                 {
-                    WorkingDirectory = _nativeDir,
+                    WorkingDirectory = watchDir,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                 };
@@ -2271,6 +2908,433 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         catch
         {
             _lobbyMapClickInjectedForRunningGame = false;
+        }
+    }
+
+
+    private string MapImagesDir()
+    {
+        var dir = NormalizePathText(MapImagesPath);
+        if (string.IsNullOrWhiteSpace(dir))
+            dir = DefaultMapImagesPathFor(MapsPath);
+        return dir;
+    }
+
+    private void EnsureMapsRootLayout()
+    {
+        var root = NormalizePathText(MapsPath);
+        if (!string.IsNullOrWhiteSpace(root))
+        {
+            foreach (var name in new[] { "classics", "downloads" })
+            {
+                try { Directory.CreateDirectory(Path.Combine(root, name)); } catch { /* ignore */ }
+            }
+            try
+            {
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "war2_maps_root.txt"), root, System.Text.Encoding.Unicode);
+            }
+            catch { /* ignore */ }
+        }
+
+        var images = MapImagesDir();
+        if (!string.IsNullOrWhiteSpace(images))
+        {
+            try { Directory.CreateDirectory(images); } catch { /* ignore */ }
+            try
+            {
+                // AllyLeaveWatch / lobby feature read this exact preview folder.
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "war2_map_images_path.txt"), images, System.Text.Encoding.Unicode);
+            }
+            catch { /* ignore */ }
+        }
+    }
+
+    private void RefreshMapsSyncStatus()
+    {
+        try
+        {
+            EnsureMapsRootLayout();
+            var dir = MapImagesDir();
+            var count = Directory.Exists(dir)
+                ? Directory.GetFiles(dir, "*.webp").Length
+                : 0;
+            var metaPath = Path.Combine(dir, "_download_meta.json");
+            _hasInitialMapImagesDownload = File.Exists(metaPath) || count > 0;
+            string last = "never";
+            if (File.Exists(metaPath))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(metaPath));
+                    if (doc.RootElement.TryGetProperty("lastDownloadUtc", out var p))
+                    {
+                        var raw = p.GetString();
+                        if (!string.IsNullOrWhiteSpace(raw) && DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out var utc))
+                            last = utc.ToLocalTime().ToString("g");
+                        else if (!string.IsNullOrWhiteSpace(raw))
+                            last = raw!;
+                    }
+                }
+                catch { /* ignore */ }
+            }
+            MapsSyncStatusText = _hasInitialMapImagesDownload
+                ? $"Last image download: {last} · {count} files"
+                : "Last image download: none yet";
+            OnPropertyChanged(nameof(MapsImagesActionLabel));
+        }
+        catch (Exception ex)
+        {
+            MapsSyncStatusText = "Could not read map images folder: " + ex.Message;
+            OnPropertyChanged(nameof(MapsImagesActionLabel));
+        }
+        RefreshMapsFilterSummary();
+        OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+        OnPropertyChanged(nameof(MapsImagesFeedbackText));
+        PushMapsFeedbackToStatus();
+    }
+
+    private void RefreshMapsFilterSummary()
+    {
+        MapsFilterSummary = $"Showing filters: category={MapsCategoryFilter}, size={MapsSizeFilter}, search=\"{MapsSearchText}\" (metadata list comes from warcraft2.site on Download/Update).";
+    }
+
+    private async void MapsImagesAction_Click(object sender, RoutedEventArgs e) =>
+        await RunMapsImageSyncAsync(incrementalOnly: _hasInitialMapImagesDownload);
+
+    private async void MapsFolderDownload_Click(object sender, RoutedEventArgs e) =>
+        await RunMapsPudDownloadAsync();
+
+    private async Task RunMapsPudDownloadAsync()
+    {
+        if (_mapsDownloadBusy) return;
+        if (!IsValidMapsPath(MapsPath))
+        {
+            System.Windows.MessageBox.Show(this, "Set a valid Maps folder path first.", "Maps",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        _mapsDownloadBusy = true;
+        OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+        OnPropertyChanged(nameof(IsMapsFolderDownloadEnabled));
+        _mapsDownloadCts?.Cancel();
+        _mapsDownloadCts = new CancellationTokenSource();
+        var token = _mapsDownloadCts.Token;
+
+        MapsDownloadProgressText = "Map download: listing warcraft2.site…";
+        try
+        {
+            EnsureMapsRootLayout();
+            var mapsRoot = NormalizePathText(MapsPath);
+            var outDir = Path.Combine(mapsRoot, "downloads");
+            Directory.CreateDirectory(outDir);
+
+            // Public list API; authenticated .pud fetch uses embedded WebView2 (own login session).
+            var jobs = await ListMapPudDownloadJobsAsync(outDir, token);
+            if (jobs.Count == 0)
+            {
+                MapsDownloadProgressText = "Map download: all listed maps already present in downloads.";
+                RefreshMapsPudSyncStatus();
+                return;
+            }
+
+            MapsDownloadProgressText = $"Map download: {jobs.Count} maps need download — open login window…";
+            var win = new Warcraft2MapDownloadWindow(this, outDir, jobs, token);
+            win.ShowDialog();
+
+            if (win.Completed || win.Ok > 0 || win.Skipped > 0)
+            {
+                var pudCount = Directory.Exists(outDir) ? Directory.GetFiles(outDir, "*.pud").Length : 0;
+                var metaPath = Path.Combine(outDir, "_pud_download_meta.json");
+                var meta = $"{{\"lastDownloadUtc\":\"{DateTime.UtcNow:o}\",\"fileCount\":{pudCount},\"ok\":{win.Ok},\"skipped\":{win.Skipped},\"failed\":{win.Fail}}}";
+                File.WriteAllText(metaPath, meta);
+                RefreshMapsPudSyncStatus();
+                MapsDownloadProgressText =
+                    $"Map download finished → downloads (new={win.Ok}, skipped={win.Skipped}, failed={win.Fail}).";
+            }
+            else
+            {
+                MapsDownloadProgressText = "Map download window closed before finishing.";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            MapsDownloadProgressText = "Map download cancelled.";
+        }
+        catch (Exception ex)
+        {
+            MapsDownloadProgressText = "Failed map download: " + ex.Message;
+            StudioDialog.Show(this, ex.Message, "Download maps", StudioDialogKind.Error);
+        }
+        finally
+        {
+            _mapsDownloadBusy = false;
+            OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+            OnPropertyChanged(nameof(IsMapsFolderDownloadEnabled));
+            PushMapsFeedbackToStatus();
+        }
+    }
+
+    private async Task<List<(string Filename, string DownloadUrl)>> ListMapPudDownloadJobsAsync(
+        string outDir, CancellationToken token)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("PlayerColorStudio-Maps/1.0");
+        http.DefaultRequestHeaders.Referrer = new Uri("https://warcraft2.site/");
+
+        var entries = new List<(string Filename, string Category, string DownloadUrl)>();
+        long? cursor = null;
+        for (var page = 0; page < 500; page++)
+        {
+            token.ThrowIfCancellationRequested();
+            var url = "https://warcraft2.site/api/maps?pageSize=100" + (cursor is null ? "" : $"&cursor={cursor}");
+            using var resp = await http.GetAsync(url, token);
+            resp.EnsureSuccessStatusCode();
+            using var doc = System.Text.Json.JsonDocument.Parse(await resp.Content.ReadAsStringAsync(token));
+            var rootEl = doc.RootElement;
+            if (rootEl.TryGetProperty("items", out var items))
+            {
+                foreach (var it in items.EnumerateArray())
+                {
+                    var filename = it.TryGetProperty("filename", out var fn) ? fn.GetString() ?? "" : "";
+                    if (string.IsNullOrWhiteSpace(filename)) continue;
+                    var category = it.TryGetProperty("category", out var c) ? c.GetString() ?? "" : "";
+                    var downloadUrl = "";
+                    if (it.TryGetProperty("links", out var links) && links.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        foreach (var link in links.EnumerateArray())
+                        {
+                            var rel = link.TryGetProperty("rel", out var r) ? r.GetString() : null;
+                            if (!string.Equals(rel, "download", StringComparison.OrdinalIgnoreCase)) continue;
+                            var href = link.TryGetProperty("href", out var h) ? h.GetString() : null;
+                            if (!string.IsNullOrWhiteSpace(href))
+                            {
+                                downloadUrl = href!.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                    ? href!
+                                    : "https://warcraft2.site" + href;
+                                break;
+                            }
+                        }
+                    }
+                    if (string.IsNullOrWhiteSpace(downloadUrl) && !string.IsNullOrWhiteSpace(category))
+                    {
+                        downloadUrl =
+                            $"https://warcraft2.site/api/maps/{Uri.EscapeDataString(category)}/{Uri.EscapeDataString(filename)}/download";
+                    }
+                    if (!string.IsNullOrWhiteSpace(downloadUrl))
+                        entries.Add((filename, category, downloadUrl));
+                }
+            }
+            MapsDownloadProgressText = $"Map download: listing… {entries.Count}";
+            var hasMore = rootEl.TryGetProperty("hasMore", out var hm) && hm.GetBoolean();
+            if (!hasMore) break;
+            if (rootEl.TryGetProperty("nextCursor", out var nc) && nc.ValueKind == System.Text.Json.JsonValueKind.Number)
+                cursor = nc.GetInt64();
+            else break;
+        }
+
+        return entries
+            .GroupBy(e => e.Filename, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .Where(e =>
+            {
+                var dest = Path.Combine(outDir, e.Filename);
+                return !(File.Exists(dest) && new FileInfo(dest).Length >= 256);
+            })
+            .Select(e => (e.Filename, e.DownloadUrl))
+            .ToList();
+    }
+
+
+    private sealed class PudDownloadResult
+    {
+        public int Ok { get; init; }
+        public int Fail { get; init; }
+        public int Skipped { get; init; }
+        public bool AuthRequired { get; init; }
+    }
+
+
+    private string? TryLoadWarcraft2SiteCookieHeader()
+    {
+        try
+        {
+            var script = Path.Combine(_nativeDir, "get_w2_site_cookies.py");
+            if (!File.Exists(script))
+            {
+                var projectNative = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "mod", "native", "get_w2_site_cookies.py"));
+                if (File.Exists(projectNative)) script = projectNative;
+            }
+            if (!File.Exists(script)) return null;
+
+            foreach (var py in new[] { "py", "python" })
+            {
+                try
+                {
+                    var args = py == "py" ? $"-3 \"{script}\"" : $"\"{script}\"";
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = py,
+                        Arguments = args,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc is null) continue;
+                    var output = proc.StandardOutput.ReadToEnd().Trim();
+                    if (!proc.WaitForExit(20000))
+                    {
+                        try { proc.Kill(entireProcessTree: true); } catch { }
+                        continue;
+                    }
+                    if (proc.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                        return output;
+                }
+                catch { /* try next launcher */ }
+            }
+        }
+        catch { /* optional auth helper */ }
+        return null;
+    }
+
+    
+
+
+    private async void MapsDownload_Click(object sender, RoutedEventArgs e) =>
+        await RunMapsImageSyncAsync(incrementalOnly: false);
+
+    private async void MapsUpdate_Click(object sender, RoutedEventArgs e) =>
+        await RunMapsImageSyncAsync(incrementalOnly: true);
+
+    private void MapsOpenImagesFolder_Click(object sender, RoutedEventArgs e)
+    {
+        EnsureMapsRootLayout();
+        var dir = MapImagesDir();
+        if (!Directory.Exists(dir))
+        {
+            System.Windows.MessageBox.Show(this, "map_images folder missing.", "Maps",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        Process.Start(new ProcessStartInfo { FileName = dir, UseShellExecute = true });
+    }
+
+    private async Task RunMapsImageSyncAsync(bool incrementalOnly)
+    {
+        if (_mapsDownloadBusy) return;
+        if (!IsValidMapImagesPath(MapImagesPath))
+        {
+            System.Windows.MessageBox.Show(this, "Set a valid Map images path first (Paths tab).", "Maps",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        _mapsDownloadBusy = true;
+        OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+        _mapsDownloadCts?.Cancel();
+        _mapsDownloadCts = new CancellationTokenSource();
+        var token = _mapsDownloadCts.Token;
+        MapsDownloadProgressText = incrementalOnly ? "Checking for missing images…" : "Downloading all map images…";
+        try
+        {
+            EnsureMapsRootLayout();
+            var outDir = MapImagesDir();
+            // Inline HTTP only — spawning py from the GUI often fails (exit 101).
+
+            await DownloadMapImagesInlineAsync(outDir, incrementalOnly, token);
+
+            var metaPath = Path.Combine(outDir, "_download_meta.json");
+            var count = Directory.GetFiles(outDir, "*.webp").Length;
+            var meta = $"{{\"lastDownloadUtc\":\"{DateTime.UtcNow:o}\",\"fileCount\":{count},\"incremental\":{(incrementalOnly ? "true" : "false")}}}";
+            File.WriteAllText(metaPath, meta);
+            RefreshMapsSyncStatus();
+            MapsDownloadProgressText = incrementalOnly ? "Update finished." : "Download finished.";
+        }
+        catch (OperationCanceledException)
+        {
+            MapsDownloadProgressText = "Cancelled.";
+        }
+        catch (Exception ex)
+        {
+            MapsDownloadProgressText = "Failed: " + ex.Message;
+            System.Windows.MessageBox.Show(this, ex.Message, "Maps download", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _mapsDownloadBusy = false;
+            OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+            OnPropertyChanged(nameof(IsMapsFolderDownloadEnabled));
+            PushMapsFeedbackToStatus();
+        }
+    }
+
+    private async Task DownloadMapImagesInlineAsync(string outDir, bool incrementalOnly, CancellationToken token)
+    {
+        Directory.CreateDirectory(outDir);
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("PlayerColorStudio-Maps/1.0");
+        var names = new List<string>();
+        long? cursor = null;
+        for (var page = 0; page < 500; page++)
+        {
+            token.ThrowIfCancellationRequested();
+            var url = "https://warcraft2.site/api/maps?pageSize=100" + (cursor is null ? "" : $"&cursor={cursor}");
+            using var resp = await http.GetAsync(url, token);
+            resp.EnsureSuccessStatusCode();
+            using var doc = System.Text.Json.JsonDocument.Parse(await resp.Content.ReadAsStringAsync(token));
+            var rootEl = doc.RootElement;
+            if (rootEl.TryGetProperty("items", out var items))
+            {
+                foreach (var it in items.EnumerateArray())
+                {
+                    if (it.TryGetProperty("filename", out var fn))
+                        names.Add(fn.GetString() ?? "");
+                }
+            }
+            var hasMore = rootEl.TryGetProperty("hasMore", out var hm) && hm.GetBoolean();
+            if (!hasMore) break;
+            if (rootEl.TryGetProperty("nextCursor", out var nc) && nc.ValueKind == System.Text.Json.JsonValueKind.Number)
+                cursor = nc.GetInt64();
+            else break;
+            MapsDownloadProgressText = $"Listing maps… {names.Count}";
+        }
+        names = names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var todo = new List<string>();
+        foreach (var fn in names)
+        {
+            var stem = Path.GetFileNameWithoutExtension(fn);
+            var dest = Path.Combine(outDir, stem + ".webp");
+            if (incrementalOnly && File.Exists(dest) && new FileInfo(dest).Length >= 2048) continue;
+            if (!incrementalOnly && File.Exists(dest) && new FileInfo(dest).Length >= 2048) continue;
+            todo.Add(fn);
+        }
+        var ok = 0;
+        var fail = 0;
+        for (var i = 0; i < todo.Count; i++)
+        {
+            token.ThrowIfCancellationRequested();
+            var fn = todo[i];
+            var stem = Path.GetFileNameWithoutExtension(fn);
+            var dest = Path.Combine(outDir, stem + ".webp");
+            var tmp = dest + ".part";
+            try
+            {
+                var enc = Uri.EscapeDataString(fn);
+                var bytes = await http.GetByteArrayAsync($"https://warcraft2.site/api/maps/{enc}/thumbnail", token);
+                if (bytes.Length < 2048) { fail++; continue; }
+                await File.WriteAllBytesAsync(tmp, bytes, token);
+                File.Move(tmp, dest, true);
+                ok++;
+            }
+            catch
+            {
+                fail++;
+                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+            }
+            if ((i + 1) % 10 == 0 || i + 1 == todo.Count)
+                MapsDownloadProgressText = $"Downloading {i + 1}/{todo.Count} (ok={ok} fail={fail})";
+                    PushMapsFeedbackToStatus();
         }
     }
 
@@ -3546,11 +4610,35 @@ public sealed class ExtraFeaturesConfig
     public bool UnitSpriteColors { get; set; }
 }
 
+public sealed class MapCatalogEntry
+{
+    public string Filename { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Category { get; set; } = "";
+    public string Size { get; set; } = "";
+    public int PlayerCount { get; set; }
+    public int Era { get; set; }
+    public bool HasLocalImage { get; set; }
+    public string? PreviewPath { get; set; }
+    /// <summary>Real map name from the .pud filename (no title/description).</summary>
+    public string MapName =>
+        Path.GetFileNameWithoutExtension(Filename ?? "") is { Length: > 0 } stem ? stem : (Filename ?? "");
+    public string Tileset => Era switch
+    {
+        0 => "Forest",
+        1 => "Winter",
+        2 => "Wasteland",
+        3 => "Swamp",
+        _ => "Unknown",
+    };
+}
+
 public sealed class StudioSettings
 {
     public string? GameRootPath { get; set; }
     public string? MapEditorPath { get; set; }
     public string? MapsPath { get; set; }
+        public string? MapImagesPath { get; set; }
     public bool ColorBlindMode { get; set; }
     public string? Language { get; set; }
 }

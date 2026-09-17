@@ -39,3 +39,10 @@ Open action
 - ShellExecuteW explorer.exe /select,"<fullpath>"
 
 Do NOT prologue-hook lobby layout 0x005362E0 (prior crash series).
+
+Fix 2026-09-17 (sticky cache + wrong map)
+- RefreshCachedPud clears cache on resolve miss (no longer keeps prior game pud).
+- WatchThread clears on InActiveMatch OR !InMpLobbyScreen.
+- ResolvePudFromMemoryInto requires fromLobbyTitle; refuses memory-score-only fallback.
+- ConsiderBasename also tries "<title> BNE" under maps root.
+- Tracks g_cachedTitleKey so lobby title changes replace the cached pud.

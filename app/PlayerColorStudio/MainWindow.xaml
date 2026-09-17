@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:PlayerColorStudio"
         Title="Warcraft II Remastered — Quality of Life Mods"
-        Width="1120" Height="1000" MinWidth="960" MinHeight="860"
+        Width="1280" Height="1000" MinWidth="1100" MinHeight="860"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}">
     <Grid Margin="24" Background="{DynamicResource WindowBrush}">
@@ -83,7 +83,7 @@
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                                                         <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold"
                                                                    Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"
-                                                                   Margin="0,0,14,14" MinWidth="120"/>
+                                                                   Margin="0,0,14,14" MinWidth="160"/>
                                                         <StackPanel VerticalAlignment="Top" Margin="0,0,14,0">
                                                             <Border Width="36" Height="28" CornerRadius="4"
                                                                     Background="{Binding VanillaBrush}"
@@ -159,7 +159,7 @@
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
                                                         <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold"
                                                                    Foreground="{DynamicResource TextBrush}" VerticalAlignment="Center"
-                                                                   Margin="0,0,14,14" MinWidth="120"/>
+                                                                   Margin="0,0,14,14" MinWidth="160"/>
                                                         <StackPanel VerticalAlignment="Top" Margin="0,0,14,0">
                                                             <Border Width="36" Height="28" CornerRadius="4"
                                                                     Background="{Binding VanillaBrush}"
@@ -391,7 +391,7 @@
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           loc:Loc.TextKey="Feature.LobbyMapClickOpen.Help" Text="In a multiplayer lobby, click the map name to open its .jpg preview (created if missing). Uses the Maps folder path from Paths (nested folders included)."/>
+                                           loc:Loc.TextKey="Feature.LobbyMapClickOpen.Help" Text="In a multiplayer lobby, click the map name to open its preview image. Make sure to download the map images manually or by using this application under the Maps tab. Previews are read from your configured map images folder (Paths)."/>
                             </Expander>
                         </Border>
 
@@ -416,6 +416,156 @@
                                            loc:Loc.TextKey="Feature.ObserveAfterEnd.Help" Text="Temporarily unavailable while this feature is being reworked."/>
                             </Expander>
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem loc:Loc.HeaderKey="Tab.Maps" Header="Maps" Tag="maps" DockPanel.Dock="Left">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
+                    <StackPanel Background="{DynamicResource PanelBrush}">
+                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
+                                   loc:Loc.TextKey="Maps.Intro"
+                                   Text="Search your local map images (download them under Paths). Category stays as a filter only."/>
+                        <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
+                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
+                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                MinHeight="{StaticResource ExpandedColorCardMinHeight}"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <StackPanel>
+                                <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                    <TextBlock FontSize="17" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,0,14"
+                                               loc:Loc.TextKey="Maps.Filters" Text="Filters"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="10"/>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock loc:Loc.TextKey="Maps.Search" Text="Search" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding MapsSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                 Height="32" Padding="10,6"
+                                                 VerticalContentAlignment="Center"
+                                                 Foreground="{DynamicResource TextBrush}"
+                                                 Background="{DynamicResource InputBackgroundBrush}"
+                                                 BorderBrush="{DynamicResource ControlBorderBrush}"
+                                                 BorderThickness="{DynamicResource ControlBorderThickness}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock loc:Loc.TextKey="Maps.Category" Text="Category" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox SelectedItem="{Binding MapsCategoryFilter}" ItemsSource="{Binding MapsCategoryOptions}"
+                                                  Height="32"
+                                                  Style="{StaticResource StudioComboBoxStyle}"
+                                                  ItemContainerStyle="{StaticResource StudioComboBoxItemStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4">
+                                        <TextBlock loc:Loc.TextKey="Maps.Size" Text="Size" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox SelectedItem="{Binding MapsSizeFilter}" ItemsSource="{Binding MapsSizeOptions}"
+                                                  Height="32"
+                                                  Style="{StaticResource StudioComboBoxStyle}"
+                                                  ItemContainerStyle="{StaticResource StudioComboBoxItemStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="6">
+                                        <TextBlock loc:Loc.TextKey="Maps.Players" Text="Players" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox SelectedItem="{Binding MapsPlayersFilter}" ItemsSource="{Binding MapsPlayersOptions}"
+                                                  Height="32"
+                                                  Style="{StaticResource StudioComboBoxStyle}"
+                                                  ItemContainerStyle="{StaticResource StudioComboBoxItemStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="8">
+                                        <TextBlock loc:Loc.TextKey="Maps.Tileset" Text="Tileset" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4"/>
+                                        <ComboBox SelectedItem="{Binding MapsTilesetFilter}" ItemsSource="{Binding MapsTilesetOptions}"
+                                                  Height="32"
+                                                  Style="{StaticResource StudioComboBoxStyle}"
+                                                  ItemContainerStyle="{StaticResource StudioComboBoxItemStyle}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="10" VerticalAlignment="Bottom">
+                                        <TextBlock Text=" " Margin="0,0,0,4" Height="16"/>
+                                        <Button Content="Reset" Width="90" Height="32"
+                                                Click="MapsFiltersReset_Click"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding MapsResultsCountText}" Margin="0,0,0,8"
+                                           Foreground="{DynamicResource TextBrush}" FontSize="13"/>
+                                <Grid Margin="4,0,4,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="104"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="1" Text="Map" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="2" Text="Size" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="3" Text="Tileset" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="4" Text="Players" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                </Grid>
+                                <ListView ItemsSource="{Binding FilteredMaps}" Height="520"
+                                          Style="{StaticResource MonitorListViewStyle}"
+                                          ItemContainerStyle="{StaticResource MonitorListViewItemStyle}"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                          HorizontalContentAlignment="Stretch">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4" HorizontalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="104"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="70"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Grid.Column="0" Width="96" Height="96" CornerRadius="4" ClipToBounds="True"
+                                                        HorizontalAlignment="Left"
+                                                        Background="{DynamicResource CardBrush}"
+                                                        BorderBrush="{DynamicResource SwatchBorderBrush}"
+                                                        BorderThickness="1">
+                                                    <Image Source="{Binding PreviewPath}" Stretch="UniformToFill"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                </Border>
+                                                <TextBlock Grid.Column="1" Text="{Binding MapName}" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextBrush}" TextWrapping="NoWrap"
+                                                           TextTrimming="CharacterEllipsis" Margin="0,0,12,0"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Size}" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+                                                <TextBlock Grid.Column="3" Text="{Binding Tileset}" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+                                                <TextBlock Grid.Column="4" Text="{Binding PlayerCount}" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextBrush}"/>
+                                                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center"
+                                                            HorizontalAlignment="Right" Margin="12,0,4,0">
+                                                    <Button Content="Preview map" Width="110" Height="32" Margin="0,0,8,0"
+                                                            Tag="{Binding}" Click="MapsPreviewMap_Click"/>
+                                                    <Button Content="Open in editor" Width="130" Height="32"
+                                                            Tag="{Binding}" Click="MapsOpenInEditor_Click"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -766,12 +916,52 @@
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="DefaultMapsPath_Click"/>
                                         <Button Content="Open" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsMapsOpenEnabled}" Click="OpenMapsFolder_Click"/>
+                                        <Button Content="Download" Width="110" Height="32" Margin="8,0,0,0" IsEnabled="{Binding IsMapsFolderDownloadEnabled}" Click="MapsFolderDownload_Click"/>
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
                                            FontSize="13" LineHeight="20"
                                            MinHeight="{StaticResource ColorCardHelpMinHeight}"
-                                           loc:Loc.TextKey="Paths.MapsFolder.Help" Text="The folder where your custom maps live (usually x86\Maps). For Open lobby map, JPG previews are generated here next to the .pud files. Open shows the folder in Explorer."/>
+                                           loc:Loc.TextKey="Paths.MapsFolder.Help"
+                                           Text="The folder where your custom maps live (usually x86\Maps). Download saves .pud maps from warcraft2.site into the downloads subfolder. Open shows the folder in Explorer."/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
+                                Height="{StaticResource ExpandedColorCardMinHeight}"
+                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
+                            <StackPanel>
+                                <Grid MinHeight="{StaticResource ColorCardHeaderMinHeight}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="160"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
+                                               VerticalAlignment="Center" Margin="0,0,14,14"
+                                               loc:Loc.TextKey="Maps.Images" Text="Map images"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                                                Margin="0,0,0,14">
+                                        <TextBox Width="420" Text="{Binding MapImagesPath, UpdateSourceTrigger=PropertyChanged}"
+                                                 IsEnabled="{Binding IsApplyEnabled}"
+                                                 BorderBrush="{Binding MapImagesPathBorderBrush}"
+                                                 VerticalContentAlignment="Center" Padding="8,6"/>
+                                        <Button Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
+                                                IsEnabled="{Binding IsApplyEnabled}" Click="BrowseMapImagesPath_Click"/>
+                                        <Button Content="Default" Width="90" Height="32" Margin="8,0,0,0"
+                                                IsEnabled="{Binding IsApplyEnabled}" Click="DefaultMapImagesPath_Click"/>
+                                        <Button Content="Open" Width="90" Height="32" Margin="8,0,0,0"
+                                                IsEnabled="{Binding IsMapImagesOpenEnabled}" Click="MapsOpenImagesFolder_Click"/>
+                                        <Button Width="110" Height="32" Margin="8,0,0,0"
+                                                IsEnabled="{Binding IsMapsDownloadEnabled}"
+                                                Click="MapsImagesAction_Click"
+                                                 Content="Download"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="13" LineHeight="20"
+                                           MinHeight="{StaticResource ColorCardHelpMinHeight}"
+                                           loc:Loc.TextKey="Maps.Images.Help"
+                                           Text="Local .webp previews for lobby map click and the Maps tab. Download fills this folder from warcraft2.site."/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -832,3 +1022,5 @@
         </Grid>
     </Grid>
 </Window>
+
+

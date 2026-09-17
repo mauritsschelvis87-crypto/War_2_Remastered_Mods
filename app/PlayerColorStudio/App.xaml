@@ -517,49 +517,50 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid SnapsToDevicePixels="True">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
                             <Border x:Name="border"
-                                    Grid.ColumnSpan="2"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="4"/>
-                            <ContentPresenter x:Name="contentPresenter"
-                                              Margin="{TemplateBinding Padding}"
-                                              HorizontalAlignment="Left"
-                                              VerticalAlignment="Center"
-                                              IsHitTestVisible="False"
-                                              Content="{TemplateBinding SelectionBoxItem}"
-                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                              TextElement.Foreground="{TemplateBinding Foreground}"/>
+                            <!-- Full-area toggle so clicking the label (not only the arrow) opens the dropdown -->
                             <ToggleButton x:Name="toggleButton"
-                                          Grid.Column="1"
-                                          Width="28"
                                           Focusable="False"
                                           Background="Transparent"
                                           BorderThickness="0"
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                           ClickMode="Press"
-                                          Cursor="Hand">
+                                          Cursor="Hand"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Stretch">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="Transparent">
-                                            <Path Data="M 0,0 L 4,4 L 8,0"
-                                                  Stroke="{DynamicResource TextBrush}"
-                                                  StrokeThickness="1.5"
-                                                  StrokeStartLineCap="Round"
-                                                  StrokeEndLineCap="Round"
-                                                  StrokeLineJoin="Round"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"/>
-                                        </Border>
+                                        <Border Background="Transparent"/>
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
+                            <Grid IsHitTestVisible="False" Margin="{TemplateBinding Padding}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="28"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="contentPresenter"
+                                                  Grid.Column="0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}"/>
+                                <Path Grid.Column="1"
+                                      Data="M 0,0 L 4,4 L 8,0"
+                                      Stroke="{DynamicResource TextBrush}"
+                                      StrokeThickness="1.5"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Grid>
                             <Popup x:Name="PART_Popup"
                                    AllowsTransparency="True"
                                    IsOpen="{TemplateBinding IsDropDownOpen}"

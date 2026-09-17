@@ -48,7 +48,7 @@
   "Feature.LobbyTeamNumber": "Show lobby team number",
   "Feature.LobbyTeamNumber.Help": "Puts the multiplayer team number in front of each player's name on the alliances screen, making it easier to observe games without confusion.",
   "Feature.LobbyMapClickOpen": "Open lobby map in Explorer",
-  "Feature.LobbyMapClickOpen.Help": "In a multiplayer lobby, click the map name to open its .jpg preview (created if missing). Uses the Maps folder path from Paths (nested folders included).",
+  "Feature.LobbyMapClickOpen.Help": "In a multiplayer lobby, click the map name to open its preview image. Make sure to download the map images manually or by using this application under the Maps tab. Previews are read from your configured map images folder (Paths).",
   "Feature.UpgradeNotifications": "Upgrade notifications",
   "Feature.UpgradeNotifications.Help": "Gold chat notifications when a building upgrade completes. Temporarily unavailable while this feature is being reworked.",
   "Feature.ObserveAfterEnd": "Observe after surrender or elimination",
@@ -87,7 +87,7 @@
   "Paths.MapEditor": "Map editor path",
   "Paths.MapEditor.Help": "Points to Warcraft II Map Editor.exe inside your install. Open launches the map editor. Useful for quick access.",
   "Paths.MapsFolder": "Maps folder path",
-  "Paths.MapsFolder.Help": "The folder where your custom maps live (usually x86\\Maps). For Open lobby map, JPG previews are generated here next to the .pud files. Open shows the folder in Explorer.",
+  "Paths.MapsFolder.Help": "The folder where your custom maps live (usually x86\\Maps). Download saves .pud maps from warcraft2.site into the downloads subfolder. Open shows the folder in Explorer.",
   "Status.ChangesPending": "Changes have been made, please apply for the changes to take place.",
   "Status.Feature.Installed": "Mods have been installed. Restart Warcraft II Remastered to take effect.",
   "Status.Bugfixes.Installed": "Bug fixes have been installed. Restart Warcraft II Remastered to take effect.",
@@ -109,12 +109,19 @@
   "Status.Applying.Hooks": "Updating hooks…",
   "Status.Restoring": "Restoring vanilla files…",
   "Status.Network.On": "Network monitor ON — play a multiplayer match while Warcraft II is running.",
-  "Status.Network.Off": "Network monitor OFF."
+  "Status.Network.Off": "Network monitor OFF.",
+  "Tab.Maps": "Maps",
+  "Maps.Intro": "Search your local map images (download them under Paths). Category stays as a filter only.",
+  "Maps.Filters": "Filters",
+  "Maps.Category": "Category",
+  "Maps.Size": "Size",
+  "Maps.Search": "Search",
+  "Maps.Images": "Map images",
+  "Maps.Images.Help": "Local .webp previews for lobby map click and the Maps tab. Download fills this folder from warcraft2.site.",
+  "Maps.Download": "Download",
+  "Maps.Update": "Update",
+  "Maps.OpenFolder": "Open map_images",
+  "Maps.Images.Path": "Map images path",
+  "Maps.Reset": "Reset",
+  "Maps.Tileset": "Tileset"
 }
-
-
-
-
-
-
-

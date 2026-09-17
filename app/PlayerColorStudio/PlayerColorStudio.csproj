@@ -9,9 +9,9 @@
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
-    <Version>1.0.5</Version>
-    <AssemblyVersion>1.0.5.0</AssemblyVersion>
-    <FileVersion>1.0.5.0</FileVersion>
+    <Version>1.0.6-beta</Version>
+    <AssemblyVersion>1.0.6.0</AssemblyVersion>
+    <FileVersion>1.0.6.0</FileVersion>
     <AssemblyTitle>Quality of Life Modding</AssemblyTitle>
     <Product>Warcraft II — Quality of Life Modding</Product>
     <ApplicationIcon>app.ico</ApplicationIcon>
@@ -19,8 +19,9 @@
   <ItemGroup>
     <Content Include="lang\*.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="app.ico" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(MSBuildProjectDirectory)\..\..\mod\native\DropMonitor.dll"
-          Link="DropMonitor.dll"
-          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(MSBuildProjectDirectory)\..\..\mod\native\DropMonitor.dll" Link="DropMonitor.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4191.47" />
   </ItemGroup>
 </Project>
