@@ -109,5 +109,8 @@
   "Status.Applying.Hooks": "Actualizando hooks…",
   "Status.Restoring": "Restaurando archivos vanilla…",
   "Status.Network.On": "Monitor de red ACTIVADO — juega una partida multijugador con Warcraft II en ejecución.",
-  "Status.Network.Off": "Monitor de red DESACTIVADO."
+  "Status.Network.Off": "Monitor de red DESACTIVADO.",
+  "Maps.Generate": "Generar",
+  "Maps.Images.Help": "Vistas previas .jpg locales para clic de mapa en lobby y la pestaña Maps. Generar las crea desde tus archivos .pud locales.",
+  "Maps.Images": "Map images"
 }

@@ -394,7 +394,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsMapsFolderDownloadEnabled => IsApplyEnabled && !_mapsDownloadBusy && IsValidMapsPath(MapsPath);
 
-    public string MapsImagesActionLabel => Localization.Get("Maps.Download");
+    public string MapsImagesActionLabel => Localization.Get("Maps.Generate");
 
     public string MapsImagesFeedbackText
     {
@@ -570,10 +570,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         foreach (var entry in _mapsCatalog)
         {
             var stem = Path.GetFileNameWithoutExtension(entry.Filename);
-            var webp = Path.Combine(dir, stem + ".webp");
-            var ok = File.Exists(webp) && new FileInfo(webp).Length >= 2048;
+            var jpg = Path.Combine(dir, stem + ".jpg");
+            var ok = File.Exists(jpg) && new FileInfo(jpg).Length >= 2048;
             entry.HasLocalImage = ok;
-            entry.PreviewPath = ok ? webp : null;
+            entry.PreviewPath = ok ? jpg : null;
         }
     }
 
@@ -1397,10 +1397,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         var imageLine = string.IsNullOrWhiteSpace(_mapsSyncStatusText)
-            ? "Last image download: none yet (Paths → Map images → Download)."
-            : (_mapsSyncStatusText.StartsWith("Last image download", StringComparison.OrdinalIgnoreCase)
+            ? "Last image generate: none yet (Paths → Map images → Generate)."
+            : (_mapsSyncStatusText.StartsWith("Last image generate", StringComparison.OrdinalIgnoreCase)
                 ? _mapsSyncStatusText
-                : "Last image download: " + _mapsSyncStatusText);
+                : "Last image generate: " + _mapsSyncStatusText);
         var imagePending = imageLine.Contains("none yet", StringComparison.OrdinalIgnoreCase) ||
                            imageLine.Contains("No download", StringComparison.OrdinalIgnoreCase) ||
                            imageLine.Contains("Could not", StringComparison.OrdinalIgnoreCase);
@@ -1688,6 +1688,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             var busy = _mapsDownloadBusy ||
                        imagesFeedback.StartsWith("Downloading", StringComparison.OrdinalIgnoreCase) ||
+                       imagesFeedback.StartsWith("Generating", StringComparison.OrdinalIgnoreCase) ||
                        imagesFeedback.StartsWith("Listing", StringComparison.OrdinalIgnoreCase) ||
                        imagesFeedback.StartsWith("Checking", StringComparison.OrdinalIgnoreCase) ||
                        imagesFeedback.StartsWith("Map download", StringComparison.OrdinalIgnoreCase);
@@ -2956,19 +2957,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             EnsureMapsRootLayout();
             var dir = MapImagesDir();
             var count = Directory.Exists(dir)
-                ? Directory.GetFiles(dir, "*.webp").Length
+                ? Directory.GetFiles(dir, "*.jpg").Length
                 : 0;
-            var metaPath = Path.Combine(dir, "_download_meta.json");
-            _hasInitialMapImagesDownload = File.Exists(metaPath) || count > 0;
+            var metaPath = Path.Combine(dir, "_generate_meta.json");
+            // Prefer new meta; fall back to legacy download meta for incremental skip state.
+            var legacyMeta = Path.Combine(dir, "_download_meta.json");
+            _hasInitialMapImagesDownload = File.Exists(metaPath) || File.Exists(legacyMeta) || count > 0;
             string last = "never";
-            if (File.Exists(metaPath))
+            var metaRead = File.Exists(metaPath) ? metaPath : (File.Exists(legacyMeta) ? legacyMeta : null);
+            if (metaRead != null)
             {
                 try
                 {
-                    using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(metaPath));
-                    if (doc.RootElement.TryGetProperty("lastDownloadUtc", out var p))
+                    using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(metaRead));
+                    if (doc.RootElement.TryGetProperty("lastGenerateUtc", out var pg) ||
+                        doc.RootElement.TryGetProperty("lastDownloadUtc", out pg))
                     {
-                        var raw = p.GetString();
+                        var raw = pg.GetString();
                         if (!string.IsNullOrWhiteSpace(raw) && DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out var utc))
                             last = utc.ToLocalTime().ToString("g");
                         else if (!string.IsNullOrWhiteSpace(raw))
@@ -2978,8 +2983,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 catch { /* ignore */ }
             }
             MapsSyncStatusText = _hasInitialMapImagesDownload
-                ? $"Last image download: {last} · {count} files"
-                : "Last image download: none yet";
+                ? $"Last image generate: {last} · {count} files"
+                : "Last image generate: none yet";
             OnPropertyChanged(nameof(MapsImagesActionLabel));
         }
         catch (Exception ex)
@@ -3230,35 +3235,50 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
+        if (!IsValidMapsPath(MapsPath))
+        {
+            System.Windows.MessageBox.Show(this, "Set a valid Maps folder path first (needed for .pud sources).", "Maps",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         _mapsDownloadBusy = true;
         OnPropertyChanged(nameof(IsMapsDownloadEnabled));
+        OnPropertyChanged(nameof(IsMapsFolderDownloadEnabled));
         _mapsDownloadCts?.Cancel();
         _mapsDownloadCts = new CancellationTokenSource();
         var token = _mapsDownloadCts.Token;
-        MapsDownloadProgressText = incrementalOnly ? "Checking for missing images…" : "Downloading all map images…";
+        MapsDownloadProgressText = incrementalOnly ? "Checking for missing map images…" : "Generating map images from .pud…";
+        PushMapsFeedbackToStatus();
         try
         {
             EnsureMapsRootLayout();
             var outDir = MapImagesDir();
-            // Inline HTTP only — spawning py from the GUI often fails (exit 101).
+            Directory.CreateDirectory(outDir);
 
-            await DownloadMapImagesInlineAsync(outDir, incrementalOnly, token);
+            await GenerateMapImagesAsync(outDir, incrementalOnly, token);
 
-            var metaPath = Path.Combine(outDir, "_download_meta.json");
-            var count = Directory.GetFiles(outDir, "*.webp").Length;
-            var meta = $"{{\"lastDownloadUtc\":\"{DateTime.UtcNow:o}\",\"fileCount\":{count},\"incremental\":{(incrementalOnly ? "true" : "false")}}}";
+            var metaPath = Path.Combine(outDir, "_generate_meta.json");
+            var count = Directory.Exists(outDir) ? Directory.GetFiles(outDir, "*.jpg").Length : 0;
+            var meta = $"{{\"lastGenerateUtc\":\"{DateTime.UtcNow:o}\",\"fileCount\":{count},\"incremental\":{(incrementalOnly ? "true" : "false")}}}";
             File.WriteAllText(metaPath, meta);
+
+            MarkLocalImagesOnCatalog();
+            ApplyMapsFilters();
             RefreshMapsSyncStatus();
-            MapsDownloadProgressText = incrementalOnly ? "Update finished." : "Download finished.";
+            MapsDownloadProgressText = "";
+            PushMapsFeedbackToStatus();
         }
         catch (OperationCanceledException)
         {
             MapsDownloadProgressText = "Cancelled.";
+            PushMapsFeedbackToStatus();
         }
         catch (Exception ex)
         {
             MapsDownloadProgressText = "Failed: " + ex.Message;
-            System.Windows.MessageBox.Show(this, ex.Message, "Maps download", MessageBoxButton.OK, MessageBoxImage.Error);
+            PushMapsFeedbackToStatus();
+            System.Windows.MessageBox.Show(this, ex.Message, "Maps generate", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -3269,73 +3289,115 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    private async Task DownloadMapImagesInlineAsync(string outDir, bool incrementalOnly, CancellationToken token)
+    private async Task GenerateMapImagesAsync(string outDir, bool incrementalOnly, CancellationToken token)
     {
         Directory.CreateDirectory(outDir);
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("PlayerColorStudio-Maps/1.0");
-        var names = new List<string>();
-        long? cursor = null;
-        for (var page = 0; page < 500; page++)
+        var mapsRoot = NormalizePathText(MapsPath);
+        if (string.IsNullOrWhiteSpace(mapsRoot) || !Directory.Exists(mapsRoot))
+            throw new InvalidOperationException("Maps folder path is missing or invalid.");
+
+        var pudFiles = await Task.Run(() =>
         {
-            token.ThrowIfCancellationRequested();
-            var url = "https://warcraft2.site/api/maps?pageSize=100" + (cursor is null ? "" : $"&cursor={cursor}");
-            using var resp = await http.GetAsync(url, token);
-            resp.EnsureSuccessStatusCode();
-            using var doc = System.Text.Json.JsonDocument.Parse(await resp.Content.ReadAsStringAsync(token));
-            var rootEl = doc.RootElement;
-            if (rootEl.TryGetProperty("items", out var items))
-            {
-                foreach (var it in items.EnumerateArray())
-                {
-                    if (it.TryGetProperty("filename", out var fn))
-                        names.Add(fn.GetString() ?? "");
-                }
-            }
-            var hasMore = rootEl.TryGetProperty("hasMore", out var hm) && hm.GetBoolean();
-            if (!hasMore) break;
-            if (rootEl.TryGetProperty("nextCursor", out var nc) && nc.ValueKind == System.Text.Json.JsonValueKind.Number)
-                cursor = nc.GetInt64();
-            else break;
-            MapsDownloadProgressText = $"Listing maps… {names.Count}";
-        }
-        names = names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        var todo = new List<string>();
-        foreach (var fn in names)
-        {
-            var stem = Path.GetFileNameWithoutExtension(fn);
-            var dest = Path.Combine(outDir, stem + ".webp");
-            if (incrementalOnly && File.Exists(dest) && new FileInfo(dest).Length >= 2048) continue;
-            if (!incrementalOnly && File.Exists(dest) && new FileInfo(dest).Length >= 2048) continue;
-            todo.Add(fn);
-        }
-        var ok = 0;
-        var fail = 0;
-        for (var i = 0; i < todo.Count; i++)
-        {
-            token.ThrowIfCancellationRequested();
-            var fn = todo[i];
-            var stem = Path.GetFileNameWithoutExtension(fn);
-            var dest = Path.Combine(outDir, stem + ".webp");
-            var tmp = dest + ".part";
+            var list = new List<string>();
             try
             {
-                var enc = Uri.EscapeDataString(fn);
-                var bytes = await http.GetByteArrayAsync($"https://warcraft2.site/api/maps/{enc}/thumbnail", token);
-                if (bytes.Length < 2048) { fail++; continue; }
-                await File.WriteAllBytesAsync(tmp, bytes, token);
-                File.Move(tmp, dest, true);
-                ok++;
+                foreach (var path in Directory.EnumerateFiles(mapsRoot, "*.pud", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        if (new FileInfo(path).Length >= 256)
+                            list.Add(path);
+                    }
+                    catch { /* skip inaccessible */ }
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                fail++;
-                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { }
+                throw new InvalidOperationException("Could not enumerate .pud files: " + ex.Message, ex);
             }
-            if ((i + 1) % 10 == 0 || i + 1 == todo.Count)
-                MapsDownloadProgressText = $"Downloading {i + 1}/{todo.Count} (ok={ok} fail={fail})";
-                    PushMapsFeedbackToStatus();
+            return list;
+        }, token).ConfigureAwait(true);
+
+        // Always skip existing >=2KB JPGs (incremental and full regenerate).
+        _ = incrementalOnly;
+        var todo = new List<string>();
+        foreach (var pud in pudFiles)
+        {
+            token.ThrowIfCancellationRequested();
+            var stem = Path.GetFileNameWithoutExtension(pud);
+            // Exact basename only — no .QoL suffix, no fuzzy rename.
+            var dest = Path.Combine(outDir, stem + ".jpg");
+            if (File.Exists(dest) && new FileInfo(dest).Length >= 2048)
+                continue;
+            todo.Add(pud);
         }
+
+        if (todo.Count == 0)
+        {
+            MapsDownloadProgressText = pudFiles.Count == 0
+                ? "Generate: no .pud files found under Maps folder."
+                : $"Generate: all {pudFiles.Count} maps already have images.";
+            PushMapsFeedbackToStatus();
+            return;
+        }
+
+        var ok = 0;
+        var fail = 0;
+        var done = 0;
+        var gate = new System.Threading.SemaphoreSlim(4);
+        async Task WorkOne(string pud)
+        {
+            await gate.WaitAsync(token).ConfigureAwait(false);
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                var stem = Path.GetFileNameWithoutExtension(pud);
+                var dest = Path.Combine(outDir, stem + ".jpg");
+                if (File.Exists(dest) && new FileInfo(dest).Length >= 2048)
+                {
+                    System.Threading.Interlocked.Increment(ref ok);
+                    return;
+                }
+
+                var generated = await Task.Run(() =>
+                {
+                    return PudMapImageGenerator.TryGenerate(pud, dest, out var err)
+                        ? (true, (string?)null)
+                        : (false, err);
+                }, token).ConfigureAwait(false);
+
+                if (generated.Item1 && File.Exists(dest) && new FileInfo(dest).Length >= 512)
+                    System.Threading.Interlocked.Increment(ref ok);
+                else
+                {
+                    System.Threading.Interlocked.Increment(ref fail);
+                    try { if (File.Exists(dest) && new FileInfo(dest).Length < 512) File.Delete(dest); } catch { }
+                }
+            }
+            finally
+            {
+                gate.Release();
+                var n = System.Threading.Interlocked.Increment(ref done);
+                if (n % 5 == 0 || n == todo.Count)
+                {
+                    var msg = $"Generating {n}/{todo.Count} (ok={ok} fail={fail})";
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        MapsDownloadProgressText = msg;
+                        PushMapsFeedbackToStatus();
+                    });
+                }
+            }
+        }
+
+        MapsDownloadProgressText = $"Generating 0/{todo.Count} from local .pud…";
+        PushMapsFeedbackToStatus();
+        await Task.WhenAll(todo.Select(WorkOne)).ConfigureAwait(true);
+
+        MapsDownloadProgressText = $"Generate finished: ok={ok} fail={fail} (of {todo.Count} missing).";
+        PushMapsFeedbackToStatus();
+        // Brief status then cleared by caller.
+        await Task.Delay(50, token).ConfigureAwait(true);
     }
 
     private string SyncLobbyMapClickHook(bool throwOnError = true)

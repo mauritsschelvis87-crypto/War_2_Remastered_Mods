@@ -109,5 +109,8 @@
   "Status.Applying.Hooks": "Aktualizacja hooków…",
   "Status.Restoring": "Przywracanie plików vanilla…",
   "Status.Network.On": "Monitor sieci WŁ. — graj mecz multiplayer, gdy Warcraft II jest uruchomiony.",
-  "Status.Network.Off": "Monitor sieci WYŁ."
+  "Status.Network.Off": "Monitor sieci WYŁ.",
+  "Maps.Generate": "Generuj",
+  "Maps.Images.Help": "Lokalne podglądy .jpg dla kliknięcia mapy w lobby i zakładki Maps. Generuj tworzy je z lokalnych plików .pud.",
+  "Maps.Images": "Map images"
 }

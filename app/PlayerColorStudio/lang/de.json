@@ -109,5 +109,8 @@
   "Status.Applying.Hooks": "Hooks werden aktualisiert…",
   "Status.Restoring": "Vanilla-Dateien werden wiederhergestellt…",
   "Status.Network.On": "Netzwerkmonitor AN — spiele ein Multiplayer-Match, während Warcraft II läuft.",
-  "Status.Network.Off": "Netzwerkmonitor AUS."
+  "Status.Network.Off": "Netzwerkmonitor AUS.",
+  "Maps.Generate": "Generieren",
+  "Maps.Images.Help": "Lokale .jpg-Vorschauen für Lobby-Kartenklick und den Maps-Tab. Generieren erzeugt sie aus deinen lokalen .pud-Dateien.",
+  "Maps.Images": "Kartenbilder"
 }

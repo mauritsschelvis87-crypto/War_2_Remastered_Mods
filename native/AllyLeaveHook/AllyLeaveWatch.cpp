@@ -466,11 +466,6 @@ bool ResolveLocalMapImage(const wchar_t* pudPath, wchar_t* outPath, size_t outCh
     wchar_t imagesDir[MAX_PATH]{};
     if (ReadMapImagesDirFromSettings(imagesDir, MAX_PATH)) {
         wchar_t cand[MAX_PATH]{};
-        swprintf_s(cand, L"%s\\%s.webp", imagesDir, baseName);
-        if (TryPreviewFile(cand, outPath, outChars)) {
-            WatchLog("open: map_images path hit %ls", cand);
-            return true;
-        }
         swprintf_s(cand, L"%s\\%s.jpg", imagesDir, baseName);
         if (TryPreviewFile(cand, outPath, outChars)) {
             WatchLog("open: map_images path jpg hit %ls", cand);
@@ -505,11 +500,6 @@ bool ResolveLocalMapImage(const wchar_t* pudPath, wchar_t* outPath, size_t outCh
 
     if (mapsRoot[0]) {
         wchar_t cand[MAX_PATH]{};
-        swprintf_s(cand, L"%s\\map_images\\%s.webp", mapsRoot, baseName);
-        if (TryPreviewFile(cand, outPath, outChars)) {
-            WatchLog("open: map_images hit %ls", cand);
-            return true;
-        }
         swprintf_s(cand, L"%s\\map_images\\%s.jpg", mapsRoot, baseName);
         if (TryPreviewFile(cand, outPath, outChars)) {
             WatchLog("open: map_images jpg hit %ls", cand);
