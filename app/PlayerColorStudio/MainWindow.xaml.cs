@@ -645,7 +645,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ? "No maps loaded yet."
                 : localCount == 0
                     ? "No local map images yet - download them under Paths."
-                    : "Type in Search, or pick a filter, to list local map images.";
+                    : string.Empty;
             RefreshMapsFilterSummary();
             return;
         }
@@ -998,6 +998,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public MainWindow()
     {
         InitializeComponent();
+        PlaceMapsTabAfterBugFixes();
         DataContext = this;
         Localization.Changed += OnLocalizationChanged;
 
@@ -1063,6 +1064,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             SetStatusLines(StatusLine("✕", PendingIconBrush, ex.Message));
             StudioDialog.Show(this, ex.Message, Localization.Get("App.Title"), StudioDialogKind.Error);
         }
+    }
+
+    private void PlaceMapsTabAfterBugFixes()
+    {
+        var mapsTab = MainTabs.Items.OfType<TabItem>().FirstOrDefault(tab => Equals(tab.Tag, "maps"));
+        var bugFixesTab = MainTabs.Items.OfType<TabItem>().FirstOrDefault(tab => Equals(tab.Tag, "bugfixes"));
+        if (mapsTab is null || bugFixesTab is null) return;
+
+        MainTabs.Items.Remove(mapsTab);
+        var bugFixesIndex = MainTabs.Items.IndexOf(bugFixesTab);
+        MainTabs.Items.Insert(bugFixesIndex + 1, mapsTab);
     }
 
     private void MainTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1862,27 +1874,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ? vanilla.Color
                 : (saved.Players.FirstOrDefault(p => p.Player == vanilla.Player)?.Color ?? vanilla.Color);
             var description = disabled
-                ? "This player color cannot be changed yet because it is shared with other game elements."
-                : "Select your player color with 'Choose color...' or by typing a hex code, " +
-                  "or press 'Reset' to set the color back to the vanilla settings.";
+                ? Localization.Get("Colors.Player.LockedHelp")
+                : Localization.Get("Colors.Player.Help");
             Cards.Add(new ColorCard(vanilla.Player, current, vanilla.Color, !disabled, description: description));
         }
 
         OtherCards.Clear();
         OtherCards.Add(MakeOtherCard(
             defaults.SelectionHighlight, saved.SelectionHighlight, "#00FF00",
-            "selectionHighlight", "Self highlight",
-            "Changes the glow around your own units and buildings when they are selected, " +
-            "the box you drag to select many units at once, and the matching selected dots on the minimap. " +
-            "Select a color with 'Choose color...' or by typing a hex code, " +
-            "or press 'Reset' to set the color back to the vanilla settings.",
+            "selectionHighlight", Localization.Get("Colors.SelectionHighlight"),
+            Localization.Get("Colors.SelectionHighlight.Help"),
             enabled: true));
         OtherCards.Add(MakeOtherCard(
             defaults.CritterHighlight, saved.CritterHighlight, "#A2A2A6",
-            "critterHighlight", "Critter minimap",
-            "Changes the minimap color for critters. " +
-            "Select a color with 'Choose color...' or by typing a hex code, " +
-            "or press 'Reset' to set the color back to the vanilla settings.",
+            "critterHighlight", Localization.Get("Colors.CritterMinimap"),
+            Localization.Get("Colors.CritterMinimap.Help"),
             enabled: true));
     }
 
@@ -2848,7 +2854,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     private async void MapsImagesAction_Click(object sender, RoutedEventArgs e) =>
-        await RunMapsImageSyncAsync(incrementalOnly: _hasInitialMapImagesDownload);
+        await RunMapsImageSyncAsync(incrementalOnly: true);
 
     private async void MapsFolderDownload_Click(object sender, RoutedEventArgs e) =>
         await RunMapsPudDownloadAsync();
@@ -3162,8 +3168,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return list;
         }, token).ConfigureAwait(true);
 
-        // Always skip existing >=2KB JPGs (incremental and full regenerate).
-        _ = incrementalOnly;
         var todo = new List<string>();
         foreach (var pud in pudFiles)
         {
@@ -3171,7 +3175,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var stem = Path.GetFileNameWithoutExtension(pud);
             // Exact basename only — no .QoL suffix, no fuzzy rename.
             var dest = Path.Combine(outDir, stem + ".jpg");
-            if (File.Exists(dest) && new FileInfo(dest).Length >= 2048)
+            if (incrementalOnly && File.Exists(dest) && new FileInfo(dest).Length >= 2048)
                 continue;
             todo.Add(pud);
         }
@@ -3197,7 +3201,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 token.ThrowIfCancellationRequested();
                 var stem = Path.GetFileNameWithoutExtension(pud);
                 var dest = Path.Combine(outDir, stem + ".jpg");
-                if (File.Exists(dest) && new FileInfo(dest).Length >= 2048)
+                if (incrementalOnly && File.Exists(dest) && new FileInfo(dest).Length >= 2048)
                 {
                     System.Threading.Interlocked.Increment(ref ok);
                     return;

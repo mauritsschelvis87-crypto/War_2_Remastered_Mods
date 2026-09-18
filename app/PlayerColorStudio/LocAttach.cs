@@ -56,6 +56,9 @@ public static class Loc
             var text = Localization.Get(textKey);
             switch (d)
             {
+                case Window window:
+                    window.Title = text;
+                    break;
                 case TextBlock tb:
                     tb.Text = text;
                     break;

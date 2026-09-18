@@ -9,9 +9,9 @@
     <Nullable>enable</Nullable>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
-    <Version>1.0.6-beta</Version>
-    <AssemblyVersion>1.0.6.0</AssemblyVersion>
-    <FileVersion>1.0.6.0</FileVersion>
+    <Version>1.0.7-beta</Version>
+    <AssemblyVersion>1.0.7.0</AssemblyVersion>
+    <FileVersion>1.0.7.0</FileVersion>
     <AssemblyTitle>Quality of Life Modding</AssemblyTitle>
     <Product>Warcraft II — Quality of Life Modding</Product>
     <ApplicationIcon>app.ico</ApplicationIcon>

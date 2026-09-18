@@ -1207,13 +1207,13 @@ void OnMapNameClick()
         Log("click ignored: outside map hitbox");
         return;
     }
-    // Lobby probe often goes idle while still hosting. Soft-open on hitbox when
-    // not in a match: resolve first; if probe is off, require a multi-word title
-    // (space in basename) so Classic single names like Rivers do not open on menu.
-    // When probe is on, any exact resolved title is allowed (incl. non-BNE).
+    // Require MP lobby probe. Soft-open without lobby caused menu/startup
+    // false opens on ultrawide (hitbox match with lobby=0).
     const bool lobby = InMpLobbyScreen();
-    if (!lobby)
-        Log("click: lobby probe off — soft open if Map-adjacent title");
+    if (!lobby) {
+        Log("click ignored: not in MP lobby");
+        return;
+    }
 
     // Never reuse a sticky wrong map (e.g. Cramped) from a previous lobby.
     SetCachedPud(nullptr);
@@ -1224,7 +1224,6 @@ void OnMapNameClick()
         Log("click ignored: no resolved pud");
         return;
     }
-    // Map-adjacent resolve already filtered; allow soft-open when probe idle.
     RequestPath();
 }
 

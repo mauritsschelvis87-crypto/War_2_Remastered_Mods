@@ -1,6 +1,8 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Color = System.Windows.Media.Color;
 
 namespace PlayerColorStudio;
 
@@ -61,7 +63,8 @@ internal static class PudMapImageGenerator
                 return false;
             }
 
-            var scale = Math.Max(1, Math.Min(8, 256 / Math.Max(width, height)));
+            // Keep the preview readable without magnifying the simplified tile art.
+            var scale = Math.Max(1, Math.Min(32, 1024 / Math.Max(width, height)));
             var outW = width * scale;
             var outH = height * scale;
             var pixels = new byte[outW * outH * 4];
@@ -72,7 +75,7 @@ internal static class PudMapImageGenerator
                 {
                     var tile = BitConverter.ToUInt16(tileData, (y * width + x) * 2);
                     var color = ColorForTile(tile, era);
-                    FillRect(pixels, outW, outH, x * scale, y * scale, scale, scale, color);
+                    DrawTile(pixels, outW, outH, x * scale, y * scale, scale, color, tile);
                 }
             }
 
@@ -115,7 +118,7 @@ internal static class PudMapImageGenerator
             var tmp = jpgPath + ".part";
             using (var fs = File.Create(tmp))
             {
-                var encoder = new JpegBitmapEncoder { QualityLevel = 90 };
+                var encoder = new JpegBitmapEncoder { QualityLevel = 96 };
                 encoder.Frames.Add(BitmapFrame.Create(bmp));
                 encoder.Save(fs);
             }
@@ -221,6 +224,58 @@ internal static class PudMapImageGenerator
         // Forest (default)
         _ => c,
     };
+
+    private static void DrawTile(byte[] pixels, int outW, int outH, int x, int y, int scale, Color color, ushort tile)
+    {
+        FillRect(pixels, outW, outH, x, y, scale, scale, color);
+        if (scale < 4) return;
+
+        var light = AdjustColor(color, 18);
+        var shade = AdjustColor(color, -22);
+        var edge = Math.Max(1, scale / 32);
+        FillRect(pixels, outW, outH, x, y, scale, edge, light);
+        FillRect(pixels, outW, outH, x, y + scale - edge, scale, edge, shade);
+
+        if (scale < 8) return;
+
+        var hash = unchecked((uint)(tile * 2654435761u + (uint)x * 17u + (uint)y * 31u));
+        var accent = IsWater(color) ? light : shade;
+        var accent2 = IsWater(color) ? AdjustColor(color, 30) : AdjustColor(color, 14);
+        var inset = Math.Max(2, scale / 4);
+        var mark = Math.Max(1, scale / 18);
+        var px = x + inset + (int)(hash % (uint)Math.Max(1, scale - inset * 2));
+        var py = y + inset + (int)((hash >> 8) % (uint)Math.Max(1, scale - inset * 2));
+
+        if (IsWater(color))
+        {
+            FillRect(pixels, outW, outH, x + inset, py, scale - inset * 2, mark, accent2);
+            FillRect(pixels, outW, outH, x + inset + scale / 5, py + scale / 3, scale / 2, mark, accent);
+        }
+        else if (IsGreen(color))
+        {
+            FillRect(pixels, outW, outH, px, py, mark * 2, mark, accent);
+            FillRect(pixels, outW, outH, px + scale / 3, py + scale / 2, mark, mark * 2, accent2);
+            FillRect(pixels, outW, outH, x + inset, y + scale - inset - mark, scale / 3, mark, accent);
+        }
+        else
+        {
+            FillRect(pixels, outW, outH, px, py, scale / 3, mark, accent);
+            FillRect(pixels, outW, outH, px + scale / 4, py + scale / 3, scale / 4, mark, accent2);
+        }
+    }
+
+    private static bool IsWater(Color color) => color.B > color.R + 18 && color.B > color.G + 8;
+
+    private static bool IsGreen(Color color) => color.G > color.R + 12 && color.G > color.B + 6;
+
+    private static Color AdjustColor(Color color, int delta)
+    {
+        static byte Clamp(int value) => (byte)Math.Clamp(value, 0, 255);
+        return Color.FromRgb(
+            Clamp(color.R + delta),
+            Clamp(color.G + delta),
+            Clamp(color.B + delta));
+    }
 
     private static void DrawMine(byte[] pixels, int outW, int outH, int tx, int ty, ushort ai, int scale, Color color)
     {
