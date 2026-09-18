@@ -21,7 +21,7 @@
                                    Text="Units on the battlefield, minimap, victory and ally screen all follow the selected colors."/>
                         <!-- Invisible spacer: same height as other tabs so the first box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                                   loc:Loc.TextKey="Colors.Player8Note" Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <!-- Same header / help heights as player color cards (collapsed + expanded). -->
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
@@ -164,7 +164,7 @@
                                                             <Border Width="36" Height="28" CornerRadius="4"
                                                                     Background="{Binding VanillaBrush}"
                                                                     BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="{DynamicResource SwatchBorderThickness}"/>
-                                                            <TextBlock Text="vanilla" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
+                                                            <TextBlock loc:Loc.TextKey="Colors.Vanilla" Text="vanilla" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
                                                                        HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                         </StackPanel>
                                                         <TextBlock Text="{Binding VanillaHex}"
@@ -186,17 +186,17 @@
                                                             <Border Width="36" Height="28" CornerRadius="4"
                                                                     Background="{Binding CurrentBrush}"
                                                                     BorderBrush="{DynamicResource SwatchBorderBrush}" BorderThickness="{DynamicResource SwatchBorderThickness}"/>
-                                                            <TextBlock Text="edited" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
+                                                            <TextBlock loc:Loc.TextKey="Colors.Edited" Text="edited" FontSize="12" Foreground="{DynamicResource MutedTextBrush}"
                                                                        HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                                         </StackPanel>
                                                         <TextBox Width="110" Text="{Binding Hex, UpdateSourceTrigger=PropertyChanged}"
                                                                  IsEnabled="{Binding IsEnabled}" LostFocus="Hex_LostFocus"
                                                                  VerticalAlignment="Center" Margin="0,0,10,14"/>
-                                                        <Button Content="Choose color..." IsEnabled="{Binding IsEnabled}"
+                                                        <Button loc:Loc.TextKey="Btn.ChooseColor" Content="Choose color..." IsEnabled="{Binding IsEnabled}"
                                                                 Tag="{Binding}" Click="ChooseColor_Click"
                                                                 VerticalAlignment="Center" Margin="0,0,8,14"
                                                                 Padding="10,4"/>
-                                                        <Button Content="Reset" IsEnabled="{Binding IsEnabled}"
+                                                        <Button loc:Loc.TextKey="Btn.Reset" Content="Reset" IsEnabled="{Binding IsEnabled}"
                                                                 Tag="{Binding}" Click="ResetCard_Click"
                                                                 VerticalAlignment="Center" Margin="0,0,0,14"
                                                                 Width="100" Padding="10,4"/>
@@ -222,7 +222,7 @@
                                    Text="Optional feature mods for multiplayer games. Each mod is compatible with the others — you can use them individually or simultaneously."/>
                         <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                                   loc:Loc.TextKey="Colors.Player8Note" Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
@@ -427,7 +427,7 @@
                                    Text="Search your local map images (download them under Paths). Category stays as a filter only."/>
                         <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                                   loc:Loc.TextKey="Colors.Player8Note" Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 MinHeight="{StaticResource ExpandedColorCardMinHeight}"
@@ -493,7 +493,7 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="10" VerticalAlignment="Bottom">
                                         <TextBlock Text=" " Margin="0,0,0,4" Height="16"/>
-                                        <Button Content="Reset" Width="90" Height="32"
+                                        <Button loc:Loc.TextKey="Btn.Reset" Content="Reset" Width="90" Height="32"
                                                 Click="MapsFiltersReset_Click"/>
                                     </StackPanel>
                                 </Grid>
@@ -514,10 +514,10 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="1" Text="Map" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
-                                    <TextBlock Grid.Column="2" Text="Size" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
-                                    <TextBlock Grid.Column="3" Text="Tileset" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
-                                    <TextBlock Grid.Column="4" Text="Players" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="1" loc:Loc.TextKey="Maps.Col.Map" Text="Map" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="2" loc:Loc.TextKey="Maps.Col.Size" Text="Size" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="3" loc:Loc.TextKey="Maps.Col.Tileset" Text="Tileset" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
+                                    <TextBlock Grid.Column="4" loc:Loc.TextKey="Maps.Col.Players" Text="Players" FontWeight="SemiBold" Foreground="{DynamicResource MutedTextBrush}"/>
                                 </Grid>
                                 <ListView ItemsSource="{Binding FilteredMaps}" Height="520"
                                           Style="{StaticResource MonitorListViewStyle}"
@@ -554,9 +554,9 @@
                                                            Foreground="{DynamicResource TextBrush}"/>
                                                 <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center"
                                                             HorizontalAlignment="Right" Margin="12,0,4,0">
-                                                    <Button Content="Preview map" Width="110" Height="32" Margin="0,0,8,0"
+                                                    <Button loc:Loc.TextKey="Btn.PreviewMap" Content="Preview map" Width="110" Height="32" Margin="0,0,8,0"
                                                             Tag="{Binding}" Click="MapsPreviewMap_Click"/>
-                                                    <Button Content="Open in editor" Width="130" Height="32"
+                                                    <Button loc:Loc.TextKey="Btn.OpenInEditor" Content="Open in editor" Width="130" Height="32"
                                                             Tag="{Binding}" Click="MapsOpenInEditor_Click"/>
                                                 </StackPanel>
                                             </Grid>
@@ -576,7 +576,7 @@
                                    loc:Loc.TextKey="Bugfixes.Intro" Text="Fixes for known multiplayer annoyances."/>
                         <!-- Invisible spacer: same height as Colors tab second line so the box starts level. -->
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                                   loc:Loc.TextKey="Colors.Player8Note" Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
@@ -674,7 +674,7 @@
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
                                    loc:Loc.TextKey="Settings.Intro" Text="Restore and other app settings."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                                   loc:Loc.TextKey="Colors.Player8Note" Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 Height="{StaticResource ExpandedColorCardMinHeight}"
@@ -768,62 +768,13 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-            <TabItem loc:Loc.HeaderKey="Tab.Network" Header="Network" Tag="network" DockPanel.Dock="Right">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
-                    <StackPanel Background="{DynamicResource PanelBrush}">
-                        <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
-                                   loc:Loc.TextKey="Network.Intro" Text="Lockstep tick-gap monitor for MP debug (v1). Not real per-player ping — a log foundation for a future /jitter command."/>
-                        <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
-
-                        <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
-                                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="{DynamicResource CardBorderThickness}">
-                            <StackPanel>
-                                <CheckBox IsChecked="{Binding NetworkMonitor}"
-                                          IsEnabled="{Binding IsApplyEnabled}"
-                                          Margin="0,0,0,10">
-                                    <TextBlock FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource TextBrush}"
-                                               loc:Loc.TextKey="Network.MonitorTitle" Text="Multiplayer network monitor"/>
-                                </CheckBox>
-                                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
-                                           FontSize="13" LineHeight="20" Margin="0,0,0,12"
-                                           loc:Loc.TextKey="Network.Monitor.Help" Text="V1 debug tool: during an MP match this measures time between game ticks (lockstep — everyone shares the same tick). Large gaps mean hitch/stall, not ICMP ping per player. Human players only in the list (no Computer). Writes a snapshot every second to %TEMP%\war2_network_monitor.log for later /jitter and analysis."/>
-                                <TextBlock Text="{Binding NetworkMonitorStatus}" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource MutedTextBrush}" FontSize="13" Margin="0,0,0,8"/>
-                                <ListView ItemsSource="{Binding NetworkSeats}" Height="220" Margin="0,0,0,8"
-                                          Style="{StaticResource MonitorListViewStyle}"
-                                          ItemContainerStyle="{StaticResource MonitorListViewItemStyle}">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridView.ColumnHeaderContainerStyle>
-                                                <Style TargetType="GridViewColumnHeader" BasedOn="{StaticResource MonitorGridViewColumnHeaderStyle}"/>
-                                            </GridView.ColumnHeaderContainerStyle>
-                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.Seat" Header="Seat" Width="48" DisplayMemberBinding="{Binding Seat}"/>
-                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.Player" Header="Player" Width="180" DisplayMemberBinding="{Binding Name}"/>
-                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.LastMs" Header="Last ms" Width="72" DisplayMemberBinding="{Binding LastMs}"/>
-                                            <GridViewColumn loc:Loc.HeaderKey="Network.Col.MaxMs" Header="Max ms" Width="72" DisplayMemberBinding="{Binding MaxMs}"/>
-                                        </GridView>
-                                    </ListView.View>
-                                </ListView>
-                                <TextBlock Text="{Binding NetworkMonitorSummary}" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource TextBrush}" FontSize="13" Margin="0,0,0,8"/>
-                                <TextBox Text="{Binding NetworkMonitorLog, Mode=OneWay}"
-                                         Style="{StaticResource LogTextBoxStyle}"
-                                         Height="120" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
-                                         FontFamily="Consolas" FontSize="12"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-            <TabItem loc:Loc.HeaderKey="Tab.Paths" Header="Paths" Tag="path" DockPanel.Dock="Right">
+<TabItem loc:Loc.HeaderKey="Tab.Paths" Header="Paths" Tag="path" DockPanel.Dock="Right">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="16" Background="{DynamicResource PanelBrush}">
                     <StackPanel Background="{DynamicResource PanelBrush}">
                         <TextBlock Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}"
                                    loc:Loc.TextKey="Paths.Intro" Text="Set your Warcraft II Remastered paths. Changes are saved automatically."/>
                         <TextBlock Margin="0,0,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextBrush}" Visibility="Hidden"
-                                   Text="Player 8 cannot be changed yet, I am working on it."/>
+                                   loc:Loc.TextKey="Colors.Player8Note" Text="Player 8 cannot be changed yet, I am working on it."/>
 
                         <Border Padding="12" CornerRadius="8" Margin="0,0,0,8"
                                 Height="{StaticResource ExpandedColorCardMinHeight}"
@@ -876,9 +827,9 @@
                                                  BorderBrush="{Binding MapEditorPathBorderBrush}"
                                                  VerticalContentAlignment="Center" Padding="8,6"
                                                  LostFocus="GameInstallPath_LostFocus"/>
-                                        <Button Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Browse" Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="BrowseMapEditorPath_Click"/>
-                                        <Button Content="Default" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Default" Content="Default" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="DefaultMapEditorPath_Click"/>
                                         <Button loc:Loc.TextKey="Btn.Open" Content="Open" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="OpenMapEditor_Click"/>
@@ -910,13 +861,13 @@
                                                  BorderBrush="{Binding MapsPathBorderBrush}"
                                                  VerticalContentAlignment="Center" Padding="8,6"
                                                  LostFocus="GameInstallPath_LostFocus"/>
-                                        <Button Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Browse" Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="BrowseMapsPath_Click"/>
-                                        <Button Content="Default" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Default" Content="Default" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="DefaultMapsPath_Click"/>
-                                        <Button Content="Open" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Open" Content="Open" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsMapsOpenEnabled}" Click="OpenMapsFolder_Click"/>
-                                        <Button Content="Download" Width="110" Height="32" Margin="8,0,0,0" IsEnabled="{Binding IsMapsFolderDownloadEnabled}" Click="MapsFolderDownload_Click"/>
+                                        <Button loc:Loc.TextKey="Maps.Download" Content="Download" Width="110" Height="32" Margin="8,0,0,0" IsEnabled="{Binding IsMapsFolderDownloadEnabled}" Click="MapsFolderDownload_Click"/>
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
@@ -945,11 +896,11 @@
                                                  IsEnabled="{Binding IsApplyEnabled}"
                                                  BorderBrush="{Binding MapImagesPathBorderBrush}"
                                                  VerticalContentAlignment="Center" Padding="8,6"/>
-                                        <Button Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Browse" Content="Browse..." Width="100" Height="32" Margin="10,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="BrowseMapImagesPath_Click"/>
-                                        <Button Content="Default" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Default" Content="Default" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsApplyEnabled}" Click="DefaultMapImagesPath_Click"/>
-                                        <Button Content="Open" Width="90" Height="32" Margin="8,0,0,0"
+                                        <Button loc:Loc.TextKey="Btn.Open" Content="Open" Width="90" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsMapImagesOpenEnabled}" Click="MapsOpenImagesFolder_Click"/>
                                         <Button Width="110" Height="32" Margin="8,0,0,0"
                                                 IsEnabled="{Binding IsMapsDownloadEnabled}"

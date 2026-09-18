@@ -33,7 +33,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly DispatcherTimer _hookWatchTimer;
     private readonly DispatcherTimer _dropMonitorTimer;
     private readonly DispatcherTimer _selfMonitorTimer;
-    private readonly DispatcherTimer _networkMonitorTimer;
     private string _dropMonitorLog = string.Empty;
     private string _dropMonitorStatus = "Monitor is off.";
     private string _dropMonitorLastCause = "No drop recorded.";
@@ -42,12 +41,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selfMonitorStatus = "Monitor is off.";
     private string _selfMonitorLastCause = "No color change recorded.";
     private bool _selfMonitorEnabled;
-    private string _networkMonitorLog = string.Empty;
-    private string _networkMonitorStatus = "Monitor off — enable and Apply, then play a multiplayer match.";
-    private string _networkMonitorSummary = string.Empty;
-    private bool _networkMonitor;
-    private bool _appliedNetworkMonitor;
-    private bool _networkMonitorInjectedForRunningGame;
     private readonly Dictionary<string, string> _selfMonitorLastColors = new(StringComparer.OrdinalIgnoreCase);
     private bool _allyLeaveMarkComputers;
     private bool _allyLeaveMarkHumans;
@@ -124,7 +117,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ColorCard> Cards { get; } = [];
     public ObservableCollection<ColorCard> OtherCards { get; } = [];
     public ObservableCollection<StatusLineItem> StatusLines { get; } = [];
-    public ObservableCollection<NetworkSeatRow> NetworkSeats { get; } = [];
 
     public string DropMonitorLog
     {
@@ -156,36 +148,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public bool DropMonitorCanStart => !DropMonitorEnabled;
-
-    public string NetworkMonitorLog
-    {
-        get => _networkMonitorLog;
-        private set { _networkMonitorLog = value; OnPropertyChanged(); }
-    }
-
-    public string NetworkMonitorStatus
-    {
-        get => _networkMonitorStatus;
-        private set { _networkMonitorStatus = value; OnPropertyChanged(); }
-    }
-
-    public string NetworkMonitorSummary
-    {
-        get => _networkMonitorSummary;
-        private set { _networkMonitorSummary = value; OnPropertyChanged(); }
-    }
-
-    public bool NetworkMonitor
-    {
-        get => _networkMonitor;
-        set
-        {
-            if (_networkMonitor == value) return;
-            _networkMonitor = value;
-            OnPropertyChanged();
-            RefreshTabStatus();
-        }
-    }
 
     public string SelfMonitorLog
     {
@@ -585,7 +547,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var path = entry.PreviewPath;
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
         {
-            StudioDialog.Show(this, "No local preview image for this map.", "Preview map", StudioDialogKind.Warning);
+            StudioDialog.Show(this, Localization.Get("Maps.Preview.Missing"), Localization.Get("Maps.Preview.Title"), StudioDialogKind.Warning);
             return;
         }
         try
@@ -594,7 +556,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            StudioDialog.Show(this, ex.Message, "Preview map", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Maps.Preview.Title"), StudioDialogKind.Error);
         }
     }
 
@@ -606,16 +568,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(pud))
         {
             StudioDialog.Show(this,
-                $"Could not find \"{entry.Filename}\" under your Maps folder.",
-                "Open in editor", StudioDialogKind.Warning);
+                Localization.Format("Maps.OpenEditor.PudMissing", entry.Filename),
+                Localization.Get("Maps.OpenEditor.Title"), StudioDialogKind.Warning);
             return;
         }
         var editor = MapEditorPath.Trim();
         if (!IsValidMapEditorPath(editor))
         {
             StudioDialog.Show(this,
-                $"Map editor not found. The path must point to \"{MapEditorExeName}\" inside your install.",
-                "Open in editor", StudioDialogKind.Warning);
+                Localization.Format("Maps.OpenEditor.NotFound", MapEditorExeName),
+                Localization.Get("Maps.OpenEditor.Title"), StudioDialogKind.Warning);
             return;
         }
         try
@@ -628,7 +590,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            StudioDialog.Show(this, ex.Message, "Open in editor", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Maps.OpenEditor.Title"), StudioDialogKind.Error);
         }
     }
 
@@ -864,7 +826,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsApplyEnabled => !_isApplying;
 
-    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes" or "network";
+    public bool IsApplyVisible => _activeTab is "colors" or "feature" or "bugfixes";
 
     public IReadOnlyList<LanguageOption> LanguageOptions => Localization.LanguageOptions;
 
@@ -1045,8 +1007,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _dropMonitorTimer.Tick += (_, _) => RefreshDropMonitorLog();
         _selfMonitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _selfMonitorTimer.Tick += (_, _) => RefreshSelfMonitor();
-        _networkMonitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _networkMonitorTimer.Tick += (_, _) => RefreshNetworkMonitorLog();
 
         try
         {
@@ -1091,8 +1051,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             RefreshColorBlindPresetButtons();
             _hookWatchTimer.Start();
             InitializeDropMonitor();
-            _networkMonitorTimer.Start();
-            RefreshNetworkMonitorLog();
             UpdateExtraHookStatus(forceInject: false);
             RefreshTabStatus();
         }
@@ -1103,7 +1061,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _extraConfigPath = string.Empty;
             _nativeDir = string.Empty;
             SetStatusLines(StatusLine("✕", PendingIconBrush, ex.Message));
-            StudioDialog.Show(this, ex.Message, "Quality of Life Modding", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("App.Title"), StudioDialogKind.Error);
         }
     }
 
@@ -1232,7 +1190,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         HasPendingMpLobbyChatScrollFix() || HasPendingCastleGoldTooltipFix();
     private bool HasPendingCastleGoldTooltipFix() =>
         _castleGoldTooltipFix != _appliedCastleGoldTooltipFix;
-    private bool HasPendingNetworkMonitor() => _networkMonitor != _appliedNetworkMonitor;
 
     private static StatusLineItem StatusLine(string icon, System.Windows.Media.Brush brush, string text) =>
         new(icon, brush, text);
@@ -1300,7 +1257,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         "colors" => HasPendingColorChanges(),
         "feature" => HasPendingFeatureChanges(),
         "bugfixes" => HasPendingBugFixChanges(),
-        "network" => HasPendingNetworkMonitor(),
         _ => false,
     };
 
@@ -1342,26 +1298,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        if (_activeTab == "network")
-        {
-            if (HasPendingChangesForActiveTab())
-            {
-                SetStatusLines(StatusLine("✕", PendingIconBrush,
-                    Localization.Get("Status.Network.Pending")));
-            }
-            else if (_appliedNetworkMonitor)
-            {
-                SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                    Localization.Get("Status.Network.On")));
-            }
-            else
-            {
-                SetStatusLines(StatusLine("✓", ReadyIconBrush,
-                    Localization.Get("Status.Network.Off")));
-            }
-            return;
-        }
-
         if (_activeTab == "path")
         {
             SetStatusLines(BuildPathLines());
@@ -1397,13 +1333,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         var imageLine = string.IsNullOrWhiteSpace(_mapsSyncStatusText)
-            ? "Last image generate: none yet (Paths → Map images → Generate)."
-            : (_mapsSyncStatusText.StartsWith("Last image generate", StringComparison.OrdinalIgnoreCase)
-                ? _mapsSyncStatusText
-                : "Last image generate: " + _mapsSyncStatusText);
-        var imagePending = imageLine.Contains("none yet", StringComparison.OrdinalIgnoreCase) ||
-                           imageLine.Contains("No download", StringComparison.OrdinalIgnoreCase) ||
-                           imageLine.Contains("Could not", StringComparison.OrdinalIgnoreCase);
+            ? Localization.Get("Maps.Status.LastGenerateNoneHint")
+            : _mapsSyncStatusText;
+        var imagePending = string.IsNullOrWhiteSpace(_mapsSyncStatusText) ||
+                           _mapsSyncStatusText == Localization.Get("Maps.Status.LastGenerateNone") ||
+                           _mapsSyncStatusText == Localization.Get("Maps.Status.LastGenerateNoneHint") ||
+                           _mapsSyncStatusText.StartsWith(Localization.Get("Maps.Status.CouldNotReadImages").Split('{')[0], StringComparison.Ordinal);
         lines.Add(imagePending
             ? StatusLine("✕", PendingIconBrush, imageLine)
             : StatusLine("✓", ReadyIconBrush, imageLine));
@@ -1755,7 +1690,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         using var dialog = new Forms.FolderBrowserDialog
         {
-            Description = "Select the Warcraft II Remastered install folder",
+            Description = Localization.Get("Paths.Browse.GameInstall"),
             UseDescriptionForTitle = true,
             SelectedPath = Directory.Exists(NormalizeGameRoot(GameInstallPath))
                 ? NormalizeGameRoot(GameInstallPath)
@@ -1775,7 +1710,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var current = MapEditorPath.Trim();
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Select the Warcraft II map editor",
+            Title = Localization.Get("Paths.Browse.MapEditor"),
             // Only the fixed editor exe works — hide everything else.
             Filter = $"Warcraft II Map Editor|{MapEditorExeName}",
             FileName = MapEditorExeName,
@@ -1799,8 +1734,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (!IsValidMapEditorPath(path))
         {
             StudioDialog.Show(this,
-                $"Map editor not found. The path must point to \"{MapEditorExeName}\" inside your install.",
-                "Open map editor", StudioDialogKind.Warning);
+                Localization.Format("Maps.OpenEditor.NotFound", MapEditorExeName),
+                Localization.Get("Dialog.OpenMapEditor"), StudioDialogKind.Warning);
             return;
         }
         try
@@ -1813,7 +1748,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            StudioDialog.Show(this, ex.Message, "Open map editor", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Dialog.OpenMapEditor"), StudioDialogKind.Error);
         }
     }
 
@@ -1823,7 +1758,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var current = NormalizePathText(MapImagesPath);
         using var dialog = new System.Windows.Forms.FolderBrowserDialog
         {
-            Description = "Select map images folder",
+            Description = Localization.Get("Paths.Browse.MapImages"),
             SelectedPath = Directory.Exists(current) ? current : (Directory.Exists(MapsPath) ? MapsPath : ""),
             ShowNewFolderButton = true,
         };
@@ -1841,7 +1776,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var current = NormalizePathText(MapsPath);
         using var dialog = new Forms.FolderBrowserDialog
         {
-            Description = "Select your Warcraft II maps folder",
+            Description = Localization.Get("Paths.Browse.Maps"),
             UseDescriptionForTitle = true,
             SelectedPath = Directory.Exists(current)
                 ? current
@@ -1863,8 +1798,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (!IsValidMapsPath(path))
         {
             StudioDialog.Show(this,
-                "Maps folder not found. The path must point to a folder that contains .pud map files.",
-                "Open maps folder", StudioDialogKind.Warning);
+                Localization.Get("Maps.OpenFolder.NotFound"),
+                Localization.Get("Maps.OpenFolder.Title"), StudioDialogKind.Warning);
             return;
         }
         try
@@ -1876,7 +1811,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            StudioDialog.Show(this, ex.Message, "Open maps folder", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Maps.OpenFolder.Title"), StudioDialogKind.Error);
         }
     }
 
@@ -2268,7 +2203,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         bool castleGoldTooltipFix,
         bool dragEnabled,
         string dragHex,
-        bool networkMonitor = false,
         bool lobbyMapClickOpen = false)
     {
         // Feature 5 is greyed out — never persist Observe as enabled.
@@ -2298,7 +2232,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             HumanFootmanAudio = voiceAudioEnhance,
             HumanKnightAudio = voiceAudioEnhance,
             CastleGoldTooltipFix = castleGoldTooltipFix,
-            NetworkMonitor = networkMonitor,
             LobbyMapClickOpen = lobbyMapClickOpen,
             DragSelectColorEnabled = dragEnabled,
             DragSelectColor = dragHex,
@@ -2345,7 +2278,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             StudioDialog.Show(this,
                 $"{card.Name}: use a six-digit hex color, for example #3B82F6.",
-                "Invalid color", StudioDialogKind.Warning);
+                Localization.Get("Dialog.InvalidColor"), StudioDialogKind.Warning);
             card.Hex = card.LastValidHex;
             RefreshTabStatus();
             return;
@@ -2375,7 +2308,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var allianceTeamNumbers = false;
         var computerAnnihilatedChat = false;
         var blacksmithWorkCompleteChat = false;
-        var networkMonitor = false;
         var lobbyMapClickOpen = false;
         var unitColors = false;
         const bool dragEnabled = false;
@@ -2405,7 +2337,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             // Voice overhaul removed — restore vanilla audio once if it was on.
             hadModAudio = (extra?.VoiceAudioEnhance ?? false) ||
                 (extra?.HumanFootmanAudio ?? false) || (extra?.HumanKnightAudio ?? false);
-            networkMonitor = extra?.NetworkMonitor ?? false;
             lobbyMapClickOpen = extra?.LobbyMapClickOpen ?? false;
             unitColors = extra?.UnitSpriteColors ?? false;
         }
@@ -2434,8 +2365,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _appliedComputerAnnihilatedChat = computerAnnihilatedChat;
         _blacksmithWorkCompleteChat = blacksmithWorkCompleteChat;
         _appliedBlacksmithWorkCompleteChat = blacksmithWorkCompleteChat;
-        _networkMonitor = networkMonitor;
-        _appliedNetworkMonitor = networkMonitor;
         _lobbyMapClickOpen = lobbyMapClickOpen;
         _appliedLobbyMapClickOpen = lobbyMapClickOpen;
         _unitSpriteColors = unitColors;
@@ -2455,14 +2384,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         OnPropertyChanged(nameof(UpgradeNotifications));
         OnPropertyChanged(nameof(BlacksmithWorkCompleteChat));
         OnPropertyChanged(nameof(LobbyMapClickOpen));
-        OnPropertyChanged(nameof(NetworkMonitor));
 
         try
         {
             WriteExtraFeaturesFile(markComputers, markHumans, chatPause, chatColored, chatStamps,
                 chatHist, mpLobbyChatScrollFix, endGameObserve, allianceTeamNumbers, computerAnnihilatedChat,
                 blacksmithWorkCompleteChat, castleGoldTooltipFix,
-                dragEnabled: false, dragHex: "#00FF00", networkMonitor: networkMonitor,
+                dragEnabled: false, dragHex: "#00FF00",
                 lobbyMapClickOpen: lobbyMapClickOpen);
         }
         catch { /* optional on first run */ }
@@ -2484,7 +2412,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UpdateChatNameColorHookStatus(forceInject);
         UpdateDragSelectHookStatus(forceInject);
         UpdateObserveHookStatus(forceInject);
-        UpdateNetworkMonitorHookStatus(forceInject);
         UpdateLobbyMapClickHookStatus(forceInject);
     }
 
@@ -2587,7 +2514,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _appliedAllianceTeamNumbers || _appliedComputerAnnihilatedChat ||
                 _appliedBlacksmithWorkCompleteChat ||
                 _appliedDragSelectColorEnabled || _appliedUnitSpriteColors ||
-                _appliedNetworkMonitor || _appliedLobbyMapClickOpen;
+                _appliedLobbyMapClickOpen;
             var args = anyExtra ? "--install-startup" : "--uninstall-startup";
             var start = new ProcessStartInfo(watch, args)
             {
@@ -2792,89 +2719,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.IsNullOrWhiteSpace(output) ? "Observe hook updated." : output;
     }
 
-    private void UpdateNetworkMonitorHookStatus(bool forceInject)
-    {
-        if (string.IsNullOrEmpty(_nativeDir)) return;
-
-        if (!_appliedNetworkMonitor)
-        {
-            if (IsWarcraftIiRunning() && forceInject)
-            {
-                try { SyncNetworkMonitorHook(throwOnError: false); }
-                catch { /* keep tab status friendly */ }
-            }
-            return;
-        }
-
-        if (!IsWarcraftIiRunning())
-        {
-            _networkMonitorInjectedForRunningGame = false;
-            return;
-        }
-
-        if (_networkMonitorInjectedForRunningGame && !forceInject) return;
-
-        try
-        {
-            var message = SyncNetworkMonitorHook(throwOnError: false);
-            _networkMonitorInjectedForRunningGame =
-                !string.IsNullOrWhiteSpace(message) &&
-                message.Contains("enabled", StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            _networkMonitorInjectedForRunningGame = false;
-        }
-    }
-
-    private string SyncNetworkMonitorHook(bool throwOnError = true)
-    {
-        var injector = Path.Combine(_nativeDir, "InjectNetworkMonitor.exe");
-        var dll = Path.Combine(_nativeDir, "NetworkMonitorHook.dll");
-        if (!File.Exists(injector) || !File.Exists(dll))
-        {
-            var missing = "Network monitor hook files are missing. Rebuild mod/native.";
-            if (throwOnError) throw new InvalidOperationException(missing);
-            return missing;
-        }
-
-        if (!IsWarcraftIiRunning())
-        {
-            _networkMonitorInjectedForRunningGame = false;
-            return _appliedNetworkMonitor
-                ? "Network monitor ON — watcher auto-injects when Warcraft II starts."
-                : "Network monitor setting saved.";
-        }
-
-        var args = _appliedNetworkMonitor ? "--enable" : "--disable";
-        var start = new ProcessStartInfo(injector, args)
-        {
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true,
-            WorkingDirectory = _nativeDir
-        };
-        using var process = Process.Start(start)
-            ?? throw new InvalidOperationException("Could not start the network monitor injector.");
-        var output = process.StandardOutput.ReadToEnd().Trim();
-        var error = process.StandardError.ReadToEnd().Trim();
-        process.WaitForExit();
-        if (process.ExitCode != 0)
-        {
-            _networkMonitorInjectedForRunningGame = false;
-            var details = string.Join(Environment.NewLine, new[] { error, output }.Where(s => !string.IsNullOrWhiteSpace(s)));
-            var message = string.IsNullOrWhiteSpace(details)
-                ? $"Network monitor hook sync failed (exit {process.ExitCode})."
-                : details;
-            if (throwOnError) throw new InvalidOperationException(message);
-            return message;
-        }
-
-        _networkMonitorInjectedForRunningGame = _appliedNetworkMonitor;
-        return string.IsNullOrWhiteSpace(output) ? "Network monitor hook updated." : output;
-    }
-
     private void UpdateLobbyMapClickHookStatus(bool forceInject)
     {
         if (string.IsNullOrWhiteSpace(_nativeDir) || !Directory.Exists(_nativeDir))
@@ -2983,13 +2827,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 catch { /* ignore */ }
             }
             MapsSyncStatusText = _hasInitialMapImagesDownload
-                ? $"Last image generate: {last} · {count} files"
-                : "Last image generate: none yet";
+                ? Localization.Format("Maps.Status.LastGenerate", last, count)
+                : Localization.Get("Maps.Status.LastGenerateNone");
             OnPropertyChanged(nameof(MapsImagesActionLabel));
         }
         catch (Exception ex)
         {
-            MapsSyncStatusText = "Could not read map images folder: " + ex.Message;
+            MapsSyncStatusText = Localization.Format("Maps.Status.CouldNotReadImages", ex.Message);
             OnPropertyChanged(nameof(MapsImagesActionLabel));
         }
         RefreshMapsFilterSummary();
@@ -3014,7 +2858,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_mapsDownloadBusy) return;
         if (!IsValidMapsPath(MapsPath))
         {
-            System.Windows.MessageBox.Show(this, "Set a valid Maps folder path first.", "Maps",
+            System.Windows.MessageBox.Show(this, Localization.Get("Maps.Path.InvalidMaps"), Localization.Get("Maps.Title"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -3026,7 +2870,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _mapsDownloadCts = new CancellationTokenSource();
         var token = _mapsDownloadCts.Token;
 
-        MapsDownloadProgressText = "Map download: listing warcraft2.site…";
+        MapsDownloadProgressText = Localization.Get("Maps.Progress.ListingSite");
         try
         {
             EnsureMapsRootLayout();
@@ -3038,12 +2882,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var jobs = await ListMapPudDownloadJobsAsync(outDir, token);
             if (jobs.Count == 0)
             {
-                MapsDownloadProgressText = "Map download: all listed maps already present in downloads.";
+                MapsDownloadProgressText = Localization.Get("Maps.Progress.AllPresent");
                 RefreshMapsPudSyncStatus();
                 return;
             }
 
-            MapsDownloadProgressText = $"Map download: {jobs.Count} maps need download — open login window…";
+            MapsDownloadProgressText = Localization.Format("Maps.Progress.NeedLogin", jobs.Count);
             var win = new Warcraft2MapDownloadWindow(this, outDir, jobs, token);
             win.ShowDialog();
 
@@ -3055,21 +2899,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 File.WriteAllText(metaPath, meta);
                 RefreshMapsPudSyncStatus();
                 MapsDownloadProgressText =
-                    $"Map download finished → downloads (new={win.Ok}, skipped={win.Skipped}, failed={win.Fail}).";
+                    Localization.Format("Maps.Progress.Finished", win.Ok, win.Skipped, win.Fail);
             }
             else
             {
-                MapsDownloadProgressText = "Map download window closed before finishing.";
+                MapsDownloadProgressText = Localization.Get("Maps.Progress.ClosedEarly");
             }
         }
         catch (OperationCanceledException)
         {
-            MapsDownloadProgressText = "Map download cancelled.";
+            MapsDownloadProgressText = Localization.Get("Maps.Progress.Cancelled");
         }
         catch (Exception ex)
         {
-            MapsDownloadProgressText = "Failed map download: " + ex.Message;
-            StudioDialog.Show(this, ex.Message, "Download maps", StudioDialogKind.Error);
+            MapsDownloadProgressText = Localization.Format("Maps.Progress.Failed", ex.Message);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Maps.Download.Title"), StudioDialogKind.Error);
         }
         finally
         {
@@ -3130,7 +2974,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         entries.Add((filename, category, downloadUrl));
                 }
             }
-            MapsDownloadProgressText = $"Map download: listing… {entries.Count}";
+            MapsDownloadProgressText = Localization.Format("Maps.Progress.ListingCount", entries.Count);
             var hasMore = rootEl.TryGetProperty("hasMore", out var hm) && hm.GetBoolean();
             if (!hasMore) break;
             if (rootEl.TryGetProperty("nextCursor", out var nc) && nc.ValueKind == System.Text.Json.JsonValueKind.Number)
@@ -3219,7 +3063,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var dir = MapImagesDir();
         if (!Directory.Exists(dir))
         {
-            System.Windows.MessageBox.Show(this, "map_images folder missing.", "Maps",
+            System.Windows.MessageBox.Show(this, Localization.Get("Maps.OpenImages.Missing"), Localization.Get("Maps.Title"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -3231,13 +3075,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_mapsDownloadBusy) return;
         if (!IsValidMapImagesPath(MapImagesPath))
         {
-            System.Windows.MessageBox.Show(this, "Set a valid Map images path first (Paths tab).", "Maps",
+            System.Windows.MessageBox.Show(this, Localization.Get("Maps.Path.InvalidImages"), Localization.Get("Maps.Title"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         if (!IsValidMapsPath(MapsPath))
         {
-            System.Windows.MessageBox.Show(this, "Set a valid Maps folder path first (needed for .pud sources).", "Maps",
+            System.Windows.MessageBox.Show(this, Localization.Get("Maps.Path.InvalidMapsForGenerate"), Localization.Get("Maps.Title"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -3248,7 +3092,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _mapsDownloadCts?.Cancel();
         _mapsDownloadCts = new CancellationTokenSource();
         var token = _mapsDownloadCts.Token;
-        MapsDownloadProgressText = incrementalOnly ? "Checking for missing map images…" : "Generating map images from .pud…";
+        MapsDownloadProgressText = incrementalOnly ? Localization.Get("Maps.Progress.CheckingImages") : Localization.Get("Maps.Progress.Generating");
         PushMapsFeedbackToStatus();
         try
         {
@@ -3271,14 +3115,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (OperationCanceledException)
         {
-            MapsDownloadProgressText = "Cancelled.";
+            MapsDownloadProgressText = Localization.Get("Maps.Progress.CancelledShort");
             PushMapsFeedbackToStatus();
         }
         catch (Exception ex)
         {
-            MapsDownloadProgressText = "Failed: " + ex.Message;
+            MapsDownloadProgressText = Localization.Format("Maps.Progress.FailedShort", ex.Message);
             PushMapsFeedbackToStatus();
-            System.Windows.MessageBox.Show(this, ex.Message, "Maps generate", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Windows.MessageBox.Show(this, ex.Message, Localization.Get("Maps.Generate.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -3335,8 +3179,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (todo.Count == 0)
         {
             MapsDownloadProgressText = pudFiles.Count == 0
-                ? "Generate: no .pud files found under Maps folder."
-                : $"Generate: all {pudFiles.Count} maps already have images.";
+                ? Localization.Get("Maps.Progress.NoPuds")
+                : Localization.Format("Maps.Progress.AllImagesPresent", pudFiles.Count);
             PushMapsFeedbackToStatus();
             return;
         }
@@ -3380,7 +3224,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 var n = System.Threading.Interlocked.Increment(ref done);
                 if (n % 5 == 0 || n == todo.Count)
                 {
-                    var msg = $"Generating {n}/{todo.Count} (ok={ok} fail={fail})";
+                    var msg = Localization.Format("Maps.Progress.GeneratingCount", n, todo.Count, ok, fail);
                     await Dispatcher.InvokeAsync(() =>
                     {
                         MapsDownloadProgressText = msg;
@@ -3390,11 +3234,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
         }
 
-        MapsDownloadProgressText = $"Generating 0/{todo.Count} from local .pud…";
+        MapsDownloadProgressText = Localization.Format("Maps.Progress.GeneratingStart", todo.Count);
         PushMapsFeedbackToStatus();
         await Task.WhenAll(todo.Select(WorkOne)).ConfigureAwait(true);
 
-        MapsDownloadProgressText = $"Generate finished: ok={ok} fail={fail} (of {todo.Count} missing).";
+        MapsDownloadProgressText = Localization.Format("Maps.Progress.GenerateFinished", ok, fail, todo.Count);
         PushMapsFeedbackToStatus();
         // Brief status then cleared by caller.
         await Task.Delay(50, token).ConfigureAwait(true);
@@ -3447,82 +3291,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _lobbyMapClickInjectedForRunningGame = _appliedLobbyMapClickOpen;
         return string.IsNullOrWhiteSpace(output) ? "Lobby map click hook updated." : output;
-    }
-
-    private static readonly string NetworkMonitorLogPath =
-        Path.Combine(Path.GetTempPath(), "war2_network_monitor.log");
-
-    private void RefreshNetworkMonitorLog()
-    {
-        try
-        {
-            if (!_appliedNetworkMonitor)
-            {
-                NetworkMonitorStatus = "Monitor off — enable and Apply, then play a multiplayer match.";
-                NetworkMonitorSummary = string.Empty;
-                NetworkSeats.Clear();
-                if (!File.Exists(NetworkMonitorLogPath))
-                {
-                    NetworkMonitorLog = "No monitor log yet.";
-                    return;
-                }
-            }
-
-            if (!File.Exists(NetworkMonitorLogPath))
-            {
-                NetworkMonitorLog = "No monitor log yet — start a multiplayer match.";
-                NetworkMonitorSummary = string.Empty;
-                NetworkSeats.Clear();
-                if (_appliedNetworkMonitor)
-                    NetworkMonitorStatus = "Waiting for match data…";
-                return;
-            }
-
-            var lines = File.ReadAllLines(NetworkMonitorLogPath);
-            NetworkMonitorLog = string.Join(Environment.NewLine, lines.TakeLast(40));
-
-            var summaryLine = lines.LastOrDefault(l => l.StartsWith("SUMMARY ", StringComparison.Ordinal));
-            NetworkMonitorSummary = summaryLine ?? string.Empty;
-
-            var seatRows = new List<NetworkSeatRow>();
-            foreach (var line in lines)
-            {
-                if (!line.StartsWith("SEAT ", StringComparison.Ordinal)) continue;
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 5) continue;
-                if (!int.TryParse(parts[1], out var seat)) continue;
-                var name = string.Empty;
-                var lastMs = string.Empty;
-                var maxMs = string.Empty;
-                foreach (var token in parts.Skip(2))
-                {
-                    if (token.StartsWith("name=", StringComparison.Ordinal))
-                        name = token["name=".Length..];
-                    else if (token.StartsWith("lastMs=", StringComparison.Ordinal))
-                        lastMs = token["lastMs=".Length..];
-                    else if (token.StartsWith("maxMs=", StringComparison.Ordinal))
-                        maxMs = token["maxMs=".Length..];
-                }
-                seatRows.Add(new NetworkSeatRow(seat, name, lastMs, maxMs));
-            }
-
-            NetworkSeats.Clear();
-            foreach (var row in seatRows.OrderBy(r => r.Seat))
-                NetworkSeats.Add(row);
-
-            if (_appliedNetworkMonitor)
-            {
-                NetworkMonitorStatus = seatRows.Count > 0
-                    ? "Match active — updating every second."
-                    : _networkMonitorInjectedForRunningGame
-                        ? "Monitor injected — waiting for multiplayer match."
-                        : "Monitor enabled — watcher will inject when Warcraft II is running.";
-            }
-        }
-        catch
-        {
-            NetworkMonitorLog = "Could not read network monitor log.";
-        }
     }
 
     private void UpdateChatNameColorHookStatus(bool forceInject)
@@ -3793,7 +3561,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _activeTab switch
                 {
                     "bugfixes" => Localization.Get("Status.Applying.Bugfixes"),
-                    "network" => Localization.Get("Status.Applying.Network"),
                     _ => Localization.Get("Status.Applying.Default"),
                 }));
             ApplyButtonBrush = ReadyButtonBrush;
@@ -3847,7 +3614,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         _appliedCastleGoldTooltipFix,
                         dragEnabled: false,
                         dragHex: "#00FF00",
-                        networkMonitor: _appliedNetworkMonitor,
                         lobbyMapClickOpen: _appliedLobbyMapClickOpen);
                     WriteColorConfigAndApply(config);
                     SyncNativeToGameInstall();
@@ -3906,7 +3672,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         _appliedCastleGoldTooltipFix,
                         dragEnabled: false,
                         dragHex: "#00FF00",
-                        networkMonitor: _appliedNetworkMonitor,
                         lobbyMapClickOpen: lobbyMapClickOpenEnabled);
                     ApplyAllyGoneSkullAtlas();
                 });
@@ -3964,7 +3729,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         castleGoldTooltipFixEnabled,
                         dragEnabled: false,
                         dragHex: "#00FF00",
-                        networkMonitor: _appliedNetworkMonitor,
                         lobbyMapClickOpen: _appliedLobbyMapClickOpen);
                     ApplyBugFixes();
                 });
@@ -3987,45 +3751,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     catch { /* keep drag hook disabled */ }
                 });
             }
-            else if (_activeTab == "network")
-            {
-                var markComputers = _appliedAllyLeaveMarkComputers;
-                var markHumans = _appliedAllyLeaveMarkHumans;
-                var chatPauseEnabled = _appliedChatDuringPauseScreen;
-                var chatNamesEnabled = _appliedChatColoredNames;
-                var chatStampsEnabled = _appliedChatTimestamps;
-                var chatHistoryEnabled = _appliedChatHistory;
-                var mpLobbyChatScrollFixEnabled = _appliedMpLobbyChatScrollFix;
-                var endGameObserveEnabled = false;
-                var allianceTeamNumbersEnabled = _appliedAllianceTeamNumbers;
-                var computerAnnihilatedChatEnabled = _appliedComputerAnnihilatedChat;
-                var blacksmithWorkCompleteChatEnabled = false;
-                var networkMonitorEnabled = NetworkMonitor;
-                SetStatusLines(StatusLine("", ReadyIconBrush, Localization.Get("Status.Applying.Network")));
-                await Task.Run(() =>
-                {
-                    WriteExtraFeaturesFile(
-                        markComputers, markHumans, chatPauseEnabled, chatNamesEnabled, chatStampsEnabled,
-                        chatHistoryEnabled, mpLobbyChatScrollFixEnabled, endGameObserveEnabled,
-                        allianceTeamNumbersEnabled,
-                        computerAnnihilatedChatEnabled, blacksmithWorkCompleteChatEnabled,
-                        _appliedCastleGoldTooltipFix,
-                        dragEnabled: false,
-                        dragHex: "#00FF00",
-                        networkMonitor: networkMonitorEnabled,
-                        lobbyMapClickOpen: _appliedLobbyMapClickOpen);
-                });
-
-                _appliedNetworkMonitor = networkMonitorEnabled;
-                SetStatusLines(StatusLine("", ReadyIconBrush, Localization.Get("Status.Applying.Hooks")));
-                await Task.Run(() =>
-                {
-                    SyncAllyLeaveWatch();
-                    try { SyncNetworkMonitorHook(throwOnError: false); }
-                    catch { /* optional while game closed */ }
-                });
-                RefreshNetworkMonitorLog();
-            }
         }
         catch (Exception ex)
         {
@@ -4036,7 +3761,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             }
             else
             {
-            StudioDialog.Show(this, ex.Message, "Apply failed", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Dialog.ApplyFailed"), StudioDialogKind.Error);
             }
         }
         finally
@@ -4379,10 +4104,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_isApplying) return;
 
         var confirm = StudioDialog.Confirm(this,
-            "Restore all modded game files to the local vanilla backup and turn Extra features off?\n\n" +
-            "This is the fast restore. You can also use Battle.net Scan and Repair (slower).\n\n" +
-            "Restart Warcraft II afterwards.",
-            "Restore clean install");
+            Localization.Get("Dialog.RestoreConfirmBody"),
+            Localization.Get("Dialog.RestoreConfirmTitle"));
         if (!confirm) return;
 
         try
@@ -4422,7 +4145,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                     HumanFootmanAudio = false,
                     HumanKnightAudio = false,
                     CastleGoldTooltipFix = false,
-                    NetworkMonitor = false,
                     LobbyMapClickOpen = false,
                     DragSelectColorEnabled = false,
                     DragSelectColor = "#00FF00",
@@ -4447,8 +4169,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _appliedMpLobbyChatScrollFix = false;
             _castleGoldTooltipFix = false;
             _appliedCastleGoldTooltipFix = false;
-            _networkMonitor = false;
-            _appliedNetworkMonitor = false;
             _endGameObserve = false;
             _appliedEndGameObserve = false;
             _allianceTeamNumbers = false;
@@ -4470,8 +4190,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             OnPropertyChanged(nameof(ChatHistory));
             OnPropertyChanged(nameof(MpLobbyChatScrollFix));
             OnPropertyChanged(nameof(CastleGoldTooltipFix));
-            OnPropertyChanged(nameof(NetworkMonitor));
-            OnPropertyChanged(nameof(LobbyMapClickOpen));
+                OnPropertyChanged(nameof(LobbyMapClickOpen));
             OnPropertyChanged(nameof(EndGameObserve));
             OnPropertyChanged(nameof(AllianceTeamNumbers));
             OnPropertyChanged(nameof(ComputerAnnihilatedChat));
@@ -4503,7 +4222,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _chatNameColorInjectedForRunningGame = false;
             _dragSelectInjectedForRunningGame = false;
             _observeInjectedForRunningGame = false;
-            _networkMonitorInjectedForRunningGame = false;
             _lobbyMapClickInjectedForRunningGame = false;
             SetStatusLines(StatusLine("", ReadyIconBrush, Localization.Get("Status.Applying.Hooks")));
             await Task.Run(() =>
@@ -4515,17 +4233,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 try { SyncDragSelectHook(throwOnError: false); } catch { /* off */ }
                 try { SyncUnitColorHook(throwOnError: false); } catch { /* off */ }
                 try { SyncObserveHook(throwOnError: false); } catch { /* off */ }
-                try { SyncNetworkMonitorHook(throwOnError: false); } catch { /* off */ }
                 try { SyncLobbyMapClickHook(throwOnError: false); } catch { /* off */ }
             });
 
             StudioDialog.Show(this,
-                "Vanilla files restored and Extra features turned off.\nRestart Warcraft II Remastered to finish.",
-                "Restore complete");
+                Localization.Get("Dialog.RestoreCompleteBody"),
+                Localization.Get("Dialog.RestoreCompleteTitle"));
         }
         catch (Exception ex)
         {
-            StudioDialog.Show(this, ex.Message, "Restore failed", StudioDialogKind.Error);
+            StudioDialog.Show(this, ex.Message, Localization.Get("Dialog.RestoreFailed"), StudioDialogKind.Error);
         }
         finally
         {
@@ -4617,21 +4334,6 @@ public sealed class ColorConfig
 
 public sealed record PlayerColor(int Player, string Color);
 
-public sealed class NetworkSeatRow
-{
-    public int Seat { get; }
-    public string Name { get; }
-    public string LastMs { get; }
-    public string MaxMs { get; }
-
-    public NetworkSeatRow(int seat, string name, string lastMs, string maxMs)
-    {
-        Seat = seat;
-        Name = name;
-        LastMs = lastMs;
-        MaxMs = maxMs;
-    }
-}
 
 public sealed class ExtraFeaturesConfig
 {
@@ -4662,8 +4364,6 @@ public sealed class ExtraFeaturesConfig
     public bool HumanFootmanAudio { get; set; }
     /// <summary>Legacy alias for VoiceAudioEnhance.</summary>
     public bool HumanKnightAudio { get; set; }
-    /// <summary>MP match frame-gap monitor for Studio Network tab.</summary>
-    public bool NetworkMonitor { get; set; }
     /// <summary>Click map name in MP lobby to open the .pud in Explorer.</summary>
     public bool LobbyMapClickOpen { get; set; }
     public bool DragSelectColorEnabled { get; set; }

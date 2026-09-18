@@ -53,13 +53,13 @@ public partial class Warcraft2MapDownloadWindow : Window
             Browser.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
             Browser.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
             Browser.CoreWebView2.Navigate("https://warcraft2.site/");
-            StatusText.Text = "Browser ready. Log in on the site, then click Start download.";
+            StatusText.Text = Localization.Get("WebView.Ready");
             StartButton.IsEnabled = true;
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Could not start embedded browser: " + ex.Message;
-            StudioDialog.Show(this, ex.Message, "WebView2", StudioDialogKind.Error);
+            StatusText.Text = Localization.Format("WebView.StartFailed", ex.Message);
+            StudioDialog.Show(this, ex.Message, Localization.Get("WebView.TitleError"), StudioDialogKind.Error);
         }
     }
 
@@ -119,11 +119,11 @@ public partial class Warcraft2MapDownloadWindow : Window
                 if (File.Exists(dest) && new FileInfo(dest).Length >= 256)
                 {
                     _skipped++;
-                    StatusText.Text = $"Skipping existing {i + 1}/{_jobs.Count}: {filename}";
+                    StatusText.Text = Localization.Format("WebView.Skipping", i + 1, _jobs.Count, filename);
                     continue;
                 }
 
-                StatusText.Text = $"Downloading {i + 1}/{_jobs.Count}: {filename}";
+                StatusText.Text = Localization.Format("WebView.Downloading", i + 1, _jobs.Count, filename);
                 _expectedName = filename;
                 _downloadTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                 Browser.CoreWebView2.Navigate(url);
@@ -132,7 +132,7 @@ public partial class Warcraft2MapDownloadWindow : Window
                 if (completed != _downloadTcs.Task)
                 {
                     _fail++;
-                    StatusText.Text = $"Timed out: {filename}";
+                    StatusText.Text = Localization.Format("WebView.TimedOut", filename);
                     continue;
                 }
 
@@ -143,15 +143,15 @@ public partial class Warcraft2MapDownloadWindow : Window
             }
 
             Completed = true;
-            StatusText.Text = $"Done. New={_ok}, skipped={_skipped}, failed={_fail}. You can close this window.";
+            StatusText.Text = Localization.Format("WebView.Done", _ok, _skipped, _fail);
         }
         catch (OperationCanceledException)
         {
-            StatusText.Text = "Cancelled.";
+            StatusText.Text = Localization.Get("WebView.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Download error: " + ex.Message;
+            StatusText.Text = Localization.Format("WebView.Error", ex.Message);
         }
         finally
         {

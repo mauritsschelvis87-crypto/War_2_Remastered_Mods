@@ -36,13 +36,12 @@ struct ExtraFlags {
     bool allianceTeamNumbers = false;
     bool computerAnnihilatedChat = false;
     bool blacksmithWorkComplete = false;
-    bool networkMonitor = false;
     bool lobbyMapClick = false;
     bool Any() const {
         return allyLeave || pauseChat || dragSelect || chatNameColor || unitColor ||
                chatTimestamps || chatHistory || mpLobbyChatScrollFix || endGameObserve ||
                allianceTeamNumbers ||
-               computerAnnihilatedChat || blacksmithWorkComplete || networkMonitor ||
+               computerAnnihilatedChat || blacksmithWorkComplete ||
                lobbyMapClick;
     }
     bool ChatDllWanted() const {
@@ -123,7 +122,6 @@ ExtraFlags ReadExtraFlags()
     flags.mpLobbyChatScrollFix = ReadJsonBool(buf, "MpLobbyChatScrollFix");
     flags.blacksmithWorkComplete = ReadJsonBool(buf, "BlacksmithWorkCompleteChat");
     flags.endGameObserve = ReadJsonBool(buf, "EndGameObserve");
-    flags.networkMonitor = ReadJsonBool(buf, "NetworkMonitor");
     flags.lobbyMapClick = ReadJsonBool(buf, "LobbyMapClickOpen");
     return flags;
 }
@@ -769,7 +767,6 @@ void WatchLoop(HANDLE quitEvent)
     DWORD chatNameInjectedPid = 0;
     DWORD unitColorInjectedPid = 0;
     DWORD observeInjectedPid = 0;
-    DWORD networkInjectedPid = 0;
     DWORD lobbyMapInjectedPid = 0;
     ExtraFlags last = ReadExtraFlags();
     SetStartup(last.Any());
@@ -814,7 +811,6 @@ void WatchLoop(HANDLE quitEvent)
             flags.chatTimestamps != last.chatTimestamps || flags.chatHistory != last.chatHistory ||
             flags.blacksmithWorkComplete != last.blacksmithWorkComplete ||
             flags.endGameObserve != last.endGameObserve ||
-            flags.networkMonitor != last.networkMonitor ||
             flags.allianceTeamNumbers != last.allianceTeamNumbers ||
             flags.lobbyMapClick != last.lobbyMapClick) {
             SetStartup(flags.Any());
@@ -840,10 +836,6 @@ void WatchLoop(HANDLE quitEvent)
             if (!flags.endGameObserve && pid != 0) {
                 RunInjector(L"InjectObserve.exe", false);
                 observeInjectedPid = 0;
-            }
-            if (!flags.networkMonitor && pid != 0) {
-                RunInjector(L"InjectNetworkMonitor.exe", false);
-                networkInjectedPid = 0;
             }
             if (!flags.lobbyMapClick && pid != 0) {
                 RunInjector(L"InjectLobbyMapClick.exe", false);
@@ -877,9 +869,6 @@ void WatchLoop(HANDLE quitEvent)
         if (flags.endGameObserve && pid != 0 && pid != observeInjectedPid) {
             if (RunInjector(L"InjectObserve.exe", true)) observeInjectedPid = pid;
         }
-        if (flags.networkMonitor && pid != 0 && pid != networkInjectedPid) {
-            if (RunInjector(L"InjectNetworkMonitor.exe", true)) networkInjectedPid = pid;
-        }
         if (flags.lobbyMapClick && pid != 0 && pid != lobbyMapInjectedPid) {
             if (RunInjector(L"InjectLobbyMapClick.exe", true)) lobbyMapInjectedPid = pid;
         }
@@ -890,7 +879,6 @@ void WatchLoop(HANDLE quitEvent)
             chatNameInjectedPid = 0;
             unitColorInjectedPid = 0;
             observeInjectedPid = 0;
-            networkInjectedPid = 0;
             lobbyMapInjectedPid = 0;
         }
     }
