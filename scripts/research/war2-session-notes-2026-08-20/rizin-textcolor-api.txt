@@ -1,0 +1,93 @@
+            0x00525d9b      cmp   byte [edi+0x918cac], 0x01
+        ÔöîÔöÇ< 0x00525da2      jnz   0x525db2
+        Ôöé   0x00525da4      push  dword [0x965170]
+        Ôöé   0x00525daa      call  0x5ae470
+        Ôöé   0x00525daf      add   esp, 0x04
+        ÔööÔöÇ> 0x00525db2      lea   eax, dword [edi+0x95c064]
+            0x00525db8      push  eax
+            0x00525db9      push  0x836c13
+            0x00525dbe      call  0x545370
+            0x00525dc3      add   esp, 0x08
+            0x00525dc6      test  al, al
+        ÔöîÔöÇ< 0x00525dc8      jz    0x525dcf
+        Ôöé   0x00525dca      call  0x526540
+        ÔööÔöÇ> 0x00525dcf      lea   eax, dword [edi+0x95c06c]
+            0x00525dd5      push  eax
+            0x00525dd6      push  0x836c13
+            0x00525ddb      call  0x545370
+            0x00525de0      add   esp, 0x08
+            0x00525de3      test  al, al
+        ÔöîÔöÇ< 0x00525de5      jz    0x525dec
+===== SEP =====
+            0x004f3f80      push  ebp
+            0x004f3f81      mov   ebp, esp
+            0x004f3f83      push  ebx
+            0x004f3f84      mov   bl, byte [ebp+0x08]
+            0x004f3f87      movzx ecx, bl
+            0x004f3f8a      imul  eax, ecx, 0x26                       ; RELOC 3 pe_004f3f8c @ 0x00000000
+            0x004f3f8d      push  esi
+            0x004f3f8e      mov   esi, dword [0x91c704]                ; [0x91c704:4]=0
+            0x004f3f94      push  edi
+            0x004f3f95      xor   edi, edi
+            0x004f3f97      mov   byte [ecx+0x918cac], 0x03
+            0x004f3f9e      mov   byte [eax+0x916268], 0x03            ; RELOC 3 pe_004f3fa0 @ 0x00000000
+            0x004f3fa5      movzx eax, byte [0x919678]                 ; [0x919678:1]=0
+            0x004f3fac      btr   eax, ecx
+            0x004f3faf      mov   byte [0x919678], al
+            ;-- pe_004f3fb4:
+            0x004f3fb4      movzx eax, byte [0x919679]                 ; [0x919679:1]=0; RELOC 3 pe_004f3fb4 @ 0x00000000
+            0x004f3fbb      btr   eax, ecx
+            0x004f3fbe      mov   byte [0x919679], al
+            0x004f3fc3      movzx eax, byte [0x91967a]                 ; [0x91967a:1]=0; RELOC 3 pe_004f3fc8 @ 0x00000000
+            0x004f3fca      btr   eax, ecx
+            0x004f3fcd      mov   byte [0x91967a], al
+            0x004f3fd2      movzx eax, byte [0x91967b]                 ; [0x91967b:1]=0
+            0x004f3fd9      btr   eax, ecx
+            ;-- pe_004f3fdc:
+            0x004f3fdc      mov   byte [0x91967b], al                  ; RELOC 3 pe_004f3fdc @ 0x00000000
+            0x004f3fe1      movzx eax, byte [0x91967c]                 ; [0x91967c:1]=0
+            0x004f3fe8      btr   eax, ecx
+            0x004f3feb      mov   byte [0x91967c], al
+            ;-- pe_004f3ff0:
+            0x004f3ff0      movzx eax, byte [0x91967d]                 ; [0x91967d:1]=0; RELOC 3 pe_004f3ff0 @ 0x00000000
+            0x004f3ff7      btr   eax, ecx
+            0x004f3ffa      mov   byte [0x91967d], al
+            0x004f4260      add   al, 0x55                             ; 85
+            0x004f4262      invalid
+            0x004f4263      mov   dh, 0x91                             ; 145
+            0x004f4265      add   byte [ebp+0x0e], dh
+            0x004f4268      cmp   word [edx*2+0x91b3ac], ax
+        ÔöîÔöÇ< 0x004f4270      jnz   0x4f4276
+        Ôöé   0x004f4272      xor   eax, eax
+        Ôöé   0x004f4274      pop   ebp
+        Ôöé   0x004f4275      ret
+        ÔööÔöÇ> 0x004f4276      cmp   byte [edx+0x918cac], 0x00
+        ÔöîÔöÇ< 0x004f427d      jnz   0x4f4297
+        Ôöé   0x004f427f      lea   ecx, dword [edx*8]
+        Ôöé   0x004f4286      xor   eax, eax
+        Ôöé   0x004f4288      sub   ecx, edx
+        Ôöé   0x004f428a      cmp   byte [ecx*8+0x91ad90], 0x01
+        Ôöé   0x004f4292      setz  al
+        Ôöé   0x004f4295      pop   ebp
+        Ôöé   0x004f4296      ret
+        ÔööÔöÇ> 0x004f4297      mov   eax, 0x01
+            0x004f429c      pop   ebp
+            0x004f429d      ret
+            0x004f429e      int3
+            0x004f429f      int3
+            0x004f42a0      mov   eax, dword [0x91b270]                ; [0x91b270:4]=0
+            0x004f42a5      push  esi
+            0x004f42a6      test  eax, 0x100                           ; 256
+        ÔöîÔöÇ< 0x004f42ab      jnz   0x4f4357
+        Ôöé   0x004f42b1      test  al, al
+       ÔöîÔöÇÔöÇ< 0x004f42b3      js    0x4f4305
+       ÔöéÔöé   0x004f42b5      mov   cl, byte [0x918ccd]                  ; [0x918ccd:1]=0
+===== SEP =====
+===== SEP =====
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x00411cc0  5356 5768 7c48 8400 8d4d e4e8 90d0 0800  SVWh|H...M......
+0x00411cd0  8b45 f88d 7de4 8b75 e483 f80f 8b5d f4ba  .E..}..u.....]..
+0x00411ce0  c59d 1c81 0f47 fe33 c985 db74 170f 1f00  .....G.3...t....
+0x00411cf0  0fb6 0439 4133 c269 d093 0100 013b cb72  ...9A3.i.....;.r
+===== SEP =====
+===== SEP =====

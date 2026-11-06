@@ -1,0 +1,152 @@
+baddr    0x00400000
+===== mov byte [96512c],0xfa
+            0x004e42c0      0000           add   byte [eax], al
+            0x004e42c2      04c3           add   al, 0xc3              ; 195
+            0x004e42c4      cc             int3
+            0x004e42c5      cc             int3
+            0x004e42c6      cc             int3
+            0x004e42c7      cc             int3
+            0x004e42c8      cc             int3
+            0x004e42c9      cc             int3
+            0x004e42ca      cc             int3
+            0x004e42cb      cc             int3
+            0x004e42cc      cc             int3
+            0x004e42cd      cc             int3
+            0x004e42ce      cc             int3
+            0x004e42cf      cc             int3
+            0x004e42d0      0fb60dcd8c91.  movzx ecx, byte [0x918ccd]  ; [0x918ccd:1]=0
+            0x004e42d7      b801000000     mov   eax, 0x01
+            0x004e42dc      d3e0           shl   eax, cl
+            0x004e42de      8405478d9100   test  byte [0x918d47], al   ; [0x918d47:1]=0
+        ÔöîÔöÇ< 0x004e42e4      7413           jz    0x4e42f9
+        Ôöé   0x004e42e6      f7048d109291.  test  dword [ecx*4+0x919210], reloc.pe_00040000
+       ÔöîÔöÇÔöÇ< 0x004e42f1      7406           jz    0x4e42f9
+       ÔöéÔöé   0x004e42f3      b801000000     mov   eax, 0x01
+       ÔöéÔöé   0x004e42f8      c3             ret
+       ÔööÔööÔöÇ> 0x004e42f9      33c0           xor   eax, eax
+            0x004e42fb      c3             ret
+            0x004e42fc      cc             int3
+            0x004e42fd      cc             int3
+            0x004e42fe      cc             int3
+            0x004e42ff      cc             int3
+            0x004e4300      0fb60dcd8c91.  movzx ecx, byte [0x918ccd]  ; [0x918ccd:1]=0
+            0x004e4307      b801000000     mov   eax, 0x01
+            0x004e430c      d3e0           shl   eax, cl
+            0x004e430e      8405478d9100   test  byte [0x918d47], al   ; [0x918d47:1]=0
+        ÔöîÔöÇ< 0x004e4314      7413           jz    0x4e4329
+        Ôöé   0x004e4316      f7048d109291.  test  dword [ecx*4+0x919210], 0x20000000
+       ÔöîÔöÇÔöÇ< 0x004e4321      7406           jz    0x4e4329
+       ÔöéÔöé   0x004e4323      b801000000     mov   eax, 0x01
+       ÔöéÔöé   0x004e4328      c3             ret
+       ÔööÔööÔöÇ> 0x004e4329      33c0           xor   eax, eax
+            0x004e432b      c3             ret
+            0x004e432c      cc             int3
+            0x004e432d      cc             int3
+            0x004e432e      cc             int3
+            0x004e432f      cc             int3
+            0x004e4330      0fb60dcd8c91.  movzx ecx, byte [0x918ccd]  ; [0x918ccd:1]=0
+            0x004e4337      b801000000     mov   eax, 0x01
+            0x004e433c      d3e0           shl   eax, cl
+            0x004e433e      8405478d9100   test  byte [0x918d47], al   ; [0x918d47:1]=0
+        ÔöîÔöÇ< 0x004e4344      7413           jz    0x4e4359
+        Ôöé   0x004e4346      f7048d109291.  test  dword [ecx*4+0x919210], reloc.pe_00010000
+===== function =====
+===== xrefs to fcn =====
+===== reader 598D18 =====
+ERROR: Cannot find function at 0x004e42db
+            0x00598d00      f0             invalid
+            0x00598d01      8b5900         mov   ebx, dword [ecx]
+            0x00598d04      f4             hlt
+            0x00598d05      8b5900         mov   ebx, dword [ecx]
+            0x00598d08      308c59000001.  xor   byte [ecx+ebx*2+0x34010000], cl
+            0x00598d0f      3434           xor   al, 0x34              ; 52
+            0x00598d11      023434         add   dh, byte [esp+esi*1]
+            0x00598d14      3434           xor   al, 0x34              ; 52
+            0x00598d16      3434           xor   al, 0x34              ; 52
+            0x00598d18      3434           xor   al, 0x34              ; 52
+            0x00598d1a      3434           xor   al, 0x34              ; 52
+            0x00598d1c      3434           xor   al, 0x34              ; 52
+            0x00598d1e      3403           xor   al, 0x03
+            0x00598d20      3434           xor   al, 0x34              ; 52
+ERROR: Cannot find function at 0x00598d18
+            0x00598d22      3434           xor   al, 0x34              ; 52
+            0x00598d24      0434           add   al, 0x34              ; 52
+            0x00598d26      3434           xor   al, 0x34              ; 52
+            0x00598d28      3434           xor   al, 0x34              ; 52
+            0x00598d2a      3405           xor   al, 0x05
+            0x00598d2c      3434           xor   al, 0x34              ; 52
+            0x00598d2e      3434           xor   al, 0x34              ; 52
+            0x00598d30      06             push  es
+            0x00598d31      07             pop   es
+            0x00598d32      0809           or    byte [ecx], cl
+            0x00598d34      0a0b           or    cl, byte [ebx]
+            0x00598d36      0c0d           or    al, 0x0d              ; 0xd ; 13
+            0x00598d38      0e             push  cs
+            0x00598d39      0f1011         movups xmm2, xmmword [ecx]
+            0x00598d3c      1213           adc   dl, byte [ebx]
+            0x00598d3e      3414           xor   al, 0x14              ; 20
+            0x00598d40      3415           xor   al, 0x15              ; 21
+            0x00598d42      3434           xor   al, 0x34              ; 52
+            0x00598d44      3434           xor   al, 0x34              ; 52
+            0x00598d46      3434           xor   al, 0x34              ; 52
+            0x00598d48      3434           xor   al, 0x34              ; 52
+            0x00598d4a      3434           xor   al, 0x34              ; 52
+            0x00598d4c      3434           xor   al, 0x34              ; 52
+            0x00598d4e      3434           xor   al, 0x34              ; 52
+            0x00598d50      3434           xor   al, 0x34              ; 52
+            0x00598d52      3434           xor   al, 0x34              ; 52
+===== unit force 4d3dd1 (rizin) =====
+            0x004d3dc0      3a05cd8c9100   cmp   al, byte [0x918ccd]   ; [0x918ccd:1]=0
+        ÔöîÔöÇ< 0x004d3dc6      750d           jnz   0x4d3dd5
+        Ôöé   0x004d3dc8      803dd4bc9100.  cmp   byte [0x91bcd4], 0x00 ; [0x91bcd4:1]=0
+       ÔöîÔöÇÔöÇ< 0x004d3dcf      7504           jnz   0x4d3dd5
+       ÔöéÔöé   0x004d3dd1      b0fa           mov   al, 0xfa              ; 250
+      ÔöîÔöÇÔöÇÔöÇ< 0x004d3dd3      eb09           jmp   0x4d3dde
+      ÔöéÔööÔööÔöÇ> 0x004d3dd5      0fb6c0         movzx eax, al
+      Ôöé     0x004d3dd8      8a80648d8c00   mov   al, byte [eax+0x8c8d64]
+      ÔööÔöÇÔöÇÔöÇ> 0x004d3dde      a22c519600     mov   byte [0x96512c], al
+            0x004d3de3      88450b         mov   byte [ebp+0x0b], al
+            0x004d3de6      0fb70d582692.  movzx ecx, word [0x922658]  ; [0x922658:2]=0
+            0x004d3ded      0fbf4618       movsx eax, word [esi+0x18]
+            0x004d3df1      d3e0           shl   eax, cl
+            0x004d3df3      0fb71d502692.  movzx ebx, word [0x922650]  ; [0x922650:2]=0
+            0x004d3dfa      99             cdq
+            0x004d3dfb      f7fb           idiv  ebx
+            0x004d3dfd      c745fc020000.  mov   dword [ebp-0x04], 0x02
+            0x004d3e04      83c018         add   eax, 0x18             ; 24
+            0x004d3e07      8945f8         mov   dword [ebp-0x08], eax
+            0x004d3e0a      0fbf461a       movsx eax, word [esi+0x1a]
+            0x004d3e0e      d3e0           shl   eax, cl
+            0x004d3e10      99             cdq
+            0x004d3e11      f7fb           idiv  ebx
+            0x004d3e13      0fb67627       movzx esi, byte [esi+0x27]
+            0x004d3e17      83c002         add   eax, 0x02
+            0x004d3e1a      0fb7f8         movzx edi, ax
+            0x004d3e1d      0fbfff         movsx edi, di
+            0x004d3e20      0fb704b5d07a.  movzx eax, word [esi*4+0x917ad0]
+            0x004d3e28      66d3e0         shl   ax, cl
+            0x004d3e2b      98             cwde
+===== search C6 05 2C 51 96 00 FA =====
+[2K
+0x004e4ed9 7 hit.bytes.0
+===== search B0 FA ... near 4d3 =====
+            0x004d31c0      6456           push  esi
+            0x004d31c2      ff35f0259200   push  dword [0x9225f0]
+            0x004d31c8      e8d3773200     call  0x7fa9a0
+            0x004d31cd      57             push  edi
+            0x004d31ce      56             push  esi
+            0x004d31cf      c6053c269200.  mov   byte [0x92263c], 0x04
+            0x004d31d6      e855191400     call  0x614b30
+            0x004d31db      83c414         add   esp, 0x14
+            0x004d31de      e8fd650c00     call  0x5997e0
+            0x004d31e3      03c7           add   eax, edi
+            0x004d31e5      a328269200     mov   dword [0x922628], eax
+        ÔöîÔöÇ< 0x004d31ea      e91f020000     jmp   0x4d340e
+        Ôöé   0x004d31ef      8d04d5000000.  lea   eax, dword [edx*8]
+        Ôöé   0x004d31f6      c785e8fdffff.  mov   dword [ebp-0x218], 0x00
+        Ôöé   0x004d3200      2bc2           sub   eax, edx
+        Ôöé   0x004d3202      c785ecfdffff.  mov   dword [ebp-0x214], 0x00
+        Ôöé   0x004d320c      0f57c0         xorps xmm0, xmm0
+        Ôöé   0x004d320f      0f1185d8fdff.  movups xmmword [ebp-0x228], xmm0
+        Ôöé   0x004d3216      8d0cc5a8ad91.  lea   ecx, dword [eax*8+0x91ada8]
+        Ôöé   0x004d321d      8bf9           mov   edi, ecx

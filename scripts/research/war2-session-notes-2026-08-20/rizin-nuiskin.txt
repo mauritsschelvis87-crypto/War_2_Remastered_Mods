@@ -1,0 +1,200 @@
+        ÔòÄ   0x005f65c0      add   byte [eax], al
+        ÔòÄ   0x005f65c2      mov   ecx, dword [ebp-0x14]
+        ÔòÄ   0x005f65c5      add   ecx, 0x60                            ; 96
+        ÔòÄ   0x005f65c8      mov   dword [ebp-0x48], ecx
+        ÔòÄ   0x005f65cb      lea   edx, dword [ebp-0x58]
+        ÔòÄ   0x005f65ce      push  edx
+        ÔòÄ   0x005f65cf      mov   ecx, dword [ebp-0x48]
+        ÔòÄ   0x005f65d2      call  0x6088b0
+        ÔòÄ   0x005f65d7      push  eax
+        ÔòÄ   0x005f65d8      lea   ecx, dword [ebp-0x28]
+        ÔòÄ   0x005f65db      call  0x58ef20
+        ÔòÄ   0x005f65e0      movzx eax, al
+        ÔòÄ   0x005f65e3      test  eax, eax
+       ÔöîÔöÇÔöÇ< 0x005f65e5      jz    0x5f65fe
+       ÔöéÔòÄ   0x005f65e7      lea   ecx, dword [ebp-0x28]
+       ÔöéÔòÄ   0x005f65ea      call  0x6025c0
+       ÔöéÔòÄ   0x005f65ef      add   eax, 0x08
+       ÔöéÔòÄ   0x005f65f2      mov   ecx, eax
+       ÔöéÔòÄ   0x005f65f4      call  0x58efa0
+       ÔöéÔòÄ   0x005f65f9      mov   dword [ebp-0x2c], eax
+      ÔöîÔöÇÔöÇÔöÇ< 0x005f65fc      jmp   0x5f6621
+      ÔöéÔööÔöÇÔöÇ> 0x005f65fe      mov   ecx, dword [ebp+0x08]
+      Ôöé ÔòÄ   0x005f6601      add   ecx, 0x04
+      Ôöé ÔòÄ   0x005f6604      call  0x4d0f50
+      Ôöé ÔòÄ   0x005f6609      push  eax
+      Ôöé ÔòÄ   0x005f660a      push  str.Skin_Config_Error:_Atlas_used_for_skin__s_not_present ; 0x85ad90 ; "Skin Config Error: Atlas used for skin %s not present\n"
+      Ôöé ÔòÄ   0x005f660f      push  0x129                                ; 297
+      Ôöé ÔòÄ   0x005f6614      push  0x85adc8                             ; u"D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NUIContent.cpp"
+      Ôöé ÔòÄ   0x005f6619      call  0x5f5480
+      Ôöé ÔòÄ   0x005f661e      add   esp, 0x10
+      ÔööÔöÇÔöÇÔöÇ> 0x005f6621      mov   ecx, dword [ebp-0x2c]
+        ÔòÄ   0x005f6624      push  ecx
+        ÔòÄ   0x005f6625      mov   edx, dword [ebp-0x10]
+        ÔòÄ   0x005f6628      push  edx
+        ÔòÄ   0x005f6629      mov   eax, dword [ebp+0x08]
+        ÔòÄ   0x005f662c      push  eax
+        ÔòÄ   0x005f662d      call  0x63e720
+        ÔòÄ   0x005f6632      add   esp, 0x0c
+        ÔòÄ   0x005f6635      mov   ecx, dword [ebp-0x10]
+        ÔòÄ   0x005f6638      add   ecx, 0x20                            ; 32
+        ÔòÄ   0x005f663b      mov   dword [ebp-0x30], ecx
+        ÔòÄ   0x005f663e      mov   ecx, dword [ebp-0x30]
+        ÔòÄ   0x005f6641      call  0x58efa0
+        ÔòÄ   0x005f6646      mov   dword [ebp-0x18], eax
+        ÔòÄ   0x005f6649      mov   ecx, dword [ebp-0x30]
+        ÔòÄ   0x005f664c      call  0x557af0
+        ÔòÄ   0x005f6651      mov   dword [ebp-0x4c], eax
+       ÔöîÔöÇÔöÇ< 0x005f6654      jmp   0x5f665f
+      ÔöîÔöÇÔöÇÔöÇ> 0x005f6656      mov   edx, dword [ebp-0x18]
+      ÔòÄÔöéÔòÄ   0x005f6659      add   edx, 0x04
+      ÔòÄÔöéÔòÄ   0x005f665c      mov   dword [ebp-0x18], edx
+      ÔòÄÔööÔöÇÔöÇ> 0x005f665f      mov   eax, dword [ebp-0x18]
+      ÔòÄ ÔòÄ   0x005f6662      cmp   eax, dword [ebp-0x4c]
+      ÔòÄÔöîÔöÇÔöÇ< 0x005f6665      jz    0x5f6690
+      ÔòÄÔöéÔòÄ   0x005f6667      mov   ecx, dword [ebp-0x18]
+      ÔòÄÔöéÔòÄ   0x005f666a      mov   edx, dword [ecx]
+      ÔòÄÔöéÔòÄ   0x005f666c      mov   dword [ebp-0x50], edx
+      ÔòÄÔöéÔòÄ   0x005f666f      lea   eax, dword [ebp-0x1c]
+      ÔòÄÔöéÔòÄ   0x005f6672      push  eax
+      ÔòÄÔöéÔòÄ   0x005f6673      lea   ecx, dword [ebp-0x50]
+      ÔòÄÔöéÔòÄ   0x005f6676      push  ecx
+      ÔòÄÔöéÔòÄ   0x005f6677      lea   ecx, dword [ebp-0x70]
+      ÔòÄÔöéÔòÄ   0x005f667a      call  0x58b3f0
+      ÔòÄÔöéÔòÄ   0x005f667f      lea   edx, dword [ebp-0x70]
+      ÔòÄÔöéÔòÄ   0x005f6682      push  edx
+      ÔòÄÔöéÔòÄ   0x005f6683      lea   ecx, dword [ebp-0x84]
+      ÔòÄÔöéÔòÄ   0x005f6689      call  0x608cc0
+      ÔööÔöÇÔöÇÔöÇ< 0x005f668e      jmp   0x5f6656
+      ÔöîÔööÔöÇÔöÇ> 0x005f6690      jmp   0x5f66b5
+      Ôöé ÔòÄ   0x005f6692      mov   ecx, dword [ebp+0x08]
+      Ôöé ÔòÄ   0x005f6695      add   ecx, 0x04
+      Ôöé ÔòÄ   0x005f6698      call  0x4d0f50
+      Ôöé ÔòÄ   0x005f669d      push  eax
+      Ôöé ÔòÄ   0x005f669e      push  str.Skin_Config_Error:_Component_skin_of_skin__s_not_present ; 0x85ae80 ; "Skin Config Error: Component skin of skin %s not present\n"
+      Ôöé ÔòÄ   0x005f66a3      push  0x137                                ; 311
+      Ôöé ÔòÄ   0x005f66a8      push  0x85aec0
+      Ôöé ÔòÄ   0x005f66ad      call  0x5f5480
+      Ôöé ÔòÄ   0x005f66b2      add   esp, 0x10
+      ÔööÔöÇÔööÔöÇ< 0x005f66b5      jmp   0x5f64dc
+            0x005f66ba      invalid
+       ÔòÄÔòÄ   0x005f6680      push  ebp
+       ÔòÄÔòÄ   0x005f6681      nop
+       ÔòÄÔòÄ   0x005f6682      push  edx
+       ÔòÄÔòÄ   0x005f6683      lea   ecx, dword [ebp-0x84]
+       ÔòÄÔòÄ   0x005f6689      call  0x608cc0
+       ÔööÔöÇÔöÇ< 0x005f668e      jmp   0x5f6656
+       ÔöîÔöÇÔöÇ< 0x005f6690      jmp   0x5f66b5
+       ÔöéÔòÄ   0x005f6692      mov   ecx, dword [ebp+0x08]
+       ÔöéÔòÄ   0x005f6695      add   ecx, 0x04
+       ÔöéÔòÄ   0x005f6698      call  0x4d0f50
+       ÔöéÔòÄ   0x005f669d      push  eax
+       ÔöéÔòÄ   0x005f669e      push  str.Skin_Config_Error:_Component_skin_of_skin__s_not_present ; 0x85ae80 ; "Skin Config Error: Component skin of skin %s not present\n"
+       ÔöéÔòÄ   0x005f66a3      push  0x137                                ; 311
+       ÔöéÔòÄ   0x005f66a8      push  0x85aec0
+       ÔöéÔòÄ   0x005f66ad      call  0x5f5480
+       ÔöéÔòÄ   0x005f66b2      add   esp, 0x10
+       ÔööÔööÔöÇ< 0x005f66b5      jmp   0x5f64dc
+            0x005f66ba      mov   dword [ebp-0x04], 0xffffffff         ; -1
+            0x005f66c1      lea   ecx, dword [ebp-0x84]
+            0x005f66c7      call  0x601c00
+            0x005f66cc      mov   ecx, dword [ebp-0x0c]
+            0x005f66cf      mov   dword fs:[0x0], ecx
+            0x005f66d6      pop   ecx
+            0x005f66d7      mov   esp, ebp
+            0x005f66d9      pop   ebp
+            0x005f66da      ret   0x04
+            0x005f66dd      int3
+            0x005f66de      int3
+            0x005f66df      int3
+            0x005f66e0      push  ebp
+            0x005f66e1      mov   ebp, esp
+            0x005f66e3      push  0xffffffff                           ; 255
+            0x005f66e5      push  0x82b004
+            0x005f66ea      mov   eax, dword fs:[0x0]
+            0x005f66f0      push  eax
+            0x005f66f1      sub   esp, 0x330
+            0x005f66f7      mov   eax, dword [0x90d6c0]                ; [0x90d6c0:4]=0xbb40e64e
+            0x005f66fc      xor   eax, ebp
+            0x005f66fe      mov   dword [ebp-0x10], eax
+            0x005f6701      push  esi
+            0x005f65b5      push  edx
+            0x005f65b6      lea   eax, dword [ebp-0x28]
+            0x005f65b9      push  eax
+            0x005f65ba      mov   ecx, dword [ebp-0x44]
+            0x005f65bd      call  0x5fe9e0
+            0x005f65c2      mov   ecx, dword [ebp-0x14]
+            0x005f65c5      add   ecx, 0x60                            ; 96
+            0x005f65c8      mov   dword [ebp-0x48], ecx
+            0x005f65cb      lea   edx, dword [ebp-0x58]
+            0x005f65ce      push  edx
+            0x005f65cf      mov   ecx, dword [ebp-0x48]
+            0x005f65d2      call  0x6088b0
+            0x005f65d7      push  eax
+            0x005f65d8      lea   ecx, dword [ebp-0x28]
+            0x005f65db      call  0x58ef20
+            0x005f65e0      movzx eax, al
+            0x005f65e3      test  eax, eax
+        ÔöîÔöÇ< 0x005f65e5      jz    0x5f65fe
+        Ôöé   0x005f65e7      lea   ecx, dword [ebp-0x28]
+        Ôöé   0x005f65ea      call  0x6025c0
+        Ôöé   0x005f65ef      add   eax, 0x08
+        Ôöé   0x005f65f2      mov   ecx, eax
+        Ôöé   0x005f65f4      call  0x58efa0
+        Ôöé   0x005f65f9      mov   dword [ebp-0x2c], eax
+       ÔöîÔöÇÔöÇ< 0x005f65fc      jmp   0x5f6621
+       ÔöéÔööÔöÇ> 0x005f65fe      mov   ecx, dword [ebp+0x08]
+       Ôöé    0x005f6601      add   ecx, 0x04
+       Ôöé    0x005f6604      call  0x4d0f50
+       Ôöé    0x005f6609      push  eax
+       Ôöé    0x005f660a      push  str.Skin_Config_Error:_Atlas_used_for_skin__s_not_present ; 0x85ad90 ; "Skin Config Error: Atlas used for skin %s not present\n"
+            0x005f54f0      push  ebp
+            0x005f54f1      mov   ebp, esp
+            0x005f54f3      push  ecx
+            0x005f54f4      mov   dword [ebp-0x04], ecx
+            0x005f54f7      mov   eax, dword [ebp-0x04]
+            0x005f54fa      mov   dword [eax], 0x85b950                ; [0x85b950:4]=0x602e10
+            0x005f5500      mov   ecx, dword [ebp-0x04]
+            0x005f5503      mov   edx, dword [ebp+0x0c]
+            0x005f5506      mov   dword [ecx+0x04], edx
+            0x005f5509      mov   eax, dword [ebp-0x04]
+            0x005f550c      mov   dword [eax+0x08], 0x00
+            0x005f5513      mov   ecx, dword [ebp+0x08]
+            0x005f5516      push  ecx
+            0x005f5517      mov   ecx, dword [ebp+0x0c]
+            0x005f551a      call  0x59a2b0
+            0x005f551f      mov   edx, dword [ebp-0x04]
+            0x005f5522      mov   dword [edx+0x08], eax
+            0x005f5525      mov   eax, dword [ebp-0x04]
+            0x005f5528      mov   esp, ebp
+            0x005f552a      pop   ebp
+            0x005f552b      ret   0x08
+            0x005f552e      int3
+            0x005f552f      int3
+            0x005f5530      push  ebp
+            0x005f5531      mov   ebp, esp
+            0x005f5533      push  0xffffffff                           ; 255
+            0x005f5535      push  0x82ae70
+            0x005f553a      mov   eax, dword fs:[0x0]
+            0x005f5540      push  eax
+            0x005f5541      sub   esp, 0x08
+            0x005f5544      mov   eax, dword [0x90d6c0]                ; [0x90d6c0:4]=0xbb40e64e
+            0x005f5549      xor   eax, ebp
+            0x005f554b      push  eax
+            0x005f554c      lea   eax, dword [ebp-0x0c]
+            0x005f554f      mov   dword fs:[0x0], eax
+            0x005f5555      mov   dword [ebp-0x10], ecx
+            0x005f5558      mov   eax, dword [ebp-0x10]
+            0x005f555b      mov   dword [eax], 0x85b950                ; [0x85b950:4]=0x602e10
+            0x005f5561      mov   ecx, dword [ebp-0x10]
+            0x005f5564      mov   edx, dword [ecx+0x04]
+            0x005f5567      mov   dword [ebp-0x14], edx
+            0x005f556a      mov   eax, dword [ebp-0x10]
+            0x005f556d      mov   ecx, dword [eax+0x08]
+            0x005f5570      push  ecx
+            0x005f5571      mov   ecx, dword [ebp-0x14]
+            0x005f5574      call  0x59a2b0
+            0x005f5579      mov   ecx, dword [ebp-0x0c]
+            0x005f557c      mov   dword fs:[0x0], ecx
+            0x005f5583      pop   ecx
+            0x005f5584      mov   esp, ebp

@@ -1,0 +1,63 @@
+
+0x00434eb8 0x008364b8   24   25 .rdata  ascii   Backgrounds\chat_bkg.pcx
+0x004353c8 0x008369c8   72   73 .rdata  ascii   D:\Jenkins\workspace\warcraft2-pipeline\War2BNE\Battle.net\gluBNChat.cpp
+0x00435640 0x00836c40   16   17 .rdata  ascii   rez\chatroom.tbl
+0x00435f90 0x00837590   19   20 .rdata  ascii   rez\gluChat_deu.bin
+0x00435fa4 0x008375a4   19   20 .rdata  ascii   rez\gluChat_esp.bin
+0x00435fb8 0x008375b8   19   20 .rdata  ascii   rez\gluChat_fra.bin
+0x00435fcc 0x008375cc   19   20 .rdata  ascii   rez\gluChat_ita.bin
+0x00435fe0 0x008375e0   15   16 .rdata  ascii   rez\gluChat.bin
+0x00435ff0 0x008375f0   74   75 .rdata  ascii   D:\Jenkins\workspace\warcraft2-pipeline\War2BNE\Battle.net\gluChatSlot.cpp
+0x004363a8 0x008379a8    8    9 .rdata  ascii   whisper 
+0x00436420 0x00837a20   76   77 .rdata  ascii   D:\Jenkins\workspace\warcraft2-pipeline\War2BNE\Battle.net\net_chat_cmds.cpp
+0x00436d70 0x00838370   72   73 .rdata  ascii   D:\Jenkins\workspace\warcraft2-pipeline\War2BNE\LANG\Source\CHATEDIT.cpp
+0x00436dc0 0x008383c0   10   11 .rdata  ascii   chatroom:2
+0x00436dcc 0x008383cc   10   11 .rdata  ascii   chatroom:4
+0x00436dd8 0x008383d8   10   11 .rdata  ascii   chatroom:1
+0x00436df0 0x008383f0   72   73 .rdata  ascii   D:\Jenkins\workspace\warcraft2-pipeline\War2BNE\LANG\Source\CHATROOM.cpp
+0x00436f28 0x00838528   15   16 .rdata  ascii   rez\chat_p1.bin
+0x00436f38 0x00838538   15   16 .rdata  ascii   rez\chat_mc.bin
+0x00436f68 0x00838568   15   16 .rdata  ascii   rez\chat_p2.bin
+0x00436f78 0x00838578   15   16 .rdata  ascii   rez\chat_mj.bin
+0x00436fa0 0x008385a0   21   22 .rdata  ascii   message_cheat_enabled
+0x00436fb8 0x008385b8   22   23 .rdata  ascii   message_cheat_disabled
+0x004385fc 0x00839bfc   26   27 .rdata  ascii   message_cannot_create_unit
+0x00438618 0x00839c18   21   22 .rdata  ascii   message_lumber_needed
+0x00438630 0x00839c30   19   20 .rdata  ascii   message_gold_needed
+0x0043be04 0x0083d404   21   22 .rdata  ascii   message_work_complete
+0x0043be1c 0x0083d41c   20   21 .rdata  ascii   message_under_attack
+0x0043be34 0x0083d434   22   23 .rdata  ascii   message_village_attack
+0x0043be4c 0x0083d44c   26   27 .rdata  ascii   message_building_destroyed
+0x0043be68 0x0083d468   25   26 .rdata  ascii   message_training_complete
+0x0043e6a8 0x0083fca8   14   15 .rdata  ascii   message_to_all
+0x0043e6b8 0x0083fcb8   15   16 .rdata  ascii   message_to_ally
+0x0043e6c8 0x0083fcc8   16   17 .rdata  ascii   message_to_enemy
+0x0043ffa0 0x008415a0   16   17 .rdata  ascii   Art\Chat_IPX.pcx
+0x0043ffb4 0x008415b4   17   18 .rdata  ascii   Art\Chat_BNET.pcx
+0x00440010 0x00841610   20   21 .rdata  ascii   message_exit_blocked
+0x00440028 0x00841628   27   28 .rdata  ascii   message_cannot_create_units
+0x0044018c 0x0084178c   25   26 .rdata  ascii   message_player_eliminated
+0x004401a8 0x008417a8   19   20 .rdata  ascii   message_player_left
+0x004401bc 0x008417bc   22   23 .rdata  ascii   message_player_dropped
+0x004401d4 0x008417d4   12   13 .rdata  ascii   message_sent
+0x00442294 0x00843894   18   19 .rdata  ascii   yes (message: %s)\n
+0x00443254 0x00844854   17   18 .rdata  ascii   widget_text_white
+0x00443268 0x00844868   18   19 .rdata  ascii   widget_text_yellow
+0x0044327c 0x0084487c   15   16 .rdata  ascii   widget_text_red
+0x00443378 0x00844978    7    8 .rdata  ascii   fe_chat
+0x0044357c 0x00844b7c   10   11 .rdata  ascii   lobby_chat
+0x00443588 0x00844b88   18   19 .rdata  ascii   lobby_chat_history
+0x004447f0 0x00845df0   15   16 .rdata  ascii   message_generic
+0x00444800 0x00845e00   15   16 .rdata  ascii   message_to_none
+0x00444810 0x00845e10   17   18 .rdata  ascii   message_to_player
+0x0044576c 0x00846d6c    4    5 .rdata  ascii   chat
+0x00445774 0x00846d74   12   13 .rdata  ascii   chat_content
+0x00445784 0x00846d84   12   13 .rdata  ascii   chat_history
+0x00445794 0x00846d94    9   10 .rdata  ascii   chat_send
+0x004457a0 0x00846da0   12   13 .rdata  ascii   mp_chat_send
+0x00447b0c 0x0084910c   18   19 .rdata  ascii   stats_player_name_
+0x0044ac0c 0x0084c20c   61   62 .rdata  ascii     processing system message: sequence=%04x event=%u player=%x
+0x0044ad80 0x0084c380   54   55 .rdata  ascii     spiFree(0x%08x,0x%08x,%u) [invalid message: corrupt]
+0x0044adb8 0x0084c3b8   57   58 .rdata  ascii     spiFree(0x%08x,0x%08x,%u) [invalid message: bad sender]
+0x0044c27c 0x0084d87c   32   33 .rdata  ascii   SNetSetServerChatCommand(0x%08x)
+

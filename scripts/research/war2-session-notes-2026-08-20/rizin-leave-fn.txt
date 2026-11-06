@@ -1,0 +1,712 @@
+Ôöî fcn.004f16f0(int32_t arg_4h);
+Ôöé           ; var int32_t var_130h @ stack - 0x130
+Ôöé           ; var int32_t var_12ch @ stack - 0x12c
+Ôöé           ; var int32_t var_12ah @ stack - 0x12a
+Ôöé           ; var int32_t var_128h @ stack - 0x128
+Ôöé           ; var int32_t var_126h @ stack - 0x126
+Ôöé           ; var int32_t var_124h @ stack - 0x124
+Ôöé           ; var int32_t var_122h @ stack - 0x122
+Ôöé           ; var int32_t var_120h @ stack - 0x120
+Ôöé           ; var int32_t var_20h @ stack - 0x20
+Ôöé           ; var int32_t var_8h @ stack - 0x8
+Ôöé           ; arg int32_t arg_4h @ stack + 0x4
+Ôöé           0x004f16f0      push  ebp
+Ôöé           0x004f16f1      mov   ebp, esp
+Ôöé           0x004f16f3      sub   esp, 0x12c
+Ôöé           0x004f16f9      mov   eax, dword [0x90d6c0]                ; [0x90d6c0:4]=0xbb40e64e
+Ôöé           0x004f16fe      xor   eax, ebp
+Ôöé           0x004f1700      mov   dword [var_8h], eax
+Ôöé           0x004f1703      push  esi
+Ôöé           0x004f1704      mov   esi, dword [arg_4h]
+Ôöé           0x004f1707      mov   cl, byte [esi+0x06]                  ; RELOC 3 pe_004f1708 @ 0x00000000
+Ôöé           0x004f170a      movzx eax, cl
+Ôöé           0x004f170d      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé           ;-- pe_004f1710:
+Ôöé           0x004f1710      cmp   eax, 0xfa                            ; 250; RELOC 3 pe_004f1710 @ 0x00000000
+Ôöé       ÔöîÔöÇ< 0x004f1715      jnbe  case.default.0x4f1724
+Ôöé       Ôöé   0x004f171b      movzx eax, byte [eax+0x4f1f20]
+Ôöé       Ôöé   0x004f1722      push  ebx
+Ôöé       Ôöé   0x004f1723      push  edi
+Ôöé       Ôöé   ;-- switch
+Ôöé       Ôöé   0x004f1724      jmp   dword [eax*4+0x4f1ec4]               ; switch table (23 cases) at 0x4f1ec4
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 25:                                               ; from 0x4f1724
+Ôöé       Ôöé   0x004f172b      call  0x4c0a30
+Ôöé       Ôöé   0x004f1730      pop   edi
+Ôöé       Ôöé   0x004f1731      pop   ebx
+Ôöé       Ôöé   0x004f1732      pop   esi
+Ôöé       Ôöé   0x004f1733      mov   ecx, dword [var_8h]
+Ôöé       Ôöé   0x004f1736      xor   ecx, ebp
+Ôöé       Ôöé   0x004f1738      call  0x7e91e5
+Ôöé       Ôöé   0x004f173d      mov   esp, ebp
+Ôöé       Ôöé   0x004f173f      pop   ebp
+Ôöé       Ôöé   0x004f1740      ret
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 4:                                                ; from 0x4f1724
+Ôöé       Ôöé   0x004f1741      movzx eax, byte [esi+0x01]
+Ôöé       Ôöé   0x004f1745      cmp   word [eax*2+0x91b38c], 0x00
+Ôöé      ÔöîÔöÇÔöÇ< 0x004f174e      jnz   0x4f177f
+Ôöé      ÔöéÔöé   0x004f1750      cmp   word [eax*2+0x91b3ac], 0x00
+Ôöé     ÔöîÔöÇÔöÇÔöÇ< 0x004f1759      jnz   0x4f177f
+Ôöé     ÔöéÔöéÔöé   0x004f175b      push  str.message_player_eliminated        ; 0x84178c ; "message_player_eliminated"
+Ôöé     ÔöéÔöéÔöé   0x004f1760      call  0x58ab00
+Ôöé     ÔöéÔöéÔöé   0x004f1765      add   esp, 0x04
+Ôöé     ÔöéÔöéÔöé   0x004f1768      mov   edi, eax
+Ôöé     ÔöéÔöéÔöé   0x004f176a      call  0x49f4f0
+Ôöé     ÔöéÔöéÔöé   0x004f176f      test  eax, eax
+Ôöé    ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004f1771      jz    0x4f17cd
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1773      movzx ecx, byte [esi+0x01]
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1777      push  ecx
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1778      call  0x4f4f30
+Ôöé   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f177d      jmp   0x4f17ca
+Ôöé   ÔöéÔöéÔööÔööÔöÇÔöÇ> 0x004f177f      cmp   cl, 0x10                             ; 16
+Ôöé   ÔöéÔöé ÔöîÔöÇÔöÇ< 0x004f1782      jnz   0x4f17a8
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1784      push  str.message_player_left              ; 0x8417a8 ; "message_player_left"
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1789      call  0x58ab00
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f178e      add   esp, 0x04
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1791      mov   edi, eax
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1793      call  0x49f4f0
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1798      test  eax, eax
+Ôöé   ÔöéÔöéÔöîÔöÇÔöÇÔöÇ< 0x004f179a      jz    0x4f17cd
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f179c      movzx eax, byte [esi+0x01]
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f17a0      push  eax
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f17a1      call  0x4f4f30
+Ôöé  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f17a6      jmp   0x4f17ca
+Ôöé  ÔöéÔöéÔöéÔöéÔööÔöÇÔöÇ> 0x004f17a8      push  str.message_player_dropped           ; 0x8417bc ; "message_player_dropped"
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17ad      call  0x58ab00
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17b2      add   esp, 0x04
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17b5      mov   edi, eax
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17b7      call  0x49f4f0
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17bc      test  eax, eax
+Ôöé  ÔöéÔöéÔöéÔöéÔöîÔöÇÔöÇ< 0x004f17be      jz    0x4f17cd
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x004f17c0      movzx eax, byte [esi+0x01]
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x004f17c4      push  eax
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x004f17c5      call  0x4f43a0
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREFS from fcn.004f16f0 @ 0x4f177d, 0x4f17a6
+Ôöé  ÔööÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f17ca      add   esp, 0x04
+Ôöé    ÔööÔööÔööÔöÇÔöÇ> 0x004f17cd      movzx ecx, byte [esi+0x01]
+Ôöé       Ôöé   0x004f17d1      lea   eax, dword [ecx*8]
+Ôöé       Ôöé   0x004f17d8      sub   eax, ecx
+Ôöé       Ôöé   0x004f17da      lea   eax, dword [eax*8+0x91ada8]
+Ôöé       Ôöé   0x004f17e1      push  eax
+Ôöé       Ôöé   0x004f17e2      lea   eax, dword [var_120h]
+Ôöé       Ôöé   0x004f17e8      push  edi
+Ôöé       Ôöé   0x004f17e9      push  eax
+Ôöé       Ôöé   0x004f17ea      call  0x484be0
+Ôöé       Ôöé   0x004f17ef      push  0x00
+Ôöé       Ôöé   0x004f17f1      push  0x28                                 ; '(' ; 40
+Ôöé       Ôöé   0x004f17f3      lea   eax, dword [var_120h]
+Ôöé       Ôöé   0x004f17f9      push  0x08                                 ; 8
+Ôöé       Ôöé   0x004f17fb      push  eax
+Ôöé       Ôöé   0x004f17fc      call  0x4d3160
+Ôöé       Ôöé   0x004f1801      movzx eax, byte [esi+0x01]
+Ôöé       Ôöé   0x004f1805      mov   byte [eax+0x918cac], 0x03
+Ôöé       Ôöé   0x004f180c      movzx eax, byte [esi+0x01]
+Ôöé       Ôöé   0x004f1810      push  eax
+Ôöé       Ôöé   0x004f1811      call  reloc.pe_004b1500
+Ôöé       Ôöé   0x004f1816      add   esp, 0x20
+Ôöé       Ôöé   0x004f1819      cmp   dword [0x91c178], 0x00               ; [0x91c178:4]=0
+Ôöé      ÔöîÔöÇÔöÇ< 0x004f1820      jz    0x4f18d4
+Ôöé      ÔöéÔöé   0x004f1826      movzx eax, byte [esi+0x01]
+Ôöé      ÔöéÔöé   0x004f182a      movzx ecx, byte [0x919678]                 ; [0x919678:1]=0
+Ôöé      ÔöéÔöé   0x004f1831      btr   ecx, eax
+Ôöé      ÔöéÔöé   0x004f1834      mov   byte [0x919678], cl
+Ôöé      ÔöéÔöé   0x004f183a      movzx eax, byte [esi+0x01]
+Ôöé      ÔöéÔöé   0x004f183e      movzx ecx, byte [0x919679]                 ; [0x919679:1]=0; RELOC 3 pe_004f1840 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1845      btr   ecx, eax
+Ôöé      ÔöéÔöé   ;-- pe_004f1848:
+Ôöé      ÔöéÔöé   0x004f1848      mov   byte [0x919679], cl                  ; RELOC 3 pe_004f1848 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f184e      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f1850 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1852      movzx ecx, byte [0x91967a]                 ; [0x91967a:1]=0; RELOC 3 pe_004f1854 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1859      btr   ecx, eax
+Ôöé      ÔöéÔöé   ;-- pe_004f185c:
+Ôöé      ÔöéÔöé   0x004f185c      mov   byte [0x91967a], cl                  ; RELOC 3 pe_004f185c @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1862      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f1864 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1866      movzx ecx, byte [0x91967b]                 ; [0x91967b:1]=0; RELOC 3 pe_004f1868 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f186d      btr   ecx, eax
+Ôöé      ÔöéÔöé   ;-- pe_004f1870:
+Ôöé      ÔöéÔöé   0x004f1870      mov   byte [0x91967b], cl                  ; RELOC 3 pe_004f1870 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1876      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f1878 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f187a      movzx ecx, byte [0x91967c]                 ; [0x91967c:1]=0; RELOC 3 pe_004f187c @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1881      btr   ecx, eax
+Ôöé      ÔöéÔöé   ;-- pe_004f1884:
+Ôöé      ÔöéÔöé   0x004f1884      mov   byte [0x91967c], cl                  ; RELOC 3 pe_004f1884 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f188a      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f188c @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f188e      movzx ecx, byte [0x91967d]                 ; [0x91967d:1]=0; RELOC 3 pe_004f1890 @ 0x00000000
+Ôöé      ÔöéÔöé   0x004f1895      btr   ecx, eax
+Ôöé      ÔöéÔöé   0x004f1898      mov   byte [0x91967d], cl
+Ôöé      ÔöéÔöé   0x004f189e      movzx eax, byte [esi+0x01]
+Ôöé      ÔöéÔöé   0x004f18a2      movzx ecx, byte [0x91967e]                 ; [0x91967e:1]=0
+Ôöé      ÔöéÔöé   0x004f18a9      btr   ecx, eax
+Ôöé      ÔöéÔöé   0x004f18ac      mov   byte [0x91967e], cl
+Ôöé      ÔöéÔöé   0x004f18b2      movzx eax, byte [esi+0x01]
+Ôöé      ÔöéÔöé   0x004f18b6      movzx ecx, byte [0x91967f]                 ; [0x91967f:1]=0
+Ôöé      ÔöéÔöé   0x004f18bd      btr   ecx, eax
+Ôöé      ÔöéÔöé   0x004f18c0      mov   al, 0x01
+Ôöé      ÔöéÔöé   0x004f18c2      mov   byte [0x91967f], cl
+Ôöé      ÔöéÔöé   0x004f18c8      movzx ecx, byte [esi+0x01]
+Ôöé      ÔöéÔöé   0x004f18cc      shl   al, cl
+Ôöé      ÔöéÔöé   0x004f18ce      mov   byte [ecx+0x919678], al
+Ôöé      ÔööÔöÇÔöÇ> 0x004f18d4      call  reloc.pe_004b13d0
+Ôöé       Ôöé   0x004f18d9      pop   edi
+Ôöé       Ôöé   0x004f18da      pop   ebx
+Ôöé       Ôöé   0x004f18db      pop   esi
+Ôöé       Ôöé   0x004f18dc      mov   ecx, dword [var_8h]
+Ôöé       Ôöé   0x004f18df      xor   ecx, ebp
+Ôöé       Ôöé   0x004f18e1      call  0x7e91e5
+Ôöé       Ôöé   0x004f18e6      mov   esp, ebp
+Ôöé       Ôöé   0x004f18e8      pop   ebp
+Ôöé       Ôöé   0x004f18e9      ret
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 5:                                                ; from 0x4f1724
+Ôöé       Ôöé   0x004f18ea      push  esi
+Ôöé       Ôöé   0x004f18eb      call  0x4de950
+Ôöé       Ôöé   0x004f18f0      add   esp, 0x04
+Ôöé       Ôöé   0x004f18f3      pop   edi
+Ôöé       Ôöé   0x004f18f4      pop   ebx
+Ôöé       Ôöé   0x004f18f5      pop   esi
+Ôöé       Ôöé   0x004f18f6      mov   ecx, dword [var_8h]
+Ôöé       Ôöé   0x004f18f9      xor   ecx, ebp
+Ôöé       Ôöé   0x004f18fb      call  0x7e91e5
+Ôöé       Ôöé   0x004f1900      mov   esp, ebp
+Ôöé       Ôöé   0x004f1902      pop   ebp
+Ôöé       Ôöé   0x004f1903      ret
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 7:                                                ; from 0x4f1724
+Ôöé       Ôöé   0x004f1904      push  esi
+Ôöé       Ôöé   0x004f1905      call  0x4de8a0
+Ôöé       Ôöé   0x004f190a      add   esp, 0x04
+Ôöé       Ôöé   0x004f190d      pop   edi
+Ôöé       Ôöé   0x004f190e      pop   ebx
+Ôöé       Ôöé   0x004f190f      pop   esi
+Ôöé       Ôöé   0x004f1910      mov   ecx, dword [var_8h]
+Ôöé       Ôöé   0x004f1913      xor   ecx, ebp
+Ôöé       Ôöé   0x004f1915      call  0x7e91e5
+Ôöé       Ôöé   0x004f191a      mov   esp, ebp
+Ôöé       Ôöé   0x004f191c      pop   ebp
+Ôöé       Ôöé   0x004f191d      ret
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 6:                                                ; from 0x4f1724
+Ôöé       Ôöé   0x004f191e      push  esi
+Ôöé       Ôöé   0x004f191f      call  0x4de8f0
+Ôöé       Ôöé   0x004f1924      add   esp, 0x04
+Ôöé       Ôöé   0x004f1927      pop   edi
+Ôöé       Ôöé   0x004f1928      pop   ebx
+Ôöé       Ôöé   0x004f1929      pop   esi
+Ôöé       Ôöé   0x004f192a      mov   ecx, dword [var_8h]
+Ôöé       Ôöé   0x004f192d      xor   ecx, ebp
+Ôöé       Ôöé   0x004f192f      call  0x7e91e5
+Ôöé       Ôöé   0x004f1934      mov   esp, ebp
+Ôöé       Ôöé   0x004f1936      pop   ebp
+Ôöé       Ôöé   0x004f1937      ret
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 20:                                               ; from 0x4f1724
+Ôöé       Ôöé   0x004f1938      movzx ecx, byte [esi+0x08]
+Ôöé       Ôöé   0x004f193c      xor   eax, eax
+Ôöé       Ôöé   0x004f193e      cmp   dword [0x91c178], eax                ; [0x91c178:4]=0
+Ôöé       Ôöé   0x004f1944      setnz al
+Ôöé       Ôöé   0x004f1947      lea   eax, dword [eax*2+0x07]
+Ôöé       Ôöé   0x004f194e      cmp   ecx, eax
+Ôöé      ÔöîÔöÇÔöÇ< 0x004f1950      jnb   case.0x4f1724.26
+Ôöé      ÔöéÔöé   0x004f1956      push  0x00
+Ôöé      ÔöéÔöé   0x004f1958      push  ecx
+Ôöé      ÔöéÔöé   0x004f1959      call  0x4c4910
+Ôöé      ÔöéÔöé   0x004f195e      add   esp, 0x08
+Ôöé      ÔöéÔöé   0x004f1961      pop   edi
+Ôöé      ÔöéÔöé   0x004f1962      pop   ebx
+Ôöé      ÔöéÔöé   0x004f1963      pop   esi
+Ôöé      ÔöéÔöé   0x004f1964      mov   ecx, dword [var_8h]
+Ôöé      ÔöéÔöé   0x004f1967      xor   ecx, ebp
+Ôöé      ÔöéÔöé   0x004f1969      call  0x7e91e5
+Ôöé      ÔöéÔöé   0x004f196e      mov   esp, ebp
+Ôöé      ÔöéÔöé   0x004f1970      pop   ebp
+Ôöé      ÔöéÔöé   0x004f1971      ret
+Ôöé      ÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé      ÔöéÔöé   ;-- case 8:                                                ; from 0x4f1724
+Ôöé      ÔöéÔöé   0x004f1972      mov   dl, byte [esi+0x08]
+Ôöé      ÔöéÔöé   0x004f1975      movzx ecx, dl
+Ôöé      ÔöéÔöé   0x004f1978      test  dl, dl
+Ôöé     ÔöîÔöÇÔöÇÔöÇ< 0x004f197a      jz    0x4f198b
+Ôöé     ÔöéÔöéÔöé   0x004f197c      add   esi, 0x0a
+Ôöé     ÔöéÔöéÔöé   0x004f197f      lea   edi, dword [var_20h]
+Ôöé     ÔöéÔöéÔöé   0x004f1982      shr   ecx, 0x01
+Ôöé     ÔöéÔöéÔöé   0x004f1984      rep   movsd
+Ôöé     ÔöéÔöéÔöé   0x004f1986      adc   ecx, ecx
+Ôöé     ÔöéÔöéÔöé   0x004f1988      rep   movsw
+Ôöé     ÔööÔöÇÔöÇÔöÇ> 0x004f198b      mov   ecx, 0x0c                            ; 0xc ; 12
+Ôöé      ÔöéÔöé   0x004f1990      movzx eax, dl
+Ôöé      ÔöéÔöé   0x004f1993      cmp   dl, cl
+Ôöé      ÔöéÔöé   0x004f1995      lea   edi, dword [var_20h]
+Ôöé      ÔöéÔöé   0x004f1998      cmovnb eax, ecx
+Ôöé      ÔöéÔöé   0x004f199b      xor   esi, esi
+Ôöé      ÔöéÔöé   0x004f199d      movzx ebx, al
+Ôöé     ÔöîÔöÇÔöÇÔöÇ> 0x004f19a0      cmp   esi, ebx
+Ôöé    ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004f19a2      jnb   0x4f19b9
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19a4      movsx eax, word [edi]
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19a7      add   edi, 0x02
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19aa      push  0x00
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19ac      push  eax
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19ad      call  0x4ee130
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19b2      add   esp, 0x08
+Ôöé    ÔöéÔòÄÔöéÔöé   0x004f19b5      mov   ecx, eax
+Ôöé   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f19b7      jmp   0x4f19bb
+Ôöé   ÔöéÔööÔöÇÔöÇÔöÇÔöÇ> 0x004f19b9      xor   ecx, ecx
+Ôöé   Ôöé ÔòÄÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f19b7
+Ôöé   ÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f19bb      movzx eax, byte [0x922f5a]                 ; [0x922f5a:1]=0
+Ôöé     ÔòÄÔöéÔöé   0x004f19c2      lea   eax, dword [eax+eax*2]
+Ôöé     ÔòÄÔöéÔöé   0x004f19c5      lea   eax, dword [esi+eax*4]
+Ôöé     ÔòÄÔöéÔöé   0x004f19c8      inc   esi
+Ôöé     ÔòÄÔöéÔöé   0x004f19c9      mov   dword [eax*4+0x933e18], ecx
+Ôöé     ÔòÄÔöéÔöé   0x004f19d0      cmp   esi, 0x0c                            ; 0xc ; 12
+Ôöé     ÔööÔöÇÔöÇÔöÇ< 0x004f19d3      jl    0x4f19a0
+Ôöé      ÔöéÔöé   0x004f19d5      pop   edi
+Ôöé      ÔöéÔöé   0x004f19d6      pop   ebx
+Ôöé      ÔöéÔöé   0x004f19d7      pop   esi
+Ôöé      ÔöéÔöé   0x004f19d8      mov   ecx, dword [var_8h]
+Ôöé      ÔöéÔöé   0x004f19db      xor   ecx, ebp
+Ôöé      ÔöéÔöé   0x004f19dd      call  0x7e91e5
+Ôöé      ÔöéÔöé   0x004f19e2      mov   esp, ebp
+Ôöé      ÔöéÔöé   0x004f19e4      pop   ebp
+Ôöé      ÔöéÔöé   0x004f19e5      ret
+Ôöé      ÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé      ÔöéÔöé   ;-- case 11:                                               ; from 0x4f1724
+Ôöé      ÔöéÔöé   0x004f19e6      movzx eax, word [esi+0x08]
+Ôöé      ÔöéÔöé   0x004f19ea      mov   bl, byte [esi+0x0c]
+Ôöé      ÔöéÔöé   0x004f19ed      mov   ecx, eax
+Ôöé      ÔöéÔöé   0x004f19ef      mov   word [var_124h], ax
+Ôöé      ÔöéÔöé   0x004f19f6      movzx eax, word [esi+0x0a]
+Ôöé      ÔöéÔöé   0x004f19fa      mov   dword [var_130h], ecx
+Ôöé      ÔöéÔöé   0x004f1a00      mov   edi, eax
+Ôöé      ÔöéÔöé   0x004f1a02      mov   word [var_122h], ax
+Ôöé      ÔöéÔöé   0x004f1a09      mov   byte [var_12ch], bl
+Ôöé      ÔöéÔöé   0x004f1a0f      call  0x49bdc0
+Ôöé      ÔöéÔöé   0x004f1a14      call  0x4dfac0
+Ôöé      ÔöéÔöé   0x004f1a19      mov   ecx, eax
+Ôöé      ÔöéÔöé   0x004f1a1b      test  ecx, ecx
+Ôöé     ÔöîÔöÇÔöÇÔöÇ< 0x004f1a1d      jz    case.0x4f1724.26
+Ôöé     ÔöéÔöéÔöé   0x004f1a23      mov   ax, word [0x918d10]                  ; [0x918d10:2]=0
+Ôöé     ÔöéÔöéÔöé   0x004f1a29      cmp   word [var_130h], ax
+Ôöé    ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004f1a30      jnb   case.0x4f1724.26
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1a36      cmp   di, ax
+Ôöé   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1a39      jnb   case.0x4f1724.26
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f1a3f      mov   al, byte [ecx+0x2c]
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f1a42      cmp   al, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1a48      jnz   case.0x4f1724.26
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a4e      lea   eax, dword [ebx-0x3a]
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a51      cmp   al, 0x2e                             ; '.' ; 46
+Ôöé ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1a53      jnbe  case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a59      movzx edx, bl
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a5c      mov   eax, dword [edx*4+0x9185f0]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a63      and   eax, 0x680020
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a68      cmp   eax, 0x20                            ; 32
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1a6b      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a71      mov   al, byte [edx+0x841626]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a77      cmp   al, byte [ecx+0x27]
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1a7a      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a80      push  dword [var_12ch]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a86      push  dword [var_124h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a8c      call  0x4dc2c0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a91      add   esp, 0x08
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a94      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a95      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a96      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a97      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a9a      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1a9c      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aa1      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aa3      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aa4      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 9:                                                ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aa5      call  0x4dfac0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aaa      mov   edx, eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aac      test  edx, edx
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1aae      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ab4      nop   dword [eax], eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ab8      nop   dword [eax+eax*1], eax
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1ac0      movzx ecx, byte [edx+0x27]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ac4      test  dword [ecx*4+0x9185f0], 0x100
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1acf      jz    0x4f1aff
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ad1      movzx ecx, word [edx+0x1e]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ad5      test  cl, 0x07                             ; 7
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1ad8      jnz   0x4f1aff
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ada      mov   al, byte [edx+0x2c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1add      cmp   al, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1ae3      jnz   0x4f1aff
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ae5      test  ecx, reloc.pe_00001000               ; 0x1000
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1aeb      jz    0x4f1af5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1aed      and   ecx, 0xf7ff
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1af3      jmp   0x4f1afb
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1af5      or    ecx, 0x800                           ; 2048
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1af3
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1afb      mov   word [edx+0x1e], cx
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1aff      call  0x4dfad0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b04      mov   edx, eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b06      test  edx, edx
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1b08      jnz   0x4f1ac0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b0a      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b0b      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b0c      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b0d      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b10      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b12      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b17      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b19      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b1a      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 10:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b1b      call  0x49bdc0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b20      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b21      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b22      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b23      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b26      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b28      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b2d      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b2f      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b30      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 12:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b31      movzx eax, word [esi+0x0c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b35      mov   word [var_128h], ax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b3c      movzx eax, word [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b40      mov   word [var_12ch], ax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b47      movzx eax, word [esi+0x0a]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b4b      mov   word [var_12ah], ax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b52      mov   al, byte [esi+0x0e]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b55      mov   byte [var_126h], al
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b5b      lea   eax, dword [var_12ch]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b61      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b62      call  0x4f2190
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b67      add   esp, 0x04
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b6a      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b6b      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b6c      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b6d      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b70      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b72      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b77      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b79      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b7a      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 21:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b7b      movzx ebx, word [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b7f      mov   ax, word [0x918d10]                  ; [0x918d10:2]=0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b85      cmp   bx, ax
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1b88      jnb   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b8e      movzx edi, word [esi+0x0a]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b92      cmp   di, ax
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1b95      jnb   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b9b      movzx eax, word [esi+0x0c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1b9f      cwde
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ba0      push  0x00
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ba2      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ba3      call  0x4ee130
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ba8      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ba9      push  edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1baa      push  ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bab      call  0x4dcc60
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bb0      add   esp, 0x14
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bb3      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bb4      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bb5      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bb6      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bb9      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bbb      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bc0      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bc2      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bc3      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 13:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bc4      call  0x4dfac0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bc9      test  eax, eax
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1bcb      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bd1      mov   cl, byte [eax+0x2c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bd4      cmp   cl, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1bda      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1be0      push  0x01                                 ; 1
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1be2      push  0x01                                 ; 1
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1be4      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1be5      call  0x4ee6a0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bea      add   esp, 0x0c
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bed      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bee      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bef      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bf0      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bf3      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bf5      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bfa      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bfc      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bfd      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 14:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1bfe      call  0x4dfac0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c03      mov   edx, eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c05      test  edx, edx
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c07      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c0d      movzx ecx, byte [edx+0x27]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c11      test  byte [ecx*4+0x9185f0], 0x20
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c19      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c1f      test  byte [edx+0x1e], 0x80
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c23      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c29      mov   al, byte [edx+0x2c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c2c      cmp   al, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c32      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c38      mov   al, byte [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c3b      cmp   al, 0x04                             ; 4
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c3d      jnb   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c43      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c44      movzx eax, byte [esi+0x09]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c48      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c49      push  edx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c4a      call  0x4ace10
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c4f      add   esp, 0x0c
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c52      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c53      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c54      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c55      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c58      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c5a      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c5f      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c61      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c62      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 15:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c63      call  0x4dfac0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c68      test  eax, eax
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c6a      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c70      movzx ecx, byte [eax+0x27]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c74      test  byte [ecx*4+0x9185f0], 0x20
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c7c      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c82      mov   cl, byte [eax+0x2c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c85      cmp   cl, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1c8b      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c91      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c92      call  reloc.pe_004ad120
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c97      add   esp, 0x04
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c9a      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c9b      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c9c      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1c9d      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ca0      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ca2      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ca7      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ca9      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1caa      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 16:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cab      mov   cl, byte [0x918ccd]                  ; [0x918ccd:1]=0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cb1      mov   eax, 0x01
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cb6      shl   eax, cl
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cb8      test  byte [esi+0x08], al
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1cbb      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cc1      movzx eax, byte [esi+0x09]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cc5      push  0x00
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cc7      push  0x28                                 ; '(' ; 40
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cc9      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cca      lea   eax, dword [esi+0x0a]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ccd      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cce      call  0x4d3160
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cd3      add   esp, 0x10
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cd6      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cd7      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cd8      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cd9      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cdc      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cde      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ce3      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ce5      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ce6      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 18:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ce7      call  0x4dfac0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cec      mov   edi, eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cee      test  edi, edi
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1cf0      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cf6      movzx ecx, byte [edi+0x27]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1cfa      test  dword [ecx*4+0x9185f0], 0x400
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1d05      jz    case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d0b      mov   cl, byte [edi+0x2c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d0e      cmp   cl, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1d14      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d1a      movzx eax, word [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d1e      cwde
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d1f      push  0x00
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d21      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d22      call  0x4ee130
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d27      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d28      push  edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d29      call  0x4ee820
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d2e      add   esp, 0x10
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d31      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d32      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d33      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d34      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d37      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d39      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d3e      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d40      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d41      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 19:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d42      cmp   dword [0x91c178], 0x00               ; [0x91c178:4]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1d49      jz    0x4f1d83
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d4b      mov   cl, byte [esi+0x0c]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d4e      cmp   cl, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1d54      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d5a      movzx eax, byte [esi+0x0b]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d5e      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d5f      movzx eax, byte [esi+0x0a]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d63      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d64      movzx eax, word [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d68      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d69      push  ecx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d6a      call  0x4d6740
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d6f      add   esp, 0x10
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d72      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d73      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d74      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d75      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d78      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d7a      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d7f      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d81      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d82      ret
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1d83      mov   cl, byte [esi+0x0a]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d86      cmp   cl, byte [0x922f5a]                  ; [0x922f5a:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1d8c      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d92      movzx eax, byte [esi+0x09]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d96      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d97      movzx eax, byte [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d9b      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d9c      push  ecx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1d9d      call  0x4d66b0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1da2      add   esp, 0x0c
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1da5      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1da6      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1da7      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1da8      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dab      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dad      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1db2      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1db4      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1db5      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 17:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1db6      movzx eax, byte [esi+0x01]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dba      mov   edi, dword [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dbd      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dbe      push  edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dbf      call  0x4d5f50
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dc4      add   esp, 0x08
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dc7      cmp   byte [0x922f5b], 0x00                ; [0x922f5b:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1dce      jz    0x4f1def
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dd0      cmp   byte [0x91b03f], 0x00                ; [0x91b03f:1]=0
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1dd7      jz    0x4f1def
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dd9      call  0x4a0200
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dde      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ddf      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1de0      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1de1      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1de4      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1de6      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1deb      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ded      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dee      ret
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1def      movzx ecx, byte [esi+0x01]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1df3      lea   eax, dword [ecx*8]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dfa      sub   eax, ecx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1dfc      lea   eax, dword [eax*8+0x91ada8]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e03      push  eax
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e04      push  edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e05      call  0x4b3d20
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e0a      add   esp, 0x08
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e0d      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e0e      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e0f      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e10      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e13      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e15      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e1a      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e1c      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e1d      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 22:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e1e      call  0x4d8c90
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e23      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e24      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e25      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e26      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e29      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e2b      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e30      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e32      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e33      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 23:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e34      call  0x4d8c20
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e39      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e3a      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e3b      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e3c      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e3f      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e41      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e46      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e48      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e49      ret
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 24:                                               ; from 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e4a      mov   al, byte [esi+0x09]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e4d      mov   byte [var_124h], al
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e53      cmp   al, 0x12                             ; 18
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1e55      jnbe  case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e57      mov   al, byte [esi+0x08]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e5a      test  al, al
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1e5c      jnz   0x4f1e7d
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e5e      push  dword [var_124h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e64      call  0x4f33a0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e69      add   esp, 0x04
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e6c      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e6d      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e6e      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e6f      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e72      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e74      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e79      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e7b      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e7c      ret
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1e7d      cmp   al, 0x01                             ; 1
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1e7f      jnz   0x4f1ea0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e81      push  dword [var_124h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e87      call  0x4f3210
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e8c      add   esp, 0x04
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e8f      pop   edi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e90      pop   ebx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e91      pop   esi
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e92      mov   ecx, dword [var_8h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e95      xor   ecx, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e97      call  0x7e91e5
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e9c      mov   esp, ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e9e      pop   ebp
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1e9f      ret
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f1ea0      cmp   al, 0x02                             ; 2
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f1ea2      jnz   case.0x4f1724.26
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1ea4      push  dword [var_124h]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1eaa      call  0x4f27c0
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004f1eaf      add   esp, 0x04
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- case 26:                                               ; from 0x4f1724
+Ôöé ÔööÔööÔööÔööÔööÔööÔöÇÔöÇ> 0x004f1eb2      pop   edi
+Ôöé       Ôöé   0x004f1eb3      pop   ebx
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- default:                                               ; from 0x4f1724
+Ôöé       ÔööÔöÇ> 0x004f1eb4      mov   ecx, dword [var_8h]
+Ôöé           0x004f1eb7      xor   ecx, ebp
+Ôöé           0x004f1eb9      pop   esi
+Ôöé           0x004f1eba      call  0x7e91e5
+Ôöé           0x004f1ebf      mov   esp, ebp
+Ôöé           0x004f1ec1      pop   ebp
+Ôöö           0x004f1ec2      ret
+===== CALLERS =====
+===== XREFS DETAIL =====
+[]

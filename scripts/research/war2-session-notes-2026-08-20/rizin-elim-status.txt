@@ -1,0 +1,29 @@
+ERROR: Pattern contains forbitten characters. Allowed is only '0x', '0-9', 'a-f', 'A-F', '.' and ':'.
+ERROR: Failed to parse given pattern.
+[2K
+0x004d6d7f 6 hit.bytes.0
+0x004f1805 6 hit.bytes.1
+[2K
+0x004b1394 6 hit.bytes.0
+0x004c4435 6 hit.bytes.1
+0x004d61d0 6 hit.bytes.2
+0x004d65ab 6 hit.bytes.3
+0x004d65bc 6 hit.bytes.4
+0x004d6ab4 6 hit.bytes.5
+0x004d6b44 6 hit.bytes.6
+0x004d6da9 6 hit.bytes.7
+0x004d6f78 6 hit.bytes.8
+0x004d6f9d 6 hit.bytes.9
+0x004f3f97 6 hit.bytes.10
+[2K
+0x004d6148 6 hit.bytes.0
+0x004d6191 6 hit.bytes.1
+0x004d6318 6 hit.bytes.2
+0x004d6354 6 hit.bytes.3
+0x004d6b0a 6 hit.bytes.4
+0x004d6e4f 6 hit.bytes.5
+[2K
+[2K
+[2K
+ERROR: Pattern contains forbitten characters. Allowed is only '0x', '0-9', 'a-f', 'A-F', '.' and ':'.
+ERROR: Failed to parse given pattern.

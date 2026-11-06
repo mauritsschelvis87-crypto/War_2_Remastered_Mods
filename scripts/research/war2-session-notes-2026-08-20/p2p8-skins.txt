@@ -1,0 +1,39 @@
+      "id": "fe_endgame_stats_bar_0",
+      "progress": {
+        "color": [166, 0, 0, 255]
+      },
+      "progress_cursor": {
+        "color": [166, 0, 0, 255]
+      }
+    },
+    {
+      "id": "fe_endgame_stats_bar_1",
+      "progress": {
+        "color": [0, 30, 96, 255]
+      },
+      "id": "fe_endgame_stats_bar_1",
+      "progress": {
+        "color": [0, 30, 96, 255]
+      },
+      "progress_cursor": {
+        "color": [0, 60, 192, 255]
+      }
+    },
+    {
+      "id": "fe_endgame_stats_bar_2",
+      "progress": {
+        "color": [45, 182, 150, 255]
+      },
+      "id": "fe_endgame_stats_bar_7",
+      "progress": {
+        "color": [126, 126, 36, 255]
+      },
+      "progress_cursor": {
+        "color": [252, 252, 72, 255]
+      }
+    },
+    {
+      "id": "fe_endgame_rankscore",
+      "atlas": "modern_fe",
+      "component_skin_ids": [
+        "fe_base_orc",

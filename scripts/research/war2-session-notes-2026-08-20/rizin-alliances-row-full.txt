@@ -1,0 +1,274 @@
+===== full alliances row loop 0x525d40-0x525e60 =====
+Ôöé           0x00525d40      ret   0xf981
+Ôöé           0x00525d43      add   byte [eax], dl
+Ôöé           0x00525d45      add   byte [eax], al
+Ôöé       ÔöîÔöÇ< 0x00525d47      jb    0x525d5d
+Ôöé       Ôöé   0x00525d49      mov   edx, dword [eax-0x04]
+Ôöé       Ôöé   0x00525d4c      add   ecx, 0x23                            ; 35
+Ôöé       Ôöé   0x00525d4f      sub   eax, edx
+Ôöé       Ôöé   0x00525d51      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé       Ôöé   0x00525d54      cmp   eax, 0x1f                            ; 31
+Ôöé      ÔöîÔöÇÔöÇ< 0x00525d57      jnbe  0x525f31
+Ôöé      ÔöéÔööÔöÇ> 0x00525d5d      push  ecx
+Ôöé      Ôöé    0x00525d5e      push  edx                                  ; int32_t arg_4h
+Ôöé      Ôöé    0x00525d5f      call  fcn.007e91f3
+Ôöé      Ôöé    0x00525d64      add   esp, 0x08
+Ôöé      Ôöé    0x00525d67      mov   dword [var_6ch], 0x00
+Ôöé      Ôöé    0x00525d6e      mov   dword [var_68h], 0x0f                ; 0xf ; 15
+Ôöé      Ôöé    0x00525d75      mov   byte [var_7ch], 0x00
+Ôöé      Ôöé    0x00525d79      push  edi
+Ôöé      Ôöé    0x00525d7a      call  fcn.00525110
+Ôöé      Ôöé    0x00525d7f      cmp   dword [var_50h], 0x0f
+Ôöé      Ôöé    0x00525d83      lea   eax, dword [var_64h]
+Ôöé      Ôöé    0x00525d86      push  0x11                                 ; 17 ; int32_t arg_4h
+Ôöé      Ôöé    0x00525d88      cmovnbe eax, dword [var_64h]
+Ôöé      Ôöé    0x00525d8c      push  eax                                  ; int32_t arg_8h
+Ôöé      Ôöé    0x00525d8d      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_ch
+Ôöé      Ôöé    0x00525d93      call  fcn.005aee20
+Ôöé      Ôöé    0x00525d98      add   esp, 0x10
+Ôöé      Ôöé    0x00525d9b      cmp   byte [edi+data.00918cac], 0x01       ; [0x918cac:1]=0
+Ôöé      ÔöéÔöîÔöÇ< 0x00525da2      jnz   0x525db2
+Ôöé      ÔöéÔöé   0x00525da4      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé      ÔöéÔöé   0x00525daa      call  fcn.005ae470
+Ôöé      ÔöéÔöé   0x00525daf      add   esp, 0x04
+Ôöé      ÔöéÔööÔöÇ> 0x00525db2      lea   eax, dword [edi+data.0095c064]       ; 0x95c064
+Ôöé      Ôöé    0x00525db8      push  eax                                  ; int32_t arg_4h
+Ôöé      Ôöé    0x00525db9      push  data.00836c13                        ; 0x836c13 ; int32_t arg_8h
+Ôöé      Ôöé    0x00525dbe      call  fcn.00545370
+Ôöé      Ôöé    0x00525dc3      add   esp, 0x08
+Ôöé      Ôöé    0x00525dc6      test  al, al
+Ôöé      ÔöéÔöîÔöÇ< 0x00525dc8      jz    0x525dcf
+Ôöé      ÔöéÔöé   0x00525dca      call  fcn.00526540
+Ôöé      ÔöéÔööÔöÇ> 0x00525dcf      lea   eax, dword [edi+data.0095c06c]       ; 0x95c06c
+Ôöé      Ôöé    0x00525dd5      push  eax                                  ; int32_t arg_4h
+Ôöé      Ôöé    0x00525dd6      push  data.00836c13                        ; 0x836c13 ; int32_t arg_8h
+Ôöé      Ôöé    0x00525ddb      call  fcn.00545370
+Ôöé      Ôöé    0x00525de0      add   esp, 0x08
+Ôöé      Ôöé    0x00525de3      test  al, al
+Ôöé      ÔöéÔöîÔöÇ< 0x00525de5      jz    0x525dec
+Ôöé      ÔöéÔöé   0x00525de7      call  fcn.00526540
+Ôöé      ÔöéÔööÔöÇ> 0x00525dec      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé      Ôöé    0x00525df2      call  fcn.005ae7e0
+Ôöé      Ôöé    0x00525df7      mov   ecx, dword [var_50h]
+Ôöé      Ôöé    0x00525dfa      add   esp, 0x04
+Ôöé      Ôöé    0x00525dfd      mov   byte [var_8h], 0x03
+Ôöé      Ôöé    0x00525e01      cmp   ecx, 0x0f                            ; 0xf ; 15
+Ôöé      ÔöéÔöîÔöÇ< 0x00525e04      jbe   0x525e32
+Ôöé      ÔöéÔöé   0x00525e06      mov   edx, dword [var_64h]
+Ôöé      ÔöéÔöé   0x00525e09      inc   ecx
+Ôöé      ÔöéÔöé   0x00525e0a      mov   eax, edx
+Ôöé      ÔöéÔöé   0x00525e0c      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé     ÔöîÔöÇÔöÇÔöÇ< 0x00525e12      jb    0x525e28
+Ôöé     ÔöéÔöéÔöé   0x00525e14      mov   edx, dword [eax-0x04]
+Ôöé     ÔöéÔöéÔöé   0x00525e17      add   ecx, 0x23                            ; 35
+Ôöé     ÔöéÔöéÔöé   0x00525e1a      sub   eax, edx
+Ôöé     ÔöéÔöéÔöé   0x00525e1c      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé     ÔöéÔöéÔöé   0x00525e1f      cmp   eax, 0x1f                            ; 31
+Ôöé    ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x00525e22      jnbe  0x525f31
+Ôöé    ÔöéÔööÔöÇÔöÇÔöÇ> 0x00525e28      push  ecx
+Ôöé    Ôöé ÔöéÔöé   0x00525e29      push  edx                                  ; int32_t arg_4h
+Ôöé    Ôöé ÔöéÔöé   0x00525e2a      call  fcn.007e91f3
+Ôöé    Ôöé ÔöéÔöé   0x00525e2f      add   esp, 0x08
+Ôöé    Ôöé ÔöéÔööÔöÇ> 0x00525e32      lea   ecx, dword [var_c4h]
+Ôöé    Ôöé Ôöé    0x00525e38      mov   dword [var_54h], 0x00
+Ôöé    Ôöé Ôöé    0x00525e3f      invalid
+Ôöé    Ôöé Ôöé    0x00525e40      inc   ebp
+Ôöé    Ôöé Ôöé    0x00525e41      mov   ah, 0x0f                             ; 0xf ; 15
+Ôöé    Ôöé Ôöé    0x00525e43      add   byte [eax], al
+Ôöé    Ôöé Ôöé    0x00525e45      add   dh, al
+Ôöé    Ôöé Ôöé    0x00525e47      inc   ebp
+Ôöé    Ôöé Ôöé    0x00525e48      mov   al, byte [0xfc45c600]
+Ôöé    Ôöé Ôöé    0x00525e4d      add   al, ch
+Ôöé    Ôöé Ôöé    0x00525e4f      jnl   0x525e48
+Ôöé    Ôöé Ôöé    0x00525e51      or    al, 0x00
+Ôöé    Ôöé Ôöé    0x00525e53      add   esi, 0x18                            ; 24
+Ôöé    Ôöé Ôöé    0x00525e56      inc   edi
+Ôöé    Ôöé Ôöé    0x00525e57      mov   dword [var_8ch], edi
+Ôöé    Ôöé Ôöé    0x00525e5d      mov   dword [var_88h], esi
+Ôöé    Ôöé Ôöé    0x00525e63      cmp   esi, 0xc0                            ; 192
+Ôöé    Ôöé Ôöé    0x00525e69      jnl   0x525e76
+Ôöé    Ôöé Ôöé    0x00525e6b      mov   eax, dword [var_94h]
+Ôöé    Ôöé Ôöé    0x00525e71      jmp   0x525ad7
+Ôöé    Ôöé Ôöé    0x00525e76      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé    Ôöé Ôöé    0x00525e7c      call  fcn.005acb70
+Ôöé    Ôöé Ôöé    0x00525e81      add   esp, 0x04
+Ôöé    Ôöé Ôöé    0x00525e84      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé    Ôöé Ôöé    0x00525e8a      call  fcn.005ac5c0
+Ôöé    Ôöé Ôöé    0x00525e8f      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé    Ôöé Ôöé    0x00525e95      call  fcn.005acb70
+Ôöé    Ôöé Ôöé    0x00525e9a      add   esp, 0x08
+Ôöé    Ôöé Ôöé    0x00525e9d      movups xmm0, xmmword [var_b8h]
+Ôöé    Ôöé Ôöé    0x00525ea4      sub   esp, 0x10
+Ôöé    Ôöé Ôöé    0x00525ea7      mov   byte [var_94h], 0x00
+Ôöé    Ôöé Ôöé    0x00525eae      mov   eax, esp
+Ôöé    Ôöé Ôöé    0x00525eb0      mov   byte [var_8ch], 0x00
+Ôöé    Ôöé Ôöé    0x00525eb7      movups xmmword [eax], xmm0
+Ôöé    Ôöé Ôöé    0x00525eba      lea   eax, dword [var_34h]
+Ôöé    Ôöé Ôöé    0x00525ebd      push  eax                                  ; int32_t arg_14h
+Ôöé    Ôöé Ôöé    0x00525ebe      call  fcn.005472d0
+Ôöé    Ôöé Ôöé    0x00525ec3      add   esp, 0x14
+Ôöé    Ôöé Ôöé    0x00525ec6      movups xmm0, xmmword [eax]
+Ôöé    Ôöé Ôöé    0x00525ec9      push  dword [var_94h]
+Ôöé    Ôöé Ôöé    0x00525ecf      push  dword [var_8ch]
+Ôöé    Ôöé Ôöé    0x00525ed5      sub   esp, 0x10
+Ôöé    Ôöé Ôöé    0x00525ed8      mov   ecx, esp
+Ôöé    Ôöé Ôöé    0x00525eda      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_8h
+Ôöé    Ôöé Ôöé    0x00525ee0      movups xmmword [ecx], xmm0
+Ôöé    Ôöé Ôöé    0x00525ee3      call  fcn.00524ac0
+Ôöé    Ôöé Ôöé    0x00525ee8      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé    Ôöé Ôöé    0x00525eee      call  fcn.005ac5c0
+Ôöé    Ôöé Ôöé    0x00525ef3      push  dword [data.00965170]                ; 0x965170 ; uint_least32_t arg_4h
+Ôöé    Ôöé Ôöé    0x00525ef9      call  fcn.005aa7e0
+===== axt widget_text_red =====
+(nofunc) 0x411cc3 [DATA] push str.widget_text_red
+(nofunc) 0x4139b3 [DATA] push str.widget_text_red
+(nofunc) 0x4157d3 [DATA] push str.widget_text_red
+(nofunc) 0x4175f3 [DATA] push str.widget_text_red
+(nofunc) 0x419cb3 [DATA] push str.widget_text_red
+(nofunc) 0x41c8ea [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x420853 [DATA] push str.widget_text_red
+(nofunc) 0x422753 [DATA] push str.widget_text_red
+(nofunc) 0x425693 [DATA] push str.widget_text_red
+(nofunc) 0x427583 [DATA] push str.widget_text_red
+(nofunc) 0x429273 [DATA] push str.widget_text_red
+(nofunc) 0x42b113 [DATA] push str.widget_text_red
+(nofunc) 0x42d063 [DATA] push str.widget_text_red
+(nofunc) 0x42fb7a [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x432fda [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x43803a [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x43cdfa [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x440c23 [DATA] push str.widget_text_red
+(nofunc) 0x442aa3 [DATA] push str.widget_text_red
+(nofunc) 0x4448a3 [DATA] push str.widget_text_red
+(nofunc) 0x4466a3 [DATA] push str.widget_text_red
+(nofunc) 0x448693 [DATA] push str.widget_text_red
+(nofunc) 0x44a5a3 [DATA] push str.widget_text_red
+(nofunc) 0x44c3a3 [DATA] push str.widget_text_red
+(nofunc) 0x44e093 [DATA] push str.widget_text_red
+(nofunc) 0x450cba [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x452d83 [DATA] push str.widget_text_red
+(nofunc) 0x454c63 [DATA] push str.widget_text_red
+(nofunc) 0x456ba3 [DATA] push str.widget_text_red
+===== axt widget_text_white =====
+(nofunc) 0x411d63 [DATA] push str.widget_text_white
+(nofunc) 0x413a53 [DATA] push str.widget_text_white
+(nofunc) 0x415873 [DATA] push str.widget_text_white
+(nofunc) 0x417693 [DATA] push str.widget_text_white
+(nofunc) 0x419d53 [DATA] push str.widget_text_white
+(nofunc) 0x41c992 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x4208f3 [DATA] push str.widget_text_white
+(nofunc) 0x4227f3 [DATA] push str.widget_text_white
+(nofunc) 0x425733 [DATA] push str.widget_text_white
+(nofunc) 0x427623 [DATA] push str.widget_text_white
+(nofunc) 0x429313 [DATA] push str.widget_text_white
+(nofunc) 0x42b1b3 [DATA] push str.widget_text_white
+(nofunc) 0x42d103 [DATA] push str.widget_text_white
+(nofunc) 0x42fc22 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x433082 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x4380e2 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x43cea2 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x440cc3 [DATA] push str.widget_text_white
+(nofunc) 0x442b43 [DATA] push str.widget_text_white
+(nofunc) 0x444943 [DATA] push str.widget_text_white
+(nofunc) 0x446743 [DATA] push str.widget_text_white
+(nofunc) 0x448733 [DATA] push str.widget_text_white
+(nofunc) 0x44a643 [DATA] push str.widget_text_white
+(nofunc) 0x44c443 [DATA] push str.widget_text_white
+(nofunc) 0x44e133 [DATA] push str.widget_text_white
+(nofunc) 0x450d62 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x452e23 [DATA] push str.widget_text_white
+(nofunc) 0x454d03 [DATA] push str.widget_text_white
+(nofunc) 0x456c43 [DATA] push str.widget_text_white
+===== axt widget_text_yellow =====
+(nofunc) 0x411e03 [DATA] push str.widget_text_yellow
+(nofunc) 0x413af3 [DATA] push str.widget_text_yellow
+(nofunc) 0x415913 [DATA] push str.widget_text_yellow
+(nofunc) 0x417733 [DATA] push str.widget_text_yellow
+(nofunc) 0x419df3 [DATA] push str.widget_text_yellow
+(nofunc) 0x41ca72 [DATA] movups xmm0, xmmword [str.widget_text_yellow]
+(nofunc) 0x420993 [DATA] push str.widget_text_yellow
+(nofunc) 0x422893 [DATA] push str.widget_text_yellow
+(nofunc) 0x4257d3 [DATA] push str.widget_text_yellow
+(nofunc) 0x4276c3 [DATA] push str.widget_text_yellow
+(nofunc) 0x4293b3 [DATA] push str.widget_text_yellow
+(nofunc) 0x42b253 [DATA] push str.widget_text_yellow
+(nofunc) 0x42d1a3 [DATA] push str.widget_text_yellow
+(nofunc) 0x42fd02 [DATA] movups xmm0, xmmword [str.widget_text_yellow]
+(nofunc) 0x433162 [DATA] movups xmm0, xmmword [str.widget_text_yellow]
+(nofunc) 0x4381c2 [DATA] movups xmm0, xmmword [str.widget_text_yellow]
+(nofunc) 0x43cf82 [DATA] movups xmm0, xmmword [str.widget_text_yellow]
+(nofunc) 0x440d63 [DATA] push str.widget_text_yellow
+(nofunc) 0x442be3 [DATA] push str.widget_text_yellow
+(nofunc) 0x4449e3 [DATA] push str.widget_text_yellow
+(nofunc) 0x4467e3 [DATA] push str.widget_text_yellow
+(nofunc) 0x4487d3 [DATA] push str.widget_text_yellow
+(nofunc) 0x44a6e3 [DATA] push str.widget_text_yellow
+(nofunc) 0x44c4e3 [DATA] push str.widget_text_yellow
+(nofunc) 0x44e1d3 [DATA] push str.widget_text_yellow
+(nofunc) 0x450e42 [DATA] movups xmm0, xmmword [str.widget_text_yellow]
+(nofunc) 0x452ec3 [DATA] push str.widget_text_yellow
+(nofunc) 0x454da3 [DATA] push str.widget_text_yellow
+(nofunc) 0x456ce3 [DATA] push str.widget_text_yellow
+0x00443254 0x00844854   17   18 .rdata  ascii   widget_text_white
+0x00443268 0x00844868   18   19 .rdata  ascii   widget_text_yellow
+0x0044327c 0x0084487c   15   16 .rdata  ascii   widget_text_red
+===== find set text style helpers near 0x5ae =====
+(nofunc) 0x411cc3 [DATA] push str.widget_text_red
+(nofunc) 0x4139b3 [DATA] push str.widget_text_red
+(nofunc) 0x4157d3 [DATA] push str.widget_text_red
+(nofunc) 0x4175f3 [DATA] push str.widget_text_red
+(nofunc) 0x419cb3 [DATA] push str.widget_text_red
+(nofunc) 0x41c8ea [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x420853 [DATA] push str.widget_text_red
+(nofunc) 0x422753 [DATA] push str.widget_text_red
+(nofunc) 0x425693 [DATA] push str.widget_text_red
+(nofunc) 0x427583 [DATA] push str.widget_text_red
+(nofunc) 0x429273 [DATA] push str.widget_text_red
+(nofunc) 0x42b113 [DATA] push str.widget_text_red
+(nofunc) 0x42d063 [DATA] push str.widget_text_red
+(nofunc) 0x42fb7a [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x432fda [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x43803a [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x43cdfa [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x440c23 [DATA] push str.widget_text_red
+(nofunc) 0x442aa3 [DATA] push str.widget_text_red
+(nofunc) 0x4448a3 [DATA] push str.widget_text_red
+(nofunc) 0x4466a3 [DATA] push str.widget_text_red
+(nofunc) 0x448693 [DATA] push str.widget_text_red
+(nofunc) 0x44a5a3 [DATA] push str.widget_text_red
+(nofunc) 0x44c3a3 [DATA] push str.widget_text_red
+(nofunc) 0x44e093 [DATA] push str.widget_text_red
+(nofunc) 0x450cba [DATA] movq xmm0, qword [str.widget_text_red]
+(nofunc) 0x452d83 [DATA] push str.widget_text_red
+(nofunc) 0x454c63 [DATA] push str.widget_text_red
+(nofunc) 0x456ba3 [DATA] push str.widget_text_red
+(nofunc) 0x84481b [CALL] jns str.widget_text_red
+(nofunc) 0x411d63 [DATA] push str.widget_text_white
+(nofunc) 0x413a53 [DATA] push str.widget_text_white
+(nofunc) 0x415873 [DATA] push str.widget_text_white
+(nofunc) 0x417693 [DATA] push str.widget_text_white
+(nofunc) 0x419d53 [DATA] push str.widget_text_white
+(nofunc) 0x41c992 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x4208f3 [DATA] push str.widget_text_white
+(nofunc) 0x4227f3 [DATA] push str.widget_text_white
+(nofunc) 0x425733 [DATA] push str.widget_text_white
+(nofunc) 0x427623 [DATA] push str.widget_text_white
+(nofunc) 0x429313 [DATA] push str.widget_text_white
+(nofunc) 0x42b1b3 [DATA] push str.widget_text_white
+(nofunc) 0x42d103 [DATA] push str.widget_text_white
+(nofunc) 0x42fc22 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x433082 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x4380e2 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x43cea2 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x440cc3 [DATA] push str.widget_text_white
+(nofunc) 0x442b43 [DATA] push str.widget_text_white
+(nofunc) 0x444943 [DATA] push str.widget_text_white
+(nofunc) 0x446743 [DATA] push str.widget_text_white
+(nofunc) 0x448733 [DATA] push str.widget_text_white
+(nofunc) 0x44a643 [DATA] push str.widget_text_white
+(nofunc) 0x44c443 [DATA] push str.widget_text_white
+(nofunc) 0x44e133 [DATA] push str.widget_text_white
+(nofunc) 0x450d62 [DATA] movups xmm0, xmmword [str.widget_text_white]
+(nofunc) 0x452e23 [DATA] push str.widget_text_white
+(nofunc) 0x454d03 [DATA] push str.widget_text_white
+(nofunc) 0x456c43 [DATA] push str.widget_text_white

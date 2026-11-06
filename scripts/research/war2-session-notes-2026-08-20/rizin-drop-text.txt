@@ -1,0 +1,150 @@
+[2K
+            0x005d1ae0      push  ebp
+            0x005d1ae1      mov   ebp, esp
+            0x005d1ae3      sub   esp, 0x08
+            0x005d1ae6      cmp   dword [ebp+0x0c], 0x00
+        ÔöîÔöÇ< 0x005d1aea      jz    0x5d1b0a
+        Ôöé   0x005d1aec      mov   eax, dword [ebp+0x0c]
+        Ôöé   0x005d1aef      cmp   dword [eax+0x3d28], 0x00
+       ÔöîÔöÇÔöÇ< 0x005d1af6      jz    0x5d1b0a
+       ÔöéÔöé   0x005d1af8      mov   ecx, dword [ebp+0x0c]
+       ÔöéÔöé   0x005d1afb      mov   edx, dword [ecx+0x3d28]
+       ÔöéÔöé   0x005d1b01      cmp   dword [edx+0x8c], 0x00
+      ÔöîÔöÇÔöÇÔöÇ< 0x005d1b08      jnz   0x5d1b0c
+     ÔöîÔöÇÔööÔööÔöÇ> 0x005d1b0a      jmp   0x5d1b67
+     ÔöéÔööÔöÇÔöÇÔöÇ> 0x005d1b0c      mov   eax, dword [ebp+0x0c]
+     Ôöé      0x005d1b0f      mov   ecx, dword [eax+0x3d28]
+     Ôöé      0x005d1b15      mov   dword [ebp-0x08], ecx
+     Ôöé      0x005d1b18      mov   edx, dword [ebp-0x08]
+     Ôöé      0x005d1b1b      mov   eax, dword [edx+0x8c]
+     Ôöé      0x005d1b21      mov   dword [ebp-0x04], eax
+     Ôöé      0x005d1b24      mov   ecx, dword [ebp-0x04]
+     Ôöé      0x005d1b27      mov   edx, dword [ebp-0x04]
+     Ôöé      0x005d1b2a      mov   eax, dword [ecx+0x68]
+     Ôöé      0x005d1b2d      cmp   eax, dword [edx+0x74]
+     Ôöé  ÔöîÔöÇ< 0x005d1b30      jl    0x5d1b42
+     Ôöé  Ôöé   0x005d1b32      mov   ecx, dword [ebp-0x08]
+     Ôöé  Ôöé   0x005d1b35      push  ecx
+     Ôöé  Ôöé   0x005d1b36      mov   edx, dword [ebp+0x0c]
+     Ôöé  Ôöé   0x005d1b39      push  edx
+     Ôöé  Ôöé   0x005d1b3a      call  0x5d1310
+     Ôöé  Ôöé   0x005d1b3f      add   esp, 0x08
+     Ôöé  ÔööÔöÇ> 0x005d1b42      push  0x01                                 ; 1
+     Ôöé      0x005d1b44      mov   eax, dword [ebp-0x08]
+     Ôöé      0x005d1b47      push  eax
+     Ôöé      0x005d1b48      mov   ecx, dword [ebp+0x0c]
+     Ôöé      0x005d1b4b      push  ecx
+     Ôöé      0x005d1b4c      mov   edx, dword [ebp+0x08]
+     Ôöé      0x005d1b4f      push  edx
+     Ôöé      0x005d1b50      call  0x5d1370
+     Ôöé      0x005d1b55      add   esp, 0x10
+     Ôöé      0x005d1b58      mov   eax, dword [ebp-0x04]
+            0x00440c64      mov   dword [0x95d990], edx
+            0x00440c6a      cmp   eax, 0x0f                            ; 0xf ; 15
+        ÔöîÔöÇ< 0x00440c6d      jbe   0x440c96
+        Ôöé   0x00440c6f      lea   ecx, dword [eax+0x01]
+        Ôöé   0x00440c72      mov   eax, esi
+        Ôöé   0x00440c74      cmp   ecx, reloc.pe_00001000               ; 0x1000
+       ÔöîÔöÇÔöÇ< 0x00440c7a      jb    0x440c8c
+       ÔöéÔöé   0x00440c7c      mov   esi, dword [eax-0x04]
+       ÔöéÔöé   0x00440c7f      add   ecx, 0x23                            ; 35
+       ÔöéÔöé   0x00440c82      sub   eax, esi
+       ÔöéÔöé   0x00440c84      add   eax, 0xfffffffc                      ; 4294967292
+       ÔöéÔöé   0x00440c87      cmp   eax, 0x1f                            ; 31
+      ÔöîÔöÇÔöÇÔöÇ< 0x00440c8a      jnbe  0x440ca7
+      ÔöéÔööÔöÇÔöÇ> 0x00440c8c      push  ecx
+      Ôöé Ôöé   0x00440c8d      push  esi
+      Ôöé Ôöé   0x00440c8e      call  0x7e91f3
+      Ôöé Ôöé   0x00440c93      add   esp, 0x08
+      Ôöé ÔööÔöÇ> 0x00440c96      mov   ecx, dword [ebp-0x04]
+      Ôöé     0x00440c99      pop   edi
+      Ôöé     0x00440c9a      pop   esi
+      Ôöé     0x00440c9b      xor   ecx, ebp
+      Ôöé     0x00440c9d      pop   ebx
+      Ôöé     0x00440c9e      call  0x7e91e5
+      Ôöé     0x00440ca3      mov   esp, ebp
+      Ôöé     0x00440ca5      pop   ebp
+      Ôöé     0x00440ca6      ret
+      ÔööÔöÇÔöÇÔöÇ> 0x00440ca7      call  0x7fa651
+            0x00440cac      int3
+            0x00440cad      int3
+            0x00440cae      int3
+            0x00440caf      int3
+            0x00440cb0      push  ebp
+            0x00440cb1      mov   ebp, esp
+            0x00440cb3      sub   esp, 0x1c
+            0x00440cb6      mov   eax, dword [0x90d6c0]                ; [0x90d6c0:4]=0xbb40e64e
+            0x00440cbb      xor   eax, ebp
+            0x00440cbd      mov   dword [ebp-0x04], eax
+            0x00440cc0      push  ebx
+            0x00440cc1      push  esi
+            0x00440cc2      push  edi
+            0x00440cc3      push  str.widget_text_white                ; 0x844854 ; "widget_text_white"
+            0x00440cc8      lea   ecx, dword [ebp-0x1c]
+            0x00440ccb      call  0x49ed60
+            0x00440cd0      mov   eax, dword [ebp-0x08]
+            0x00440cd3      lea   edi, dword [ebp-0x1c]
+            0x00440cd6      mov   esi, dword [ebp-0x1c]
+            0x00440cd9      cmp   eax, 0x0f                            ; 0xf ; 15
+            0x00440cdc      mov   ebx, dword [ebp-0x0c]
+            0x00440cdf      mov   edx, 0x811c9dc5
+            0x00440ce4      cmovnbe edi, esi
+            0x00440ce7      xor   ecx, ecx
+            0x00440ce9      test  ebx, ebx
+        ÔöîÔöÇ< 0x00440ceb      jz    0x440d04
+        Ôöé   0x00440ced      nop   dword [eax], eax
+       ÔöîÔöÇÔöÇ> 0x00440cf0      movzx eax, byte [ecx+edi*1]
+       ÔòÄÔöé   0x00440cf4      inc   ecx
+       ÔòÄÔöé   0x00440cf5      xor   eax, edx
+       ÔòÄÔöé   0x00440cf7      imul  edx, eax, 0x1000193
+       ÔòÄÔöé   0x00440cfd      cmp   ecx, ebx
+       ÔööÔöÇÔöÇ< 0x00440cff      jb    0x440cf0
+0x00459880 0x0085ae80   57   58 .rdata  ascii   Skin Config Error: Component skin of skin %s not present\n
+0x0046b138 0x0086c738   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b250 0x0086c850   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b368 0x0086c968   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b488 0x0086ca88   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b5a8 0x0086cba8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b6c8 0x0086ccc8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b7f0 0x0086cdf0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046b918 0x0086cf18   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046ba30 0x0086d030   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bb50 0x0086d150   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bc70 0x0086d270   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bd90 0x0086d390   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046beb8 0x0086d4b8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046bfe0 0x0086d5e0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c0f8 0x0086d6f8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c210 0x0086d810   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c328 0x0086d928   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c448 0x0086da48   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c568 0x0086db68   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c690 0x0086dc90   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c7b8 0x0086ddb8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046c8e0 0x0086dee0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046ca08 0x0086e008   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cb30 0x0086e130   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cc60 0x0086e260   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cd90 0x0086e390   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046ceb8 0x0086e4b8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046cfe8 0x0086e5e8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d118 0x0086e718   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d230 0x0086e830   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d350 0x0086e950   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d470 0x0086ea70   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d598 0x0086eb98   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d6c0 0x0086ecc0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d7f0 0x0086edf0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046d910 0x0086ef10   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046da38 0x0086f038   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046db60 0x0086f160   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046dc80 0x0086f280   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046dda0 0x0086f3a0   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046deb8 0x0086f4b8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046dfd8 0x0086f5d8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e0f8 0x0086f6f8   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e218 0x0086f818   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e338 0x0086f938   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e450 0x0086fa50   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e570 0x0086fb70   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n
+0x0046e690 0x0086fc90   88   89 .rdata  ascii   Skin Config Error: Composing duplicate widget for skin '%s' from skin '%s', widget '%s'\n

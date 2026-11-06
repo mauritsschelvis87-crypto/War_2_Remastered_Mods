@@ -1,0 +1,80 @@
+0x004448a0 0x00845ea0    7    8 .rdata  ascii   minimap
+0x0044673c 0x00847d3c   30   31 .rdata  ascii   option_preference_minimap_mode
+0x0044675c 0x00847d5c   36   37 .rdata  ascii   option_preference_minimap_terrain_on
+0x00446784 0x00847d84   37   38 .rdata  ascii   option_preference_minimap_terrain_off
+0x00441508 0x00842b08   35   36 .rdata  ascii   Art\hd\classic\forest_mapColors.bin
+0x00441598 0x00842b98   36   37 .rdata  ascii   Art\hd\classic\iceland_mapColors.bin
+0x00441634 0x00842c34   34   35 .rdata  ascii   Art\hd\classic\swamp_mapColors.bin
+0x004416d0 0x00842cd0   35   36 .rdata  ascii   Art\hd\classic\xswamp_mapColors.bin
+0x00440ce8 0x008422e8   11   12 .rdata  ascii   bad palette
+0x0044a4b4 0x0084bab4   13   14 .rdata  ascii   SYSTEMPALETTE
+0x0044cc10 0x0084e210   25   26 .rdata  ascii   _SmackBufferNewPalette@12
+0x0044df5c 0x0084f55c   17   18 .rdata  ascii   DDERR_PALETTEBUSY
+0x0044e0cc 0x0084f6cc   23   24 .rdata  ascii   DDERR_NOPALETTEATTACHED
+0x0044e0e4 0x0084f6e4   17   18 .rdata  ascii   DDERR_NOPALETTEHW
+0x00458af8 0x0085a0f8  313  314 .rdata  ascii   \n\t#version 460 core\n\tout vec4 FragColor;\n\n\tin vec2 TexCoord;\n\n\tuniform usampler2D gameTexture;\n\tuniform sampler2D paletteTexture;\n\n\tvoid main()\n\t{\n\t\tuint paletteIndex = texture(gameTexture, TexCoord).r;\n\t\tvec3 color = texelFetch(paletteTexture, ivec2(paletteIndex, 0), 0).rgb;\n\t\tFragColor = vec4(color, 1.0f);\n\t}\n
+0x00458f94 0x0085a594   14   15 .rdata  ascii   paletteTexture
+0x0046ee60 0x00870460   35   36 .rdata  ascii   the palette is too small or too big
+0x0046ee84 0x00870484   60   61 .rdata  ascii   tRNS chunk before PLTE or has more entries than palette size
+0x0046ef64 0x00870564   43   44 .rdata  ascii   bKGD chunk has wrong size for palette image
+0x0046f4a0 0x00870aa0   88   89 .rdata  ascii   tried to encode a PLTE chunk with a palette that has less than 1 or more than 256 colors
+0x0046f728 0x00870d28   92   93 .rdata  ascii   color conversion to palette requested while a color isn't in palette, or index out of bounds
+0x0046fb48 0x00871148   69   70 .rdata  ascii   invalid palette index in bKGD chunk. Maybe it came before PLTE chunk?
+0x0046fb90 0x00871190   67   68 .rdata  ascii   invalid bKGD color while encoding (e.g. palette index out of range)
+0x0046fbf0 0x008711f0   54   55 .rdata  ascii   PNG file must have PLTE chunk if color type is palette
+0x0046fc28 0x00871228   80   81 .rdata  ascii   color convert from palette mode requested without setting the palette data in it
+0x0046fc7c 0x0087127c   46   47 .rdata  ascii   tried to add more than 256 values to a palette
+0x004bc7e8 0x008bdde8   17   18 .rdata  ascii   GetPaletteEntries
+0x004bc95e 0x008bdf5e   13   14 .rdata  ascii   CreatePalette
+0x004bc96e 0x008bdf6e   23   24 .rdata  ascii   GetSystemPaletteEntries
+0x004bc988 0x008bdf88   14   15 .rdata  ascii   RealizePalette
+0x004bc99a 0x008bdf9a   13   14 .rdata  ascii   SelectPalette
+0x004bc9aa 0x008bdfaa   17   18 .rdata  ascii   SetPaletteEntries
+0x004ca148 0x008cbb48   32   33 .data   ascii   SDL_SetSurfacePalette(): surface
+0x004ca43c 0x008cbe3c   25   26 .data   ascii   Empty destination palette
+0x004cf454 0x008d0e54   35   36 .data   ascii   SDL_SetPixelFormatPalette(): format
+0x004cf498 0x008d0e98   74   75 .data   ascii   SDL_SetPixelFormatPalette() passed a palette that doesn't match the format
+0x004cf4e4 0x008d0ee4    7    8 .data   ascii   palette
+0x004eb56c 0x008ecf6c   25   26 .data   ascii   CONFLICTINGTEXTUREPALETTE
+0x004f281c 0x008f421c   60   61 .data   ascii   A BMP image contains a pixel with a color out of the palette
+0x004f285c 0x008f425c   60   61 .data   ascii   A BMP image contains a pixel with a color out of the palette
+0x00443394 0x00844994   29   30 .rdata  ascii   fe_alliance_team_color_border
+0x004438d4 0x00844ed4   11   12 .rdata  ascii   team_color_
+0x004438f8 0x00844ef8   17   18 .rdata  ascii   team_color_frame_
+===== SEP =====
+[2K
+0x0040ec8f 2 hit.bytes.0
+0x0040ecb7 2 hit.bytes.1
+0x0041b095 2 hit.bytes.2
+0x0041b0df 2 hit.bytes.3
+0x0041e28f 2 hit.bytes.4
+0x0041e2b7 2 hit.bytes.5
+0x0042e335 2 hit.bytes.6
+0x0042e37f 2 hit.bytes.7
+0x00431795 2 hit.bytes.8
+0x004317df 2 hit.bytes.9
+0x0043496f 2 hit.bytes.10
+0x00434997 2 hit.bytes.11
+0x004367f5 2 hit.bytes.12
+0x0043683f 2 hit.bytes.13
+0x004399cf 2 hit.bytes.14
+0x004399f7 2 hit.bytes.15
+0x0043b5b5 2 hit.bytes.16
+0x0043b5ff 2 hit.bytes.17
+0x0043e78f 2 hit.bytes.18
+0x0043e7b7 2 hit.bytes.19
+0x0044f475 2 hit.bytes.20
+0x0044f4bf 2 hit.bytes.21
+0x004d6044 2 hit.bytes.22
+0x004d6073 2 hit.bytes.23
+0x004d60ac 2 hit.bytes.24
+0x0051517d 2 hit.bytes.25
+0x005151a8 2 hit.bytes.26
+0x005151d0 2 hit.bytes.27
+0x005151d6 2 hit.bytes.28
+0x005151fd 2 hit.bytes.29
+0x00515266 2 hit.bytes.30
+0x0055a4ee 2 hit.bytes.31
+0x0055a4fa 2 hit.bytes.32
+0x0055a504 2 hit.bytes.33
+0x0055bf0a 2 hit.bytes.34

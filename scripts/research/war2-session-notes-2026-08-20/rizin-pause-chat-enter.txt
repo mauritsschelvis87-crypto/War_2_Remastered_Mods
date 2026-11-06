@@ -1,0 +1,369 @@
+0x004e9510 6 hit.bytes.0
+0x004ea3da 6 hit.bytes.1
+0x004ea44b 6 hit.bytes.2
+0x004ea466 6 hit.bytes.3
+0x004ea473 6 hit.bytes.4
+0x004ea48f 6 hit.bytes.5
+0x004ea498 6 hit.bytes.6
+[2K
+===== movs =====
+[2K
+0x004ea488 5 hit.bytes.0
+=====
+        ÔòÄ   0x004d45f0      55             push  ebp
+        ÔòÄ   0x004d45f1      8bec           mov   ebp, esp
+        ÔòÄ   0x004d45f3      8b4d0c         mov   ecx, dword [ebp+0x0c]
+        ÔòÄ   0x004d45f6      0fb701         movzx eax, word [ecx]
+        ÔòÄ   0x004d45f9      83f80d         cmp   eax, 0x0d             ; 0xd ; 13
+       ÔöîÔöÇÔöÇ< 0x004d45fc      7729           jnbe  0x4d4627
+       ÔöéÔòÄ   0x004d45fe      0fb68038464d.  movzx eax, byte [eax+0x4d4638]
+       ÔöéÔòÄ   0x004d4605      ff248530464d.  jmp   dword [eax*4+0x4d4630]
+       ÔöéÔòÄ   0x004d460c      51             push  ecx
+       ÔöéÔòÄ   0x004d460d      ff7508         push  dword [ebp+0x08]
+       ÔöéÔòÄ   0x004d4610      e86bdefcff     call  0x4a2480
+       ÔöéÔòÄ   0x004d4615      8bc8           mov   ecx, eax
+       ÔöéÔòÄ   0x004d4617      83c408         add   esp, 0x08
+       ÔöéÔòÄ   0x004d461a      f6c101         test  cl, 0x01              ; 1
+       ÔöéÔòÄ   0x004d461d      b801000000     mov   eax, 0x01
+       ÔöéÔòÄ   0x004d4622      0f45c1         cmovnz eax, ecx
+       ÔöéÔòÄ   0x004d4625      5d             pop   ebp
+       ÔöéÔòÄ   0x004d4626      c3             ret
+       ÔööÔöÇÔöÇ> 0x004d4627      894d0c         mov   dword [ebp+0x0c], ecx
+        ÔòÄ   0x004d462a      5d             pop   ebp
+        ÔööÔöÇ< 0x004d462b      e950defcff     jmp   0x4a2480
+            0x004d4630      0c46           or    al, 0x46              ; 70
+            0x004d4632      4d             dec   ebp
+            0x004d4633      0027           add   byte [edi], ah
+            0x004d4635      46             inc   esi
+            0x004d4636      4d             dec   ebp
+            0x004d4637      0000           add   byte [eax], al
+            0x004d4639      0001           add   byte [ecx], al
+            0x004d463b      0000           add   byte [eax], al
+            0x004d463d      0000           add   byte [eax], al
+            0x004d463f      0000           add   byte [eax], al
+            0x004d4641      0001           add   byte [ecx], al
+            0x004d4643      0101           add   dword [ecx], eax
+            0x004d4645      00cc           add   ah, cl
+            0x004d4647      cc             int3
+            0x004d4648      cc             int3
+            0x004d4649      cc             int3
+            0x004d464a      cc             int3
+            0x004d464b      cc             int3
+            0x004d464c      cc             int3
+            0x004d464d      cc             int3
+            0x004d464e      cc             int3
+            0x004d464f      cc             int3
+            0x004d4650      55             push  ebp
+            0x004d4651      8bec           mov   ebp, esp
+            0x004d4653      8b450c         mov   eax, dword [ebp+0x0c]
+            0x004d4656      56             push  esi
+            0x004d4657      8b7508         mov   esi, dword [ebp+0x08]
+            0x004d465a      6683380b       cmp   word [eax], 0x0b
+        ÔöîÔöÇ< 0x004d465e      0f85b0000000   jnz   0x4d4714
+        Ôöé   0x004d4664      6683780200     cmp   word [eax+0x02], 0x00
+       ÔöîÔöÇÔöÇ< 0x004d4669      0f85a5000000   jnz   0x4d4714
+       ÔöéÔöé   0x004d466f      53             push  ebx
+       ÔöéÔöé   0x004d4670      57             push  edi
+       ÔöéÔöé   0x004d4671      6a00           push  0x00
+       ÔöéÔöé   0x004d4673      56             push  esi
+       ÔöéÔöé   0x004d4674      e8c732fdff     call  0x4a7940
+       ÔöéÔöé   0x004d4679      33db           xor   ebx, ebx
+       ÔöéÔöé   0x004d467b      83c408         add   esp, 0x08
+       ÔöéÔöé   0x004d467e      381d882c9200   cmp   byte [0x922c88], bl   ; [0x922c88:1]=0
+       ÔöéÔöé   0x004d4684      bf8c2c9200     mov   edi, 0x922c8c
+       ÔöéÔöé   0x004d4689      0f94c3         setz  bl
+       ÔöéÔöé   0x004d468c      33f6           xor   esi, esi
+       ÔöéÔöé   0x004d468e      8d1c9d030000.  lea   ebx, dword [ebx*4+0x03]
+       ÔöéÔöé   0x004d4695      6666660f1f84.  nop   word [eax+eax*1], ax
+      ÔöîÔöÇÔöÇÔöÇ> 0x004d46a0      ff34b58c3484.  push  dword [esi*4+0x84348c]
+      ÔòÄÔöéÔöé   0x004d46a7      6844fd8300     push  0x83fd44              ; "%ld"
+      ÔòÄÔöéÔöé   0x004d46ac      57             push  edi
+      ÔòÄÔöéÔöé   0x004d46ad      e82e05fbff     call  0x484be0
+      ÔòÄÔöéÔöé   0x004d46b2      6a00           push  0x00
+      ÔòÄÔöéÔöé   0x004d46b4      57             push  edi
+      ÔòÄÔöéÔöé   0x004d46b5      ff7508         push  dword [ebp+0x08]
+      ÔòÄÔöéÔöé   0x004d46b8      e8d321fdff     call  0x4a6890
+      ÔòÄÔöéÔöé   0x004d46bd      46             inc   esi
+      ÔòÄÔöéÔöé   0x004d46be      83c418         add   esp, 0x18
+      ÔòÄÔöéÔöé   0x004d46c1      83c708         add   edi, 0x08
+      ÔòÄÔöéÔöé   0x004d46c4      3bf3           cmp   esi, ebx
+      ÔööÔöÇÔöÇÔöÇ< 0x004d46c6      7cd8           jl    0x4d46a0
+       ÔöéÔöé   0x004d46c8      8b7508         mov   esi, dword [ebp+0x08]
+       ÔöéÔöé   0x004d46cb      6a01           push  0x01                  ; 1
+=====
+            0x004a2480      55             push  ebp
+            0x004a2481      8bec           mov   ebp, esp
+            0x004a2483      53             push  ebx
+            0x004a2484      56             push  esi
+            0x004a2485      57             push  edi
+            0x004a2486      8b7d0c         mov   edi, dword [ebp+0x0c]
+            0x004a2489      0fb707         movzx eax, word [edi]
+            0x004a248c      83f80b         cmp   eax, 0x0b             ; 0xb ; 11
+        ÔöîÔöÇ< 0x004a248f      0f8766050000   jnbe  0x4a29fb
+        Ôöé   0x004a2495      0fb6801c2a4a.  movzx eax, byte [eax+0x4a2a1c]
+        Ôöé   0x004a249c      ff2485042a4a.  jmp   dword [eax*4+0x4a2a04]
+        Ôöé   0x004a24a3      0fb74702       movzx eax, word [edi+0x02]
+        Ôöé   0x004a24a7      8b5d08         mov   ebx, dword [ebp+0x08]
+        Ôöé   0x004a24aa      83f80b         cmp   eax, 0x0b             ; 0xb ; 11
+       ÔöîÔöÇÔöÇ< 0x004a24ad      0f8771010000   jnbe  0x4a2624
+       ÔöéÔöé   0x004a24b3      0fb680402a4a.  movzx eax, byte [eax+0x4a2a40]
+       ÔöéÔöé   0x004a24ba      ff2485282a4a.  jmp   dword [eax*4+0x4a2a28]
+       ÔöéÔöé   0x004a24c1      ff0560709100   inc   dword [0x917060]
+       ÔöéÔöé   0x004a24c7      8b4346         mov   eax, dword [ebx+0x46]
+       ÔöéÔöé   0x004a24ca      85c0           test  eax, eax
+      ÔöîÔöÇÔöÇÔöÇ< 0x004a24cc      0f8452010000   jz    0x4a2624
+     ÔöîÔöÇÔöÇÔöÇÔöÇ> 0x004a24d2      6683782200     cmp   word [eax+0x22], 0x00
+     ÔòÄÔöéÔöéÔöé   0x004a24d7      8d7046         lea   esi, dword [eax+0x46]
+    ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004a24da      7402           jz    0x4a24de
+    ÔöéÔòÄÔöéÔöéÔöé   0x004a24dc      8bf0           mov   esi, eax
+    ÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004a24de      8b36           mov   esi, dword [esi]
+     ÔòÄÔöéÔöéÔöé   0x004a24e0      57             push  edi
+     ÔòÄÔöéÔöéÔöé   0x004a24e1      50             push  eax
+     ÔòÄÔöéÔöéÔöé   0x004a24e2      8b402a         mov   eax, dword [eax+0x2a]
+     ÔòÄÔöéÔöéÔöé   0x004a24e5      ffd0           call  eax
+     ÔòÄÔöéÔöéÔöé   0x004a24e7      8bc6           mov   eax, esi
+     ÔòÄÔöéÔöéÔöé   0x004a24e9      83c408         add   esp, 0x08
+     ÔòÄÔöéÔöéÔöé   0x004a24ec      85c0           test  eax, eax
+     ÔööÔöÇÔöÇÔöÇÔöÇ< 0x004a24ee      75e2           jnz   0x4a24d2
+      ÔöéÔöéÔöé   0x004a24f0      57             push  edi
+      ÔöéÔöéÔöé   0x004a24f1      53             push  ebx
+      ÔöéÔöéÔöé   0x004a24f2      e899070000     call  0x4a2c90
+      ÔöéÔöéÔöé   0x004a24f7      83c408         add   esp, 0x08
+      ÔöéÔöéÔöé   0x004a24fa      5f             pop   edi
+      ÔöéÔöéÔöé   0x004a24fb      5e             pop   esi
+=====
+            0x004e89a0      55             push  ebp
+            0x004e89a1      8bec           mov   ebp, esp
+            0x004e89a3      83ec10         sub   esp, 0x10
+            0x004e89a6      e8951afeff     call  0x4ca440
+            0x004e89ab      b8ffff0000     mov   eax, 0xffff
+            0x004e89b0      b932000000     mov   ecx, 0x32             ; '2' ; 50
+            0x004e89b5      660105584793.  add   word [0x934758], ax
+        ÔöîÔöÇ< 0x004e89bc      0f85bc000000   jnz   0x4e8a7e
+        Ôöé   0x004e89c2      53             push  ebx
+        Ôöé   0x004e89c3      56             push  esi
+        Ôöé   0x004e89c4      57             push  edi
+        Ôöé   0x004e89c5      66890d584793.  mov   word [0x934758], cx
+        Ôöé   0x004e89cc      e84f36feff     call  0x4cc020
+        Ôöé   0x004e89d1      33f6           xor   esi, esi
+        Ôöé   0x004e89d3      c745fc000000.  mov   dword [ebp-0x04], 0x00
+        Ôöé   0x004e89da      b96cb69100     mov   ecx, 0x91b66c
+        Ôöé   0x004e89df      c745f873d691.  mov   dword [ebp-0x08], 0x91d673
+        Ôöé   0x004e89e6      bbac8c9100     mov   ebx, 0x918cac
+        Ôöé   0x004e89eb      894df0         mov   dword [ebp-0x10], ecx
+        Ôöé   0x004e89ee      c745f4100000.  mov   dword [ebp-0x0c], 0x10 ; 16
+        Ôöé   0x004e89f5      ba73d69100     mov   edx, 0x91d673
+        Ôöé   0x004e89fa      33c0           xor   eax, eax
+        Ôöé   0x004e89fc      8d7e10         lea   edi, dword [esi+0x10]
+        Ôöé   0x004e89ff      90             nop
+        Ôöé   0x004e8a00      803b01         cmp   byte [ebx], 0x01
+       ÔöîÔöÇÔöÇ< 0x004e8a03      754e           jnz   0x4e8a53
+       ÔöéÔöé   0x004e8a05      66833900       cmp   word [ecx], 0x00
+      ÔöîÔöÇÔöÇÔöÇ< 0x004e8a09      7548           jnz   0x4e8a53
+      ÔöéÔöéÔöé   0x004e8a0b      0fb67aff       movzx edi, byte [edx-0x01]
+      ÔöéÔöéÔöé   0x004e8a0f      33c0           xor   eax, eax
+      ÔöéÔöéÔöé   0x004e8a11      8b12           mov   edx, dword [edx]
+      ÔöéÔöéÔöé   0x004e8a13      803aff         cmp   byte [edx], 0xff
+     ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004e8a16      7432           jz    0x4e8a4a
+    ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004e8a18      3bc7           cmp   eax, edi
+   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004e8a1a      7d2b           jnl   0x4e8a47
+   ÔöéÔòÄÔöéÔöéÔöéÔöé   0x004e8a1c      83f840         cmp   eax, 0x40             ; '@' ; 64
+  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004e8a1f      7d26           jnl   0x4e8a47
+  ÔöéÔöéÔòÄÔöéÔöéÔöéÔöé   0x004e8a21      80bc06584393.  cmp   byte [esi+eax*1+0x934358], 0x00
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004e8a29      7508           jnz   0x4e8a33
+  ÔöéÔöéÔòÄÔöéÔöéÔöéÔöé   0x004e8a2b      0fb60c02       movzx ecx, byte [edx+eax*1]
+  ÔöéÔöéÔòÄÔöéÔöéÔöéÔöé   0x004e8a2f      84c9           test  cl, cl
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004e8a31      7809           js    0x4e8a3c
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004e8a33      40             inc   eax
+  ÔöéÔöéÔòÄÔöéÔöéÔöéÔöé   0x004e8a34      803c02ff       cmp   byte [edx+eax*1], 0xff
+  ÔöéÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004e8a38      75de           jnz   0x4e8a18
+  ÔöéÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004e8a3a      eb0b           jmp   0x4e8a47
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004e8a3c      8b55fc         mov   edx, dword [ebp-0x04]
+  ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004e8a3f      c6840a308f91.  mov   byte [edx+ecx*1+0x918f30], 0x01
+  ÔööÔööÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004e8a47      8b4df0         mov   ecx, dword [ebp-0x10]
+     ÔööÔöÇÔöÇÔöÇÔöÇ> 0x004e8a4a      8b55f8         mov   edx, dword [ebp-0x08]
+=====
+            0x004f11c0      56             push  esi
+            0x004f11c1      8b3504c79100   mov   esi, dword [0x91c704] ; [0x91c704:4]=0
+            0x004f11c7      57             push  edi
+            0x004f11c8      8b3db8bf9100   mov   edi, dword [0x91bfb8] ; [0x91bfb8:4]=0
+            0x004f11ce      85ff           test  edi, edi
+        ÔöîÔöÇ< 0x004f11d0      0f8488000000   jz    0x4f125e
+        Ôöé   0x004f11d6      4f             dec   edi
+        Ôöé   0x004f11d7      f6461e0f       test  byte [esi+0x1e], 0x0f
+       ÔöîÔöÇÔöÇ< 0x004f11db      7406           jz    0x4f11e3
+       ÔöéÔöé   0x004f11dd      c64629ff       mov   byte [esi+0x29], 0xff ; [0xff:1]=255 ; 255
+      ÔöîÔöÇÔöÇÔöÇ< 0x004f11e1      eb6d           jmp   0x4f1250
+      ÔöéÔööÔöÇÔöÇ> 0x004f11e3      66837e4400     cmp   word [esi+0x44], 0x00
+      ÔöéÔöîÔöÇÔöÇ< 0x004f11e8      7446           jz    0x4f1230
+      ÔöéÔöéÔöé   0x004f11ea      833d78c19100.  cmp   dword [0x91c178], 0x00 ; [0x91c178:4]=0
+     ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004f11f1      742a           jz    0x4f121d
+     ÔöéÔöéÔöéÔöé   0x004f11f3      8a462c         mov   al, byte [esi+0x2c]
+     ÔöéÔöéÔöéÔöé   0x004f11f6      3c08           cmp   al, 0x08              ; 8
+    ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f11f8      7315           jnb   0x4f120f
+    ÔöéÔöéÔöéÔöéÔöé   0x004f11fa      0fb6c0         movzx eax, al
+    ÔöéÔöéÔöéÔöéÔöé   0x004f11fd      ba29000000     mov   edx, 0x29             ; ')' ; 41
+    ÔöéÔöéÔöéÔöéÔöé   0x004f1202      8bce           mov   ecx, esi
+    ÔöéÔöéÔöéÔöéÔöé   0x004f1204      8a8078969100   mov   al, byte [eax+0x919678]
+    ÔöéÔöéÔöéÔöéÔöé   0x004f120a      88040a         mov   byte [edx+ecx*1], al
+   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f120d      eb41           jmp   0x4f1250
+   ÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004f120f      ba29000000     mov   edx, 0x29             ; ')' ; 41
+   Ôöé ÔöéÔöéÔöéÔöé   0x004f1214      8bce           mov   ecx, esi
+   Ôöé ÔöéÔöéÔöéÔöé   0x004f1216      32c0           xor   al, al
+   Ôöé ÔöéÔöéÔöéÔöé   0x004f1218      88040a         mov   byte [edx+ecx*1], al
+   ÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f121b      eb33           jmp   0x4f1250
+   ÔöéÔöéÔööÔöÇÔöÇÔöÇÔöÇ> 0x004f121d      8a4e2c         mov   cl, byte [esi+0x2c]
+   ÔöéÔöé ÔöéÔöéÔöé   0x004f1220      b001           mov   al, 0x01
+   ÔöéÔöé ÔöéÔöéÔöé   0x004f1222      d2e0           shl   al, cl
+   ÔöéÔöé ÔöéÔöéÔöé   0x004f1224      ba29000000     mov   edx, 0x29             ; ')' ; 41
+   ÔöéÔöé ÔöéÔöéÔöé   0x004f1229      8bce           mov   ecx, esi
+   ÔöéÔöé ÔöéÔöéÔöé   0x004f122b      88040a         mov   byte [edx+ecx*1], al
+   ÔöéÔöéÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004f122e      eb20           jmp   0x4f1250
+   ÔöéÔöéÔöéÔöéÔööÔöÇÔöÇ> 0x004f1230      0fb64627       movzx eax, byte [esi+0x27]
+   ÔöéÔöéÔöéÔöé Ôöé   0x004f1234      f60485f08591.  test  byte [eax*4+0x9185f0], 0x40
+   ÔöéÔöéÔöéÔöéÔöîÔöÇÔöÇ< 0x004f123c      7506           jnz   0x4f1244
+   ÔöéÔöéÔöéÔöéÔöéÔöé   0x004f123e      c64629ff       mov   byte [esi+0x29], 0xff ; [0xff:1]=255 ; 255
+=====
+0x0043678c 0x00837d8c   17   18 .rdata  ascii   No Messages Turns
+0x0044acbc 0x0084c2bc   61   62 .rdata  ascii     spiReceiveExternalMessage(*senderpath,*sendername,*message)
+0x0044acfc 0x0084c2fc   46   47 .rdata  ascii     spiFreeExternalMessage(0x%08x,0x%08x,0x%08x)
+0x0044be10 0x0084d410   52   53 .rdata  ascii   SNetReceiveMessage(*senderplayerid,*data,*databytes)
+0x0044c22c 0x0084d82c   29   30 .rdata  ascii   SNetSendMessage(%u,0x%08x,%u)
+0x00457594 0x00858b94   22   23 .rdata  ascii   glDebugMessageCallback
+0x004575ac 0x00858bac   21   22 .rdata  ascii   glDebugMessageControl
+0x004575c4 0x00858bc4   20   21 .rdata  ascii   glDebugMessageInsert
+0x00457624 0x00858c24   20   21 .rdata  ascii   glGetDebugMessageLog
+0x004585ac 0x00859bac   25   26 .rdata  ascii   glDebugMessageCallbackARB
+0x004585c8 0x00859bc8   24   25 .rdata  ascii   glDebugMessageControlARB
+0x004585e4 0x00859be4   23   24 .rdata  ascii   glDebugMessageInsertARB
+0x004585fc 0x00859bfc   23   24 .rdata  ascii   glGetDebugMessageLogARB
+0x0045a9e0 0x0085bfe0   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045aac0 0x0085c0c0   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045aba0 0x0085c1a0   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ac80 0x0085c280   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ad60 0x0085c360   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ae40 0x0085c440   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x004bb364 0x008bc964   14   15 .rdata  ascii   FormatMessageA
+0x004bb860 0x008bce60   14   15 .rdata  ascii   FormatMessageW
+0x004bbbce 0x008bd1ce   12   13 .rdata  ascii   SendMessageA
+0x004bbc26 0x008bd226   12   13 .rdata  ascii   PostMessageA
+0x004bbc64 0x008bd264   19   20 .rdata  ascii   SendDlgItemMessageA
+0x004bbd60 0x008bd360   11   12 .rdata  ascii   MessageBoxA
+0x004bbe28 0x008bd428   16   17 .rdata  ascii   TranslateMessage
+0x004bbe3c 0x008bd43c   16   17 .rdata  ascii   DispatchMessageA
+0x004bbe50 0x008bd450   12   13 .rdata  ascii   PeekMessageA
+0x004bbee2 0x008bd4e2   15   16 .rdata  ascii   PostQuitMessage
+0x004bc0b0 0x008bd6b0   16   17 .rdata  ascii   IsDialogMessageA
+0x004bc12c 0x008bd72c   11   12 .rdata  ascii   GetMessageA
+0x004bc13a 0x008bd73a   11   12 .rdata  ascii   MessageBeep
+0x004bc184 0x008bd784   22   23 .rdata  ascii   RegisterWindowMessageA
+0x004bc19e 0x008bd79e   12   13 .rdata  ascii   SendMessageW
+0x004bc36c 0x008bd96c   12   13 .rdata  ascii   PostMessageW
+0x004bc3e4 0x008bd9e4   16   17 .rdata  ascii   DispatchMessageW
+0x004bc3f8 0x008bd9f8   12   13 .rdata  ascii   PeekMessageW
+0x004bc408 0x008bda08   19   20 .rdata  ascii   GetMessageExtraInfo
+0x004bc6e8 0x008bdce8   11   12 .rdata  ascii   GetMessageW
+0x004bc734 0x008bdd34   18   19 .rdata  ascii   PostThreadMessageW
+0x004bc772 0x008bdd72   11   12 .rdata  ascii   MessageBoxW
+0x004ee9b8 0x008f03b8   25   26 .data   ascii   glDebugMessageCallbackARB
+0x004eea84 0x008f0484   25   26 .data   ascii   glDebugMessageCallbackARB
+0x004efeec 0x008f18ec    7   16 .data   utf16le Message
+0x004eff34 0x008f1934    7   16 .data   utf16le Message
+=====
+0x0043678c 0x00837d8c   17   18 .rdata  ascii   No Messages Turns
+0x00436fa0 0x008385a0   21   22 .rdata  ascii   message_cheat_enabled
+0x00436fb8 0x008385b8   22   23 .rdata  ascii   message_cheat_disabled
+0x004385fc 0x00839bfc   26   27 .rdata  ascii   message_cannot_create_unit
+0x00438618 0x00839c18   21   22 .rdata  ascii   message_lumber_needed
+0x00438630 0x00839c30   19   20 .rdata  ascii   message_gold_needed
+0x00438aac 0x0083a0ac   22   23 .rdata  ascii   missed syncing message
+0x0043be04 0x0083d404   21   22 .rdata  ascii   message_work_complete
+0x0043be1c 0x0083d41c   20   21 .rdata  ascii   message_under_attack
+0x0043be34 0x0083d434   22   23 .rdata  ascii   message_village_attack
+0x0043be4c 0x0083d44c   26   27 .rdata  ascii   message_building_destroyed
+0x0043be68 0x0083d468   25   26 .rdata  ascii   message_training_complete
+0x0043ded0 0x0083f4d0   14   15 .rdata  ascii   repair message
+0x0043e6a8 0x0083fca8   14   15 .rdata  ascii   message_to_all
+0x0043e6b8 0x0083fcb8   15   16 .rdata  ascii   message_to_ally
+0x0043e6c8 0x0083fcc8   16   17 .rdata  ascii   message_to_enemy
+0x0043f778 0x00840d78   17   18 .rdata  ascii   mp_resume_message
+0x00440010 0x00841610   20   21 .rdata  ascii   message_exit_blocked
+0x00440028 0x00841628   27   28 .rdata  ascii   message_cannot_create_units
+0x0044018c 0x0084178c   25   26 .rdata  ascii   message_player_eliminated
+0x004401a8 0x008417a8   19   20 .rdata  ascii   message_player_left
+0x004401bc 0x008417bc   22   23 .rdata  ascii   message_player_dropped
+0x004401d4 0x008417d4   12   13 .rdata  ascii   message_sent
+0x00442294 0x00843894   18   19 .rdata  ascii   yes (message: %s)\n
+0x004447f0 0x00845df0   15   16 .rdata  ascii   message_generic
+0x00444800 0x00845e00   15   16 .rdata  ascii   message_to_none
+0x00444810 0x00845e10   17   18 .rdata  ascii   message_to_player
+0x0044ac0c 0x0084c20c   61   62 .rdata  ascii     processing system message: sequence=%04x event=%u player=%x
+0x0044ac4c 0x0084c24c   44   45 .rdata  ascii     spiFree(0x%08x,0x%08x,%u) [system message]
+0x0044acbc 0x0084c2bc   61   62 .rdata  ascii     spiReceiveExternalMessage(*senderpath,*sendername,*message)
+0x0044acfc 0x0084c2fc   46   47 .rdata  ascii     spiFreeExternalMessage(0x%08x,0x%08x,0x%08x)
+0x0044ad80 0x0084c380   54   55 .rdata  ascii     spiFree(0x%08x,0x%08x,%u) [invalid message: corrupt]
+0x0044adb8 0x0084c3b8   57   58 .rdata  ascii     spiFree(0x%08x,0x%08x,%u) [invalid message: bad sender]
+0x0044be10 0x0084d410   52   53 .rdata  ascii   SNetReceiveMessage(*senderplayerid,*data,*databytes)
+0x0044c22c 0x0084d82c   29   30 .rdata  ascii   SNetSendMessage(%u,0x%08x,%u)
+0x00457594 0x00858b94   22   23 .rdata  ascii   glDebugMessageCallback
+0x004575ac 0x00858bac   21   22 .rdata  ascii   glDebugMessageControl
+0x004575c4 0x00858bc4   20   21 .rdata  ascii   glDebugMessageInsert
+0x00457624 0x00858c24   20   21 .rdata  ascii   glGetDebugMessageLog
+0x004585ac 0x00859bac   25   26 .rdata  ascii   glDebugMessageCallbackARB
+0x004585c8 0x00859bc8   24   25 .rdata  ascii   glDebugMessageControlARB
+0x004585e4 0x00859be4   23   24 .rdata  ascii   glDebugMessageInsertARB
+0x004585fc 0x00859bfc   23   24 .rdata  ascii   glGetDebugMessageLogARB
+0x0045a9b8 0x0085bfb8   32   33 .rdata  ascii   Map messages already initialized
+0x0045a9e0 0x0085bfe0   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045aa9c 0x0085c09c   28   29 .rdata  ascii   Map messages not initialized
+0x0045aac0 0x0085c0c0   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ab7c 0x0085c17c   28   29 .rdata  ascii   Map messages not initialized
+0x0045aba0 0x0085c1a0   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ac5c 0x0085c25c   28   29 .rdata  ascii   Map messages not initialized
+0x0045ac80 0x0085c280   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ad3c 0x0085c33c   28   29 .rdata  ascii   Map messages not initialized
+0x0045ad60 0x0085c360   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045ae1c 0x0085c41c   28   29 .rdata  ascii   Map messages not initialized
+0x0045ae40 0x0085c440   93  188 .rdata  utf16le D:\Jenkins\workspace\warcraft2-pipeline\Contrib\warcraft-rts-shared\nuklear\NKMapMessages.cpp
+0x0045aefc 0x0085c4fc    8    9 .rdata  ascii   messages
+0x00484dd8 0x008863d8   30   62 .rdata  utf16le Do not show this message again
+0x0048810c 0x0088970c    8    9 .rdata  ascii   -message
+0x00488d64 0x0088a364   11   12 .rdata  ascii   bad message
+0x00488f48 0x0088a548   12   13 .rdata  ascii   message size
+0x00488fcc 0x0088a5cc   20   21 .rdata  ascii   no message available
+0x00488fe4 0x0088a5e4   10   11 .rdata  ascii   no message
+0x004bb364 0x008bc964   14   15 .rdata  ascii   FormatMessageA
+0x004bb860 0x008bce60   14   15 .rdata  ascii   FormatMessageW
+0x004bbbce 0x008bd1ce   12   13 .rdata  ascii   SendMessageA
+0x004bbc26 0x008bd226   12   13 .rdata  ascii   PostMessageA
+0x004bbc64 0x008bd264   19   20 .rdata  ascii   SendDlgItemMessageA
+0x004bbd60 0x008bd360   11   12 .rdata  ascii   MessageBoxA
+0x004bbe28 0x008bd428   16   17 .rdata  ascii   TranslateMessage
+0x004bbe3c 0x008bd43c   16   17 .rdata  ascii   DispatchMessageA
+0x004bbe50 0x008bd450   12   13 .rdata  ascii   PeekMessageA
+0x004bbee2 0x008bd4e2   15   16 .rdata  ascii   PostQuitMessage
+0x004bc0b0 0x008bd6b0   16   17 .rdata  ascii   IsDialogMessageA
+0x004bc12c 0x008bd72c   11   12 .rdata  ascii   GetMessageA
+0x004bc13a 0x008bd73a   11   12 .rdata  ascii   MessageBeep
+0x004bc184 0x008bd784   22   23 .rdata  ascii   RegisterWindowMessageA
+0x004bc19e 0x008bd79e   12   13 .rdata  ascii   SendMessageW
+0x004bc36c 0x008bd96c   12   13 .rdata  ascii   PostMessageW
+0x004bc3e4 0x008bd9e4   16   17 .rdata  ascii   DispatchMessageW
+0x004bc3f8 0x008bd9f8   12   13 .rdata  ascii   PeekMessageW
+0x004bc408 0x008bda08   19   20 .rdata  ascii   GetMessageExtraInfo
+0x004bc6e8 0x008bdce8   11   12 .rdata  ascii   GetMessageW
+0x004bc734 0x008bdd34   18   19 .rdata  ascii   PostThreadMessageW
+0x004bc772 0x008bdd72   11   12 .rdata  ascii   MessageBoxW
+0x004cd2e0 0x008cece0   14   15 .data   ascii   messageboxdata
+0x004cd338 0x008ced38   27   28 .data   ascii   No message system available
+0x004d0234 0x008d1c34   11   12 .data   ascii   LC_MESSAGES
+0x004d0554 0x008d1f54   30   31 .data   ascii   SDL_WINDOWS_ENABLE_MESSAGELOOP
+0x004ea718 0x008ec118   37   38 .data   ascii   The message box encountered an error.
+0x004ea740 0x008ec140   47   48 .data   ascii   Invalid message box pointer in dialog procedure
+0x004ee9b8 0x008f03b8   25   26 .data   ascii   glDebugMessageCallbackARB
+0x004eea84 0x008f0484   25   26 .data   ascii   glDebugMessageCallbackARB
+0x004efeec 0x008f18ec    7   16 .data   utf16le Message
+0x004eff34 0x008f1934    7   16 .data   utf16le Message
+0x004eff44 0x008f1944   55   56 .data   ascii   Failed to create message window for joystick autodetect
+0x0050c8e4 0x0090e2e4   18   19 .data   ascii   .?AUTBNETMESSAGE@@
+0x0050dbdc 0x0090f5dc   13   14 .data   ascii   .?AUMESSAGE@@

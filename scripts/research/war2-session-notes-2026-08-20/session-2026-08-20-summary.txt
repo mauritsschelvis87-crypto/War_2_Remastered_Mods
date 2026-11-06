@@ -1,0 +1,47 @@
+Session summary - Warcraft II mod experiments - 2026-08-20
+
+User goals
+- Investigate live chat font/textbox scaling to 200% without affecting HUD/buttons/resources.
+- Later investigate a visible, non-functional "Open map" button only in the MP lobby.
+- Preserve existing player-color/QoL features.
+
+Chat font scaling findings
+- Chat enters ChatNameColor_OnDrawColored through DrawTextColored.
+- Known route: 0x005AEEB0 -> 0x005AED00 -> 0x005D24B0.
+- Per-glyph route: 0x005D1FF0.
+- Chat-only context was observed as depth=1, kind=2.
+- Player-color implementation is chat-specific: it changes the color field (ui+0x20C in earlier research) and redraws names; it does not expose font scaling.
+- skins.json detail_font.size and dynamicFonts.size_hud are shared HUD resources. Changing 15 to 30 enlarged top buttons/resources and made chat disappear. Restored to 15/15.
+- ui+0x1E0 and ui+0x3D28 were not valid textbox geometry/font pointers.
+- state[1]=15 was in the chat path, but doubling it hid chat.
+- TextRender height 16->32 changed clipping/input layout, not glyph size.
+- Glyph y 15->30 cut chat in half.
+- Glyph arg2/arg3 scaling, including correct float interpretation, affected general/menu text and hid text.
+- Glyph callback 0x0065D4D0 is a resource/glyph lookup (ret 0xC), not the final rasterizer.
+- Stable chat glyph observations included x=294, y=15 and glyphData/style pointers; no safe isolated font scale was proven.
+- Textbox scaling is now disabled in the Studio/config and its UI control is greyed out with English explanation.
+
+Chat history finding
+- Existing Page Up/Page Down logic lives in HistoryKeyThread in ChatNameColorHook.cpp.
+- Ctrl+ArrowUp and Ctrl+ArrowDown were added as alternative shortcuts while retaining Page Up/Page Down.
+- The native build produced ChatNameColorHook.dll successfully after that change.
+
+MP lobby button findings
+- The game lobby is built imperatively; there is no simple declarative button list in skins.json.
+- Important offline anchors: player_slots around 0x0053674D, player_slots_header around 0x005367CE, player_slots_header_offset around 0x00536849, layout function around 0x005362E0, Map widget construction around 0x00536CC8, UI add path 0x005ACA30, ButtonSpec constructor 0x00530320.
+- Direct native prologue hooks on lobby/resource/helper candidates caused crashes during lobby rebuilds and were removed.
+- Desktop contained Warcraft-II-Plugins-main/lobby_map, an existing working 32-bit .w2p plugin using w2p_init(), screen_update(), in_lobby(), and backbuffer drawing.
+- A separate LobbyButton.w2p was built with exports w2p_init and screen_update, ASLR correction, and a no-op Open map button. The plugin loader did not load it reliably; no runtime log appeared.
+- The original lobby_map.w2p was backed up as mod/backup/lobby_map-original.w2p before experiments.
+- A PowerShell WinForms overlay based on the working lobby_map concept was created at the installed lobby_map_mod path. It contains Open map, MapClickTarget, hand cursor, tooltip, and Clicked feedback.
+- UIAutomation was unreliable and repeatedly caused "Argumenttypen komen niet overeen" / PSEnumerableBinder errors. Constructor and timer guards were added, then fallback enumeration was reduced.
+- Overlay got sticky/black-bar behavior during tests; old processes were stopped and the overlay was later disabled by default with -EnableLobbyButtonTest.
+- Map-row anchoring was implemented as Get-LobbyMapAnchor and Set-OverlayMapAnchor, intended to place the overlay beside the visible Map row.
+- Current recommended future approach: use a proven plugin loader contract or a robust external overlay, but do not revive the failed native lobby prologue hooks without exact ABI/prologue/lifetime validation.
+
+Safety/restoration state
+- Textbox scaling is disabled.
+- Native lobby hooks were removed from ObserveHook.
+- The dedicated lobby-button overlay was disabled by default during the session.
+- Do not start Warcraft II automatically during future experiments; user explicitly requested manual launching.
+- Preserve all research .txt files from this session.

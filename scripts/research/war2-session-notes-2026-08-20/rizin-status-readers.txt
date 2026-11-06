@@ -1,0 +1,160 @@
+0x0049c54e 4 hit.bytes.0
+0x0049ca1a 4 hit.bytes.1
+0x0049cd21 4 hit.bytes.2
+0x004a8a52 4 hit.bytes.3
+0x004a8a7f 4 hit.bytes.4
+0x004a8bcd 4 hit.bytes.5
+0x004a8c3b 4 hit.bytes.6
+0x004a8eaf 4 hit.bytes.7
+0x004a90f4 4 hit.bytes.8
+0x004a92ac 4 hit.bytes.9
+0x004a92dc 4 hit.bytes.10
+0x004a9a5c 4 hit.bytes.11
+0x004a9bb9 4 hit.bytes.12
+0x004aa95b 4 hit.bytes.13
+0x004ab305 4 hit.bytes.14
+0x004aefa3 4 hit.bytes.15
+0x004b1322 4 hit.bytes.16
+0x004b1352 4 hit.bytes.17
+0x004b1377 4 hit.bytes.18
+0x004b1396 4 hit.bytes.19
+0x004b3e12 4 hit.bytes.20
+0x004b3e54 4 hit.bytes.21
+0x004b4c78 4 hit.bytes.22
+0x004bda3f 4 hit.bytes.23
+0x004bdae7 4 hit.bytes.24
+0x004bde7a 4 hit.bytes.25
+0x004bdf33 4 hit.bytes.26
+0x004bdf5f 4 hit.bytes.27
+0x004be194 4 hit.bytes.28
+0x004be45f 4 hit.bytes.29
+0x004be515 4 hit.bytes.30
+0x004be64e 4 hit.bytes.31
+0x004c25e2 4 hit.bytes.32
+0x004c2900 4 hit.bytes.33
+0x004c2c58 4 hit.bytes.34
+0x004c35c8 4 hit.bytes.35
+0x004c35d6 4 hit.bytes.36
+0x004c3619 4 hit.bytes.37
+[2K
+ERROR: Pattern contains forbitten characters. Allowed is only '0x', '0-9', 'a-f', 'A-F', '.' and ':'.
+ERROR: Failed to parse given pattern.
+ERROR: Pattern contains forbitten characters. Allowed is only '0x', '0-9', 'a-f', 'A-F', '.' and ':'.
+ERROR: Failed to parse given pattern.
+0x004c3645 4 hit.bytes.38
+0x004c37c1 4 hit.bytes.39
+0x004c4437 4 hit.bytes.40
+0x004c4835 4 hit.bytes.41
+0x004c9c72 4 hit.bytes.42
+0x004ca446 4 hit.bytes.43
+0x004cc02f 4 hit.bytes.44
+0x004cc3c5 4 hit.bytes.45
+0x004ccceb 4 hit.bytes.46
+0x004cce60 4 hit.bytes.47
+0x004cd094 4 hit.bytes.48
+0x004d1b91 4 hit.bytes.49
+0x004d1bb6 4 hit.bytes.50
+0x004d1bd8 4 hit.bytes.51
+0x004d1de6 4 hit.bytes.52
+0x004d1f19 4 hit.bytes.53
+0x004d5710 4 hit.bytes.54
+0x004d5742 4 hit.bytes.55
+0x004d5cd3 4 hit.bytes.56
+0x004d5cfd 4 hit.bytes.57
+0x004d5d64 4 hit.bytes.58
+0x004d5e2d 4 hit.bytes.59
+0x004d5e61 4 hit.bytes.60
+0x004d6117 4 hit.bytes.61
+0x004d614a 4 hit.bytes.62
+0x004d6177 4 hit.bytes.63
+0x004d6193 4 hit.bytes.64
+0x004d61c2 4 hit.bytes.65
+0x004d61d2 4 hit.bytes.66
+0x004d62e7 4 hit.bytes.67
+0x004d631a 4 hit.bytes.68
+0x004d633b 4 hit.bytes.69
+0x004d6356 4 hit.bytes.70
+0x004d65a2 4 hit.bytes.71
+0x004d65ad 4 hit.bytes.72
+0x004d65be 4 hit.bytes.73
+0x004d6ab6 4 hit.bytes.74
+0x004d6afe 4 hit.bytes.75
+0x004d6b0c 4 hit.bytes.76
+0x004d6b36 4 hit.bytes.77
+0x004d6b46 4 hit.bytes.78
+0x004d6c19 4 hit.bytes.79
+0x004d6c27 4 hit.bytes.80
+0x004d6d0a 4 hit.bytes.81
+0x004d6d13 4 hit.bytes.82
+0x004d6d62 4 hit.bytes.83
+0x004d6d81 4 hit.bytes.84
+0x004d6da2 4 hit.bytes.85
+0x004d6dab 4 hit.bytes.86
+0x004d6e17 4 hit.bytes.87
+0x004d6e51 4 hit.bytes.88
+0x004d6e91 4 hit.bytes.89
+0x004d6f55 4 hit.bytes.90
+0x004d6f7a 4 hit.bytes.91
+0x004d6f96 4 hit.bytes.92
+0x004d6f9f 4 hit.bytes.93
+0x004d86aa 4 hit.bytes.94
+0x004d8dc5 4 hit.bytes.95
+0x004da0cf 4 hit.bytes.96
+0x004e8720 4 hit.bytes.97
+0x004e87c6 4 hit.bytes.98
+0x004e884e 4 hit.bytes.99
+0x004e89e7 4 hit.bytes.100
+0x004e8b02 4 hit.bytes.101
+0x004e9dad 4 hit.bytes.102
+0x004eba2d 4 hit.bytes.103
+0x004ec82d 4 hit.bytes.104
+0x004ed44e 4 hit.bytes.105
+0x004eeae7 4 hit.bytes.106
+0x004eeb8b 4 hit.bytes.107
+0x004eecd9 4 hit.bytes.108
+0x004ef36b 4 hit.bytes.109
+0x004ef46b 4 hit.bytes.110
+0x004f0642 4 hit.bytes.111
+0x004f1807 4 hit.bytes.112
+0x004f3f99 4 hit.bytes.113
+0x004f4278 4 hit.bytes.114
+0x004f49ec 4 hit.bytes.115
+0x004f4c10 4 hit.bytes.116
+0x004f4c39 4 hit.bytes.117
+0x0051f67d 4 hit.bytes.118
+0x00525d9d 4 hit.bytes.119
+===== SEP =====
+===== SEP =====
+===== SEP =====
+            0x005aebf0      add   byte [eax], al
+            0x005aebf2      mov   dword [ebp-0x3c], ecx
+            0x005aebf5      mov   edx, dword [ebp+0x08]
+            0x005aebf8      add   edx, 0x1e0                           ; 480
+            0x005aebfe      mov   dword [ebp-0x34], edx
+            0x005aec01      mov   eax, dword [ebp+0x08]
+            0x005aec04      push  eax
+            0x005aec05      lea   ecx, dword [ebp-0x14]
+            0x005aec08      push  ecx
+            0x005aec09      call  0x5d1ae0
+            0x005aec0e      add   esp, 0x08
+            0x005aec11      mov   edx, dword [ebp-0x34]
+            0x005aec14      mov   eax, dword [edx+0x34]
+            0x005aec17      mov   ecx, dword [edx+0x38]
+            0x005aec1a      mov   dword [ebp-0x44], eax
+            0x005aec1d      mov   dword [ebp-0x40], ecx
+            0x005aec20      movss xmm0, dword [ebp-0x44]
+            0x005aec25      movss dword [ebp-0x30], xmm0
+            0x005aec2a      movss xmm0, dword [ebp-0x40]
+            0x005aec2f      movss dword [ebp-0x2c], xmm0
+            0x005aec34      mov   edx, dword [ebp-0x34]
+            0x005aec37      mov   eax, dword [edx+0x30]
+            0x005aec3a      mov   dword [ebp-0x20], eax
+            0x005aec3d      mov   ecx, dword [ebp-0x34]
+            0x005aec40      mov   edx, dword [ecx+0x3c]
+===== SEP =====
+0x0046adac 0x0086c3ac   18   19 .rdata  ascii   component_skin_ids
+0x0046adc0 0x0086c3c0   18   19 .rdata  ascii   component_skin_ids
+0x0046add4 0x0086c3d4   18   19 .rdata  ascii   component_skin_ids
+0x0046adac 0x0086c3ac   18   19 .rdata  ascii   component_skin_ids
+0x0046adc0 0x0086c3c0   18   19 .rdata  ascii   component_skin_ids
+0x0046add4 0x0086c3d4   18   19 .rdata  ascii   component_skin_ids

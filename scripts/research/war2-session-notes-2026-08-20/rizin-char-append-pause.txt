@@ -1,0 +1,252 @@
+===== char-append pause gate =====
+            0x004a6400      8b7508         mov   esi, dword [ebp+0x08]
+            0x004a6403      6a01           push  0x01                  ; 1; RELOC 3 pe_004a6404 @ 0x00000000
+            0x004a6405      56             push  esi
+            0x004a6406      e875020000     call  pe_004a6408           ; RELOC 3 pe_004a6408 @ 0x00000000
+            0x004a640b      8b5614         mov   edx, dword [esi+0x14]
+            0x004a640e      83c408         add   esp, 0x08
+            0x004a6411      8bca           mov   ecx, edx
+            0x004a6413      8d7901         lea   edi, dword [ecx+0x01]
+        ÔöîÔöÇ> 0x004a6416      8a01           mov   al, byte [ecx]
+        ÔòÄ   ;-- pe_004a6418:
+        ÔòÄ   0x004a6418      41             inc   ecx                   ; RELOC 3 pe_004a6418 @ 0x00000000
+        ÔòÄ   0x004a6419      84c0           test  al, al
+        ÔööÔöÇ< 0x004a641b      75f9           jnz   pe_004a641c           ; RELOC 3 pe_004a641c @ 0x00000000
+            0x004a641d      2bcf           sub   ecx, edi
+        ÔöîÔöÇ< 0x004a641f      0f84c4000000   jz    pe_004a6420           ; RELOC 3 pe_004a6420 @ 0x00000000
+        Ôöé   0x004a6425      88440aff       mov   byte [edx+ecx*1-0x01], al; RELOC 3 pe_004a6428 @ 0x00000000
+        Ôöé   0x004a6429      384637         cmp   byte [esi+0x37], al
+       ÔöîÔöÇÔöÇ< 0x004a642c      7404           jz    0x4a6432
+       ÔöéÔöé   0x004a642e      c6463601       mov   byte [esi+0x36], 0x01
+       ÔööÔöÇÔöÇ> 0x004a6432      56             push  esi
+        Ôöé   0x004a6433      e8a8d5ffff     call  0x4a39e0
+        Ôöé   0x004a6438      83c404         add   esp, 0x04
+        Ôöé   0x004a643b      b801000000     mov   eax, 0x01
+        Ôöé   ;-- pe_004a6440:
+        Ôöé   0x004a6440      5f             pop   edi                   ; RELOC 3 pe_004a6440 @ 0x00000000
+        Ôöé   0x004a6441      5e             pop   esi
+        Ôöé   0x004a6442      5d             pop   ebp
+        Ôöé   0x004a6443      c3             ret
+        Ôöé   0x004a6444      807f0e00       cmp   byte [edi+0x0e], 0x00
+       ÔöîÔöÇÔöÇ< 0x004a6448      0f84a4000000   jz    0x4a64f2
+       ÔöéÔöé   0x004a644e      8b7508         mov   esi, dword [ebp+0x08] ; RELOC 3 pe_004a6450 @ 0x00000000
+       ÔöéÔöé   0x004a6451      53             push  ebx
+       ÔöéÔöé   0x004a6452      56             push  esi
+       ÔöéÔöé   0x004a6453      e818e7ffff     call  pe_004a6454           ; RELOC 3 pe_004a6454 @ 0x00000000
+       ÔöéÔöé   0x004a6458      0fb6470e       movzx eax, byte [edi+0x0e]
+       ÔöéÔöé   ;-- pe_004a645c:
+       ÔöéÔöé   0x004a645c      50             push  eax                   ; RELOC 3 pe_004a645c @ 0x00000000
+       ÔöéÔöé   0x004a645d      e89eff0d00     call  0x586400
+       ÔöéÔöé   0x004a6462      8bd8           mov   ebx, eax
+       ÔöéÔöé   0x004a6464      83c408         add   esp, 0x08
+       ÔöéÔöé   0x004a6467      85db           test  ebx, ebx
+      ÔöîÔöÇÔöÇÔöÇ< 0x004a6469      7452           jz    0x4a64bd
+      ÔöéÔöéÔöé   0x004a646b      6a01           push  0x01                  ; 1
+      ÔöéÔöéÔöé   0x004a646d      56             push  esi
+      ÔöéÔöéÔöé   0x004a646e      e80d020000     call  0x4a6680
+      ÔöéÔöéÔöé   0x004a6473      83c408         add   esp, 0x08             ; RELOC 3 pe_004a6474 @ 0x00000000
+      ÔöéÔöéÔöé   0x004a6476      803d96c59100.  cmp   byte [0x91c596], 0x01 ; [0x91c596:1]=0
+     ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004a647d      743e           jz    0x4a64bd
+     ÔöéÔöéÔöéÔöé   0x004a647f      8b5614         mov   edx, dword [esi+0x14]
+     ÔöéÔöéÔöéÔöé   0x004a6482      8bca           mov   ecx, edx
+     ÔöéÔöéÔöéÔöé   ;-- pe_004a6484:
+     ÔöéÔöéÔöéÔöé   0x004a6484      8d4101         lea   eax, dword [ecx+0x01] ; RELOC 3 pe_004a6484 @ 0x00000000
+     ÔöéÔöéÔöéÔöé   0x004a6487      89450c         mov   dword [ebp+0x0c], eax ; RELOC 3 pe_004a6488 @ 0x00000000
+     ÔöéÔöéÔöéÔöé   0x004a648a      660f1f440000   nop   word [eax+eax*1], ax
+=====
+            0x004a6460      0d008bd883     or    eax, 0x83d88b00
+            0x004a6465      c408           les   ecx, fword [eax]
+            0x004a6467      85db           test  ebx, ebx
+        ÔöîÔöÇ< 0x004a6469      7452           jz    0x4a64bd
+        Ôöé   0x004a646b      6a01           push  0x01                  ; 1
+        Ôöé   0x004a646d      56             push  esi
+        Ôöé   0x004a646e      e80d020000     call  0x4a6680
+        Ôöé   0x004a6473      83c408         add   esp, 0x08             ; RELOC 3 pe_004a6474 @ 0x00000000
+        Ôöé   0x004a6476      803d96c59100.  cmp   byte [0x91c596], 0x01 ; [0x91c596:1]=0
+       ÔöîÔöÇÔöÇ< 0x004a647d      743e           jz    0x4a64bd
+       ÔöéÔöé   0x004a647f      8b5614         mov   edx, dword [esi+0x14]
+       ÔöéÔöé   0x004a6482      8bca           mov   ecx, edx
+       ÔöéÔöé   ;-- pe_004a6484:
+       ÔöéÔöé   0x004a6484      8d4101         lea   eax, dword [ecx+0x01] ; RELOC 3 pe_004a6484 @ 0x00000000
+       ÔöéÔöé   0x004a6487      89450c         mov   dword [ebp+0x0c], eax ; RELOC 3 pe_004a6488 @ 0x00000000
+       ÔöéÔöé   0x004a648a      660f1f440000   nop   word [eax+eax*1], ax
+      ÔöîÔöÇÔöÇÔöÇ> 0x004a6490      8a01           mov   al, byte [ecx]
+      ÔòÄÔöéÔöé   0x004a6492      41             inc   ecx
+      ÔòÄÔöéÔöé   0x004a6493      84c0           test  al, al
+      ÔööÔöÇÔöÇÔöÇ< 0x004a6495      75f9           jnz   0x4a6490
+       ÔöéÔöé   0x004a6497      2b4d0c         sub   ecx, dword [ebp+0x0c] ; RELOC 3 pe_004a6498 @ 0x00000000
+       ÔöéÔöé   0x004a649a      81f9fe000000   cmp   ecx, 0xfe             ; 254; RELOC 3 pe_004a649c @ 0x00000000
+       ÔöéÔöé   ;-- pe_004a64a0:
+      ÔöîÔöÇÔöÇÔöÇ< 0x004a64a0      7d1b           jnl   pe_004a64a0           ; RELOC 3 pe_004a64a0 @ 0x00000000
+      ÔöéÔöéÔöé   0x004a64a2      8a470e         mov   al, byte [edi+0x0e]
+      ÔöéÔöéÔöé   0x004a64a5      88040a         mov   byte [edx+ecx*1], al
+      ÔöéÔöéÔöé   ;-- pe_004a64a8:
+      ÔöéÔöéÔöé   0x004a64a8      8b4614         mov   eax, dword [esi+0x14] ; RELOC 3 pe_004a64a8 @ 0x00000000
+      ÔöéÔöéÔöé   0x004a64ab      56             push  esi
+      ÔöéÔöéÔöé   0x004a64ac      c644080100     mov   byte [eax+ecx*1+0x01], 0x00
+      ÔöéÔöéÔöé   0x004a64b1      c6463601       mov   byte [esi+0x36], 0x01
+      ÔöéÔöéÔöé   0x004a64b5      e826d5ffff     call  0x4a39e0
+      ÔöéÔöéÔöé   0x004a64ba      83c404         add   esp, 0x04
+      ÔööÔööÔööÔöÇ> 0x004a64bd      6a00           push  0x00
+            0x004a64bf      e8ecf60d00     call  pe_004a64c0           ; RELOC 3 pe_004a64c0 @ 0x00000000
+            0x004a64c4      83c404         add   esp, 0x04
+            0x004a64c7      8bc3           mov   eax, ebx
+            0x004a64c9      5b             pop   ebx
+            0x004a64ca      5f             pop   edi
+            0x004a64cb      5e             pop   esi
+            0x004a64cc      5d             pop   ebp
+            0x004a64cd      c3             ret
+            0x004a64ce      8b7508         mov   esi, dword [ebp+0x08] ; RELOC 3 pe_004a64d0 @ 0x00000000
+===== writers with imm =====
+            0x004ea48f      c605be479300.  mov   byte [0x9347be], 0x02 ; RELOC 3 pe_004ea490 @ 0x00000000
+        ÔöîÔöÇ< 0x004ea496      eb07           jmp   0x4ea49f
+        Ôöé   ;-- pe_004ea498:
+        Ôöé   0x004ea498      c605be479300.  mov   byte [0x9347be], 0x01 ; RELOC 3 pe_004ea498 @ 0x00000000
+            ;-- pe_004ea498:
+            0x004ea498      c605be479300.  mov   byte [0x9347be], 0x01 ; RELOC 3 pe_004ea498 @ 0x00000000
+            0x004ea49f      5b             pop   ebx
+            ;-- pe_004ea4a0:
+            0x004ea4a0      e8ab3bfbff     call  pe_004ea4a0           ; RELOC 3 pe_004ea4a0 @ 0x00000000
+            0x004ea44b      c605be479300.  mov   byte [0x9347be], 0x03 ; RELOC 3 pe_004ea44c @ 0x00000000
+        ÔöîÔöÇ< 0x004ea452      eb4b           jmp   0x4ea49f
+        Ôöé   ;-- pe_004ea454:
+        Ôöé   0x004ea454      e8f7c8f9ff     call  pe_004ea454           ; RELOC 3 pe_004ea454 @ 0x00000000
+            0x004ea466      c605be479300.  mov   byte [0x9347be], 0x04 ; RELOC 3 pe_004ea468 @ 0x00000000
+        ÔöîÔöÇ< 0x004ea46d      eb30           jmp   0x4ea49f
+        Ôöé   0x004ea46f      3c0b           cmp   al, 0x0b              ; 0xb ; 11; RELOC 3 pe_004ea470 @ 0x00000000
+            0x004ea473      c605be479300.  mov   byte [0x9347be], 0x06 ; RELOC 3 pe_004ea474 @ 0x00000000
+        ÔöîÔöÇ< 0x004ea47a      eb23           jmp   0x4ea49f
+        Ôöé   ;-- pe_004ea47c:
+        Ôöé   0x004ea47c      3c0c           cmp   al, 0x0c              ; 0xc ; 12; RELOC 3 pe_004ea47c @ 0x00000000
+            0x004ea3da      c605be479300.  mov   byte [0x9347be], 0x00 ; RELOC 3 pe_004ea3dc @ 0x00000000
+        ÔöîÔöÇ< 0x004ea3e1      e9ba000000     jmp   reloc.pe_004ea4a0     ; RELOC 3 pe_004ea3e4 @ 0x00000000
+        Ôöé   0x004ea3e6      53             push  ebx
+===== or [chat] / add =====
+
+
+0x0049c51c 5 hit.bytes.0
+0x004e9491 5 hit.bytes.1
+0x004e94a9 5 hit.bytes.2
+0x004ea618 5 hit.bytes.3
+===== what is at 9347be vs nearby =====
+===== 4c1360 (enter pause path) =====
+       ÔòÄÔòÄ   0x004c1360      55             push  ebp
+       ÔòÄÔòÄ   0x004c1361      8bec           mov   ebp, esp
+       ÔòÄÔòÄ   0x004c1363      a144be9100     mov   eax, dword [0x91be44] ; [0x91be44:4]=0
+       ÔòÄÔòÄ   0x004c1368      85c0           test  eax, eax
+      ÔöîÔöÇÔöÇÔöÇ< 0x004c136a      7408           jz    0x4c1374
+      ÔöéÔòÄÔòÄ   0x004c136c      ff7508         push  dword [ebp+0x08]
+      ÔöéÔòÄÔòÄ   0x004c136f      ffd0           call  eax
+      ÔöéÔòÄÔòÄ   0x004c1371      83c404         add   esp, 0x04
+      ÔööÔöÇÔöÇÔöÇ> 0x004c1374      5d             pop   ebp
+       ÔööÔöÇÔöÇ< 0x004c1375      e916caffff     jmp   0x4bdd90
+        ÔòÄ   0x004c137a      cc             int3
+        ÔòÄ   0x004c137b      cc             int3
+        ÔòÄ   0x004c137c      cc             int3
+        ÔòÄ   0x004c137d      cc             int3
+        ÔòÄ   0x004c137e      cc             int3
+        ÔòÄ   0x004c137f      cc             int3
+        ÔòÄ   0x004c1380      a140be9100     mov   eax, dword [0x91be40] ; [0x91be40:4]=0
+        ÔòÄ   0x004c1385      85c0           test  eax, eax
+       ÔöîÔöÇÔöÇ< 0x004c1387      740c           jz    0x4c1395
+       ÔöéÔòÄ   0x004c1389      ffd0           call  eax
+       ÔöéÔòÄ   0x004c138b      c70540be9100.  mov   dword [0x91be40], 0x00
+       ÔööÔöÇÔöÇ> 0x004c1395      6a38           push  0x38                  ; '8' ; 56
+        ÔòÄ   0x004c1397      6a00           push  0x00
+        ÔòÄ   0x004c1399      6844be9100     push  0x91be44
+        ÔòÄ   0x004c139e      e8ed9c3200     call  pe_004c13a0           ; RELOC 3 pe_004c13a0 @ 0x00000000
+        ÔòÄ   0x004c13a3      6840134c00     push  reloc.pe_004c1340     ; 0x4c1340 ; "U\x8b\xec\xa1<\xbe\x91"; RELOC 3 pe_004c13a4 @ 0x00000000
+        ÔòÄ   ;-- pe_004c13a8:
+        ÔòÄ   0x004c13a8      e8b3750d00     call  pe_004c13a8           ; RELOC 3 pe_004c13a8 @ 0x00000000
+        ÔòÄ   0x004c13ad      83c410         add   esp, 0x10
+        Ôöé   ;-- pe_004c13b0:
+        ÔööÔöÇ< 0x004c13b0      e95b74feff     jmp   pe_004c13b0           ; RELOC 3 pe_004c13b0 @ 0x00000000
+            0x004c13b5      cc             int3
+            0x004c13b6      cc             int3
+            0x004c13b7      cc             int3
+            ;-- pe_004c13b8:
+            0x004c13b8      cc             int3                        ; RELOC 3 pe_004c13b8 @ 0x00000000
+            0x004c13b9      cc             int3
+            0x004c13ba      cc             int3
+            0x004c13bb      cc             int3
+            ;-- pe_004c13bc:
+            0x004c13bc      cc             int3                        ; RELOC 3 pe_004c13bc @ 0x00000000
+            0x004c13bd      cc             int3
+            0x004c13be      cc             int3
+            0x004c13bf      cc             int3
+===== find mov that sets chat from enter =====
+            ;-- pe_004ea400:
+            0x004ea400      5b             pop   ebx                   ; RELOC 3 pe_004ea400 @ 0x00000000
+            0x004ea401      2f             das
+            0x004ea402      92             xchg  edx, eax
+            0x004ea403      0000           add   byte [eax], al        ; RELOC 3 pe_004ea404 @ 0x00000000
+            0x004ea405      8985f4feffff   mov   dword [ebp-0x10c], eax; RELOC 3 pe_004ea408 @ 0x00000000
+        ÔöîÔöÇ< 0x004ea40b      0f8487000000   jz    reloc.pe_004ea498     ; RELOC 3 pe_004ea40c @ 0x00000000
+        Ôöé   0x004ea411      e83a3cfbff     call  pe_004ea414           ; RELOC 3 pe_004ea414 @ 0x00000000
+        Ôöé   0x004ea416      85c0           test  eax, eax
+        Ôöé   ;-- pe_004ea418:
+       ÔöîÔöÇÔöÇ< 0x004ea418      747e           jz    reloc.pe_004ea498     ; RELOC 3 pe_004ea418 @ 0x00000000
+       ÔöéÔöé   0x004ea41a      84db           test  bl, bl
+       ÔöéÔöé   ;-- pe_004ea41c:
+      ÔöîÔöÇÔöÇÔöÇ< 0x004ea41c      7571           jnz   pe_004ea41c           ; RELOC 3 pe_004ea41c @ 0x00000000
+      ÔöéÔöéÔöé   0x004ea41e      e82dc9f9ff     call  pe_004ea420           ; RELOC 3 pe_004ea420 @ 0x00000000
+      ÔöéÔöéÔöé   0x004ea423      85c0           test  eax, eax              ; RELOC 3 pe_004ea424 @ 0x00000000
+     ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004ea425      7409           jz    reloc.pe_004ea430
+     ÔöéÔöéÔöéÔöé   0x004ea427      f685f4feffff.  test  byte [ebp-0x10c], 0x04; RELOC 3 pe_004ea428 @ 0x00000000
+    ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea42e      751b           jnz   0x4ea44b
+    ÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea430:
+    ÔöéÔööÔöÇÔöÇÔöÇÔöÇ> 0x004ea430      803deb8b9100.  cmp   byte [0x918beb], 0x08 ; [0x918beb:1]=0; RELOC 3 pe_004ea430 @ 0x00000000
+    ÔöéÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004ea437      7456           jz    pe_004ea438           ; RELOC 3 pe_004ea438 @ 0x00000000
+    ÔöéÔöéÔöéÔöéÔöé   0x004ea439      e812c9f9ff     call  pe_004ea43c           ; RELOC 3 pe_004ea43c @ 0x00000000
+    ÔöéÔöéÔöéÔöéÔöé   0x004ea43e      85c0           test  eax, eax
+    ÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea440:
+   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea440      7412           jz    reloc.pe_004ea454     ; RELOC 3 pe_004ea440 @ 0x00000000
+   ÔöéÔöéÔöéÔöéÔöéÔöé   0x004ea442      803deb8b9100.  cmp   byte [0x918beb], 0x09 ; [0x918beb:1]=0; RELOC 3 pe_004ea444 @ 0x00000000
+  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea449      7509           jnz   reloc.pe_004ea454
+  ÔöéÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004ea44b      c605be479300.  mov   byte [0x9347be], 0x03 ; RELOC 3 pe_004ea44c @ 0x00000000
+  ÔöéÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea452      eb4b           jmp   0x4ea49f
+  ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea454:
+  ÔööÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004ea454      e8f7c8f9ff     call  pe_004ea454           ; RELOC 3 pe_004ea454 @ 0x00000000
+    ÔöéÔöéÔöéÔöéÔöé   0x004ea459      85c0           test  eax, eax
+    ÔöéÔöéÔöéÔöéÔöé   0x004ea45b      a0eb8b9100     mov   al, byte [0x918beb]   ; [0x918beb:1]=0; RELOC 3 pe_004ea45c @ 0x00000000
+    ÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea460:
+   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea460      740d           jz    pe_004ea460           ; RELOC 3 pe_004ea460 @ 0x00000000
+   ÔöéÔöéÔöéÔöéÔöéÔöé   0x004ea462      3c0a           cmp   al, 0x0a              ; 0xa ; 10
+   ÔöéÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea464:
+  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea464      7509           jnz   pe_004ea464           ; RELOC 3 pe_004ea464 @ 0x00000000
+  ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x004ea466      c605be479300.  mov   byte [0x9347be], 0x04 ; RELOC 3 pe_004ea468 @ 0x00000000
+  ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea46d      eb30           jmp   0x4ea49f
+  ÔööÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004ea46f      3c0b           cmp   al, 0x0b              ; 0xb ; 11; RELOC 3 pe_004ea470 @ 0x00000000
+   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea471      7509           jnz   reloc.pe_004ea47c
+   ÔöéÔöéÔöéÔöéÔöéÔöé   0x004ea473      c605be479300.  mov   byte [0x9347be], 0x06 ; RELOC 3 pe_004ea474 @ 0x00000000
+  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea47a      eb23           jmp   0x4ea49f
+  ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea47c:
+  ÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x004ea47c      3c0c           cmp   al, 0x0c              ; 0xc ; 12; RELOC 3 pe_004ea47c @ 0x00000000
+  Ôöé ÔöéÔöéÔöéÔöéÔöé   0x004ea47e      0f94c0         setz  al                    ; RELOC 3 pe_004ea480 @ 0x00000000
+  Ôöé ÔöéÔöéÔöéÔöéÔöé   0x004ea481      8d0445050000.  lea   eax, dword [eax*2+0x05]; RELOC 3 pe_004ea484 @ 0x00000000
+  Ôöé ÔöéÔöéÔöéÔöéÔöé   ;-- pe_004ea488:
+  Ôöé ÔöéÔöéÔöéÔöéÔöé   0x004ea488      a2be479300     mov   byte [0x9347be], al   ; RELOC 3 pe_004ea488 @ 0x00000000
+  ÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004ea48d      eb10           jmp   0x4ea49f
+  ÔöéÔöéÔöéÔööÔööÔöÇÔöÇÔöÇ> 0x004ea48f      c605be479300.  mov   byte [0x9347be], 0x02 ; RELOC 3 pe_004ea490 @ 0x00000000
+  ÔöéÔöéÔöé ÔöîÔöÇÔöÇÔöÇ< 0x004ea496      eb07           jmp   0x4ea49f
+  ÔöéÔöéÔöé ÔöéÔöéÔöé   ;-- pe_004ea498:
+  ÔöéÔöéÔöé ÔöéÔööÔööÔöÇ> 0x004ea498      c605be479300.  mov   byte [0x9347be], 0x01 ; RELOC 3 pe_004ea498 @ 0x00000000
+  ÔööÔööÔööÔöÇÔööÔöÇÔöÇÔöÇ> 0x004ea49f      5b             pop   ebx
+            ;-- pe_004ea4a0:
+            0x004ea4a0      e8ab3bfbff     call  pe_004ea4a0           ; RELOC 3 pe_004ea4a0 @ 0x00000000
+            0x004ea4a5      85c0           test  eax, eax
+        ÔöîÔöÇ< 0x004ea4a7      740b           jz    reloc.pe_004ea4b4     ; RELOC 3 pe_004ea4a8 @ 0x00000000
+        Ôöé   0x004ea4a9      56             push  esi
+        Ôöé   0x004ea4aa      e851010000     call  reloc.pe_004ea600     ; RELOC 3 pe_004ea4ac @ 0x00000000
+        Ôöé   0x004ea4af      83c404         add   esp, 0x04             ; RELOC 3 pe_004ea4b0 @ 0x00000000
+       ÔöîÔöÇÔöÇ< 0x004ea4b2      eb41           jmp   0x4ea4f5
+       ÔöéÔöé   ;-- pe_004ea4b4:
+       ÔöéÔööÔöÇ> 0x004ea4b4      6a07           push  0x07                  ; 7; RELOC 3 pe_004ea4b4 @ 0x00000000
+       Ôöé    0x004ea4b6      56             push  esi
+       Ôöé    0x004ea4b7      e8548cfbff     call  pe_004ea4b8           ; RELOC 3 pe_004ea4b8 @ 0x00000000
+       Ôöé    ;-- pe_004ea4bc:
+       Ôöé    0x004ea4bc      0fb60dbe4793.  movzx ecx, byte [0x9347be]  ; [0x9347be:1]=0; RELOC 3 pe_004ea4bc @ 0x00000000
+       Ôöé    0x004ea4c3      51             push  ecx
+       Ôöé    ;-- pe_004ea4c4:
+       Ôöé    0x004ea4c4      50             push  eax                   ; RELOC 3 pe_004ea4c4 @ 0x00000000
+       Ôöé    0x004ea4c5      e8e695fbff     call  pe_004ea4c8           ; RELOC 3 pe_004ea4c8 @ 0x00000000

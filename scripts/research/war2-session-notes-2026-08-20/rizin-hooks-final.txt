@@ -1,0 +1,761 @@
+===== fcn.00525110 team_color builder =====
+            ; CALL XREF from fcn.005256b0 @ 0x525d7a
+Ôöî fcn.00525110();
+Ôöé           ; var int32_t var_168h @ stack - 0x168
+Ôöé           ; var int32_t var_164h @ stack - 0x164
+Ôöé           ; var int32_t var_160h @ stack - 0x160
+Ôöé           ; var int32_t var_15ch @ stack - 0x15c
+Ôöé           ; var int32_t var_108h @ stack - 0x108
+Ôöé           ; var int32_t var_fch @ stack - 0xfc
+Ôöé           ; var int32_t var_f8h @ stack - 0xf8
+Ôöé           ; var int32_t var_e8h @ stack - 0xe8
+Ôöé           ; var int32_t var_e4h @ stack - 0xe4
+Ôöé           ; var int32_t var_ddh @ stack - 0xdd
+Ôöé           ; var int32_t var_dch @ stack - 0xdc
+Ôöé           ; var int32_t var_c8h @ stack - 0xc8
+Ôöé           ; var int32_t var_c4h @ stack - 0xc4
+Ôöé           ; var int32_t var_b0h @ stack - 0xb0
+Ôöé           ; var int32_t var_ach @ stack - 0xac
+Ôöé           ; var int32_t var_a4h @ stack - 0xa4
+Ôöé           ; var int32_t var_98h @ stack - 0x98
+Ôöé           ; var int32_t var_94h @ stack - 0x94
+Ôöé           ; var int32_t var_84h @ stack - 0x84
+Ôöé           ; var uint_least32_t var_80h @ stack - 0x80
+Ôöé           ; var int32_t var_7fh @ stack - 0x7f
+Ôöé           ; var int32_t var_7ch @ stack - 0x7c
+Ôöé           ; var uint_least32_t var_6ch @ stack - 0x6c
+Ôöé           ; var uint_least32_t var_68h @ stack - 0x68
+Ôöé           ; var int32_t var_4fh @ stack - 0x4f
+Ôöé           ; var int32_t var_4ch @ stack - 0x4c
+Ôöé           ; var int32_t var_37h @ stack - 0x37
+Ôöé           ; var int32_t var_20h @ stack - 0x20
+Ôöé           ; var int32_t var_18h @ stack - 0x18
+Ôöé           ; var int32_t var_10h @ stack - 0x10
+Ôöé           ; var int32_t var_8h @ stack - 0x8
+Ôöé           0x00525110      push  ebx
+Ôöé           0x00525111      mov   ebx, esp
+Ôöé           0x00525113      sub   esp, 0x08
+Ôöé           0x00525116      and   esp, 0xfffffff0
+Ôöé           0x00525119      add   esp, 0x04
+Ôöé           0x0052511c      push  ebp
+Ôöé           0x0052511d      mov   ebp, dword [ebx+0x04]
+Ôöé           0x00525120      mov   dword [var_8h], ebp
+Ôöé           0x00525124      mov   ebp, esp
+Ôöé           0x00525126      push  0xffffffff                           ; 255
+Ôöé           0x00525128      push  data.00823129                        ; 0x823129
+Ôöé           0x0052512d      mov   eax, dword fs:[0x0]
+Ôöé           0x00525133      push  eax
+Ôöé           0x00525134      push  ebx
+Ôöé           0x00525135      sub   esp, 0xf8
+Ôöé           0x0052513b      mov   eax, dword [data.0090d6c0]           ; [0x90d6c0:4]=0xbb40e64e ; "N\xe6@\xbb"
+Ôöé           0x00525140      xor   eax, ebp
+Ôöé           0x00525142      mov   dword [var_20h], eax
+Ôöé           0x00525145      push  esi
+Ôöé           0x00525146      push  edi
+Ôöé           0x00525147      push  eax
+Ôöé           0x00525148      lea   eax, dword [var_18h]
+Ôöé           0x0052514b      mov   dword fs:[0x0], eax
+Ôöé           0x00525151      mov   edi, dword [ebx+0x08]
+Ôöé           0x00525154      lea   eax, dword [var_37h]
+Ôöé           0x00525157      push  edi                                  ; int32_t arg_4h
+Ôöé           0x00525158      push  eax                                  ; int32_t arg_8h
+Ôöé           0x00525159      mov   dword [var_e8h], edi
+Ôöé           0x0052515f      call  fcn.0049d020
+Ôöé           0x00525164      add   esp, 0x08
+Ôöé           0x00525167      lea   ecx, dword [var_ddh]
+Ôöé           0x0052516d      push  ecx
+Ôöé           0x0052516e      lea   ecx, dword [var_37h]
+Ôöé           0x00525171      push  ecx                                  ; int32_t arg_8h
+Ôöé           0x00525172      push  eax                                  ; int32_t arg_4h
+Ôöé           0x00525173      lea   ecx, dword [var_ach]
+Ôöé           0x00525179      call  fcn.00507ec0
+Ôöé           0x0052517e      push  0x0b                                 ; 0xb ; 11 ; int32_t arg_8h
+Ôöé           0x00525180      push  str.team_color                       ; 0x844ed4 ; "team_color_" ; int32_t arg_ch
+Ôöé           0x00525185      push  0x00                                 ; int32_t arg_4h
+Ôöé           0x00525187      lea   ecx, dword [var_ach]
+Ôöé           0x0052518d      mov   dword [var_10h], 0x00
+Ôöé           0x00525194      call  fcn.0049d830
+Ôöé           0x00525199      mov   dword [var_84h], 0x00
+Ôöé           0x005251a0      xorps xmm0, xmm0
+Ôöé           0x005251a3      movups xmmword [var_94h], xmm0
+Ôöé           0x005251aa      mov   dword [var_80h], 0x00
+Ôöé           0x005251b1      movups xmm0, xmmword [eax]
+Ôöé           0x005251b4      push  0x20                                 ; 32 ; int32_t arg_4h
+Ôöé           0x005251b6      movups xmmword [var_94h], xmm0
+Ôöé           0x005251bd      movq  xmm0, qword [eax+0x10]
+Ôöé           0x005251c2      movq  qword [var_84h], xmm0
+Ôöé           0x005251c7      mov   dword [eax+0x10], 0x00
+Ôöé           0x005251ce      mov   dword [eax+0x14], 0x0f               ; [0xf:4]=-1 ; 15
+Ôöé           0x005251d5      mov   byte [eax], 0x00
+Ôöé           0x005251d8      lea   eax, dword [var_94h]
+Ôöé           0x005251de      cmp   dword [var_80h], 0x0f
+Ôöé           0x005251e2      cmovnbe eax, dword [var_94h]
+Ôöé           0x005251e9      push  eax                                  ; int32_t arg_8h
+Ôöé           0x005251ea      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_ch
+Ôöé           0x005251f0      call  fcn.005aca30
+Ôöé           0x005251f5      mov   ecx, dword [var_80h]
+Ôöé           0x005251f8      add   esp, 0x0c
+Ôöé           0x005251fb      mov   esi, eax
+Ôöé           0x005251fd      cmp   ecx, 0x0f                            ; 0xf ; 15
+Ôöé       ÔöîÔöÇ< 0x00525200      jbe   0x525231
+Ôöé       Ôöé   0x00525202      mov   edx, dword [var_94h]
+Ôöé       Ôöé   0x00525208      inc   ecx
+Ôöé       Ôöé   0x00525209      mov   eax, edx
+Ôöé       Ôöé   0x0052520b      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé      ÔöîÔöÇÔöÇ< 0x00525211      jb    0x525227
+Ôöé      ÔöéÔöé   0x00525213      mov   edx, dword [eax-0x04]
+Ôöé      ÔöéÔöé   0x00525216      add   ecx, 0x23                            ; 35
+Ôöé      ÔöéÔöé   0x00525219      sub   eax, edx
+Ôöé      ÔöéÔöé   0x0052521b      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé      ÔöéÔöé   0x0052521e      cmp   eax, 0x1f                            ; 31
+Ôöé     ÔöîÔöÇÔöÇÔöÇ< 0x00525221      jnbe  0x525691
+Ôöé     ÔöéÔööÔöÇÔöÇ> 0x00525227      push  ecx
+Ôöé     Ôöé Ôöé   0x00525228      push  edx                                  ; int32_t arg_4h
+Ôöé     Ôöé Ôöé   0x00525229      call  fcn.007e91f3
+Ôöé     Ôöé Ôöé   0x0052522e      add   esp, 0x08
+Ôöé     Ôöé ÔööÔöÇ> 0x00525231      mov   ecx, dword [var_98h]
+Ôöé     Ôöé     0x00525237      mov   dword [var_84h], 0x00
+Ôöé     Ôöé     0x0052523e      mov   dword [var_80h], 0x0f                ; 0xf ; 15
+Ôöé     Ôöé     0x00525245      mov   byte [var_94h], 0x00
+Ôöé     Ôöé     0x0052524c      mov   dword [var_10h], 0xffffffff          ; -1
+Ôöé     Ôöé     0x00525253      cmp   ecx, 0x0f                            ; 0xf ; 15
+Ôöé     Ôöé ÔöîÔöÇ< 0x00525256      jbe   0x525287
+Ôöé     Ôöé Ôöé   0x00525258      mov   edx, dword [var_ach]
+Ôöé     Ôöé Ôöé   0x0052525e      inc   ecx
+Ôöé     Ôöé Ôöé   0x0052525f      mov   eax, edx
+Ôöé     Ôöé Ôöé   0x00525261      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé     ÔöéÔöîÔöÇÔöÇ< 0x00525267      jb    0x52527d
+Ôöé     ÔöéÔöéÔöé   0x00525269      mov   edx, dword [eax-0x04]
+Ôöé     ÔöéÔöéÔöé   0x0052526c      add   ecx, 0x23                            ; 35
+Ôöé     ÔöéÔöéÔöé   0x0052526f      sub   eax, edx
+Ôöé     ÔöéÔöéÔöé   0x00525271      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé     ÔöéÔöéÔöé   0x00525274      cmp   eax, 0x1f                            ; 31
+Ôöé    ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x00525277      jnbe  0x525691
+Ôöé    ÔöéÔöéÔööÔöÇÔöÇ> 0x0052527d      push  ecx
+Ôöé    ÔöéÔöé Ôöé   0x0052527e      push  edx                                  ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x0052527f      call  fcn.007e91f3
+Ôöé    ÔöéÔöé Ôöé   0x00525284      add   esp, 0x08
+Ôöé    ÔöéÔöé ÔööÔöÇ> 0x00525287      test  esi, esi
+Ôöé    ÔöéÔöé ÔöîÔöÇ< 0x00525289      jz    0x525673
+Ôöé    ÔöéÔöé Ôöé   0x0052528f      push  0x3e8                                ; 1000
+Ôöé    ÔöéÔöé Ôöé   0x00525294      push  ecx
+Ôöé    ÔöéÔöé Ôöé   0x00525295      mov   dword [esp], 0x00                    ; int32_t arg_ch
+Ôöé    ÔöéÔöé Ôöé   0x0052529c      push  0x01                                 ; 1 ; int32_t arg_10h
+Ôöé    ÔöéÔöé Ôöé   0x0052529e      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x005252a4      call  fcn.005ac490
+Ôöé    ÔöéÔöé Ôöé   0x005252a9      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x005252af      lea   eax, dword [var_4ch]
+Ôöé    ÔöéÔöé Ôöé   0x005252b2      push  eax                                  ; int32_t arg_8h
+Ôöé    ÔöéÔöé Ôöé   0x005252b3      call  fcn.005aab20
+Ôöé    ÔöéÔöé Ôöé   0x005252b8      movups xmm2, xmmword [eax]
+Ôöé    ÔöéÔöé Ôöé   0x005252bb      movzx eax, byte [edi+data.00919390]        ; [0x919390:1]=0
+Ôöé    ÔöéÔöé Ôöé   0x005252c2      push  eax                                  ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x005252c3      movaps xmm3, xmm2
+Ôöé    ÔöéÔöé Ôöé   0x005252c6      lea   eax, dword [var_7fh]
+Ôöé    ÔöéÔöé Ôöé   0x005252c9      shufps xmm3, xmm2, 0xaa
+Ôöé    ÔöéÔöé Ôöé   0x005252cd      subss xmm3, dword [data.00839528]
+Ôöé    ÔöéÔöé Ôöé   0x005252d5      shufps xmm2, xmm2, 0xff
+Ôöé    ÔöéÔöé Ôöé   0x005252d9      subss xmm2, dword [data.00839528]
+Ôöé    ÔöéÔöé Ôöé   0x005252e1      push  eax                                  ; int32_t arg_8h
+Ôöé    ÔöéÔöé Ôöé   0x005252e2      mulss xmm3, dword [data.00842498]
+Ôöé    ÔöéÔöé Ôöé   0x005252ea      mulss xmm2, dword [data.00842498]
+Ôöé    ÔöéÔöé Ôöé   0x005252f2      movaps xmmword [var_4ch], xmm3
+Ôöé    ÔöéÔöé Ôöé   0x005252f6      movups xmmword [var_a4h], xmm2
+Ôöé    ÔöéÔöé Ôöé   0x005252fd      call  fcn.0049d020
+Ôöé    ÔöéÔöé Ôöé   0x00525302      add   esp, 0x20
+Ôöé    ÔöéÔöé Ôöé   0x00525305      lea   ecx, dword [var_ddh]
+Ôöé    ÔöéÔöé Ôöé   0x0052530b      push  ecx
+Ôöé    ÔöéÔöé Ôöé   0x0052530c      lea   ecx, dword [var_7fh]
+Ôöé    ÔöéÔöé Ôöé   0x0052530f      push  ecx                                  ; int32_t arg_8h
+Ôöé    ÔöéÔöé Ôöé   0x00525310      push  eax                                  ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x00525311      lea   ecx, dword [var_c4h]
+Ôöé    ÔöéÔöé Ôöé   0x00525317      call  fcn.00507ec0
+Ôöé    ÔöéÔöé Ôöé   0x0052531c      push  0x15                                 ; 21 ; int32_t arg_8h
+Ôöé    ÔöéÔöé Ôöé   0x0052531e      push  str.fe_endgame_stats_bar             ; 0x844ee0 ; "fe_endgame_stats_bar_" ; int32_t arg_ch
+Ôöé    ÔöéÔöé Ôöé   0x00525323      push  0x00                                 ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x00525325      lea   ecx, dword [var_c4h]
+Ôöé    ÔöéÔöé Ôöé   0x0052532b      mov   dword [var_10h], 0x01
+Ôöé    ÔöéÔöé Ôöé   0x00525332      call  fcn.0049d830
+Ôöé    ÔöéÔöé Ôöé   0x00525337      movups xmm1, xmmword [eax]
+Ôöé    ÔöéÔöé Ôöé   0x0052533a      movq  xmm0, qword [eax+0x10]
+Ôöé    ÔöéÔöé Ôöé   0x0052533f      movups xmmword [var_7ch], xmm1
+Ôöé    ÔöéÔöé Ôöé   0x00525343      mov   dword [eax+0x10], 0x00
+Ôöé    ÔöéÔöé Ôöé   0x0052534a      movq  qword [var_6ch], xmm0
+Ôöé    ÔöéÔöé Ôöé   0x0052534f      mov   dword [eax+0x14], 0x0f               ; [0xf:4]=-1 ; 15
+Ôöé    ÔöéÔöé Ôöé   0x00525356      mov   byte [eax], 0x00
+Ôöé    ÔöéÔöé Ôöé   0x00525359      cmp   dword [var_68h], 0x0f
+Ôöé    ÔöéÔöé Ôöé   0x0052535d      lea   esi, dword [var_7ch]
+Ôöé    ÔöéÔöé Ôöé   0x00525360      movd  edi, xmm1
+Ôöé    ÔöéÔöé Ôöé   0x00525364      mov   edx, 0x811c9dc5
+Ôöé    ÔöéÔöé Ôöé   0x00525369      mov   byte [var_10h], 0x02
+Ôöé    ÔöéÔöé Ôöé   0x0052536d      cmovnbe esi, edi
+Ôöé    ÔöéÔöé Ôöé   0x00525370      xor   ecx, ecx
+Ôöé    ÔöéÔöé Ôöé   0x00525372      cmp   dword [var_6ch], ecx
+Ôöé    ÔöéÔöéÔöîÔöÇÔöÇ< 0x00525375      jbe   0x525389
+Ôöé   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x00525377      movzx eax, byte [ecx+esi*1]
+Ôöé   ÔòÄÔöéÔöéÔöéÔöé   0x0052537b      inc   ecx
+Ôöé   ÔòÄÔöéÔöéÔöéÔöé   0x0052537c      xor   eax, edx
+Ôöé   ÔòÄÔöéÔöéÔöéÔöé   0x0052537e      imul  edx, eax, 0x1000193
+Ôöé   ÔòÄÔöéÔöéÔöéÔöé   0x00525384      cmp   ecx, dword [var_6ch]
+Ôöé   ÔööÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x00525387      jb    0x525377
+Ôöé    ÔöéÔöéÔööÔöÇÔöÇ> 0x00525389      push  data.00965310                        ; 0x965310 ; int32_t arg_4h
+Ôöé    ÔöéÔöé Ôöé   0x0052538e      push  edx                                  ; int32_t arg_8h
+Ôöé    ÔöéÔöé Ôöé   0x0052538f      lea   ecx, dword [var_108h]
+Ôöé    ÔöéÔöé Ôöé   0x00525395      call  fcn.005f54f0
+Ôöé    ÔöéÔöé Ôöé   0x0052539a      mov   eax, dword [var_68h]
+Ôöé    ÔöéÔöé Ôöé   0x0052539d      mov   byte [var_10h], 0x01
+Ôöé    ÔöéÔöé Ôöé   0x005253a1      cmp   eax, 0x0f                            ; 0xf ; 15
+Ôöé    ÔöéÔöéÔöîÔöÇÔöÇ< 0x005253a4      jbe   0x5253d1
+Ôöé    ÔöéÔöéÔöéÔöé   0x005253a6      lea   ecx, dword [eax+0x01]
+Ôöé    ÔöéÔöéÔöéÔöé   0x005253a9      mov   eax, edi
+Ôöé    ÔöéÔöéÔöéÔöé   0x005253ab      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x005253b1      jb    0x5253c7
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x005253b3      mov   edi, dword [eax-0x04]
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x005253b6      add   ecx, 0x23                            ; 35
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x005253b9      sub   eax, edi
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x005253bb      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x005253be      cmp   eax, 0x1f                            ; 31
+Ôöé  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x005253c1      jnbe  0x525696
+Ôöé  ÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x005253c7      push  ecx
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253c8      push  edi                                  ; int32_t arg_4h
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253c9      call  fcn.007e91f3
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253ce      add   esp, 0x08
+Ôöé  Ôöé ÔöéÔöéÔööÔöÇÔöÇ> 0x005253d1      mov   ecx, dword [var_b0h]
+Ôöé  Ôöé ÔöéÔöé Ôöé   0x005253d7      mov   dword [var_10h], 0xffffffff          ; -1
+Ôöé  Ôöé ÔöéÔöé Ôöé   0x005253de      cmp   ecx, 0x0f                            ; 0xf ; 15
+Ôöé  Ôöé ÔöéÔöéÔöîÔöÇÔöÇ< 0x005253e1      jbe   0x525412
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253e3      mov   edx, dword [var_c4h]
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253e9      inc   ecx
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253ea      mov   eax, edx
+Ôöé  Ôöé ÔöéÔöéÔöéÔöé   0x005253ec      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé  ÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x005253f2      jb    0x525408
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x005253f4      mov   edx, dword [eax-0x04]
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x005253f7      add   ecx, 0x23                            ; 35
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x005253fa      sub   eax, edx
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x005253fc      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé  ÔöéÔöéÔöéÔöéÔöéÔöé   0x005253ff      cmp   eax, 0x1f                            ; 31
+Ôöé ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x00525402      jnbe  0x525696
+Ôöé ÔöéÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x00525408      push  ecx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525409      push  edx                                  ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052540a      call  fcn.007e91f3
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052540f      add   esp, 0x08
+Ôöé ÔöéÔöé ÔöéÔöéÔööÔöÇÔöÇ> 0x00525412      movss xmm0, dword [var_a4h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052541a      lea   eax, dword [var_fch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525420      addss xmm0, dword [data.00845008]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525428      sub   esp, 0x10
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052542b      mov   dword [var_15ch], 0x42a80000         ; [0x42a80000:4]=-1
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525433      mov   dword [var_160h], 0x42a80000         ; [0x42a80000:4]=-1
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052543b      movss dword [var_164h], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525441      movss xmm0, dword [var_4ch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525446      addss xmm0, dword [data.00845008]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052544e      movss dword [esp], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525453      push  eax                                  ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525454      call  fcn.005bfd90
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525459      add   esp, 0x04
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052545c      mov   ecx, esp
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052545e      movups xmm0, xmmword [eax]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525461      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525467      movups xmmword [ecx], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052546a      call  fcn.005ac550
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052546f      push  0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525471      push  0x01                                 ; 1 ; int32_t arg_10h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525473      lea   eax, dword [var_e4h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525479      mov   dword [var_e4h], 0x01
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525483      push  eax                                  ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525484      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052548a      call  fcn.005b1320
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052548f      add   esp, 0x24
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525492      lea   ecx, dword [var_108h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525498      call  fcn.005f5530
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052549d      push  data.00965310                        ; 0x965310 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254a2      push  dword [data.0095bef0]                ; 0x95bef0 ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254a8      lea   ecx, dword [var_f8h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254ae      call  fcn.005f54f0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254b3      movups xmm0, xmmword [var_a4h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254ba      sub   esp, 0x10
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254bd      mov   dword [var_10h], 0x03
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254c4      lea   eax, dword [var_4ch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254c7      mov   dword [var_164h], 0x42c80000         ; [0x42c80000:4]=-1
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254cf      mov   dword [var_168h], 0x42c80000         ; [0x42c80000:4]=-1
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254d7      movss dword [esp+0x04], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254dd      movaps xmm0, xmmword [var_4ch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254e1      movss dword [esp], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254e6      push  eax                                  ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254e7      call  fcn.005bfd90
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254ec      add   esp, 0x04
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254ef      mov   ecx, esp
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254f1      movups xmm0, xmmword [eax]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254f4      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254fa      movups xmmword [ecx], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005254fd      call  fcn.005ac550
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525502      push  dword [var_e8h]                      ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525508      lea   eax, dword [var_4fh]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052550b      push  eax                                  ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052550c      call  fcn.0049d020
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525511      add   esp, 0x1c
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525514      lea   ecx, dword [var_ddh]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052551a      push  ecx
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052551b      lea   ecx, dword [var_4fh]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052551e      push  ecx                                  ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052551f      push  eax                                  ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525520      lea   ecx, dword [var_dch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525526      call  fcn.00507ec0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052552b      push  0x11                                 ; 17 ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052552d      push  str.team_color_frame                 ; 0x844ef8 ; "team_color_frame_" ; int32_t arg_ch
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525532      push  0x00                                 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525534      lea   ecx, dword [var_dch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052553a      mov   byte [var_10h], 0x04
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052553e      call  fcn.0049d830
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525543      mov   dword [var_6ch], 0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052554a      xorps xmm0, xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052554d      movups xmmword [var_7ch], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525551      mov   dword [var_68h], 0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525558      movups xmm0, xmmword [eax]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052555b      movups xmmword [var_7ch], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052555f      movq  xmm0, qword [eax+0x10]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525564      movq  qword [var_6ch], xmm0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525569      mov   dword [eax+0x10], 0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525570      mov   dword [eax+0x14], 0x0f               ; [0xf:4]=-1 ; 15
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525577      mov   byte [eax], 0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052557a      lea   eax, dword [var_7ch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052557d      cmp   dword [var_68h], 0x0f
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525581      push  0x20                                 ; 32 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525583      cmovnbe eax, dword [var_7ch]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525587      push  eax                                  ; int32_t arg_8h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525588      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_ch
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052558e      call  fcn.005aca30
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525593      mov   ecx, dword [var_68h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525596      add   esp, 0x0c
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525599      mov   esi, eax
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052559b      cmp   ecx, 0x0f                            ; 0xf ; 15
+Ôöé ÔöéÔöé ÔöéÔöéÔöîÔöÇÔöÇ< 0x0052559e      jbe   0x5255cc
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255a0      mov   edx, dword [var_7ch]
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255a3      inc   ecx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255a4      mov   eax, edx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255a6      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé ÔöéÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x005255ac      jb    0x5255c2
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255ae      mov   edx, dword [eax-0x04]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255b1      add   ecx, 0x23                            ; 35
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255b4      sub   eax, edx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255b6      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255b9      cmp   eax, 0x1f                            ; 31
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x005255bc      jnbe  0x52569b
+Ôöé ÔöéÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x005255c2      push  ecx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255c3      push  edx                                  ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255c4      call  fcn.007e91f3
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255c9      add   esp, 0x08
+Ôöé ÔöéÔöé ÔöéÔöéÔööÔöÇÔöÇ> 0x005255cc      mov   ecx, dword [var_c8h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005255d2      mov   dword [var_6ch], 0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005255d9      mov   dword [var_68h], 0x0f                ; 0xf ; 15
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005255e0      mov   byte [var_7ch], 0x00
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x005255e4      cmp   ecx, 0x0f                            ; 0xf ; 15
+Ôöé ÔöéÔöé ÔöéÔöéÔöîÔöÇÔöÇ< 0x005255e7      jbe   0x525618
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255e9      mov   edx, dword [var_dch]
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255ef      inc   ecx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255f0      mov   eax, edx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x005255f2      cmp   ecx, reloc.pe_00001000               ; 0x1000
+Ôöé ÔöéÔöéÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x005255f8      jb    0x52560e
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255fa      mov   edx, dword [eax-0x04]
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x005255fd      add   ecx, 0x23                            ; 35
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x00525600      sub   eax, edx
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x00525602      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé ÔöéÔöéÔöéÔöéÔöéÔöéÔöé   0x00525605      cmp   eax, 0x1f                            ; 31
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x00525608      jnbe  0x52569b
+Ôöé ÔöéÔöéÔööÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x0052560e      push  ecx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052560f      push  edx                                  ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525610      call  fcn.007e91f3
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525615      add   esp, 0x08
+Ôöé ÔöéÔöé ÔöéÔöéÔööÔöÇÔöÇ> 0x00525618      test  esi, esi
+Ôöé ÔöéÔöé ÔöéÔöéÔöîÔöÇÔöÇ< 0x0052561a      jz    0x52564f
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052561c      push  0x3e8                                ; 1000
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525621      push  ecx
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525622      mov   dword [esp], 0x00                    ; int32_t arg_ch
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525629      push  0x01                                 ; 1 ; int32_t arg_10h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052562b      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525631      call  fcn.005ac490
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525636      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052563c      call  fcn.005ac5c0
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525641      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x00525647      call  fcn.005acb70
+Ôöé ÔöéÔöé ÔöéÔöéÔöéÔöé   0x0052564c      add   esp, 0x18
+Ôöé ÔöéÔöé ÔöéÔöéÔööÔöÇÔöÇ> 0x0052564f      lea   ecx, dword [var_f8h]
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525655      call  fcn.005f5530
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052565a      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525660      call  fcn.005ac5c0
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525665      push  dword [data.00965170]                ; 0x965170 ; int32_t arg_4h
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x0052566b      call  fcn.005acb70
+Ôöé ÔöéÔöé ÔöéÔöé Ôöé   0x00525670      add   esp, 0x08
+Ôöé ÔöéÔöé ÔöéÔöé ÔööÔöÇ> 0x00525673      mov   ecx, dword [var_18h]
+Ôöé ÔöéÔöé ÔöéÔöé     0x00525676      mov   dword fs:[0x0], ecx
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052567d      pop   ecx
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052567e      pop   edi
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052567f      pop   esi
+Ôöé ÔöéÔöé ÔöéÔöé     0x00525680      mov   ecx, dword [var_20h]
+Ôöé ÔöéÔöé ÔöéÔöé     0x00525683      xor   ecx, ebp
+Ôöé ÔöéÔöé ÔöéÔöé     0x00525685      call  fcn.007e91e5
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052568a      mov   esp, ebp
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052568c      pop   ebp
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052568d      mov   esp, ebx
+Ôöé ÔöéÔöé ÔöéÔöé     0x0052568f      pop   ebx
+Ôöé ÔöéÔöé ÔöéÔöé     0x00525690      ret
+Ôöé ÔöéÔöé ÔööÔööÔöÇÔöÇÔöÇ> 0x00525691      call  fcn.007fa651
+Ôöé ÔööÔööÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x00525696      call  fcn.007fa651
+Ôöé ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ> 0x0052569b      call  fcn.007fa651
+Ôöö           0x005256a0      int3
+===== axt fcn.005ae470 =====
+fcn.005256b0 0x525924 [CALL] call fcn.005ae470
+fcn.005256b0 0x525daa [CALL] call fcn.005ae470
+fcn.00527d90 0x5280d1 [CALL] call fcn.005ae470
+fcn.00527d90 0x52867f [CALL] call fcn.005ae470
+fcn.0052caf0 0x52cc62 [CALL] call fcn.005ae470
+fcn.0052d930 0x52db62 [CALL] call fcn.005ae470
+fcn.0052e940 0x52eb20 [CALL] call fcn.005ae470
+fcn.0052ec90 0x52ee91 [CALL] call fcn.005ae470
+(nofunc) 0x530488 [CALL] call fcn.005ae470
+(nofunc) 0x530700 [CALL] call fcn.005ae470
+fcn.00530a30 0x530f3d [CALL] call fcn.005ae470
+fcn.00530a30 0x53105c [CALL] call fcn.005ae470
+(nofunc) 0x5346e3 [CALL] call fcn.005ae470
+fcn.005362e0 0x536608 [CALL] call fcn.005ae470
+fcn.005362e0 0x537d28 [CALL] call fcn.005ae470
+(nofunc) 0x538919 [CALL] call fcn.005ae470
+fcn.00538e20 0x5395ae [CALL] call fcn.005ae470
+(nofunc) 0x53b004 [CALL] call fcn.005ae470
+(nofunc) 0x53b501 [CALL] call fcn.005ae470
+(nofunc) 0x53b795 [CALL] call fcn.005ae470
+fcn.0053f3a0 0x53f8e0 [CALL] call fcn.005ae470
+fcn.005400e0 0x540925 [CALL] call fcn.005ae470
+fcn.005400e0 0x540a79 [CALL] call fcn.005ae470
+fcn.00541ca0 0x541fe2 [CALL] call fcn.005ae470
+(nofunc) 0x5443c2 [CALL] call fcn.005ae470
+(nofunc) 0x5444c4 [CALL] call fcn.005ae470
+fcn.00544bf0 0x54501b [CALL] call fcn.005ae470
+fcn.00628540 0x628ae2 [CALL] call fcn.005ae470
+===== axt fcn.005ae7e0 =====
+fcn.005256b0 0x525956 [CALL] call fcn.005ae7e0
+fcn.005256b0 0x525df2 [CALL] call fcn.005ae7e0
+fcn.00527d90 0x528305 [CALL] call fcn.005ae7e0
+fcn.00527d90 0x528769 [CALL] call fcn.005ae7e0
+fcn.0052caf0 0x52cdcd [CALL] call fcn.005ae7e0
+fcn.0052d930 0x52dbec [CALL] call fcn.005ae7e0
+fcn.0052e940 0x52ec6a [CALL] call fcn.005ae7e0
+fcn.0052ec90 0x52efdb [CALL] call fcn.005ae7e0
+(nofunc) 0x530529 [CALL] call fcn.005ae7e0
+(nofunc) 0x530618 [CALL] call fcn.005ae7e0
+(nofunc) 0x530852 [CALL] call fcn.005ae7e0
+fcn.00530a30 0x530f72 [CALL] call fcn.005ae7e0
+fcn.00530a30 0x53108d [CALL] call fcn.005ae7e0
+(nofunc) 0x534840 [CALL] call fcn.005ae7e0
+fcn.005362e0 0x537ee8 [CALL] call fcn.005ae7e0
+(nofunc) 0x53894e [CALL] call fcn.005ae7e0
+fcn.00538e20 0x539639 [CALL] call fcn.005ae7e0
+(nofunc) 0x53b044 [CALL] call fcn.005ae7e0
+(nofunc) 0x53b5ca [CALL] call fcn.005ae7e0
+(nofunc) 0x53b7b6 [CALL] call fcn.005ae7e0
+fcn.0053f3a0 0x53f970 [CALL] call fcn.005ae7e0
+fcn.005400e0 0x540976 [CALL] call fcn.005ae7e0
+fcn.005400e0 0x540b41 [CALL] call fcn.005ae7e0
+fcn.00541ca0 0x542060 [CALL] call fcn.005ae7e0
+(nofunc) 0x544459 [CALL] call fcn.005ae7e0
+(nofunc) 0x544475 [CALL] call fcn.005ae7e0
+(nofunc) 0x54467d [CALL] call fcn.005ae7e0
+fcn.00544bf0 0x545069 [CALL] call fcn.005ae7e0
+fcn.00628540 0x628b9d [CALL] call fcn.005ae7e0
+===== axt fcn.005aee20 =====
+fcn.00524080 0x52420a [CALL] call fcn.005aee20
+fcn.005256b0 0x525873 [CALL] call fcn.005aee20
+fcn.005256b0 0x52596e [CALL] call fcn.005aee20
+fcn.005256b0 0x525a36 [CALL] call fcn.005aee20
+fcn.005256b0 0x525a58 [CALL] call fcn.005aee20
+fcn.005256b0 0x525a7d [CALL] call fcn.005aee20
+fcn.005256b0 0x525d93 [CALL] call fcn.005aee20
+fcn.00527d90 0x527e33 [CALL] call fcn.005aee20
+fcn.00527d90 0x5289dd [CALL] call fcn.005aee20
+fcn.00527d90 0x528a09 [CALL] call fcn.005aee20
+fcn.00527d90 0x528a5a [CALL] call fcn.005aee20
+fcn.00527d90 0x528b41 [CALL] call fcn.005aee20
+fcn.00527d90 0x528b71 [CALL] call fcn.005aee20
+fcn.00527d90 0x528bdc [CALL] call fcn.005aee20
+fcn.00527d90 0x528c47 [CALL] call fcn.005aee20
+fcn.00527d90 0x528cb2 [CALL] call fcn.005aee20
+fcn.00527d90 0x528d1d [CALL] call fcn.005aee20
+fcn.00527d90 0x528ec0 [CALL] call fcn.005aee20
+fcn.005299a0 0x529b18 [CALL] call fcn.005aee20
+fcn.005299a0 0x529fa4 [CALL] call fcn.005aee20
+fcn.0052a050 0x52a23d [CALL] call fcn.005aee20
+fcn.0052a3e0 0x52a8df [CALL] call fcn.005aee20
+fcn.0052b470 0x52b737 [CALL] call fcn.005aee20
+fcn.0052c270 0x52c3b5 [CALL] call fcn.005aee20
+fcn.0052ce20 0x52d0a2 [CALL] call fcn.005aee20
+fcn.0052d5b0 0x52d778 [CALL] call fcn.005aee20
+fcn.0052d7a0 0x52d916 [CALL] call fcn.005aee20
+fcn.0052e080 0x52e5da [CALL] call fcn.005aee20
+fcn.0052f020 0x52f0be [CALL] call fcn.005aee20
+fcn.0052f220 0x52f2ae [CALL] call fcn.005aee20
+fcn.0052f220 0x52f33e [CALL] call fcn.005aee20
+fcn.00530a30 0x530d87 [CALL] call fcn.005aee20
+fcn.00531740 0x531923 [CALL] call fcn.005aee20
+fcn.00531da0 0x5325a0 [CALL] call fcn.005aee20
+fcn.005358e0 0x535b6e [CALL] call fcn.005aee20
+fcn.005362e0 0x536655 [CALL] call fcn.005aee20
+fcn.005362e0 0x536891 [CALL] call fcn.005aee20
+fcn.005362e0 0x5368b4 [CALL] call fcn.005aee20
+fcn.005362e0 0x5368da [CALL] call fcn.005aee20
+fcn.005362e0 0x537029 [CALL] call fcn.005aee20
+fcn.005362e0 0x5370cb [CALL] call fcn.005aee20
+fcn.005362e0 0x53717d [CALL] call fcn.005aee20
+fcn.005362e0 0x53721f [CALL] call fcn.005aee20
+fcn.005362e0 0x53752d [CALL] call fcn.005aee20
+fcn.005362e0 0x5375d8 [CALL] call fcn.005aee20
+fcn.005362e0 0x537777 [CALL] call fcn.005aee20
+fcn.005362e0 0x5377f6 [CALL] call fcn.005aee20
+fcn.005362e0 0x537872 [CALL] call fcn.005aee20
+fcn.005362e0 0x5378dc [CALL] call fcn.005aee20
+fcn.005362e0 0x537987 [CALL] call fcn.005aee20
+fcn.005362e0 0x5379fb [CALL] call fcn.005aee20
+fcn.005362e0 0x537a77 [CALL] call fcn.005aee20
+fcn.005362e0 0x537ad9 [CALL] call fcn.005aee20
+fcn.005362e0 0x537b78 [CALL] call fcn.005aee20
+fcn.005362e0 0x537bd7 [CALL] call fcn.005aee20
+fcn.005362e0 0x537c49 [CALL] call fcn.005aee20
+(nofunc) 0x5389f2 [CALL] call fcn.005aee20
+fcn.00538e20 0x538ecc [CALL] call fcn.005aee20
+fcn.00538e20 0x5398bc [CALL] call fcn.005aee20
+fcn.00538e20 0x5398e2 [CALL] call fcn.005aee20
+fcn.00538e20 0x539933 [CALL] call fcn.005aee20
+fcn.00538e20 0x539a1d [CALL] call fcn.005aee20
+fcn.00538e20 0x539a4d [CALL] call fcn.005aee20
+fcn.00538e20 0x539abb [CALL] call fcn.005aee20
+fcn.00538e20 0x539b26 [CALL] call fcn.005aee20
+fcn.00538e20 0x539b91 [CALL] call fcn.005aee20
+fcn.00538e20 0x539bfc [CALL] call fcn.005aee20
+fcn.00538e20 0x539c67 [CALL] call fcn.005aee20
+fcn.00538e20 0x539e10 [CALL] call fcn.005aee20
+(nofunc) 0x53b269 [CALL] call fcn.005aee20
+(nofunc) 0x53b295 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53bc54 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53bd50 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53bdf0 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53c0c8 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53c0e0 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53c0f8 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53c6dc [CALL] call fcn.005aee20
+fcn.0053bb50 0x53c6f8 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53c8ad [CALL] call fcn.005aee20
+fcn.0053bb50 0x53cc03 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53ccab [CALL] call fcn.005aee20
+fcn.0053bb50 0x53cd41 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53cdf8 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53cef9 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53cf7b [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d101 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d186 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d203 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d270 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d30a [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d381 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d400 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d465 [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d51d [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d57f [CALL] call fcn.005aee20
+fcn.0053bb50 0x53d5f4 [CALL] call fcn.005aee20
+fcn.0053e290 0x53e4f9 [CALL] call fcn.005aee20
+fcn.0053e8e0 0x53eae3 [CALL] call fcn.005aee20
+fcn.0053ec10 0x53edb2 [CALL] call fcn.005aee20
+fcn.0053ec10 0x53edfc [CALL] call fcn.005aee20
+fcn.0053f3a0 0x53f549 [CALL] call fcn.005aee20
+fcn.0053f3a0 0x53f593 [CALL] call fcn.005aee20
+fcn.0053f3a0 0x53f733 [CALL] call fcn.005aee20
+fcn.0053f3a0 0x53f8fb [CALL] call fcn.005aee20
+fcn.0053f3a0 0x53f9f9 [CALL] call fcn.005aee20
+fcn.0053f3a0 0x53fb45 [CALL] call fcn.005aee20
+fcn.005400e0 0x5402bb [CALL] call fcn.005aee20
+fcn.005400e0 0x5402ff [CALL] call fcn.005aee20
+fcn.005400e0 0x54049f [CALL] call fcn.005aee20
+fcn.005400e0 0x54056f [CALL] call fcn.005aee20
+fcn.005400e0 0x54073c [CALL] call fcn.005aee20
+fcn.005400e0 0x5407eb [CALL] call fcn.005aee20
+fcn.005400e0 0x5408a1 [CALL] call fcn.005aee20
+fcn.005400e0 0x540adb [CALL] call fcn.005aee20
+fcn.005400e0 0x540ba3 [CALL] call fcn.005aee20
+fcn.00541220 0x5413eb [CALL] call fcn.005aee20
+fcn.00541220 0x541435 [CALL] call fcn.005aee20
+fcn.00541220 0x5415d5 [CALL] call fcn.005aee20
+fcn.00541220 0x541630 [CALL] call fcn.005aee20
+fcn.00541220 0x5416d4 [CALL] call fcn.005aee20
+fcn.00541ca0 0x541e43 [CALL] call fcn.005aee20
+fcn.00541ca0 0x541e8d [CALL] call fcn.005aee20
+fcn.00541ca0 0x542012 [CALL] call fcn.005aee20
+fcn.00541ca0 0x542078 [CALL] call fcn.005aee20
+fcn.00541ca0 0x5420dc [CALL] call fcn.005aee20
+fcn.00542e90 0x542efa [CALL] call fcn.005aee20
+fcn.00543270 0x5432ca [CALL] call fcn.005aee20
+(nofunc) 0x543b58 [CALL] call fcn.005aee20
+(nofunc) 0x543c3a [CALL] call fcn.005aee20
+(nofunc) 0x543df9 [CALL] call fcn.005aee20
+fcn.00544bf0 0x544e57 [CALL] call fcn.005aee20
+fcn.00546870 0x546a42 [CALL] call fcn.005aee20
+fcn.00548450 0x548923 [CALL] call fcn.005aee20
+fcn.00548c20 0x548f69 [CALL] call fcn.005aee20
+fcn.00548c20 0x5490c1 [CALL] call fcn.005aee20
+fcn.00548c20 0x54916c [CALL] call fcn.005aee20
+fcn.00548c20 0x5492a8 [CALL] call fcn.005aee20
+fcn.00548c20 0x549344 [CALL] call fcn.005aee20
+fcn.00548c20 0x5495b1 [CALL] call fcn.005aee20
+fcn.00548c20 0x54a5c4 [CALL] call fcn.005aee20
+fcn.00548c20 0x54a71d [CALL] call fcn.005aee20
+fcn.0054b760 0x54bb1e [CALL] call fcn.005aee20
+fcn.0054b760 0x54bf14 [CALL] call fcn.005aee20
+fcn.005af0f0 0x5af12e [CALL] call fcn.005aee20
+fcn.00626560 0x626b9b [CALL] call fcn.005aee20
+fcn.00628540 0x6288d6 [CALL] call fcn.005aee20
+===== leave write site context =====
+Ôöé           0x004f17e0      add   byte [eax-0x73], dl
+Ôöé           0x004f17e3      test  esp, esp
+Ôöé           0x004f17e5      invalid
+Ôöé           0x004f17e6      invalid
+Ôöé           0x004f17e7      call  dword [edi+0x50]                     ; 80
+Ôöé           0x004f17ea      call  fcn.00484be0
+Ôöé           0x004f17ef      push  0x00
+Ôöé           0x004f17f1      push  0x28                                 ; '(' ; 40 ; int32_t arg_8h
+Ôöé           0x004f17f3      lea   eax, dword [var_120h]
+Ôöé           0x004f17f9      push  0x08                                 ; 8 ; int32_t arg_ch
+Ôöé           0x004f17fb      push  eax                                  ; int32_t arg_4h
+Ôöé           0x004f17fc      call  fcn.004d3160
+Ôöé           0x004f1801      movzx eax, byte [esi+0x01]
+Ôöé           0x004f1805      mov   byte [eax+data.00918cac], 0x03       ; [0x918cac:1]=0
+Ôöé           0x004f180c      movzx eax, byte [esi+0x01]
+Ôöé           0x004f1810      push  eax                                  ; int32_t arg_4h
+Ôöé           0x004f1811      call  reloc.pe_004b1500                    ;  reloc.pe_004b1500(int32_t arg_4h)
+Ôöé           0x004f1816      add   esp, 0x20
+Ôöé           0x004f1819      cmp   dword [data.0091c178], 0x00          ; [0x91c178:4]=0
+Ôöé       ÔöîÔöÇ< 0x004f1820      jz    0x4f18d4
+Ôöé       Ôöé   0x004f1826      movzx eax, byte [esi+0x01]
+Ôöé       Ôöé   0x004f182a      movzx ecx, byte [data.00919678]            ; [0x919678:1]=0
+Ôöé       Ôöé   0x004f1831      btr   ecx, eax
+Ôöé       Ôöé   0x004f1834      mov   byte [data.00919678], cl             ; [0x919678:1]=0
+Ôöé       Ôöé   0x004f183a      movzx eax, byte [esi+0x01]
+Ôöé       Ôöé   0x004f183e      movzx ecx, byte [data.00919679]            ; [0x919679:1]=0; RELOC 3 pe_004f1840 @ 0x00000000
+Ôöé       Ôöé   0x004f1845      btr   ecx, eax
+Ôöé       Ôöé   ;-- pe_004f1848:
+Ôöé       Ôöé   0x004f1848      mov   byte [data.00919679], cl             ; [0x919679:1]=0; RELOC 3 pe_004f1848 @ 0x00000000
+Ôöé       Ôöé   0x004f184e      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f1850 @ 0x00000000
+Ôöé       Ôöé   0x004f1852      movzx ecx, byte [data.0091967a]            ; [0x91967a:1]=0; RELOC 3 pe_004f1854 @ 0x00000000
+Ôöé       Ôöé   0x004f1859      btr   ecx, eax
+Ôöé       Ôöé   ;-- pe_004f185c:
+Ôöé       Ôöé   0x004f185c      mov   byte [data.0091967a], cl             ; [0x91967a:1]=0; RELOC 3 pe_004f185c @ 0x00000000
+Ôöé       Ôöé   0x004f1862      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f1864 @ 0x00000000
+Ôöé       Ôöé   0x004f1866      movzx ecx, byte [data.0091967b]            ; [0x91967b:1]=0; RELOC 3 pe_004f1868 @ 0x00000000
+Ôöé       Ôöé   0x004f186d      btr   ecx, eax
+Ôöé       Ôöé   ;-- pe_004f1870:
+Ôöé       Ôöé   0x004f1870      mov   byte [data.0091967b], cl             ; [0x91967b:1]=0; RELOC 3 pe_004f1870 @ 0x00000000
+Ôöé       Ôöé   0x004f1876      movzx eax, byte [esi+0x01]                 ; RELOC 3 pe_004f1878 @ 0x00000000
+Ôöé       Ôöé   0x004f187a      movzx ecx, byte [data.0091967c]            ; [0x91967c:1]=0; RELOC 3 pe_004f187c @ 0x00000000
+Ôöé       Ôöé   0x004f1881      btr   ecx, eax
+Ôöé       Ôöé   ;-- pe_004f1884:
+Ôöé       Ôöé   0x004f1884      mov   byte [data.0091967c], cl             ; [0x91967c:1]=0; RELOC 3 pe_004f1884 @ 0x00000000
+===== fcn.004f16f0 leave handler head =====
+            ; CALL XREF from fcn.004d8d70 @ 0x4d8df3
+Ôöî fcn.004f16f0(int32_t arg_4h);
+Ôöé           ; var uint_least32_t var_130h @ stack - 0x130
+Ôöé           ; var int32_t var_12ch @ stack - 0x12c
+Ôöé           ; var int32_t var_12ah @ stack - 0x12a
+Ôöé           ; var int32_t var_128h @ stack - 0x128
+Ôöé           ; var int32_t var_126h @ stack - 0x126
+Ôöé           ; var int32_t var_124h @ stack - 0x124
+Ôöé           ; var int32_t var_122h @ stack - 0x122
+Ôöé           ; var int32_t var_120h @ stack - 0x120
+Ôöé           ; var int32_t var_20h @ stack - 0x20
+Ôöé           ; var int32_t var_8h @ stack - 0x8
+Ôöé           ; arg int32_t arg_4h @ stack + 0x4
+Ôöé           0x004f16f0      push  ebp
+Ôöé           0x004f16f1      mov   ebp, esp
+Ôöé           0x004f16f3      sub   esp, 0x12c
+Ôöé           0x004f16f9      mov   eax, dword [data.0090d6c0]           ; [0x90d6c0:4]=0xbb40e64e ; "N\xe6@\xbb"
+Ôöé           0x004f16fe      xor   eax, ebp
+Ôöé           0x004f1700      mov   dword [var_8h], eax
+Ôöé           0x004f1703      push  esi
+Ôöé           0x004f1704      mov   esi, dword [arg_4h]
+Ôöé           0x004f1707      mov   cl, byte [esi+0x06]                  ; RELOC 3 pe_004f1708 @ 0x00000000
+Ôöé           0x004f170a      movzx eax, cl
+Ôöé           0x004f170d      add   eax, 0xfffffffc                      ; 4294967292
+Ôöé           ;-- pe_004f1710:
+Ôöé           0x004f1710      cmp   eax, 0xfa                            ; 250; RELOC 3 pe_004f1710 @ 0x00000000
+Ôöé       ÔöîÔöÇ< 0x004f1715      jnbe  case.default.0x4f1724
+Ôöé       Ôöé   0x004f171b      movzx eax, byte [eax+0x4f1f20]
+Ôöé       Ôöé   0x004f1722      push  ebx
+Ôöé       Ôöé   0x004f1723      push  edi
+Ôöé       Ôöé   ;-- switch
+Ôöé       Ôöé   0x004f1724      jmp   dword [eax*4+data.004f1ec4]          ; 0x4f1ec4 ; "A\U00000017O" ; switch table (23 cases) at 0x4f1ec4
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 25:                                               ; from 0x4f1724
+Ôöé       Ôöé   0x004f172b      call  fcn.004c0a30
+Ôöé       Ôöé   0x004f1730      pop   edi
+Ôöé       Ôöé   0x004f1731      pop   ebx
+Ôöé       Ôöé   0x004f1732      pop   esi
+Ôöé       Ôöé   0x004f1733      mov   ecx, dword [var_8h]
+Ôöé       Ôöé   0x004f1736      xor   ecx, ebp
+Ôöé       Ôöé   0x004f1738      call  fcn.007e91e5
+Ôöé       Ôöé   0x004f173d      mov   esp, ebp
+Ôöé       Ôöé   0x004f173f      pop   ebp
+Ôöé       Ôöé   0x004f1740      ret
+Ôöé       Ôöé   ; CODE XREF from fcn.004f16f0 @ 0x4f1724
+Ôöé       Ôöé   ;-- case 4:                                                ; from 0x4f1724
+Ôöé       Ôöé   0x004f1741      movzx eax, byte [esi+0x01]
+Ôöé       Ôöé   0x004f1745      cmp   word [eax*2+data.0091b38c], 0x00     ; [0x91b38c:2]=0
+Ôöé      ÔöîÔöÇÔöÇ< 0x004f174e      jnz   0x4f177f
+Ôöé      ÔöéÔöé   0x004f1750      cmp   word [eax*2+data.0091b3ac], 0x00     ; [0x91b3ac:2]=0
+Ôöé     ÔöîÔöÇÔöÇÔöÇ< 0x004f1759      jnz   0x4f177f
+Ôöé     ÔöéÔöéÔöé   0x004f175b      push  str.message_player_eliminated        ; 0x84178c ; "message_player_eliminated" ; int32_t arg_4h
+Ôöé     ÔöéÔöéÔöé   0x004f1760      call  fcn.0058ab00
+Ôöé     ÔöéÔöéÔöé   0x004f1765      add   esp, 0x04
+Ôöé     ÔöéÔöéÔöé   0x004f1768      mov   edi, eax
+Ôöé     ÔöéÔöéÔöé   0x004f176a      call  fcn.0049f4f0
+Ôöé     ÔöéÔöéÔöé   0x004f176f      test  eax, eax
+Ôöé    ÔöîÔöÇÔöÇÔöÇÔöÇ< 0x004f1771      jz    0x4f17cd
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1773      movzx ecx, byte [esi+0x01]
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1777      push  ecx                                  ; int32_t arg_4h
+Ôöé    ÔöéÔöéÔöéÔöé   0x004f1778      call  fcn.004f4f30
+Ôöé   ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f177d      jmp   0x4f17ca
+Ôöé   ÔöéÔöéÔööÔööÔöÇÔöÇ> 0x004f177f      cmp   cl, 0x10                             ; 16
+Ôöé   ÔöéÔöé ÔöîÔöÇÔöÇ< 0x004f1782      jnz   0x4f17a8
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1784      push  str.message_player_left              ; 0x8417a8 ; "message_player_left" ; int32_t arg_4h
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1789      call  fcn.0058ab00
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f178e      add   esp, 0x04
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1791      mov   edi, eax
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1793      call  fcn.0049f4f0
+Ôöé   ÔöéÔöé ÔöéÔöé   0x004f1798      test  eax, eax
+Ôöé   ÔöéÔöéÔöîÔöÇÔöÇÔöÇ< 0x004f179a      jz    0x4f17cd
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f179c      movzx eax, byte [esi+0x01]
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f17a0      push  eax                                  ; int32_t arg_4h
+Ôöé   ÔöéÔöéÔöéÔöéÔöé   0x004f17a1      call  fcn.004f4f30
+Ôöé  ÔöîÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ< 0x004f17a6      jmp   0x4f17ca
+Ôöé  ÔöéÔöéÔöéÔöéÔööÔöÇÔöÇ> 0x004f17a8      push  str.message_player_dropped           ; 0x8417bc ; "message_player_dropped" ; int32_t arg_4h
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17ad      call  fcn.0058ab00
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17b2      add   esp, 0x04
+Ôöé  ÔöéÔöéÔöéÔöé Ôöé   0x004f17b5      mov   edi, eax
+===== search cmp status==3 near UI =====
+0x004872e2 7 hit.bytes.0
+0x004a0320 7 hit.bytes.1
+0x004a033a 7 hit.bytes.2
+0x004a035e 7 hit.bytes.3
+0x004a037c 7 hit.bytes.4
+0x004a039a 7 hit.bytes.5
+0x004a03b8 7 hit.bytes.6
+0x004a03d6 7 hit.bytes.7
+0x004a03f4 7 hit.bytes.8
+0x004b061f 7 hit.bytes.9
+0x004b2028 7 hit.bytes.10
+0x004b39fa 7 hit.bytes.11
+0x004ce470 7 hit.bytes.12
+0x004ce480 7 hit.bytes.13
+0x004ce490 7 hit.bytes.14
+0x004ce4a0 7 hit.bytes.15
+0x004ce4b0 7 hit.bytes.16
+0x004ce4c0 7 hit.bytes.17
+0x004ce4d0 7 hit.bytes.18
+0x004ce4e0 7 hit.bytes.19
+0x004ea645 7 hit.bytes.20
+0x0051704a 7 hit.bytes.21
+0x005290ed 7 hit.bytes.22
+===== search cmp [reg+0x918cac], 3 =====

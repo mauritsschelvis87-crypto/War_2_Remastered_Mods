@@ -1,0 +1,18 @@
+[32m0x00443068[0m [32m0x00844668[0m [33m  17[0m [33m  18[0m [36m.rdata  [0m[90mascii   [0m[36mAlliance Traitors[0m
+[32m0x00443254[0m [32m0x00844854[0m [33m  17[0m [33m  18[0m [36m.rdata  [0m[90mascii   [0m[36mwidget_text_white[0m
+[32m0x00443268[0m [32m0x00844868[0m [33m  18[0m [33m  19[0m [36m.rdata  [0m[90mascii   [0m[36mwidget_text_yellow[0m
+[32m0x0044327c[0m [32m0x0084487c[0m [33m  15[0m [33m  16[0m [36m.rdata  [0m[90mascii   [0m[36mwidget_text_red[0m
+[32m0x00443394[0m [32m0x00844994[0m [33m  29[0m [33m  30[0m [36m.rdata  [0m[90mascii   [0m[36mfe_alliance_team_color_border[0m
+[32m0x004438d4[0m [32m0x00844ed4[0m [33m  11[0m [33m  12[0m [36m.rdata  [0m[90mascii   [0m[36mteam_color_[0m
+[32m0x004438f8[0m [32m0x00844ef8[0m [33m  17[0m [33m  18[0m [36m.rdata  [0m[90mascii   [0m[36mteam_color_frame_[0m
+[32m0x00443928[0m [32m0x00844f28[0m [33m  14[0m [33m  15[0m [36m.rdata  [0m[90mascii   [0m[36malliances_menu[0m
+[32m0x00443940[0m [32m0x00844f40[0m [33m  12[0m [33m  13[0m [36m.rdata  [0m[90mascii   [0m[36mmp_dip_title[0m
+[32m0x00443960[0m [32m0x00844f60[0m [33m  14[0m [33m  15[0m [36m.rdata  [0m[90mascii   [0m[36mmp_dip_victory[0m
+[32m0x00443970[0m [32m0x00844f70[0m [33m  13[0m [33m  14[0m [36m.rdata  [0m[90mascii   [0m[36mmp_dip_allies[0m
+[32m0x00443980[0m [32m0x00844f80[0m [33m  19[0m [33m  20[0m [36m.rdata  [0m[90mascii   [0m[36mshared_vision_title[0m
+[32m0x00443994[0m [32m0x00844f94[0m [33m  13[0m [33m  14[0m [36m.rdata  [0m[90mascii   [0m[36mmp_dip_vision[0m
+[32m0x00445708[0m [32m0x00846d08[0m [33m  12[0m [33m  13[0m [36m.rdata  [0m[90mascii   [0m[36mplayer_slots[0m
+[32m0x00445718[0m [32m0x00846d18[0m [33m  19[0m [33m  20[0m [36m.rdata  [0m[90mascii   [0m[36mplayer_slots_header[0m
+[32m0x0044572c[0m [32m0x00846d2c[0m [33m  26[0m [33m  27[0m [36m.rdata  [0m[90mascii   [0m[36mplayer_slots_header_offset[0m
+[32m0x00447b0c[0m [32m0x0084910c[0m [33m  18[0m [33m  19[0m [36m.rdata  [0m[90mascii   [0m[36mstats_player_name_[0m
+[32m0x0046ad50[0m [32m0x0086c350[0m [33m  15[0m [33m  16[0m [36m.rdata  [0m[90mascii   [0m[36mdrop_text_color[0m

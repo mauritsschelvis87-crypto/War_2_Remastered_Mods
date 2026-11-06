@@ -1,0 +1,90 @@
+===== all mov byte [96512c], imm =====
+0x004a4e2c 6 hit.bytes.0
+[2K
+0x004a4fcb 6 hit.bytes.1
+0x004a5005 6 hit.bytes.2
+0x004a517e 6 hit.bytes.3
+0x004a527e 6 hit.bytes.4
+0x004a52a7 6 hit.bytes.5
+0x004a5322 6 hit.bytes.6
+0x004a555e 6 hit.bytes.7
+0x004a575b 6 hit.bytes.8
+0x004a57d1 6 hit.bytes.9
+0x004a5812 6 hit.bytes.10
+0x004a587c 6 hit.bytes.11
+0x004a5ca6 6 hit.bytes.12
+0x004a5e3c 6 hit.bytes.13
+0x004a5fc3 6 hit.bytes.14
+0x004a6027 6 hit.bytes.15
+0x004a6091 6 hit.bytes.16
+0x004a6247 6 hit.bytes.17
+0x004a6307 6 hit.bytes.18
+0x004e4ed9 6 hit.bytes.19
+===== hit 4e4ed9 =====
+            0x004e4ed0      17             pop   ss
+            0x004e4ed1      8c00           mov   word [eax], es
+            0x004e4ed3      66854114       test  word [ecx+0x14], ax
+        ÔöîÔöÇ< 0x004e4ed7      743d           jz    0x4e4f16
+        Ôöé   ;-- hit.bytes.19:
+        Ôöé   0x004e4ed9      c6052c519600.  mov   byte [0x96512c], 0xfa ; [0xfa:1]=255 ; 250
+        Ôöé   0x004e4ee0      0fb74e06       movzx ecx, word [esi+0x06]
+        Ôöé   0x004e4ee4      0fb7460a       movzx eax, word [esi+0x0a]
+        Ôöé   0x004e4ee8      0fb75604       movzx edx, word [esi+0x04]
+        Ôöé   0x004e4eec      662bc1         sub   ax, cx
+        Ôöé   0x004e4eef      6683e807       sub   ax, 0x07
+        Ôöé   0x004e4ef3      0fb7c0         movzx eax, ax
+        Ôöé   0x004e4ef6      50             push  eax
+        Ôöé   0x004e4ef7      0fb74608       movzx eax, word [esi+0x08]
+        Ôöé   0x004e4efb      662bc2         sub   ax, dx
+        Ôöé   0x004e4efe      6683e807       sub   ax, 0x07
+        Ôöé   0x004e4f02      0fb7c0         movzx eax, ax
+        Ôöé   0x004e4f05      50             push  eax
+        Ôöé   0x004e4f06      8d4104         lea   eax, dword [ecx+0x04]
+        Ôöé   0x004e4f09      50             push  eax
+        Ôöé   0x004e4f0a      8d4204         lea   eax, dword [edx+0x04]
+        Ôöé   0x004e4f0d      50             push  eax
+        Ôöé   0x004e4f0e      e88d4a0b00     call  0x5999a0
+        Ôöé   0x004e4f13      83c410         add   esp, 0x10
+        ÔööÔöÇ> 0x004e4f16      5e             pop   esi
+            0x004e4f17      5d             pop   ebp
+            0x004e4f18      c3             ret
+            0x004e4f19      cc             int3
+            0x004e4f1a      cc             int3
+            0x004e4f1b      cc             int3
+            0x004e4f1c      cc             int3
+            0x004e4f1d      cc             int3
+            0x004e4f1e      cc             int3
+            0x004e4f1f      cc             int3
+            0x004e4f20      55             push  ebp
+            0x004e4f21      8bec           mov   ebp, esp
+            0x004e4f23      56             push  esi
+            0x004e4f24      6afb           push  0xfffffffb            ; 0xfb ; 251
+            0x004e4f26      ff7508         push  dword [ebp+0x08]
+            0x004e4f29      e8e2e1fbff     call  0x4a3110
+            0x004e4f2e      8bf0           mov   esi, eax
+            0x004e4f30      83c408         add   esp, 0x08
+            0x004e4f33      66837e2000     cmp   word [esi+0x20], 0x00
+        ÔöîÔöÇ< 0x004e4f38      7d1f           jnl   0x4e4f59
+        Ôöé   0x004e4f3a      660f1f440000   nop   word [eax+eax*1], ax
+       ÔöîÔöÇÔöÇ> 0x004e4f40      56             push  esi
+       ÔòÄÔöé   0x004e4f41      c74614000000.  mov   dword [esi+0x14], 0x00
+       ÔòÄÔöé   0x004e4f48      e893eafbff     call  0x4a39e0
+       ÔòÄÔöé   0x004e4f4d      8b36           mov   esi, dword [esi]
+       ÔòÄÔöé   0x004e4f4f      83c404         add   esp, 0x04
+       ÔòÄÔöé   0x004e4f52      66837e2000     cmp   word [esi+0x20], 0x00
+       ÔööÔöÇÔöÇ< 0x004e4f57      7ce7           jl    0x4e4f40
+        ÔööÔöÇ> 0x004e4f59      5e             pop   esi
+            0x004e4f5a      5d             pop   ebp
+            0x004e4f5b      c3             ret
+            0x004e4f5c      cc             int3
+            0x004e4f5d      cc             int3
+            0x004e4f5e      cc             int3
+            0x004e4f5f      cc             int3
+            0x004e4f60      55             push  ebp
+            0x004e4f61      8bec           mov   ebp, esp
+===== pdf try =====
+ERROR: Cannot find function at 0x004e4ed9
+===== callers =====
+===== unit box site full fn =====
+ERROR: Cannot find function at 0x004d3dd1
+===== axt unit =====

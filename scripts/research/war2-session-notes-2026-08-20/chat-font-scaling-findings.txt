@@ -1,0 +1,66 @@
+Warcraft II Remastered chat font scaling - findings
+
+Goal
+- Scale only in-game chat text to 200% without changing the top HUD, buttons, resources, pause text, or player-color features.
+
+Confirmed chat route
+- Chat text enters ChatNameColor_OnDrawColored in native/AllyLeaveHook/ChatNameColorHook.cpp.
+- DrawTextColored path: 0x005AEEB0 -> 0x005AED00 -> 0x005D24B0.
+- Per-glyph path: 0x005D1FF0.
+- A chat-only render context is confirmed by the hook: depth=1, kind=2.
+- The player-color mod is proven to be chat-only because it changes ui+0x20C color and redraws the name; it does not control font size.
+
+Rejected candidates
+- skins.json detail_font.size and dynamicFonts.size_hud are shared UI/HUD resources. Changing 15 to 30 enlarged top buttons/resources and made chat disappear. Restored to 15/15.
+- ui+0x1E0 fields are invalid/sentinel values, not textbox geometry.
+- ui+0x3D28 style pointer is null for the DrawTextColored ui object.
+- state[1]=15 was in the chat render route, but doubling it made chat invisible.
+- TextRender height 16->32 changed clipping/input layout, not glyph size; it was reverted.
+- Glyph y 15->30 cut chat in half; it was reverted.
+- Glyph arg2/arg3 doubling made typed chat invisible; it was reverted.
+
+Confirmed diagnostics
+- Install: glyph render=00641FF0 confirms the per-glyph hook is installed.
+- A chat glyph call has x=294, y=15, style pointer, and glyphData pointer.
+- glyphData+0x08 resolves to callback 0x0065D4D0.
+- 0x0065D4D0 is a resource/glyph lookup (ret 0xC), not the final rasterizer.
+- The current code logs glyph probes and nested style pointers without changing rendering.
+
+Current direction
+- Correct the glyph hook ABI/signature: 0x005D1FF0 uses float arguments at [ebp+0x0C], [ebp+0x10], [ebp+0x14], [ebp+0x18].
+- Test only the next candidate in the chat-only depth=1/kind=2 path and restore vanilla values on failure.
+- Do not launch Warcraft II automatically.
+
+Latest tests
+- Directly doubling glyph y (15 -> 30) cut the chat line in half; reverted.
+- Directly doubling glyph arg2/arg3 made all game text disappear; reverted.
+- Correctly interpreting arg2/arg3 as floats still affected main-menu text, proving these are shared renderer ABI parameters; reverted.
+- The glyph callback at 0x0065D4D0 is a resource lookup, not the final glyph rasterizer.
+- Chat glyph diagnostics consistently identify depth=1/kind=2, x=294, y=15.
+
+Current safety state
+- TextboxScaling is disabled in mod/extra-features.json.
+- The Studio Textbox scaling control is permanently disabled/greyed out.
+- The Studio ignores persisted TextboxScaling/ChatMessageFont150 values and forces the feature off.
+- skins.json must remain vanilla: detail_font.size=15 and dynamicFonts.size_hud=15.
+- Other player-color, chat, pause, drop, selection, and QoL features are not part of this disabled experiment.
+
+MP lobby button investigation
+- The MP lobby is built imperatively; no declarative button list was found in skins.json or the installed Data files.
+- The main lobby layout function starts at preferred VA 0x005362E0.
+- The player_slots resource string is referenced around 0x0053674D.
+- The existing Map row/widget is built around 0x00536CC8 and uses the UI add path at 0x005ACA30.
+- Existing layout code also uses ButtonSpecCtor at 0x00530320, but it is embedded in a large function with local cleanup state.
+- A direct prologue hook on the earlier candidate 0x00523470 was wrong and caused lobby crashes; it was removed.
+- A later direct hook on 0x005362E0 was also removed after injection instability.
+- No-op target button label requested: "Open map".
+- Current conclusion: clone the existing Map widget/button construction using the 0x00530320/0x005ACA30 route, but do not patch runtime until the exact owning object and cleanup lifetime are proven.
+
+Desktop plugin discovery
+- Desktop contains Warcraft-II-Plugins-main/lobby_map, an existing working MP-lobby plugin.
+- Its lifecycle exports are w2p_init() and screen_update(DWORD location).
+- It uses in_lobby() to scope rendering strictly to the MP lobby and stops drawing outside it.
+- It draws directly to the game backbuffer through getDisplayInfo(), not by patching the lobby builder.
+- This is the safer route for a visual no-op "Open map" button: draw a button rectangle and label only while in_lobby() is true.
+- The plugin Makefile builds a 32-bit .w2p with MinGW; this workspace currently has no .w2p plugin loader integration.
+- The failed native lobby prologue hooks should not be revived; the Desktop plugin architecture avoids those crashes.
